@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Merchant {
+  id        String   @id @default(cuid())
+  name      String
+  type      String   @default("mobile") // fixed | mobile
+  phone     String?
+  status    String   @default("active") // active | inactive | suspended
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  branches Branch[]
+  dishes   Dish[]
+  orders   Order[]
+}
+
+model NightMarket {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  lat       Float
+  lng       Float
+  radius    Int      @default(200) // meters
+  city      String?
+  status    String   @default("active")
+  branches  Branch[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Branch {
+  id            String   @id @default(cuid())
+  merchantId    String
+  nightMarketId String?
+  name          String
+  address       String?
+  lat           Float?
+  lng           Float?
+  logoUrl       String?
+  bannerUrl     String?
+  status        String   @default("active")
+
+  merchant   Merchant    @relation(fields: [merchantId], references: [id])
+  nightMarket NightMarket? @relation(fields: [nightMarketId], references: [id])
+  categories Category[]
+  tables     Table[]
+  orders     Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id       String @id @default(cuid())
+  branchId String
+  name     String
+  sort     Int    @default(0)
+
+  branch Branch @relation(fields: [branchId], references: [id])
+  dishes Dish[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Dish {
+  id          String   @id @default(cuid())
+  merchantId  String
+  categoryId  String
+  name        String
+  price       Float
+  image       String?
+  desc        String?
+  specsPreset String   @default("none") // none | tea | bbq | hotpot | dessert
+  status      String   @default("active")
+
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Table {
+  id       String @id @default(cuid())
+  branchId String
+  label    String
+  qrCode   String?
+
+  branch Branch @relation(fields: [branchId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Order {
+  id         String   @id @default(cuid())
+  branchId   String
+  merchantId String
+  tableId    String?
+  orderType  String   @default("takeaway") // dine_in | takeaway
+  orderNumber String
+  status     String   @default("pending")
+  totalPrice Float
+  customerName String?
+  customerPhone String?
+  note       String?
+
+  branch   Branch   @relation(fields: [branchId], references: [id])
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+  items    OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrderItem {
+  id       String @id @default(cuid())
+  orderId  String
+  dishId   String
+  name     String
+  price    Float
+  quantity Int
+  specs    String?
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  createdAt DateTime @default(now())
+}

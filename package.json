@@ -1,0 +1,14 @@
+{
+  "name": "diancan",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm -r run dev",
+    "dev:h5": "pnpm --filter @diancan/h5 dev",
+    "dev:api": "pnpm --filter @diancan/api dev",
+    "build": "pnpm -r run build",
+    "lint": "eslint . --ext .ts,.vue"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
