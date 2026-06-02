@@ -146,22 +146,22 @@ function dishImage(item: any): string {
 }
 
 const tabs = [
-  { key: 'pending', label: '等待中', icon: 'hourglass_empty' },
-  { key: 'active', label: '进行中', icon: 'fire_truck' },
+  { key: 'active', label: '进行中', icon: 'hourglass_empty' },
+  { key: 'ready', label: '待取餐', icon: 'notifications_active' },
   { key: 'completed', label: '已完成', icon: 'check_circle' },
 ]
 
 const filteredOrders = computed(() => {
-  if (tab.value === 'active') return orders.value.filter((o) => o.status === 'preparing' || o.status === 'ready')
+  if (tab.value === 'active') return orders.value.filter((o) => o.status === 'pending' || o.status === 'preparing')
   return orders.value.filter((o) => o.status === tab.value)
 })
 
 function badgeCount(key: string) {
-  if (key === 'pending') return orders.value.filter((o) => o.status === 'pending').length || ''
   if (key === 'active') {
-    const n = orders.value.filter((o) => o.status === 'preparing' || o.status === 'ready').length
+    const n = orders.value.filter((o) => o.status === 'pending' || o.status === 'preparing').length
     return n || ''
   }
+  if (key === 'ready') return orders.value.filter((o) => o.status === 'ready').length || ''
   if (key === 'completed') return orders.value.filter((o) => o.status === 'completed').length || ''
   return ''
 }
