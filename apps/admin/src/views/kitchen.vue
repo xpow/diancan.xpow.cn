@@ -125,19 +125,34 @@ function statusText(s: string) {
   return map[s] || s
 }
 
-function speak(msg: string) {
-  if (!voiceEnabled.value) return
-  if (!window.speechSynthesis) return
+let speechQueue: string[] = []
+let speaking = false
+
+function processQueue() {
+  if (speaking || !speechQueue.length) return
+  speaking = true
+  const msg = speechQueue.shift()!
   window.speechSynthesis.cancel()
   const u = new SpeechSynthesisUtterance(msg)
   u.lang = 'zh-CN'
   u.rate = 0.9
+  u.onend = () => { speaking = false; processQueue() }
+  u.onerror = () => { speaking = false; processQueue() }
   window.speechSynthesis.speak(u)
 }
 
+function speak(msg: string) {
+  if (!voiceEnabled.value || !window.speechSynthesis) return
+  speechQueue = []
+  speechQueue.push(msg)
+  processQueue()
+}
+
 function speakTwice(msg: string) {
-  speak(msg)
-  setTimeout(() => speak(msg), 1200)
+  if (!voiceEnabled.value || !window.speechSynthesis) return
+  speechQueue = []
+  speechQueue.push(msg, msg)
+  processQueue()
 }
 
 async function announcePickup(order: any) {
