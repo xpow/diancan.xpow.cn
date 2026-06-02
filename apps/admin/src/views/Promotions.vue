@@ -1,34 +1,119 @@
 <template>
-  <div>
-    <h2>营销活动</h2>
-    <DataTable :value="promotions" striped-rows>
+  <div class="promo-page">
+    <div class="page-header">
+      <h2 class="page-title">营销活动</h2>
+      <Button label="新增活动" icon="pi pi-plus" @click="openNew" />
+    </div>
+
+    <DataTable :value="promotions" striped-rows class="p-mt-3">
       <Column field="name" header="活动名称" />
       <Column field="type" header="类型">
         <template #body="{ data }">
-          {{ typeLabel(data.type) }}
+          <Tag :value="typeLabel(data.type)" />
         </template>
       </Column>
       <Column field="status" header="状态">
         <template #body="{ data }">
-          <Tag :value="data.status" :severity="data.status === 'active' ? 'success' : 'secondary'" />
+          <Tag :value="statusLabel(data.status)" :severity="statusSeverity(data.status)" />
         </template>
       </Column>
       <Column field="rules" header="规则">
         <template #body="{ data }">
-          {{ ruleText(data) }}
+          <span class="rule-text">{{ ruleText(data) }}</span>
         </template>
       </Column>
-      <Column header="操作">
+      <Column header="操作" style="width:160px">
         <template #body="{ data }">
-          <Button icon="pi pi-sync" severity="secondary" text @click="toggleStatus(data)" />
+          <Button icon="pi pi-pencil" severity="secondary" text @click="openEdit(data)" />
+          <Button icon="pi pi-trash" severity="danger" text @click="remove(data)" />
         </template>
       </Column>
     </DataTable>
+
+    <Dialog v-model:visible="showDialog" :header="editing ? '编辑活动' : '新增活动'" style="width:540px">
+      <div class="form-group">
+        <label>活动名称</label>
+        <InputText v-model="form.name" class="w-full" placeholder="例：满50减5" />
+      </div>
+      <div class="form-group">
+        <label>活动类型</label>
+        <SelectButton v-model="form.type" :options="typeOptions" optionLabel="label" optionValue="value" class="w-full" />
+      </div>
+
+      <!-- 满减配置 -->
+      <template v-if="form.type === 'full_reduction'">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>满额门槛 (¥)</label>
+            <InputNumber v-model="form.rules.threshold" :min="0" class="w-full" placeholder="50" />
+          </div>
+          <div class="form-group flex-1">
+            <label>减免金额 (¥)</label>
+            <InputNumber v-model="form.rules.discount" :min="0" class="w-full" placeholder="5" />
+          </div>
+        </div>
+      </template>
+
+      <!-- 福利品配置 -->
+      <template v-if="form.type === 'welfare_item'">
+        <div v-for="(item, idx) in form.items" :key="idx" class="promo-item-card">
+          <div class="promo-item-header">
+            <span class="promo-item-label">福利品 {{ idx + 1 }}</span>
+            <Button v-if="form.items.length > 1" icon="pi pi-trash" severity="danger" text size="small" @click="removeItem(idx)" />
+          </div>
+          <div class="form-group">
+            <label>选择菜品</label>
+            <Select v-model="item.dishId" :options="dishes" optionLabel="name" optionValue="id" placeholder="搜索并选择菜品" filter class="w-full" />
+          </div>
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>福利价 (¥)</label>
+              <InputNumber v-model="item.promoPrice" :min="0" class="w-full" placeholder="0.1" />
+            </div>
+            <div class="form-group flex-1">
+              <label>限购类型</label>
+              <Select v-model="item.limitType" :options="limitOptions" optionLabel="label" optionValue="value" class="w-full" />
+            </div>
+            <div class="form-group flex-1">
+              <label>限购数量</label>
+              <InputNumber v-model="item.maxQty" :min="1" class="w-full" placeholder="1" />
+            </div>
+          </div>
+        </div>
+        <Button label="+ 添加福利品" severity="secondary" text @click="addItem" class="p-mt-2" />
+      </template>
+
+      <div class="form-group">
+        <label>状态</label>
+        <Select v-model="form.status" :options="statusOptions" optionLabel="label" optionValue="value" class="w-full" />
+      </div>
+
+      <template #footer>
+        <Button label="取消" severity="secondary" @click="showDialog = false" />
+        <Button label="保存" @click="save" />
+      </template>
+    </Dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import Button from 'primevue/button'
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
+import Dialog from 'primevue/dialog'
+import InputText from 'primevue/inputtext'
+import InputNumber from 'primevue/inputnumber'
+import Select from 'primevue/select'
+import SelectButton from 'primevue/selectbutton'
+import Tag from 'primevue/tag'
+
+interface PromoItem {
+  dishId: string
+  promoPrice: number
+  limitType: string
+  maxQty: number
+}
 
 interface Promotion {
   id: string
@@ -36,14 +121,128 @@ interface Promotion {
   type: string
   status: string
   rules: Record<string, any>
-  items?: any[]
+  items: PromoItem[]
+}
+
+interface Dish {
+  id: string
+  name: string
+  price: number
 }
 
 const promotions = ref<Promotion[]>([])
+const dishes = ref<Dish[]>([])
+const showDialog = ref(false)
+const editing = ref(false)
+const editingId = ref('')
+
+const typeOptions = [
+  { label: '满减', value: 'full_reduction' },
+  { label: '福利品', value: 'welfare_item' },
+]
+const limitOptions = [
+  { label: '每单限购', value: 'per_order' },
+  { label: '全场限量', value: 'global_promo' },
+]
+const statusOptions = [
+  { label: '草稿', value: 'draft' },
+  { label: '已启用', value: 'active' },
+  { label: '已暂停', value: 'paused' },
+  { label: '已结束', value: 'ended' },
+]
+
+const form = ref<{
+  name: string
+  type: string
+  rules: Record<string, any>
+  items: PromoItem[]
+  status: string
+}>({
+  name: '',
+  type: 'full_reduction',
+  rules: {},
+  items: [],
+  status: 'draft',
+})
+
+function resetForm() {
+  form.value = {
+    name: '',
+    type: 'full_reduction',
+    rules: {},
+    items: [],
+    status: 'draft',
+  }
+}
+
+function openNew() {
+  editing.value = false
+  resetForm()
+  showDialog.value = true
+}
+
+function openEdit(p: Promotion) {
+  editing.value = true
+  editingId.value = p.id
+  form.value = {
+    name: p.name,
+    type: p.type,
+    rules: { ...p.rules },
+    items: (p.items || []).map((i: any) => ({
+      dishId: i.dishId,
+      promoPrice: i.promoPrice || 0,
+      limitType: i.limitType || 'per_order',
+      maxQty: i.maxQty || 1,
+    })),
+    status: p.status,
+  }
+  showDialog.value = true
+}
+
+function addItem() {
+  form.value.items.push({ dishId: '', promoPrice: 0, limitType: 'per_order', maxQty: 1 })
+}
+
+function removeItem(idx: number) {
+  form.value.items.splice(idx, 1)
+}
+
+async function save() {
+  const body = {
+    merchantId: 'demo-merchant',
+    ...form.value,
+  }
+  const url = editing.value ? `/api/promotions/${editingId.value}` : '/api/promotions'
+  const method = editing.value ? 'PUT' : 'POST'
+
+  await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  showDialog.value = false
+  fetchPromotions()
+}
+
+async function remove(p: Promotion) {
+  if (!confirm(`确认删除活动「${p.name}」？`)) return
+  await fetch(`/api/promotions/${p.id}`, { method: 'DELETE' })
+  fetchPromotions()
+}
 
 function typeLabel(type: string): string {
   const map: Record<string, string> = { full_reduction: '满减', welfare_item: '福利品', buy_get: '买赠', time_discount: '限时折扣' }
   return map[type] || type
+}
+
+function statusLabel(status: string): string {
+  const map: Record<string, string> = { draft: '草稿', active: '已启用', paused: '已暂停', ended: '已结束' }
+  return map[status] || status
+}
+
+function statusSeverity(status: string): string {
+  const map: Record<string, string> = { active: 'success', paused: 'warn', ended: 'secondary', draft: 'info' }
+  return map[status] || 'secondary'
 }
 
 function ruleText(p: Promotion): string {
@@ -52,26 +251,43 @@ function ruleText(p: Promotion): string {
     const item = p.items?.[0]
     if (!item) return '-'
     const limit = item.limitType === 'global_promo' ? '全场限量' : '每单限购'
-    return `${item.dishId} ¥${item.promoPrice} (${limit} ${item.maxQty})`
+    const dish = dishes.value.find((d) => d.id === item.dishId)
+    return `${dish?.name || item.dishId} ¥${item.promoPrice} (${limit} ${item.maxQty})`
   }
   return JSON.stringify(p.rules)
 }
 
-function toggleStatus(p: Promotion) {
-  const newStatus = p.status === 'active' ? 'disabled' : 'active'
-  fetch(`/api/promotions/${p.id}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status: newStatus }),
-  })
-    .then((r) => { if (r.ok) p.status = newStatus })
-    .catch(() => {})
+async function fetchPromotions() {
+  const res = await fetch('/api/promotions?merchantId=demo-merchant')
+  promotions.value = await res.json()
+}
+
+async function fetchDishes() {
+  try {
+    const res = await fetch('/api/dishes')
+    dishes.value = await res.json()
+  } catch {
+    // 可能没有 /api/dishes 接口
+  }
 }
 
 onMounted(() => {
-  fetch('/api/promotions?merchantId=demo-merchant')
-    .then((r) => r.json())
-    .then((data) => { promotions.value = data })
-    .catch(() => {})
+  fetchPromotions()
+  fetchDishes()
 })
 </script>
+
+<style scoped>
+.promo-page { max-width: 900px; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.page-title { margin: 0; font-size: 22px; font-weight: 700; }
+.form-group { margin-bottom: 12px; }
+.form-group label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 4px; }
+.form-row { display: flex; gap: 12px; }
+.flex-1 { flex: 1; }
+.w-full { width: 100%; }
+.rule-text { font-size: 13px; }
+.promo-item-card { background: #f9f9f9; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+.promo-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.promo-item-label { font-size: 13px; font-weight: 600; color: #666; }
+</style>

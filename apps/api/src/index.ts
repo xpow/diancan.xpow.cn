@@ -3,6 +3,7 @@ import cors from 'cors'
 import nightMarketRoutes from './routes/night-markets.js'
 import orderRoutes from './routes/orders.js'
 import promotionRoutes from './routes/promotions.js'
+import dishRoutes from './routes/dishes.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -17,6 +18,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/night-markets', nightMarketRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/promotions', promotionRoutes)
+app.use('/api/dishes', dishRoutes)
 
 app.listen(PORT, () => {
   console.log(`API server running on http://localhost:${PORT}`)

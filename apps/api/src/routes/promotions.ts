@@ -17,7 +17,6 @@ router.get('/', async (req, res) => {
     include: { items: true },
     orderBy: { createdAt: 'desc' },
   })
-  // Parse rules JSON string
   const result = promotions.map((p) => ({
     ...p,
     rules: JSON.parse(p.rules),
@@ -35,10 +34,63 @@ router.get('/:id', async (req, res) => {
   res.json({ ...p, rules: JSON.parse(p.rules) })
 })
 
-// 更新活动（状态等）
+// 新增活动
+router.post('/', async (req, res) => {
+  const { merchantId, name, type, rules, items, status } = req.body
+  if (!merchantId || !name || !type) {
+    return res.status(400).json({ error: 'merchantId, name, type required' })
+  }
+  const p = await prisma.promotion.create({
+    data: {
+      merchantId,
+      name,
+      type,
+      rules: JSON.stringify(rules || {}),
+      status: status || 'draft',
+      items: items?.length ? {
+        create: items.map((i: any) => ({
+          dishId: i.dishId,
+          promoPrice: i.promoPrice,
+          limitType: i.limitType || 'per_order',
+          maxQty: i.maxQty || 1,
+        })),
+      } : undefined,
+    },
+    include: { items: true },
+  })
+  res.json({ ...p, rules: JSON.parse(p.rules) })
+})
+
+// 更新活动
+router.put('/:id', async (req, res) => {
+  const { name, type, rules, items, status } = req.body
+  // 先删子表再重建
+  await prisma.promotionItem.deleteMany({ where: { promotionId: req.params.id } })
+  const p = await prisma.promotion.update({
+    where: { id: req.params.id },
+    data: {
+      name,
+      type,
+      rules: JSON.stringify(rules || {}),
+      status,
+      items: items?.length ? {
+        create: items.map((i: any) => ({
+          dishId: i.dishId,
+          promoPrice: i.promoPrice,
+          limitType: i.limitType || 'per_order',
+          maxQty: i.maxQty || 1,
+        })),
+      } : undefined,
+    },
+    include: { items: true },
+  })
+  res.json({ ...p, rules: JSON.parse(p.rules) })
+})
+
+// 更新状态
 router.patch('/:id', async (req, res) => {
   const { status } = req.body
-  if (status && !['active', 'disabled', 'expired'].includes(status)) {
+  if (status && !['draft', 'active', 'paused', 'ended'].includes(status)) {
     return res.status(400).json({ error: 'invalid status' })
   }
   const p = await prisma.promotion.update({
@@ -47,6 +99,14 @@ router.patch('/:id', async (req, res) => {
     include: { items: true },
   })
   res.json({ ...p, rules: JSON.parse(p.rules) })
+})
+
+// 删除活动
+router.delete('/:id', async (req, res) => {
+  await prisma.promotionItem.deleteMany({ where: { promotionId: req.params.id } })
+  await prisma.orderPromotion.deleteMany({ where: { promotionId: req.params.id } })
+  await prisma.promotion.delete({ where: { id: req.params.id } })
+  res.json({ ok: true })
 })
 
 export default router
