@@ -49,6 +49,10 @@
                   <h4 class="dish-name">
                     {{ dish.name }}
                     <span v-if="dish.promotionId" class="promo-tag">福利</span>
+                    <span class="dish-price-inline">
+                      <span v-if="dish.promotionId" class="price-orig">¥{{ dish.price }}</span>
+                      ¥{{ dish.promotionId ? dish.promoPrice : dish.price }}
+                    </span>
                   </h4>
                   <p class="dish-desc">{{ dish.desc }}</p>
                 </div>
@@ -72,10 +76,7 @@
                 </div>
               </div>
               <div class="dish-bottom">
-                <div>
-                  <span v-if="dish.promotionId" class="dish-price-orig">¥{{ dish.price }}</span>
-                  <span class="dish-price" :class="dish.promotionId && 'dish-price-promo'">¥{{ dish.promotionId ? dish.promoPrice : dish.price }}</span>
-                </div>
+                <span class="dish-spec-hint">选好规格后加入</span>
                 <button class="add-btn" @click="addToCart(dish)">
                   <span class="material-symbols-outlined">add</span>
                 </button>
@@ -444,8 +445,10 @@ onMounted(async () => {
   flex-shrink: 0;
   background: #e5e2e1;
 }
-.dish-body { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-.dish-name { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 700; margin: 0; }
+.dish-body { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; text-align: right; }
+.dish-name { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.dish-price-inline { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 800; color: #a04100; line-height: 1; display: flex; align-items: center; gap: 4px; }
+.price-orig { font-size: 14px; font-weight: 600; color: #8e7164; text-decoration: line-through; }
 .dish-desc { font-size: 13px; color: #5e5e5c; margin: 4px 0 0; line-height: 1.3; }
 .dish-specs { display: flex; flex-direction: column; gap: 6px; }
 .spec-row { display: flex; align-items: center; gap: 6px; }
@@ -460,18 +463,7 @@ onMounted(async () => {
 .chip-active {
   background: #ff6b00; color: #fff; border-color: #ff6b00; font-weight: 700;
 }
-.dish-bottom { display: flex; justify-content: space-between; align-items: center; }
-.dish-price { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 800; color: #a04100; line-height: 1; }
-.dish-price-orig {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  color: #8e7164;
-  text-decoration: line-through;
-  margin-right: 6px;
-  line-height: 1;
-}
-.dish-price-promo { color: #ba1a1a; font-size: 18px; }
+.dish-bottom { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
 .promo-tag {
   display: inline-block;
   margin-left: 6px;
