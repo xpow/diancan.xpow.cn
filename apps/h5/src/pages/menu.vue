@@ -181,26 +181,6 @@ interface Promotion {
   items: PromoItem[]
 }
 
-const IMG_LAMB = '/src/assets/images/yrc-s1.jpg?raw=true'
-const IMG_LAMB_BIG = '/src/assets/images/yrc-x.webp?raw=true'
-const IMG_LAMB_HL = '/src/assets/images/hlyrc.jpg?raw=true'
-const IMG_NLT = '/src/assets/images/nlt.jpg?raw=true' 
-
-const IMG_CHICKEN = 'https://lh3.googleusercontent.com/aida-public/AB6AXuDNi2StZSK00ik7rR2-C-8XBhO5E1QGB_pMY5iSavlhvyqo3dgJzgARlkxLLTY3gLfALOMP3WFFPLWLo430ltudUTgyhRkjh4sTeRKY3YNimXqGNhnxpqqNI6ri5LItfhM4623iuVdazjEXGPpTs0HU2QkeFsE_-NoV4bFdWcfjer6NLT50UA-UzRqGFVjSXUTboJGhygNl8m0jtiD82dtgwIbPZGUSKx27P0SrbbUhVMYFTTBF6cZVeZNssfgTdz0Kza-4LrJ5KpQ'
-const IMG_WAGYU = 'https://lh3.googleusercontent.com/aida-public/AB6AXuAHKY4HaXrtm2lGXl2U69VRg4rKSyTSzuEdhRntKPvyU5Kx_GaaEKHD5lAwU3ovLy11pitZ-wnIpF3RRINOnzSnXRBvut1sSnU1JkKfCGnRyKvrrk59Gy3sZQlQCZQnpRiHbI6qToVvuXDcCUbNcqzuNoevYEKAvKtT0gL33D5Z77Vi_vsEFkOmWDDcGrXhLlfI-ElGN20NGNcN2bz19mNFwcwi50yVEOW344TZzLOITI5p_j6uiqOpwal8WNJb4TndAO7khGJArrs'
-const IMG_SQUID = 'https://lh3.googleusercontent.com/aida-public/AB6AXuAJMlNVLhJTApxtpMnLp2Wx0KyWNInkhp4XfUxh8EhWGvN_af2wzcAilSuYPmx1tcItHhNQsE5ONyF6Cwtc2hBzjvccviMUkenV5mTLtm5Ae6evTj-gJndEsQkyF3jXACPVCXHRDR2RYuVwY0OZeXVGi8zgRTaWNuKzVP71J28yJO_Q7HQ7ETOnP2wY-Z-FlFb6ZdXUBUUXgAzD0AqMnIem1hkVgBkA1wSHgpyRlS7phcKkx8l79vp8dng9-joPcnv_ESoBHIIxWRM'
-const IMG_LEMON = '/src/assets/images/sdmmc.webp?raw=true'
-const IMG_SMT = '/src/assets/images/smt.jpg?raw=true'
-const IMG_KQS = '/src/assets/images/kqs.webp?raw=true'
-
-function initDish(data: Omit<DishItem, 'selectedSpice' | 'selectedQty'>): DishItem {
-  return {
-    ...data,
-    selectedSpice: data.specs?.spice?.[0],
-    selectedQty: data.specs?.qty?.[0],
-  }
-}
-
 interface CategoryItem {
   id: string
   name: string
