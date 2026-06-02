@@ -50,6 +50,24 @@
                   <span v-if="dish.promotionId" class="promo-tag">福利</span>
                 </h4>
                 <p class="dish-desc">{{ dish.desc }}</p>
+                <div class="dish-specs" v-if="dish.spice.length || dish.qty.length">
+                  <div class="spec-row" v-if="dish.spice.length">
+                    <span class="spec-label">口感</span>
+                    <div class="spec-options">
+                      <button v-for="opt in dish.spice" :key="opt"
+                        :class="['spec-chip', dish.selectedSpice === opt && 'chip-active']"
+                        @click="dish.selectedSpice = opt">{{ opt }}</button>
+                    </div>
+                  </div>
+                  <div class="spec-row" v-if="dish.qty.length">
+                    <span class="spec-label">份量</span>
+                    <div class="spec-options">
+                      <button v-for="opt in dish.qty" :key="opt"
+                        :class="['spec-chip', dish.selectedQty === opt && 'chip-active']"
+                        @click="dish.selectedQty = opt">{{ opt }}</button>
+                    </div>
+                  </div>
+                </div>
                 <div class="dish-bottom">
                   <span v-if="dish.promotionId" class="dish-price-orig">¥{{ dish.price }}</span>
                   <span class="dish-price" :class="dish.promotionId && 'dish-price-promo'">¥{{ dish.promotionId ? dish.promoPrice : dish.price }}</span>
@@ -100,7 +118,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCart } from '@/stores/cart'
 import { showToast } from 'vant'
@@ -142,9 +160,16 @@ interface DishItem {
   desc: string
   image: string
   categoryId: string
+  specsPreset: string
+  spice: string[]
+  qty: string[]
+  selectedSpice: string
+  selectedQty: string
   promotionId?: string
   promoPrice?: number
   limitType?: string
+  maxQty?: number
+  apiDishId?: string
 }
 
 const categories = ref<CategoryItem[]>([])
@@ -172,6 +197,11 @@ const CAT_ICON_MAP: Record<string, string> = {
   '饮品': 'local_bar',
 }
 
+const SPECS_PRESETS: Record<string, { spice: string[]; qty: string[] }> = {
+  bbq: { spice: ['原味', '微辣', '加辣'], qty: ['1份', '2份', '3份'] },
+  none: { spice: [], qty: [] },
+}
+
 function catIcon(name: string): string {
   for (const [key, icon] of Object.entries(CAT_ICON_MAP)) {
     if (name.includes(key)) return icon
@@ -181,6 +211,51 @@ function catIcon(name: string): string {
 
 function filteredDishes(categoryId: string) {
   return dishes.value.filter((d) => d.categoryId === categoryId)
+}
+
+function addToCart(dish: DishItem) {
+  const price = dish.promotionId ? dish.promoPrice! : dish.price
+  const specsParts: string[] = []
+  if (dish.selectedSpice) specsParts.push(dish.selectedSpice)
+  if (dish.selectedQty) specsParts.push(dish.selectedQty)
+  const specsKey = specsParts.join(' · ')
+  const qty = dish.selectedQty ? parseInt(dish.selectedQty) || 1 : 1
+  const cartKey = `${dish.apiDishId || dish.id}|${specsKey}`
+
+  if (dish.promotionId && dish.maxQty) {
+    if (dish.limitType === 'per_order') {
+      const existing = items
+        .filter((i: any) => i.promotionId === dish.promotionId && (i.baseDishId || i.dishId?.split('|')[0]) === dish.id)
+        .reduce((s: number, i: any) => s + i.quantity, 0)
+      if (existing + qty > dish.maxQty) {
+        showToast(`该福利单品限购 ${dish.maxQty} 份`)
+        return
+      }
+    }
+    if (dish.limitType === 'global_promo') {
+      const existing = items
+        .filter((i: any) => i.promotionId === dish.promotionId)
+        .reduce((s: number, i: any) => s + i.quantity, 0)
+      if (existing + qty > dish.maxQty) {
+        showToast(`该福利活动限购 ${dish.maxQty} 份`)
+        return
+      }
+    }
+  }
+
+  cartAdd({
+    dishId: cartKey,
+    baseDishId: dish.apiDishId,
+    name: dish.name + (dish.promotionId ? ' (福利)' : ''),
+    price,
+    quantity: qty,
+    specs: specsKey || undefined,
+    originalPrice: dish.promotionId ? dish.price : undefined,
+    promotionId: dish.promotionId,
+    promoPrice: dish.promoPrice,
+    limitType: dish.limitType,
+  } as any)
+  showToast('已加入购物车')
 }
 
 function goCheckout() {
@@ -219,16 +294,24 @@ onMounted(async () => {
 
     dishes.value = apiDishes.map((d) => {
       const promo = welfareMap.get(d.id)
+      const preset = SPECS_PRESETS[d.specsPreset] || SPECS_PRESETS.none
       return {
         id: d.id,
+        apiDishId: d.id,
         name: d.name,
         price: d.price,
         desc: d.desc || '',
         image: d.image || DISH_IMAGES[d.id] || placeholderImg,
         categoryId: d.categoryId,
+        specsPreset: d.specsPreset,
+        spice: preset.spice,
+        qty: preset.qty,
+        selectedSpice: preset.spice[0] || '',
+        selectedQty: preset.qty[0] || '',
         promotionId: promo?.promotionId,
         promoPrice: promo?.promoPrice,
         limitType: promo?.limitType,
+        maxQty: undefined,
       }
     })
   } catch {
@@ -358,6 +441,19 @@ onMounted(async () => {
 .dish-body { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
 .dish-name { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 700; margin: 0; }
 .dish-desc { font-size: 13px; color: #5e5e5c; margin: 4px 0 0; line-height: 1.3; }
+.dish-specs { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.spec-row { display: flex; align-items: center; gap: 6px; }
+.spec-label { font-size: 11px; font-weight: 600; color: #5e5e5c; white-space: nowrap; min-width: 30px; }
+.spec-options { display: flex; gap: 4px; flex-wrap: wrap; }
+.spec-chip {
+  padding: 2px 8px; border-radius: 9999px; border: 1px solid #e2bfb0;
+  background: #fff; font-size: 11px; color: #5e5e5c; cursor: pointer;
+  transition: all 0.15s; font-family: inherit;
+}
+.spec-chip:active { transform: scale(0.95); }
+.chip-active {
+  background: #ff6b00; color: #fff; border-color: #ff6b00; font-weight: 700;
+}
 .dish-bottom { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 8px; }
 .dish-price { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 800; color: #a04100; line-height: 1; }
 .dish-price-orig {
