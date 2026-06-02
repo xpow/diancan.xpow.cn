@@ -145,6 +145,7 @@ interface DishSpecs {
 
 interface DishItem {
   id: string
+  apiDishId?: string
   categoryId: string
   name: string
   price: string
@@ -153,9 +154,10 @@ interface DishItem {
   specs?: DishSpecs
   selectedSpice?: string
   selectedQty?: string
-  rawPrice?: number // for promo display
+  rawPrice?: number
   promoPrice?: number
   promotionId?: string
+  promotionItemId?: string
   limitType?: string
   maxQty?: number
 }
@@ -167,6 +169,7 @@ interface CategoryItem {
 }
 
 interface PromoItem {
+  id: string
   dishId: string
   promoPrice: number
   limitType: string
@@ -179,12 +182,6 @@ interface Promotion {
   type: string
   status: string
   items: PromoItem[]
-}
-
-interface CategoryItem {
-  id: string
-  name: string
-  en: string
 }
 
 const router = useRouter()
@@ -226,47 +223,65 @@ const dishes = ref<DishItem[]>([
   initDish({ id: 'd1010', categoryId: 'meat', name: '羊肉串 (大)', price: '¥6.00', desc: '外焦里嫩，肥而不腻', image: IMG_LAMB_BIG, specs: { spice: ['原味', '微辣', '加辣'], qty: ['5串', '10串', '15串', '20串', '30串', '50串'] } }),
   initDish({ id: 'd1011', categoryId: 'meat', name: '红柳羊肉串 (大)', price: '¥12.00', desc: '柳香清新，肥瘦适当，大串满足感超强', image: IMG_LAMB_HL, specs: { spice: ['原味', '微辣', '加辣'], qty: ['2串', '4串', '6串', '8串', '10串'] } }),
   initDish({ id: 'd1012', categoryId: 'meat', name: '安格斯牛肋条 (进口高品质)', price: '¥20.00', desc: '雪花饱满，奶香十足，入口即化，一次即满足', image: IMG_NLT, specs: { spice: ['原味', '微辣', '加辣'], qty: ['5串', '10串', '15串', '20串'] } }),
-  initDish({ id: 'd2000', categoryId: 'veg', name: '烤茄子', price: '¥6.00', desc: '蒜香四溢，软糯入味', image: '/src/assets/images/kqz.jpg?raw=true', specs: { spice: ['原味', '微辣', '特辣'], qty: ['1份', '2份'] } }),
-  initDish({ id: 'd2001', categoryId: 'veg', name: '烤韭菜', price: '¥4.00', desc: '鲜嫩翠绿，孜然飘香', image: '/src/assets/images/kjc.jpg?raw=true', specs: { spice: ['原味', '微辣'], qty: ['1份', '2份'] } }),
-  initDish({ id: 'd2002', categoryId: 'veg', name: '炭烤玉米', price: '¥2.00', desc: '刷酱烤制，香甜可口', image: '/src/assets/images/kym.jpg?raw=true', specs: { spice: ['刷酱', '原味'], qty: ['1份', '2份'] } }),
-  initDish({ id: 'd2003', categoryId: 'veg', name: '烤金针菇', price: '¥5.00', desc: '蒜香黄油，滑嫩多汁', image: '/src/assets/images/kqz.jpg?raw=true', specs: { spice: ['原味', '微辣', '特辣'], qty: ['1份', '2份'] } }),
-  initDish({ id: 'd3001', categoryId: 'drinks', name: '手打柠檬茶', price: '¥18.00', desc: '少冰 · 五分糖', image: IMG_LEMON }),
-  initDish({ id: 'd3002', categoryId: 'drinks', name: '冰镇酸梅汤', price: '¥8.00', desc: '解腻神器，冰爽一夏', image: IMG_SMT }),
-  initDish({ id: 'd3003', categoryId: 'drinks', name: '矿泉水', price: '¥3.00', desc: '天然矿泉水', image: IMG_KQS }),
+  initDish({ id: 'd2000', apiDishId: 'dish-06', categoryId: 'veg', name: '烤茄子', price: '¥6.00', desc: '蒜香四溢，软糯入味', image: '/src/assets/images/kqz.jpg?raw=true', specs: { spice: ['原味', '微辣', '特辣'], qty: ['1份', '2份'] } }),
+  initDish({ id: 'd2001', apiDishId: 'dish-07', categoryId: 'veg', name: '烤韭菜', price: '¥4.00', desc: '鲜嫩翠绿，孜然飘香', image: '/src/assets/images/kjc.jpg?raw=true', specs: { spice: ['原味', '微辣'], qty: ['1份', '2份'] } }),
+  initDish({ id: 'd2002', apiDishId: 'dish-09', categoryId: 'veg', name: '炭烤玉米', price: '¥2.00', desc: '刷酱烤制，香甜可口', image: '/src/assets/images/kym.jpg?raw=true', specs: { spice: ['刷酱', '原味'], qty: ['1份', '2份'] } }),
+  initDish({ id: 'd2003', apiDishId: 'dish-08', categoryId: 'veg', name: '烤金针菇', price: '¥5.00', desc: '蒜香黄油，滑嫩多汁', image: '/src/assets/images/kqz.jpg?raw=true', specs: { spice: ['原味', '微辣', '特辣'], qty: ['1份', '2份'] } }),
+  initDish({ id: 'd3001', apiDishId: 'dish-11', categoryId: 'drinks', name: '手打柠檬茶', price: '¥18.00', desc: '少冰 · 五分糖', image: IMG_LEMON }),
+  initDish({ id: 'd3002', apiDishId: 'dish-10', categoryId: 'drinks', name: '冰镇酸梅汤', price: '¥8.00', desc: '解腻神器，冰爽一夏', image: IMG_SMT }),
+  initDish({ id: 'd3003', apiDishId: 'dish-12', categoryId: 'drinks', name: '矿泉水', price: '¥3.00', desc: '天然矿泉水', image: IMG_KQS }),
 ])
 
 const currentCat = computed(() => categories.value.find((c) => c.id === activeCat.value))
 const filteredDishes = computed(() => dishes.value.filter((d) => d.categoryId === activeCat.value))
 
 function addToCart(dish: DishItem) {
-  const price = dish.promotionId ? dish.promoPrice! : parseFloat(dish.price.replace('¥', ''))
+  const unitPrice = parseFloat(dish.price.replace('¥', ''))
+  const price = dish.promotionId ? dish.promoPrice! : unitPrice
   const specsParts: string[] = []
   if (dish.selectedSpice) specsParts.push(dish.selectedSpice)
   if (dish.selectedQty) specsParts.push(dish.selectedQty)
   const specsKey = specsParts.join(' · ')
   const qty = dish.selectedQty ? parseInt(dish.selectedQty) || 1 : 1
 
-  // 福利品限购校验
-  if (dish.promotionId && dish.limitType === 'per_order' && dish.maxQty) {
-    const existing = items.filter((i) => i.promotionId === dish.promotionId)
-      .reduce((s, i) => s + i.quantity, 0)
-    if (existing + qty > dish.maxQty) {
-      showToast(`该福利限购 ${dish.maxQty} 份`)
-      return
+  const baseDishId = dish.apiDishId || dish.id
+  const cartKey = `${baseDishId}|${specsKey}`
+
+  if (dish.promotionId && dish.maxQty) {
+    if (dish.limitType === 'per_order') {
+      const existing = items
+        .filter((i: any) => i.promotionId === dish.promotionId && (i.baseDishId || i.dishId?.split('|')[0]) === baseDishId)
+        .reduce((s: number, i: any) => s + i.quantity, 0)
+      if (existing + qty > dish.maxQty) {
+        showToast(`该福利单品限购 ${dish.maxQty} 份`)
+        return
+      }
+    }
+
+    if (dish.limitType === 'global_promo') {
+      const existing = items
+        .filter((i: any) => i.promotionId === dish.promotionId)
+        .reduce((s: number, i: any) => s + i.quantity, 0)
+      if (existing + qty > dish.maxQty) {
+        showToast(`该福利活动限购 ${dish.maxQty} 份`)
+        return
+      }
     }
   }
 
   cartAdd({
-    dishId: dish.id + specsKey,
+    dishId: cartKey,
+    baseDishId,
     name: dish.name + (dish.promotionId ? ' (福利)' : ''),
     price,
     quantity: qty,
     specs: specsKey || undefined,
-    originalPrice: dish.promotionId ? parseFloat(dish.price.replace('¥', '')) : undefined,
+    originalPrice: dish.promotionId ? unitPrice : undefined,
     promotionId: dish.promotionId,
+    promotionItemId: dish.promotionItemId,
     promoPrice: dish.promoPrice,
     limitType: dish.limitType,
-  })
+  } as any)
   showToast('已加入购物车')
 }
 
@@ -282,14 +297,15 @@ function goCheckout() {
 
 const promotions = ref<Promotion[]>([])
 
-// Match welfare promotions to dishes by name
 function applyPromotions() {
   for (const promo of promotions.value) {
     if (promo.type !== 'welfare_item') continue
     for (const pi of promo.items) {
-      const match = dishes.value.find((d) => d.name.includes(pi.dishId.replace('dish-', '')) || d.name.includes(nameFromId(pi.dishId)))
+      const match = dishes.value.find((d) => d.apiDishId === pi.dishId) ||
+        dishes.value.find((d) => d.name.includes(nameFromId(pi.dishId)))
       if (match) {
         match.promotionId = promo.id
+        match.promotionItemId = pi.id
         match.promoPrice = pi.promoPrice
         match.limitType = pi.limitType
         match.maxQty = pi.maxQty

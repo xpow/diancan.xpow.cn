@@ -38,32 +38,44 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'merchantId, branchId, items required' })
   }
 
-  // 校验福利品限购
-  if (promotions?.length) {
-    const promoItems = items.filter((i: any) => i.promotionId)
-    for (const pi of promoItems) {
-      const promo = await prisma.promotion.findUnique({
-        where: { id: pi.promotionId },
-        include: { items: true },
-      })
+  // 校验福利品限购（按“订单维度”）
+  const promoItems = items.filter((i: any) => i.promotionId)
+  if (promoItems.length) {
+    const promoIds = Array.from(new Set(promoItems.map((i: any) => i.promotionId)))
+    const promos = await prisma.promotion.findMany({
+      where: { id: { in: promoIds } },
+      include: { items: true },
+    })
+    const promoMap = new Map(promos.map((p) => [p.id, p]))
+
+    for (const pid of promoIds) {
+      const promo = promoMap.get(pid)
       if (!promo || promo.status !== 'active') {
-        return res.status(400).json({ error: `promotion ${pi.promotionId} not active` })
+        return res.status(400).json({ error: `promotion ${pid} not active` })
       }
-      const rule = promo.items.find((ri: any) => ri.dishId === pi.dishId || !ri.dishId)
-      if (!rule) continue
-      if (rule.limitType === 'per_order' && pi.quantity > rule.maxQty) {
-        return res.status(400).json({ error: `${pi.name} 限购 ${rule.maxQty} 份` })
+
+      const promoOrderItems = promoItems.filter((i: any) => i.promotionId === pid)
+
+      const globalRule = promo.items.find((ri: any) => ri.limitType === 'global_promo')
+      if (globalRule?.maxQty) {
+        const totalQty = promoOrderItems.reduce((s: number, i: any) => s + (i.quantity || 0), 0)
+        if (totalQty > globalRule.maxQty) {
+          return res.status(400).json({ error: `该福利活动限购 ${globalRule.maxQty} 份` })
+        }
       }
-      if (rule.limitType === 'global_promo') {
-        const today = new Date(); today.setHours(0, 0, 0, 0)
-        const used = await prisma.orderPromotion.count({
-          where: {
-            promotionId: pi.promotionId,
-            order: { branchId, createdAt: { gte: today } },
-          },
-        })
-        if (used >= rule.maxQty) {
-          return res.status(400).json({ error: '该福利品已被领完' })
+
+      for (const oi of promoOrderItems) {
+        const dishId = oi.dishId
+        const rule = promo.items.find((ri: any) => ri.dishId === dishId)
+        if (!rule?.maxQty) continue
+
+        if (rule.limitType === 'per_order') {
+          const dishQty = promoOrderItems
+            .filter((x: any) => x.dishId === dishId)
+            .reduce((s: number, x: any) => s + (x.quantity || 0), 0)
+          if (dishQty > rule.maxQty) {
+            return res.status(400).json({ error: `${oi.name} 限购 ${rule.maxQty} 份` })
+          }
         }
       }
     }

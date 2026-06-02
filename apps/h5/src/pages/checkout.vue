@@ -49,7 +49,7 @@
 
         <div v-for="item in items" :key="item.dishId" class="order-item">
           <div class="item-img">
-            <img :src="dishImage(item.dishId)" :alt="item.name" class="item-img-el" />
+            <img :src="dishImage(item.baseDishId || item.dishId)" :alt="item.name" class="item-img-el" />
           </div>
           <div class="item-body">
             <p class="item-name">{{ item.name }}</p>
@@ -66,15 +66,15 @@
             <span class="total-label">商品总计</span>
             <span class="total-value">¥{{ totalPrice.toFixed(2) }}</span>
           </div>
-          <div class="total-row" v-if="eligible">
+          <div class="total-row" v-if="eligible && promotion">
             <span class="total-label">
               限时满减
-              <span class="promo-tag">满{{ promotion.threshold }}减{{ promotion.discount }}</span>
+              <span class="promo-tag">满{{ promotion.rules.threshold }}减{{ promotion.rules.discount }}</span>
             </span>
             <span class="total-discount">-¥{{ discount.toFixed(2) }}</span>
           </div>
-          <div v-else-if="remainingForDiscount > 0" class="total-row promo-hint">
-            <span class="promo-hint-text">还差 ¥{{ remainingForDiscount }} 即可享受满{{ promotion.threshold }}减{{ promotion.discount }}</span>
+          <div v-else-if="promotion && remainingForDiscount > 0" class="total-row promo-hint">
+            <span class="promo-hint-text">还差 ¥{{ remainingForDiscount }} 即可享受满{{ promotion.rules.threshold }}减{{ promotion.rules.discount }}</span>
           </div>
         </div>
       </section>
@@ -153,10 +153,18 @@ const DISH_IMAGES: Record<string, string> = {
   d2003: '/src/assets/images/kqz.jpg?raw=true',
   d3001: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=300&h=300&fit=crop',
   d3002: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=300&h=300&fit=crop',
+
+  'dish-06': '/src/assets/images/kqz.jpg?raw=true',
+  'dish-07': '/src/assets/images/kjc.jpg?raw=true',
+  'dish-08': '/src/assets/images/kqz.jpg?raw=true',
+  'dish-09': '/src/assets/images/kym.jpg?raw=true',
+  'dish-10': '/src/assets/images/smt.jpg?raw=true',
+  'dish-11': '/src/assets/images/sdmmc.webp?raw=true',
+  'dish-12': '/src/assets/images/kqs.webp?raw=true',
 }
 
 function dishImage(dishId: string): string {
-  const baseId = dishId?.split(/[^\w]/)[0] || ''
+  const baseId = dishId?.split('|')[0] || ''
   return DISH_IMAGES[baseId] || 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300&h=300&fit=crop'
 }
 
@@ -169,14 +177,16 @@ function dishImage(dishId: string): string {
 
 function confirmOrder() {
   const itemsData = items.map((i: any) => ({
-    dishId: i.dishId,
+    dishId: i.baseDishId || i.dishId?.split('|')[0] || i.dishId,
     name: i.name,
     price: i.price,
-    originalPrice: i.promotionId ? items.find((x: any) => x.dishId === i.dishId && !x.promotionId)?.price || i.price : undefined,
+    originalPrice: i.originalPrice,
     quantity: i.quantity,
     specs: i.specs,
     promotionId: i.promotionId,
+    promotionItemId: i.promotionItemId,
     promoPrice: i.promoPrice,
+    limitType: i.limitType,
   }))
 
   fetch('/api/orders', {
