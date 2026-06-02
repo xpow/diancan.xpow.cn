@@ -128,10 +128,15 @@ function statusText(s: string) {
 let speechQueue: string[] = []
 let speaking = false
 
+function fixSpeech(text: string): string {
+  return text.replace(/([A-Z])(\d)/g, '$1\u200B$2')
+}
+
 function processQueue() {
   if (speaking || !speechQueue.length) return
   speaking = true
-  const msg = speechQueue.shift()!
+  const raw = speechQueue.shift()!
+  const msg = fixSpeech(raw)
   window.speechSynthesis.cancel()
   const u = new SpeechSynthesisUtterance(msg)
   u.lang = 'zh-CN'
