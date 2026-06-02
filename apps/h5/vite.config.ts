@@ -21,7 +21,11 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
+    port: 5177,
+    hmr: {
+      protocol: 'wss',                  // 强制使用加密的 WebSocket
+      port: 9003                        // 走 9002 端口，交给 Nginx 转发
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:3001',
