@@ -180,7 +180,11 @@ const IMG_NLT = '/src/assets/images/nlt.jpg?raw=true'
 const IMG_CHICKEN = 'https://lh3.googleusercontent.com/aida-public/AB6AXuDNi2StZSK00ik7rR2-C-8XBhO5E1QGB_pMY5iSavlhvyqo3dgJzgARlkxLLTY3gLfALOMP3WFFPLWLo430ltudUTgyhRkjh4sTeRKY3YNimXqGNhnxpqqNI6ri5LItfhM4623iuVdazjEXGPpTs0HU2QkeFsE_-NoV4bFdWcfjer6NLT50UA-UzRqGFVjSXUTboJGhygNl8m0jtiD82dtgwIbPZGUSKx27P0SrbbUhVMYFTTBF6cZVeZNssfgTdz0Kza-4LrJ5KpQ'
 const IMG_WAGYU = 'https://lh3.googleusercontent.com/aida-public/AB6AXuAHKY4HaXrtm2lGXl2U69VRg4rKSyTSzuEdhRntKPvyU5Kx_GaaEKHD5lAwU3ovLy11pitZ-wnIpF3RRINOnzSnXRBvut1sSnU1JkKfCGnRyKvrrk59Gy3sZQlQCZQnpRiHbI6qToVvuXDcCUbNcqzuNoevYEKAvKtT0gL33D5Z77Vi_vsEFkOmWDDcGrXhLlfI-ElGN20NGNcN2bz19mNFwcwi50yVEOW344TZzLOITI5p_j6uiqOpwal8WNJb4TndAO7khGJArrs'
 const IMG_SQUID = 'https://lh3.googleusercontent.com/aida-public/AB6AXuAJMlNVLhJTApxtpMnLp2Wx0KyWNInkhp4XfUxh8EhWGvN_af2wzcAilSuYPmx1tcItHhNQsE5ONyF6Cwtc2hBzjvccviMUkenV5mTLtm5Ae6evTj-gJndEsQkyF3jXACPVCXHRDR2RYuVwY0OZeXVGi8zgRTaWNuKzVP71J28yJO_Q7HQ7ETOnP2wY-Z-FlFb6ZdXUBUUXgAzD0AqMnIem1hkVgBkA1wSHgpyRlS7phcKkx8l79vp8dng9-joPcnv_ESoBHIIxWRM'
-const IMG_LEMON = 'https://lh3.googleusercontent.com/aida-public/AB6AXuD7GSAZUaQBJ0CsDqMqTPIGSBmf89Mj-a5WTtmBobbk1wRfm9_SN4O8rP6vz2YG7UqlhNWWIwteIpVAID0_q4hyQVQgGTkKHgsT9n9ISGnE1SX03MWGBcVP4iV0ZxJxEd-rO_8rcJLvGMuD22RFajU3zfMGqpwUEVWvHtkVjevWOBMfVSOspDzALp1HiyFLxslXgN8SIkowTjUI5xQ0MGqhT_cq2HRqFDSGxHYtZOeV5z5UJtit1vt6q8ol22hgePir6pWDLZDqD9U'
+const IMG_LEMON = '/src/assets/images/sdmmc.webp?raw=true'
+const IMG_SMT = '/src/assets/images/smt.jpg?raw=true'
+const IMG_KQS = '/src/assets/images/kqs.webp?raw=true'
+
+
 
 function initDish(data: Omit<DishItem, 'selectedSpice' | 'selectedQty'>): DishItem {
   return {
@@ -199,8 +203,8 @@ const dishes = ref<DishItem[]>([
   initDish({ id: 'd2001', categoryId: 'veg', name: '烤韭菜', price: '¥4.00', desc: '鲜嫩翠绿，孜然飘香', image: '/src/assets/images/kjc.jpg?raw=true', specs: { spice: ['原味', '微辣'], qty: ['1份', '2份'] } }),
   initDish({ id: 'd2002', categoryId: 'veg', name: '炭烤玉米', price: '¥2.00', desc: '刷酱烤制，香甜可口', image: '/src/assets/images/kym.jpg?raw=true', specs: { spice: ['刷酱', '原味'], qty: ['1份', '2份'] } }),
   initDish({ id: 'd3001', categoryId: 'drinks', name: '手打柠檬茶', price: '¥18.00', desc: '少冰 · 五分糖', image: IMG_LEMON }),
-  initDish({ id: 'd3002', categoryId: 'drinks', name: '冰镇酸梅汤', price: '¥8.00', desc: '解腻神器，冰爽一夏', image: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=300&h=300&fit=crop' }),
-  initDish({ id: 'd3003', categoryId: 'drinks', name: '矿泉水', price: '¥3.00', desc: '天然矿泉水', image: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=300&h=300&fit=crop' }),
+  initDish({ id: 'd3002', categoryId: 'drinks', name: '冰镇酸梅汤', price: '¥8.00', desc: '解腻神器，冰爽一夏', image: IMG_SMT }),
+  initDish({ id: 'd3003', categoryId: 'drinks', name: '矿泉水', price: '¥3.00', desc: '天然矿泉水', image: IMG_KQS }),
 ])
 
 const currentCat = computed(() => categories.value.find((c) => c.id === activeCat.value))
