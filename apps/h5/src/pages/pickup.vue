@@ -146,20 +146,23 @@ function dishImage(item: any): string {
 }
 
 const tabs = [
-  { key: 'pending', label: '等待取餐', icon: 'hourglass_empty' },
-  { key: 'preparing', label: '制作中', icon: 'fire_truck' },
-  { key: 'ready', label: '待取餐', icon: 'notifications_active' },
-  { key: 'completed', label: '已完成取餐', icon: 'check_circle' },
+  { key: 'pending', label: '等待中', icon: 'hourglass_empty' },
+  { key: 'active', label: '进行中', icon: 'fire_truck' },
+  { key: 'completed', label: '已完成', icon: 'check_circle' },
 ]
 
-const filteredOrders = computed(() =>
-  orders.value.filter((o) => o.status === tab.value)
-)
+const filteredOrders = computed(() => {
+  if (tab.value === 'active') return orders.value.filter((o) => o.status === 'preparing' || o.status === 'ready')
+  return orders.value.filter((o) => o.status === tab.value)
+})
 
 function badgeCount(key: string) {
   if (key === 'pending') return orders.value.filter((o) => o.status === 'pending').length || ''
-  if (key === 'preparing') return orders.value.filter((o) => o.status === 'preparing').length || ''
-  if (key === 'ready') return orders.value.filter((o) => o.status === 'ready').length || ''
+  if (key === 'active') {
+    const n = orders.value.filter((o) => o.status === 'preparing' || o.status === 'ready').length
+    return n || ''
+  }
+  if (key === 'completed') return orders.value.filter((o) => o.status === 'completed').length || ''
   return ''
 }
 
