@@ -17,6 +17,7 @@
           :class="['tab', tab === t.key && 'tab-active']"
           @click="tab = t.key"
         >
+          <span class="material-symbols-outlined tab-icon" :class="{ 'tab-icon-fill': tab === t.key }">{{ t.icon }}</span>
           {{ t.label }}
           <span v-if="badgeCount(t.key)" class="tab-badge">{{ badgeCount(t.key) }}</span>
         </button>
@@ -25,14 +26,6 @@
       <template v-for="(order, oi) in filteredOrders" :key="order.id">
         <div class="order-section-label" v-if="oi > 0">
           <span class="section-divider"></span>
-        </div>
-
-        <div class="status-section">
-          <div class="status-pill" :class="`status-${order.status}`">
-            <span class="material-symbols-outlined status-icon" style="font-variation-settings: 'FILL' 1;">{{ statusIcon(order.status) }}</span>
-            <span class="status-text">{{ statusLabel(order.status) }}</span>
-          </div>
-          <p class="status-hint">{{ statusHint(order.status) }}</p>
         </div>
 
         <div class="ticket-card nfc-card" v-if="oi === 0 && order.status !== 'completed'">
@@ -44,10 +37,10 @@
               </div>
             </div>
             <div class="nfc-text">
-              <p class="nfc-title">碰一下付款</p>
-              <p class="nfc-desc">拿出手机碰一下摊位 NFC 标签，即可打开付款</p>
+              <p class="nfc-title">碰一下付�?/p>
+              <p class="nfc-desc">拿出手机碰一下摊�?NFC 标签，即可打开付款</p>
               <div class="nfc-pay-logos">
-                <span class="pay-logo">支付宝</span>
+                <span class="pay-logo">支付�?/span>
                 <span class="pay-logo">微信</span>
               </div>
             </div>
@@ -56,7 +49,7 @@
 
         <div class="ticket-card">
           <div class="ticket-header">
-            <p class="ticket-label">取餐号</p>
+            <p class="ticket-label">取餐�?/p>
             <div class="ticket-number">{{ order.orderNumber }}</div>
             <div class="ticket-hole-left"></div>
             <div class="ticket-hole-right"></div>
@@ -86,7 +79,7 @@
             </div>
 
             <div class="ticket-total">
-              <span class="ticket-total-label">合计 {{ (order.items || []).length }} 项商品</span>
+              <span class="ticket-total-label">合计 {{ (order.items || []).length }} 项商�?/span>
               <div class="ticket-total-right">
                 <span class="ticket-total-sub">实付金额</span>
                 <span class="ticket-total-price">¥{{ (order.totalPrice || 0).toFixed(2) }}</span>
@@ -95,8 +88,8 @@
           </div>
 
           <div class="ticket-footer" :class="order.status === 'completed' ? 'footer-completed' : ''">
-            <p class="ticket-thanks">{{ order.status === 'completed' ? '欢迎下次光临！' : '感谢您选择滋滋烤串！' }}</p>
-            <p class="ticket-hint">{{ order.status === 'completed' ? '订单已完成' : '凭此界面到柜台取餐' }}</p>
+            <p class="ticket-thanks">{{ order.status === 'completed' ? '欢迎下次光临�? : '感谢您选择滋滋烤串�? }}</p>
+            <p class="ticket-hint">{{ order.status === 'completed' ? '订单已完�? : '凭此界面到柜台取�? }}</p>
           </div>
         </div>
       </template>
@@ -115,7 +108,7 @@
       <div v-if="!filteredOrders.length" class="empty-state">
         <span class="material-symbols-outlined empty-icon">receipt_long</span>
         <p class="empty-text">暂无{{ statusLabel(tab) }}订单</p>
-        <router-link to="/menu" class="empty-cta">去点餐</router-link>
+        <router-link to="/menu" class="empty-cta">去点�?/router-link>
       </div>
     </main>
   </div>
@@ -153,10 +146,10 @@ function dishImage(item: any): string {
 }
 
 const tabs = [
-  { key: 'pending', label: '等待中' },
-  { key: 'preparing', label: '制作中' },
-  { key: 'ready', label: '待取餐' },
-  { key: 'completed', label: '已完成' },
+  { key: 'pending', label: '等待�?, icon: 'hourglass_empty' },
+  { key: 'preparing', label: '制作�?, icon: 'fire_truck' },
+  { key: 'ready', label: '待取�?, icon: 'notifications_active' },
+  { key: 'completed', label: '已完�?, icon: 'check_circle' },
 ]
 
 const filteredOrders = computed(() =>
@@ -170,32 +163,14 @@ function badgeCount(key: string) {
   return ''
 }
 
-function statusIcon(s: string) {
-  const map: Record<string, string> = {
-    pending: 'hourglass_empty',
-    preparing: 'fire_truck',
-    ready: 'notifications_active',
-    completed: 'check_circle',
-  }
-  return map[s] || 'fire_truck'
-}
 function statusLabel(s: string) {
   const map: Record<string, string> = {
-    pending: '等待中',
-    preparing: '制作中',
-    ready: '待取餐',
-    completed: '已取餐',
+    pending: '等待�?,
+    preparing: '制作�?,
+    ready: '待取�?,
+    completed: '已取�?,
   }
   return map[s] || s
-}
-function statusHint(s: string) {
-  const map: Record<string, string> = {
-    pending: '已接单，马上开始制作',
-    preparing: '请耐心等待，美味即将出炉',
-    ready: '餐已就绪，请到柜台取餐',
-    completed: '感谢惠顾，欢迎下次光临！',
-  }
-  return map[s] || ''
 }
 
 function formatTime(ts: string) {
@@ -203,7 +178,7 @@ function formatTime(ts: string) {
 }
 
 function copyOrderNumbers() {
-  const nums = orders.value.map(o => o.orderNumber).join('、')
+  const nums = orders.value.map(o => o.orderNumber).join('�?)
   navigator.clipboard?.writeText(nums).catch(() => {})
 }
 
@@ -253,7 +228,7 @@ async function fetchOrders() {
     for (const o of merged) {
       const prev = prevStatusMap.value[o.id]
       if (prev && prev !== o.status && o.status === 'ready') {
-        speak(`请${o.orderNumber}取餐`)
+        speak(`�?{o.orderNumber}取餐`)
         notify('取餐提醒', `${o.orderNumber} 号已就绪，请到柜台取餐`)
         playBeep()
       }
@@ -269,21 +244,21 @@ onMounted(async () => {
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission()
   }
-  // 1. 从 router state 拿订单列表（从 home 页"我的取餐"跳过来）
+  // 1. �?router state 拿订单列表（�?home �?我的取餐"跳过来）
   if (history.state?.orders) {
     orders.value = history.state.orders
     timer = setInterval(fetchOrders, POLL_MS)
     return
   }
 
-  // 2. 从 router state 拿刚下的单（从 checkout 跳过来）
+  // 2. �?router state 拿刚下的单（�?checkout 跳过来）
   if (history.state?.order) {
     orders.value = [history.state.order]
     timer = setInterval(fetchOrders, POLL_MS)
     return
   }
 
-  // 3. 从 API 拉订单（页面刷新后）
+  // 3. �?API 拉订单（页面刷新后）
   await fetchOrders()
   timer = setInterval(fetchOrders, POLL_MS)
 })
@@ -313,19 +288,11 @@ main { padding: 64px 16px 80px; min-height: 100vh; display: flex; flex-direction
 .status-tabs { display: flex; gap: 8px; padding: 0 0 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .tab { flex-shrink: 0; display: flex; align-items: center; gap: 4px; padding: 8px 16px; border-radius: 9999px; border: none; font-family: var(--font-display); font-size: 14px; font-weight: 600; background: var(--surface-container-high); color: var(--secondary); cursor: pointer; transition: all 0.2s; }
 .tab-active { background: var(--primary-container); color: var(--on-primary); }
+.tab-icon { font-size: 18px; }
+.tab-icon-fill { font-variation-settings: 'FILL' 1; }
 .tab-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9999px; background: var(--error); color: #fff; font-size: 11px; font-weight: 700; line-height: 1; }
 
-.status-pending { background: var(--surface-variant); color: var(--on-surface-variant); }
-.status-ready { background: var(--tertiary-container); color: #fff; box-shadow: 0 4px 12px rgba(0,110,28,0.25); }
-.status-completed { background: var(--surface-container-high); color: var(--secondary); box-shadow: none; }
 
-.status-section { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 24px; }
-.status-pill { display: flex; align-items: center; gap: 8px; background: var(--primary-container); color: var(--on-primary-container); padding: 8px 24px; border-radius: 9999px; box-shadow: 0 4px 12px rgba(255,107,0,0.2); animation: softPulse 2s infinite; }
-.status-completed { animation: none; }
-@keyframes softPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.85; transform: scale(0.98); } }
-.status-icon { font-size: 18px; }
-.status-text { font-family: var(--font-display); font-size: 14px; font-weight: 600; }
-.status-hint { font-size: 14px; line-height: 20px; color: var(--secondary); margin: 0; }
 
 .ticket-card { width: 100%; max-width: 448px; background: var(--surface-container-lowest); border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.06); position: relative; }
 .nfc-card { border: 1px solid var(--primary-container); }
