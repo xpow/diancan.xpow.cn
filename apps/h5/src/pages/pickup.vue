@@ -35,7 +35,7 @@
           <p class="status-hint">{{ statusHint(order.status) }}</p>
         </div>
 
-        <div class="ticket-card" v-if="oi === 0 && nfcSupported">
+        <button class="nfc-trigger" v-if="oi === 0 && nfcSupported && !nfcScanning" @click="startNfcScan">
           <div class="nfc-section">
             <div class="nfc-icon-wrap">
               <div class="nfc-ping"></div>
@@ -46,10 +46,28 @@
             <div class="nfc-text">
               <div class="nfc-status">
                 <div class="nfc-dot nfc-dot-active"></div>
-                <span class="nfc-label">NFC Ready</span>
+                <span class="nfc-label">点击开始感应</span>
               </div>
               <p class="nfc-title">NFC 感应取餐</p>
               <p class="nfc-desc">靠近取餐柜 NFC 感应区，碰一碰即可取餐</p>
+            </div>
+          </div>
+        </button>
+        <div class="ticket-card" v-if="oi === 0 && nfcScanning">
+          <div class="nfc-section nfc-scanning">
+            <div class="nfc-icon-wrap">
+              <div class="nfc-ping"></div>
+              <div class="nfc-circle">
+                <span class="material-symbols-outlined nfc-icon">contactless</span>
+              </div>
+            </div>
+            <div class="nfc-text">
+              <div class="nfc-status">
+                <div class="nfc-dot nfc-dot-active"></div>
+                <span class="nfc-label">感应中...</span>
+              </div>
+              <p class="nfc-title">请将手机靠近 NFC 标签</p>
+              <p class="nfc-desc">保持靠近直至感应成功</p>
             </div>
           </div>
         </div>
@@ -129,6 +147,7 @@ const router = useRouter()
 
 const orders = ref<any[]>([])
 const nfcSupported = ref(false)
+const nfcScanning = ref(false)
 const tab = ref('pending')
 
 const POLL_MS = 5000
@@ -208,7 +227,7 @@ function copyOrderNumbers() {
 
 async function startNfcScan() {
   if (!('NDEFReader' in window)) return
-  nfcSupported.value = true
+  nfcScanning.value = true
   try {
     const ndef = new (window as any).NDEFReader()
     await ndef.scan()
@@ -219,12 +238,17 @@ async function startNfcScan() {
           const text = decoder.decode(record.data)
           if (orders.value.some(o => o.orderNumber === text)) {
             alert('✅ NFC 取餐验证成功！请到柜台取餐')
+            nfcScanning.value = false
           }
         }
       }
     })
+    ndef.addEventListener('readingerror', () => {
+      nfcScanning.value = false
+    })
   } catch {
-    // NFC scan not available or permission denied
+    nfcScanning.value = false
+    alert('NFC 感应失败，请重试或到柜台取餐')
   }
 }
 
@@ -249,10 +273,11 @@ async function fetchOrders() {
 let timer: ReturnType<typeof setInterval> | null = null
 
 onMounted(async () => {
+  nfcSupported.value = 'NDEFReader' in window
+
   // 1. 从 router state 拿订单列表（从 home 页"我的取餐"跳过来）
   if (history.state?.orders) {
     orders.value = history.state.orders
-    if (orders.value.length) startNfcScan()
     timer = setInterval(fetchOrders, POLL_MS)
     return
   }
@@ -260,14 +285,12 @@ onMounted(async () => {
   // 2. 从 router state 拿刚下的单（从 checkout 跳过来）
   if (history.state?.order) {
     orders.value = [history.state.order]
-    startNfcScan()
     timer = setInterval(fetchOrders, POLL_MS)
     return
   }
 
   // 3. 从 API 拉订单（页面刷新后）
   await fetchOrders()
-  if (orders.value.length) startNfcScan()
   timer = setInterval(fetchOrders, POLL_MS)
 })
 
@@ -311,6 +334,8 @@ main { padding: 64px 16px 40px; min-height: 100vh; display: flex; flex-direction
 .status-hint { font-size: 14px; line-height: 20px; color: var(--secondary); margin: 0; }
 
 .ticket-card { width: 100%; max-width: 448px; background: var(--surface-container-lowest); border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.06); position: relative; }
+.nfc-trigger { display: block; width: 100%; max-width: 448px; padding: 0; border: none; background: transparent; cursor: pointer; text-align: center; border-radius: 12px; overflow: hidden; }
+.nfc-trigger:active { opacity: 0.8; }
 .nfc-section { background: rgba(160,65,0,0.04); padding: 20px 24px; border-bottom: 1px solid var(--surface-variant); display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .nfc-icon-wrap { position: relative; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; }
 .nfc-ping { position: absolute; inset: 0; border-radius: 50%; background: rgba(160,65,0,0.15); animation: nfcPing 2s infinite; }
