@@ -25,7 +25,10 @@ export default defineConfig({
     allowedHosts: ['diancan.xpow.cn'],
     hmr: {
       protocol: 'wss',                  // 强制使用加密的 WebSocket
-      port: 9003                        // 走 9002 端口，交给 Nginx 转发
+      clientPort: 9005,                 // 走 443 端口，交给 Nginx 转发
+      headers: {
+        'Access-Control-Allow-Origin': '*'
+      }
     },
     proxy: {
       '/api': {
