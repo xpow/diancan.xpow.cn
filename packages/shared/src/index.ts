@@ -122,6 +122,7 @@ export const SPECS_PRESETS: Record<SpecPreset, SpecGroup[] | null> = {
 
 export interface CartItem {
   dishId: string
+  baseDishId?: string
   name: string
   price: number
   quantity: number
@@ -129,8 +130,9 @@ export interface CartItem {
   image?: string
   originalPrice?: number
   promotionId?: string
+  promotionItemId?: string
   promoPrice?: number
-  limitType?: string
+  limitType?: LimitType | string
 }
 
 export type PromotionType = 'full_reduction' | 'welfare_item' | 'buy_get' | 'time_discount'

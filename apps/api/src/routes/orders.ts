@@ -166,13 +166,13 @@ router.get('/', async (req, res) => {
     include: { items: true, promotions: true },
   })
   // Parse promotion metadata
-  return orders.map((o) => ({
+  res.json(orders.map((o) => ({
     ...o,
     promotions: o.promotions.map((op) => ({
       ...op,
       metadata: op.metadata ? JSON.parse(op.metadata) : null,
     })),
-  }))
+  })))
 })
 
 // Get by id
