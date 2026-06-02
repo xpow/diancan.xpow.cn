@@ -49,7 +49,7 @@
 
         <div class="ticket-card">
           <div class="ticket-header">
-            <p class="ticket-label">取餐�?/p>
+            <p class="ticket-label">取餐订单</p>
             <div class="ticket-number">{{ order.orderNumber }}</div>
             <div class="ticket-hole-left"></div>
             <div class="ticket-hole-right"></div>
@@ -79,7 +79,7 @@
             </div>
 
             <div class="ticket-total">
-              <span class="ticket-total-label">合计 {{ (order.items || []).length }} 项商�?/span>
+              <span class="ticket-total-label">合计 {{ (order.items || []).length }} 项商品</span>
               <div class="ticket-total-right">
                 <span class="ticket-total-sub">实付金额</span>
                 <span class="ticket-total-price">¥{{ (order.totalPrice || 0).toFixed(2) }}</span>
@@ -88,8 +88,8 @@
           </div>
 
           <div class="ticket-footer" :class="order.status === 'completed' ? 'footer-completed' : ''">
-            <p class="ticket-thanks">{{ order.status === 'completed' ? '欢迎下次光临�? : '感谢您选择滋滋烤串�? }}</p>
-            <p class="ticket-hint">{{ order.status === 'completed' ? '订单已完�? : '凭此界面到柜台取�? }}</p>
+            <p class="ticket-thanks">{{ order.status === 'completed' ? '欢迎下次光临' : '感谢您选择滋滋烤串' }}</p>
+            <p class="ticket-hint">{{ order.status === 'completed' ? '订单已完成' : '凭此界面到柜台取餐' }}</p>
           </div>
         </div>
       </template>
@@ -108,7 +108,7 @@
       <div v-if="!filteredOrders.length" class="empty-state">
         <span class="material-symbols-outlined empty-icon">receipt_long</span>
         <p class="empty-text">暂无{{ statusLabel(tab) }}订单</p>
-        <router-link to="/menu" class="empty-cta">去点�?/router-link>
+        <router-link to="/menu" class="empty-cta">去点餐</router-link>
       </div>
     </main>
   </div>
@@ -146,10 +146,10 @@ function dishImage(item: any): string {
 }
 
 const tabs = [
-  { key: 'pending', label: '等待�?, icon: 'hourglass_empty' },
-  { key: 'preparing', label: '制作�?, icon: 'fire_truck' },
-  { key: 'ready', label: '待取�?, icon: 'notifications_active' },
-  { key: 'completed', label: '已完�?, icon: 'check_circle' },
+  { key: 'pending', label: '等待取餐', icon: 'hourglass_empty' },
+  { key: 'preparing', label: '制作中', icon: 'fire_truck' },
+  { key: 'ready', label: '待取餐', icon: 'notifications_active' },
+  { key: 'completed', label: '已完成取餐', icon: 'check_circle' },
 ]
 
 const filteredOrders = computed(() =>
@@ -165,10 +165,10 @@ function badgeCount(key: string) {
 
 function statusLabel(s: string) {
   const map: Record<string, string> = {
-    pending: '等待�?,
-    preparing: '制作�?,
-    ready: '待取�?,
-    completed: '已取�?,
+    pending: '等待取餐',
+    preparing: '制作中',
+    ready: '待取餐',
+    completed: '已完成取餐',
   }
   return map[s] || s
 }
@@ -178,7 +178,7 @@ function formatTime(ts: string) {
 }
 
 function copyOrderNumbers() {
-  const nums = orders.value.map(o => o.orderNumber).join('�?)
+  const nums = orders.value.map(o => o.orderNumber).join(' ')
   navigator.clipboard?.writeText(nums).catch(() => {})
 }
 
@@ -228,7 +228,7 @@ async function fetchOrders() {
     for (const o of merged) {
       const prev = prevStatusMap.value[o.id]
       if (prev && prev !== o.status && o.status === 'ready') {
-        speak(`�?{o.orderNumber}取餐`)
+        speak(`${o.orderNumber} 号已就绪，请到柜台取餐`)
         notify('取餐提醒', `${o.orderNumber} 号已就绪，请到柜台取餐`)
         playBeep()
       }
@@ -251,14 +251,14 @@ onMounted(async () => {
     return
   }
 
-  // 2. �?router state 拿刚下的单（�?checkout 跳过来）
+  // 2. router state 拿刚下的单（checkout 跳过来）
   if (history.state?.order) {
     orders.value = [history.state.order]
     timer = setInterval(fetchOrders, POLL_MS)
     return
   }
 
-  // 3. �?API 拉订单（页面刷新后）
+  // 3. API 拉订单（页面刷新后）
   await fetchOrders()
   timer = setInterval(fetchOrders, POLL_MS)
 })
