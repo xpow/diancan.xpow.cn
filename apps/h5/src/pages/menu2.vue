@@ -37,7 +37,7 @@
       <!-- 右侧内容 -->
       <section class="content">
         <!-- 菜品列表 -->
-        <div v-for="cat in categories" :key="cat.id" :id="cat.id" class="section">
+        <div v-for="cat in categories" :key="cat.id" :id="cat.id" class="section" v-show="activeCat === cat.id">
           <div class="section-header">
             <h3 class="section-title">{{ cat.name }}</h3>
           </div>
@@ -181,21 +181,6 @@ function catIcon(name: string): string {
 
 function filteredDishes(categoryId: string) {
   return dishes.value.filter((d) => d.categoryId === categoryId)
-}
-
-function addToCart(dish: DishItem) {
-  const price = dish.promotionId ? dish.promoPrice! : dish.price
-  cartAdd({
-    dishId: dish.id,
-    name: dish.name + (dish.promotionId ? ' (福利)' : ''),
-    price,
-    quantity: 1,
-    promotionId: dish.promotionId,
-    promoPrice: dish.promoPrice,
-    limitType: dish.limitType,
-    originalPrice: dish.promotionId ? dish.price : undefined,
-  })
-  showToast('已加入购物车')
 }
 
 function goCheckout() {
