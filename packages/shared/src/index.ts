@@ -127,4 +127,18 @@ export interface CartItem {
   quantity: number
   specs?: string
   image?: string
+  originalPrice?: number
+  promotionId?: string
+  promoPrice?: number
+  limitType?: string
+}
+
+export type PromotionType = 'full_reduction' | 'welfare_item' | 'buy_get' | 'time_discount'
+export type LimitType = 'none' | 'per_order' | 'global_promo'
+
+export interface PromotionRule {
+  threshold?: number
+  discount?: number
+  buyQty?: number
+  freeQty?: number
 }

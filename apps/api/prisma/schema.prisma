@@ -20,6 +20,7 @@ model Merchant {
   branches Branch[]
   dishes   Dish[]
   orders   Order[]
+  promotions Promotion[]
 }
 
 model NightMarket {
@@ -74,18 +75,19 @@ model Category {
 }
 
 model Dish {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   merchantId  String
   categoryId  String
   name        String
   price       Float
   image       String?
   desc        String?
-  specsPreset String   @default("none") // none | tea | bbq | hotpot | dessert
-  status      String   @default("active")
+  specsPreset String         @default("none")
+  status      String         @default("active")
 
-  merchant Merchant @relation(fields: [merchantId], references: [id])
-  category Category @relation(fields: [categoryId], references: [id])
+  merchant   Merchant       @relation(fields: [merchantId], references: [id])
+  category   Category       @relation(fields: [categoryId], references: [id])
+  promotions PromotionItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -108,7 +110,7 @@ model Order {
   branchId   String
   merchantId String
   tableId    String?
-  orderType  String   @default("takeaway") // dine_in | takeaway
+  orderType  String   @default("takeaway")
   orderNumber String
   status     String   @default("pending")
   totalPrice Float
@@ -119,6 +121,7 @@ model Order {
   branch   Branch   @relation(fields: [branchId], references: [id])
   merchant Merchant @relation(fields: [merchantId], references: [id])
   items    OrderItem[]
+  promotions OrderPromotion[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -134,6 +137,51 @@ model OrderItem {
   specs    String?
 
   order Order @relation(fields: [orderId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Promotion {
+  id         String   @id @default(cuid())
+  merchantId String
+  name       String
+  type       String   // full_reduction | welfare_item | buy_get | time_discount
+  rules      String   // JSON string
+  startDate  DateTime?
+  endDate    DateTime?
+  status     String   @default("draft") // draft | active | paused | ended
+
+  merchant Merchant       @relation(fields: [merchantId], references: [id])
+  items    PromotionItem[]
+  orders   OrderPromotion[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PromotionItem {
+  id         String @id @default(cuid())
+  promotionId String
+  dishId     String
+  promoPrice Float?
+  limitType  String @default("per_order") // none | per_order | global_promo
+  maxQty     Int    @default(1)
+
+  promotion Promotion @relation(fields: [promotionId], references: [id])
+  dish      Dish      @relation(fields: [dishId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model OrderPromotion {
+  id           String @id @default(cuid())
+  orderId      String
+  promotionId  String
+  discount     Float  @default(0)
+  metadata     String? // JSON string
+
+  order     Order     @relation(fields: [orderId], references: [id])
+  promotion Promotion @relation(fields: [promotionId], references: [id])
 
   createdAt DateTime @default(now())
 }

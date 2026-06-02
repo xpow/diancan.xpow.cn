@@ -90,6 +90,41 @@ async function main() {
     await prisma.nightMarket.upsert({ where: { id: nm.id }, update: {}, create: nm })
   }
 
+  // Demo 营销活动
+  await prisma.orderPromotion.deleteMany({ })
+  await prisma.promotionItem.deleteMany({ })
+  await prisma.promotion.deleteMany({ where: { id: { startsWith: 'promo-' } } })
+
+  await prisma.promotion.create({
+    data: {
+      id: 'promo-welfare',
+      merchantId: merchant.id,
+      name: '福利烤韭菜',
+      type: 'welfare_item',
+      rules: JSON.stringify({}),
+      status: 'active',
+      items: {
+        create: {
+          dishId: 'dish-08',
+          promoPrice: 0.1,
+          limitType: 'global_promo',
+          maxQty: 1,
+        },
+      },
+    },
+  })
+
+  await prisma.promotion.create({
+    data: {
+      id: 'promo-full-reduction',
+      merchantId: merchant.id,
+      name: '满50减5',
+      type: 'full_reduction',
+      rules: JSON.stringify({ threshold: 50, discount: 5 }),
+      status: 'active',
+    },
+  })
+
   console.log('Seed data created')
 }
 

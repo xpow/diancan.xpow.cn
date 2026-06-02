@@ -45,6 +45,7 @@
             <h4 class="dish-name">{{ dish.name }}</h4>
             <p class="dish-desc">{{ dish.desc }}</p>
             <span class="dish-price">{{ dish.price }}</span>
+            <span v-if="dish.promotionId" class="dish-promo-tag">福利 ¥{{ dish.promoPrice?.toFixed(2) }}</span>
           </div>
         </div>
 
@@ -152,6 +153,52 @@ interface DishItem {
   specs?: DishSpecs
   selectedSpice?: string
   selectedQty?: string
+  rawPrice?: number // for promo display
+  promoPrice?: number
+  promotionId?: string
+  limitType?: string
+  maxQty?: number
+}
+
+interface CategoryItem {
+  id: string
+  name: string
+  en: string
+}
+
+interface PromoItem {
+  dishId: string
+  promoPrice: number
+  limitType: string
+  maxQty: number
+}
+
+interface Promotion {
+  id: string
+  name: string
+  type: string
+  status: string
+  items: PromoItem[]
+}
+
+const IMG_LAMB = '/src/assets/images/yrc-s1.jpg?raw=true'
+const IMG_LAMB_BIG = '/src/assets/images/yrc-x.webp?raw=true'
+const IMG_LAMB_HL = '/src/assets/images/hlyrc.jpg?raw=true'
+const IMG_NLT = '/src/assets/images/nlt.jpg?raw=true' 
+
+const IMG_CHICKEN = 'https://lh3.googleusercontent.com/aida-public/AB6AXuDNi2StZSK00ik7rR2-C-8XBhO5E1QGB_pMY5iSavlhvyqo3dgJzgARlkxLLTY3gLfALOMP3WFFPLWLo430ltudUTgyhRkjh4sTeRKY3YNimXqGNhnxpqqNI6ri5LItfhM4623iuVdazjEXGPpTs0HU2QkeFsE_-NoV4bFdWcfjer6NLT50UA-UzRqGFVjSXUTboJGhygNl8m0jtiD82dtgwIbPZGUSKx27P0SrbbUhVMYFTTBF6cZVeZNssfgTdz0Kza-4LrJ5KpQ'
+const IMG_WAGYU = 'https://lh3.googleusercontent.com/aida-public/AB6AXuAHKY4HaXrtm2lGXl2U69VRg4rKSyTSzuEdhRntKPvyU5Kx_GaaEKHD5lAwU3ovLy11pitZ-wnIpF3RRINOnzSnXRBvut1sSnU1JkKfCGnRyKvrrk59Gy3sZQlQCZQnpRiHbI6qToVvuXDcCUbNcqzuNoevYEKAvKtT0gL33D5Z77Vi_vsEFkOmWDDcGrXhLlfI-ElGN20NGNcN2bz19mNFwcwi50yVEOW344TZzLOITI5p_j6uiqOpwal8WNJb4TndAO7khGJArrs'
+const IMG_SQUID = 'https://lh3.googleusercontent.com/aida-public/AB6AXuAJMlNVLhJTApxtpMnLp2Wx0KyWNInkhp4XfUxh8EhWGvN_af2wzcAilSuYPmx1tcItHhNQsE5ONyF6Cwtc2hBzjvccviMUkenV5mTLtm5Ae6evTj-gJndEsQkyF3jXACPVCXHRDR2RYuVwY0OZeXVGi8zgRTaWNuKzVP71J28yJO_Q7HQ7ETOnP2wY-Z-FlFb6ZdXUBUUXgAzD0AqMnIem1hkVgBkA1wSHgpyRlS7phcKkx8l79vp8dng9-joPcnv_ESoBHIIxWRM'
+const IMG_LEMON = '/src/assets/images/sdmmc.webp?raw=true'
+const IMG_SMT = '/src/assets/images/smt.jpg?raw=true'
+const IMG_KQS = '/src/assets/images/kqs.webp?raw=true'
+
+function initDish(data: Omit<DishItem, 'selectedSpice' | 'selectedQty'>): DishItem {
+  return {
+    ...data,
+    selectedSpice: data.specs?.spice?.[0],
+    selectedQty: data.specs?.qty?.[0],
+  }
 }
 
 interface CategoryItem {
@@ -202,6 +249,7 @@ const dishes = ref<DishItem[]>([
   initDish({ id: 'd2000', categoryId: 'veg', name: '烤茄子', price: '¥6.00', desc: '蒜香四溢，软糯入味', image: '/src/assets/images/kqz.jpg?raw=true', specs: { spice: ['原味', '微辣', '特辣'], qty: ['1份', '2份'] } }),
   initDish({ id: 'd2001', categoryId: 'veg', name: '烤韭菜', price: '¥4.00', desc: '鲜嫩翠绿，孜然飘香', image: '/src/assets/images/kjc.jpg?raw=true', specs: { spice: ['原味', '微辣'], qty: ['1份', '2份'] } }),
   initDish({ id: 'd2002', categoryId: 'veg', name: '炭烤玉米', price: '¥2.00', desc: '刷酱烤制，香甜可口', image: '/src/assets/images/kym.jpg?raw=true', specs: { spice: ['刷酱', '原味'], qty: ['1份', '2份'] } }),
+  initDish({ id: 'd2003', categoryId: 'veg', name: '烤金针菇', price: '¥5.00', desc: '蒜香黄油，滑嫩多汁', image: '/src/assets/images/kqz.jpg?raw=true', specs: { spice: ['原味', '微辣', '特辣'], qty: ['1份', '2份'] } }),
   initDish({ id: 'd3001', categoryId: 'drinks', name: '手打柠檬茶', price: '¥18.00', desc: '少冰 · 五分糖', image: IMG_LEMON }),
   initDish({ id: 'd3002', categoryId: 'drinks', name: '冰镇酸梅汤', price: '¥8.00', desc: '解腻神器，冰爽一夏', image: IMG_SMT }),
   initDish({ id: 'd3003', categoryId: 'drinks', name: '矿泉水', price: '¥3.00', desc: '天然矿泉水', image: IMG_KQS }),
@@ -211,18 +259,33 @@ const currentCat = computed(() => categories.value.find((c) => c.id === activeCa
 const filteredDishes = computed(() => dishes.value.filter((d) => d.categoryId === activeCat.value))
 
 function addToCart(dish: DishItem) {
-  const price = parseFloat(dish.price.replace('¥', ''))
+  const price = dish.promotionId ? dish.promoPrice! : parseFloat(dish.price.replace('¥', ''))
   const specsParts: string[] = []
   if (dish.selectedSpice) specsParts.push(dish.selectedSpice)
   if (dish.selectedQty) specsParts.push(dish.selectedQty)
   const specsKey = specsParts.join(' · ')
+  const qty = dish.selectedQty ? parseInt(dish.selectedQty) || 1 : 1
+
+  // 福利品限购校验
+  if (dish.promotionId && dish.limitType === 'per_order' && dish.maxQty) {
+    const existing = items.filter((i) => i.promotionId === dish.promotionId)
+      .reduce((s, i) => s + i.quantity, 0)
+    if (existing + qty > dish.maxQty) {
+      showToast(`该福利限购 ${dish.maxQty} 份`)
+      return
+    }
+  }
 
   cartAdd({
     dishId: dish.id + specsKey,
-    name: dish.name,
+    name: dish.name + (dish.promotionId ? ' (福利)' : ''),
     price,
-    quantity: dish.selectedQty ? parseInt(dish.selectedQty) || 1 : 1,
+    quantity: qty,
     specs: specsKey || undefined,
+    originalPrice: dish.promotionId ? parseFloat(dish.price.replace('¥', '')) : undefined,
+    promotionId: dish.promotionId,
+    promoPrice: dish.promoPrice,
+    limitType: dish.limitType,
   })
   showToast('已加入购物车')
 }
@@ -237,6 +300,29 @@ function goCheckout() {
   router.push('/checkout')
 }
 
+const promotions = ref<Promotion[]>([])
+
+// Match welfare promotions to dishes by name
+function applyPromotions() {
+  for (const promo of promotions.value) {
+    if (promo.type !== 'welfare_item') continue
+    for (const pi of promo.items) {
+      const match = dishes.value.find((d) => d.name.includes(pi.dishId.replace('dish-', '')) || d.name.includes(nameFromId(pi.dishId)))
+      if (match) {
+        match.promotionId = promo.id
+        match.promoPrice = pi.promoPrice
+        match.limitType = pi.limitType
+        match.maxQty = pi.maxQty
+      }
+    }
+  }
+}
+
+function nameFromId(id: string): string {
+  const map: Record<string, string> = { 'dish-07': '烤韭菜', 'dish-08': '烤金针菇' }
+  return map[id] || id
+}
+
 onMounted(() => {
   fetch('/api/orders?branchId=demo-branch&status=preparing&limit=1')
     .then(r => r.json())
@@ -245,6 +331,10 @@ onMounted(() => {
   fetch('/api/orders?branchId=demo-branch&status=pending&limit=1')
     .then(r => r.json())
     .then(list => { if (list.length) hasActiveOrder.value = true })
+    .catch(() => {})
+  fetch('/api/promotions?merchantId=demo-merchant&status=active')
+    .then(r => r.json())
+    .then((data) => { promotions.value = data; applyPromotions() })
     .catch(() => {})
 })</script>
 
@@ -492,6 +582,18 @@ onMounted(() => {
   font-weight: 800;
   color: var(--primary-container);
   margin-top: 8px;
+}
+
+.dish-promo-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--error);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  vertical-align: middle;
 }
 
 .dish-specs {

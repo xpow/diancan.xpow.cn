@@ -104,7 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCart } from '@/stores/cart'
 import { useUser } from '@/stores/user'
@@ -116,6 +116,32 @@ const { items, totalPrice, clear: clearCart } = useCart()
 const user = useUser()
 const orderType = ref<'dine_in' | 'takeaway'>('dine_in')
 
+interface ReductionPromo {
+  id: string
+  name: string
+  rules: { threshold: number; discount: number }
+}
+const reductionPromos = ref<ReductionPromo[]>([])
+
+const promotion = computed(() => {
+  if (!reductionPromos.value.length) return null
+  return reductionPromos.value[0]
+})
+const eligible = computed(() => promotion.value ? Number(totalPrice.value) >= promotion.value.rules.threshold : false)
+const discount = computed(() => eligible.value ? promotion.value.rules.discount : 0)
+const remainingForDiscount = computed(() => promotion.value ? Math.max(0, promotion.value.rules.threshold - Number(totalPrice.value)) : 0)
+const finalTotal = computed(() => Math.max(0, Number(totalPrice.value) - discount.value).toFixed(2))
+
+// Welfare items in cart
+const welfareItems = computed(() => items.filter((i) => i.promotionId))
+
+onMounted(() => {
+  fetch('/api/promotions?merchantId=demo-merchant&status=active&type=full_reduction')
+    .then((r) => r.json())
+    .then((data: ReductionPromo[]) => { reductionPromos.value = data })
+    .catch(() => {})
+})
+
 const DISH_IMAGES: Record<string, string> = {
   d1000: '/src/assets/images/yrc-s1.jpg?raw=true',
   d1010: '/src/assets/images/yrc-x.webp?raw=true',
@@ -124,6 +150,7 @@ const DISH_IMAGES: Record<string, string> = {
   d2000: '/src/assets/images/kqz.jpg?raw=true',
   d2001: '/src/assets/images/kjc.jpg?raw=true',
   d2002: '/src/assets/images/kym.jpg?raw=true',
+  d2003: '/src/assets/images/kqz.jpg?raw=true',
   d3001: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=300&h=300&fit=crop',
   d3002: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=300&h=300&fit=crop',
 }
@@ -145,8 +172,11 @@ function confirmOrder() {
     dishId: i.dishId,
     name: i.name,
     price: i.price,
+    originalPrice: i.promotionId ? items.find((x) => x.dishId === i.dishId && !x.promotionId)?.price || i.price : undefined,
     quantity: i.quantity,
     specs: i.specs,
+    promotionId: i.promotionId,
+    promoPrice: i.promoPrice,
   }))
 
   fetch('/api/orders', {

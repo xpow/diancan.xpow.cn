@@ -7,6 +7,7 @@
       <h2 class="sidebar-title">商家后台</h2>
       <nav>
         <router-link to="/orders" class="nav-link">订单管理</router-link>
+        <router-link to="/promotions" class="nav-link">营销活动</router-link>
         <router-link to="/night-markets" class="nav-link">夜市管理</router-link>
         <router-link to="/kitchen" class="nav-link">📱 出餐管理（手机版）</router-link>
       </nav>
