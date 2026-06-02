@@ -41,6 +41,13 @@
         </div>
       </section>
 
+      <section class="section">
+        <div class="name-input-wrap">
+          <span class="material-symbols-outlined name-icon">person</span>
+          <input v-model="customerName" class="name-input" type="text" placeholder="输入您的姓氏（用于取餐号）" maxlength="4" />
+        </div>
+      </section>
+
       <section class="section glass-card">
         <div class="order-summary-header">
           <h3 class="summary-title">已选项目</h3>
@@ -113,6 +120,7 @@ import 'vant/es/toast/style'
 const router = useRouter()
 const { items, totalPrice, clear: clearCart } = useCart()
 const orderType = ref<'dine_in' | 'takeaway'>('dine_in')
+const customerName = ref('')
 
 const DISH_IMAGES: Record<string, string> = {
   d1000: '/src/assets/images/yrc-s1.jpg?raw=true',
@@ -154,6 +162,7 @@ function confirmOrder() {
       merchantId: 'demo-merchant',
       branchId: 'demo-branch',
       orderType: orderType.value,
+      customerName: customerName.value || undefined,
       items: itemsData,
     }),
   })
@@ -196,6 +205,11 @@ main { padding: 56px 16px 100px; max-width: 672px; margin: 0 auto; }
 .toggle-indicator { position: absolute; top: 4px; bottom: 4px; width: calc(50% - 4px); background: var(--primary-container); border-radius: 9999px; transition: left 0.3s; z-index: 1; box-shadow: 0 2px 8px rgba(255,107,0,0.2); }
 .indicator-left { left: 4px; }
 .indicator-right { left: calc(50% + 0px); }
+
+.name-input-wrap { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.7); backdrop-filter: blur(12px); border: 1px solid rgba(226,191,176,0.3); border-radius: 12px; padding: 12px 16px; }
+.name-icon { font-size: 20px; color: var(--primary-container); }
+.name-input { flex: 1; border: none; background: transparent; font-family: var(--font-display); font-size: 16px; font-weight: 600; outline: none; color: var(--text); }
+.name-input::placeholder { color: var(--secondary); font-weight: 500; }
 
 .glass-card { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(226, 191, 176, 0.3); border-radius: 12px; padding: 16px; }
 .order-summary-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }

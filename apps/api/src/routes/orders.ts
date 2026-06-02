@@ -4,16 +4,29 @@ import { PrismaClient } from '@prisma/client'
 const router = Router()
 const prisma = new PrismaClient()
 
-// 生成取餐号：字母(A-Z) + 2位数字，按分支每日递增
-async function genOrderNumber(branchId: string): Promise<string> {
+function customerInitial(name?: string): string {
+  if (!name || !name.trim()) return 'X'
+  const first = name.trim()[0]
+  if (/[a-zA-Z]/.test(first)) return first.toUpperCase()
+  return first
+}
+
+// 生成取餐号: {顾客名首字母}{商家编号}{分店编号}{2位序号}
+async function genOrderNumber(merchantId: string, branchId: string, customerName?: string): Promise<string> {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const count = await prisma.order.count({
     where: { branchId, createdAt: { gte: today } },
   })
-  const prefix = String.fromCharCode(65 + Math.floor(count / 100)) // A=0-99, B=100-199...
+  const [merchant, branch] = await Promise.all([
+    prisma.merchant.findUnique({ where: { id: merchantId } }),
+    prisma.branch.findUnique({ where: { id: branchId } }),
+  ])
+  const mCode = merchant?.code || 'M'
+  const bCode = branch?.code || 'B'
+  const init = customerInitial(customerName)
   const seq = (count % 100 + 1).toString().padStart(2, '0')
-  return `${prefix}${seq}`
+  return `${init}${mCode}${bCode}${seq}`
 }
 
 // Create order
@@ -23,7 +36,7 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'merchantId, branchId, items required' })
   }
 
-  const orderNumber = await genOrderNumber(branchId)
+  const orderNumber = await genOrderNumber(merchantId, branchId, customerName)
   const totalPrice = items.reduce((s: number, i: any) => s + i.price * i.quantity, 0)
 
   const order = await prisma.order.create({

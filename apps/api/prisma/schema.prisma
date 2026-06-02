@@ -10,9 +10,10 @@ datasource db {
 model Merchant {
   id        String   @id @default(cuid())
   name      String
-  type      String   @default("mobile") // fixed | mobile
+  code      String   @default("M") // 商家编号（1位字母）
+  type      String   @default("mobile")
   phone     String?
-  status    String   @default("active") // active | inactive | suspended
+  status    String   @default("active")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -41,6 +42,7 @@ model Branch {
   merchantId    String
   nightMarketId String?
   name          String
+  code          String   @default("B") // 分店编号（1位字母）
   address       String?
   lat           Float?
   lng           Float?

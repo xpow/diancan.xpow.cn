@@ -9,6 +9,7 @@ async function main() {
     create: {
       id: 'demo-merchant',
       name: '炭火烧烤小摊',
+      code: 'D',
       type: 'mobile',
       phone: '13800138000',
     },
@@ -21,6 +22,7 @@ async function main() {
       id: 'demo-branch',
       merchantId: merchant.id,
       name: '炭火烧烤·夜市总摊',
+      code: 'X',
       address: '星光夜市 A区 08号',
       logoUrl: '',
       bannerUrl: '',
