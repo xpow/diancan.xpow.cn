@@ -43,38 +43,42 @@
           </div>
           <div class="dish-list">
             <div v-for="dish in filteredDishes(cat.id)" :key="dish.id" class="dish-card">
-              <img :src="dish.image || placeholderImg" :alt="dish.name" class="dish-img" />
-              <div class="dish-body">
-                <h4 class="dish-name">
-                  {{ dish.name }}
-                  <span v-if="dish.promotionId" class="promo-tag">福利</span>
-                </h4>
-                <p class="dish-desc">{{ dish.desc }}</p>
-                <div class="dish-specs" v-if="dish.spice.length || dish.qty.length">
-                  <div class="spec-row" v-if="dish.spice.length">
-                    <span class="spec-label">口感</span>
-                    <div class="spec-options">
-                      <button v-for="opt in dish.spice" :key="opt"
-                        :class="['spec-chip', dish.selectedSpice === opt && 'chip-active']"
-                        @click="dish.selectedSpice = opt">{{ opt }}</button>
-                    </div>
-                  </div>
-                  <div class="spec-row" v-if="dish.qty.length">
-                    <span class="spec-label">份量</span>
-                    <div class="spec-options">
-                      <button v-for="opt in dish.qty" :key="opt"
-                        :class="['spec-chip', dish.selectedQty === opt && 'chip-active']"
-                        @click="dish.selectedQty = opt">{{ opt }}</button>
-                    </div>
+              <div class="dish-top">
+                <img :src="dish.image || placeholderImg" :alt="dish.name" class="dish-img" />
+                <div class="dish-body">
+                  <h4 class="dish-name">
+                    {{ dish.name }}
+                    <span v-if="dish.promotionId" class="promo-tag">福利</span>
+                  </h4>
+                  <p class="dish-desc">{{ dish.desc }}</p>
+                </div>
+              </div>
+              <div class="dish-specs" v-if="dish.spice.length || dish.qty.length">
+                <div class="spec-row" v-if="dish.spice.length">
+                  <span class="spec-label">口感</span>
+                  <div class="spec-options">
+                    <button v-for="opt in dish.spice" :key="opt"
+                      :class="['spec-chip', dish.selectedSpice === opt && 'chip-active']"
+                      @click="dish.selectedSpice = opt">{{ opt }}</button>
                   </div>
                 </div>
-                <div class="dish-bottom">
+                <div class="spec-row" v-if="dish.qty.length">
+                  <span class="spec-label">份量</span>
+                  <div class="spec-options">
+                    <button v-for="opt in dish.qty" :key="opt"
+                      :class="['spec-chip', dish.selectedQty === opt && 'chip-active']"
+                      @click="dish.selectedQty = opt">{{ opt }}</button>
+                  </div>
+                </div>
+              </div>
+              <div class="dish-bottom">
+                <div>
                   <span v-if="dish.promotionId" class="dish-price-orig">¥{{ dish.price }}</span>
                   <span class="dish-price" :class="dish.promotionId && 'dish-price-promo'">¥{{ dish.promotionId ? dish.promoPrice : dish.price }}</span>
-                  <button class="add-btn" @click="addToCart(dish)">
-                    <span class="material-symbols-outlined">add</span>
-                  </button>
                 </div>
+                <button class="add-btn" @click="addToCart(dish)">
+                  <span class="material-symbols-outlined">add</span>
+                </button>
               </div>
             </div>
           </div>
@@ -423,13 +427,15 @@ onMounted(async () => {
 .dish-list { display: flex; flex-direction: column; gap: 12px; }
 .dish-card {
   display: flex;
-  gap: 16px;
+  flex-direction: column;
+  gap: 8px;
   background: #fff;
   border-radius: 12px;
   padding: 12px;
   border: 1px solid rgba(226, 191, 176, 0.2);
   box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
+.dish-top { display: flex; gap: 16px; }
 .dish-img {
   width: 96px;
   height: 96px;
@@ -438,10 +444,10 @@ onMounted(async () => {
   flex-shrink: 0;
   background: #e5e2e1;
 }
-.dish-body { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+.dish-body { flex: 1; display: flex; flex-direction: column; justify-content: center; }
 .dish-name { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 700; margin: 0; }
 .dish-desc { font-size: 13px; color: #5e5e5c; margin: 4px 0 0; line-height: 1.3; }
-.dish-specs { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.dish-specs { display: flex; flex-direction: column; gap: 6px; }
 .spec-row { display: flex; align-items: center; gap: 6px; }
 .spec-label { font-size: 11px; font-weight: 600; color: #5e5e5c; white-space: nowrap; min-width: 30px; }
 .spec-options { display: flex; gap: 4px; flex-wrap: wrap; }
@@ -454,7 +460,7 @@ onMounted(async () => {
 .chip-active {
   background: #ff6b00; color: #fff; border-color: #ff6b00; font-weight: 700;
 }
-.dish-bottom { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 8px; }
+.dish-bottom { display: flex; justify-content: space-between; align-items: center; }
 .dish-price { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 800; color: #a04100; line-height: 1; }
 .dish-price-orig {
   font-family: 'Plus Jakarta Sans', sans-serif;
