@@ -35,7 +35,8 @@ function customerInitial(name?: string): string {
   return SURNAME_INITIAL[first] || first
 }
 
-// 生成取餐号: {顾客名首字母}{商家编号}{分店编号}{2位序号}
+// 生成取餐号: {姓氏首字母}-{商家编号}{分店编号}-{全店顺序号}
+// 例: Z-DX-01, L-DX-02, Z-DX-03（序号每日全店统一递增，不按首字母分组）
 async function genOrderNumber(merchantId: string, branchId: string, customerName?: string): Promise<string> {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -50,7 +51,7 @@ async function genOrderNumber(merchantId: string, branchId: string, customerName
   const bCode = branch?.code || 'B'
   const init = customerInitial(customerName)
   const seq = (count % 100 + 1).toString().padStart(2, '0')
-  return `${init}${mCode}${bCode}${seq}`
+  return `${init}-${mCode}${bCode}-${seq}`
 }
 
 // Create order
