@@ -128,12 +128,12 @@ const promotion = computed(() => {
   return reductionPromos.value[0]
 })
 const eligible = computed(() => promotion.value ? Number(totalPrice.value) >= promotion.value.rules.threshold : false)
-const discount = computed(() => eligible.value ? promotion.value.rules.discount : 0)
+const discount = computed(() => eligible.value ? promotion?.value?.rules.discount || 0 : 0)
 const remainingForDiscount = computed(() => promotion.value ? Math.max(0, promotion.value.rules.threshold - Number(totalPrice.value)) : 0)
 const finalTotal = computed(() => Math.max(0, Number(totalPrice.value) - discount.value).toFixed(2))
 
 // Welfare items in cart
-const welfareItems = computed(() => items.filter((i) => i.promotionId))
+const welfareItems = computed(() => items.filter((i: any) => i.promotionId))
 
 onMounted(() => {
   fetch('/api/promotions?merchantId=demo-merchant&status=active&type=full_reduction')
@@ -160,19 +160,19 @@ function dishImage(dishId: string): string {
   return DISH_IMAGES[baseId] || 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300&h=300&fit=crop'
 }
 
-// Mock 满减规则
-const promotion = { threshold: 100, discount: 12 }
-const eligible = computed(() => Number(totalPrice.value) >= promotion.threshold)
-const discount = computed(() => eligible.value ? promotion.discount : 0)
-const remainingForDiscount = computed(() => Math.max(0, promotion.threshold - Number(totalPrice.value)))
-const finalTotal = computed(() => Math.max(0, Number(totalPrice.value) - discount.value).toFixed(2))
+// // Mock 满减规则
+// const promotion = { threshold: 100, discount: 12 }
+// const eligible = computed(() => Number(totalPrice.value) >= promotion.threshold)
+// const discount = computed(() => eligible.value ? promotion.discount : 0)
+// const remainingForDiscount = computed(() => Math.max(0, promotion.threshold - Number(totalPrice.value)))
+// const finalTotal = computed(() => Math.max(0, Number(totalPrice.value) - discount.value).toFixed(2))
 
 function confirmOrder() {
   const itemsData = items.map((i: any) => ({
     dishId: i.dishId,
     name: i.name,
     price: i.price,
-    originalPrice: i.promotionId ? items.find((x) => x.dishId === i.dishId && !x.promotionId)?.price || i.price : undefined,
+    originalPrice: i.promotionId ? items.find((x: any) => x.dishId === i.dishId && !x.promotionId)?.price || i.price : undefined,
     quantity: i.quantity,
     specs: i.specs,
     promotionId: i.promotionId,

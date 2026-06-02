@@ -49,7 +49,7 @@ router.post('/', async (req, res) => {
       if (!promo || promo.status !== 'active') {
         return res.status(400).json({ error: `promotion ${pi.promotionId} not active` })
       }
-      const rule = promo.items.find((ri) => ri.dishId === pi.dishId || !ri.dishId)
+      const rule = promo.items.find((ri: any) => ri.dishId === pi.dishId || !ri.dishId)
       if (!rule) continue
       if (rule.limitType === 'per_order' && pi.quantity > rule.maxQty) {
         return res.status(400).json({ error: `${pi.name} 限购 ${rule.maxQty} 份` })
