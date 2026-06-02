@@ -35,8 +35,7 @@
           <p class="status-hint">{{ statusHint(order.status) }}</p>
         </div>
 
-        <div class="ticket-card" v-if="oi === 0">
-          <!-- NFC 感应区（仅第一个订单展示） -->
+        <div class="ticket-card" v-if="oi === 0 && nfcSupported">
           <div class="nfc-section">
             <div class="nfc-icon-wrap">
               <div class="nfc-ping"></div>
@@ -46,11 +45,11 @@
             </div>
             <div class="nfc-text">
               <div class="nfc-status">
-                <div class="nfc-dot" :class="{ 'nfc-dot-active': nfcSupported }"></div>
-                <span class="nfc-label">{{ nfcSupported ? 'NFC Ready' : 'NFC 不可用' }}</span>
+                <div class="nfc-dot nfc-dot-active"></div>
+                <span class="nfc-label">NFC Ready</span>
               </div>
               <p class="nfc-title">NFC 感应取餐</p>
-              <p class="nfc-desc">{{ nfcSupported ? '靠近取餐柜 NFC 感应区，碰一碰即可取餐' : '当前设备不支持 NFC' }}</p>
+              <p class="nfc-desc">靠近取餐柜 NFC 感应区，碰一碰即可取餐</p>
             </div>
           </div>
         </div>
