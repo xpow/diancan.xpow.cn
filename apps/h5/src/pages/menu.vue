@@ -135,6 +135,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCart } from '@/stores/cart'
 import { showToast } from 'vant'
+import 'vant/es/toast/style'
 
 interface DishSpecs {
   spice?: string[]
@@ -219,7 +220,7 @@ function addToCart(dish: DishItem) {
     quantity: dish.selectedQty ? parseInt(dish.selectedQty) || 1 : 1,
     specs: specsKey || undefined,
   })
-  showToast({ message: '已加入购物车', duration: 1000 })
+  showToast('已加入购物车')
 }
 
 function removeItem(dishId: string) {

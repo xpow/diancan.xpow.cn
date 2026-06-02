@@ -48,8 +48,8 @@
         </div>
 
         <div v-for="item in items" :key="item.dishId" class="order-item">
-          <div class="item-img-placeholder">
-            <span class="material-symbols-outlined">restaurant_menu</span>
+          <div class="item-img">
+            <img :src="dishImage(item.dishId)" :alt="item.name" class="item-img-el" />
           </div>
           <div class="item-body">
             <p class="item-name">{{ item.name }}</p>
@@ -108,10 +108,29 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCart } from '@/stores/cart'
 import { showToast } from 'vant'
+import 'vant/es/toast/style'
 
 const router = useRouter()
 const { items, totalPrice, clear: clearCart } = useCart()
 const orderType = ref<'dine_in' | 'takeaway'>('dine_in')
+
+const DISH_IMAGES: Record<string, string> = {
+  d1000: '/src/assets/images/yrc-s1.jpg?raw=true',
+  d1010: '/src/assets/images/yrc-x.webp?raw=true',
+  d1011: '/src/assets/images/hlyrc.jpg?raw=true',
+  d1012: '/src/assets/images/nlt.jpg?raw=true',
+  d2000: '/src/assets/images/kqz.jpg?raw=true',
+  d2001: '/src/assets/images/kjc.jpg?raw=true',
+  d2002: '/src/assets/images/kym.jpg?raw=true',
+  d3001: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=300&h=300&fit=crop',
+  d3002: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=300&h=300&fit=crop',
+}
+
+function dishImage(dishId: string): string {
+  const baseId = dishId?.split(/[^\w]/)[0] || ''
+  return DISH_IMAGES[baseId] || 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300&h=300&fit=crop'
+}
+
 // Mock 满减规则
 const promotion = { threshold: 100, discount: 12 }
 const eligible = computed(() => Number(totalPrice.value) >= promotion.threshold)
@@ -144,7 +163,7 @@ function confirmOrder() {
       router.push({ path: '/pickup', state: { order } })
     })
     .catch(() => {
-      showToast({ message: '下单失败，请重试', duration: 2000 })
+      showToast('下单失败，请重试')
     })
 }
 </script>
@@ -184,7 +203,8 @@ main { padding: 56px 16px 100px; max-width: 672px; margin: 0 auto; }
 .summary-count { font-size: 12px; font-weight: 600; color: var(--secondary); letter-spacing: 0.02em; }
 
 .order-item { display: flex; align-items: center; gap: 16px; padding: 8px 0; }
-.item-img-placeholder { width: 64px; height: 64px; border-radius: 8px; flex-shrink: 0; background: var(--surface-container-high); display: flex; align-items: center; justify-content: center; color: var(--text-secondary); }
+.item-img { width: 64px; height: 64px; border-radius: 8px; flex-shrink: 0; overflow: hidden; background: var(--surface-container-high); }
+.item-img-el { width: 100%; height: 100%; object-fit: cover; }
 .item-body { flex: 1; }
 .item-name { font-family: var(--font-display); font-size: 14px; font-weight: 600; margin: 0; }
 .item-spec { font-size: 12px; font-weight: 600; color: var(--secondary); margin: 2px 0 0; letter-spacing: 0.02em; }

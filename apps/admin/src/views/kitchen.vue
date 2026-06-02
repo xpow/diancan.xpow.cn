@@ -87,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, onActivated, onDeactivated } from 'vue'
 
 const BRANCH_ID = 'demo-branch'
 const POLL_MS = 5000
@@ -97,6 +97,28 @@ const orders = ref<any[]>([])
 const tab = ref<'all' | 'pending' | 'preparing' | 'ready'>('all')
 const voiceEnabled = ref(true)
 const prevStatusMap = ref<Record<string, string>>({})
+let wakeLock: any = null
+
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await (navigator as any).wakeLock.request('screen')
+      wakeLock.addEventListener('release', () => { wakeLock = null })
+    }
+  } catch {}
+}
+
+async function releaseWakeLock() {
+  if (wakeLock) {
+    try { await wakeLock.release() } catch {}
+    wakeLock = null
+  }
+}
+
+// 页面可见性变化时重新请求（用户切回来时）
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') requestWakeLock()
+})
 
 function loadAnnounced(): Set<string> {
   try { return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')) } catch { return new Set() }
@@ -241,6 +263,7 @@ function notify(title: string, body: string) {
 }
 
 onMounted(() => {
+  requestWakeLock()
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission()
   }
@@ -249,6 +272,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  releaseWakeLock()
   if (timer) clearInterval(timer)
   window.speechSynthesis?.cancel()
 })

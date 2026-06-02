@@ -35,7 +35,7 @@
           <p class="status-hint">{{ statusHint(order.status) }}</p>
         </div>
 
-        <button class="nfc-trigger" v-if="oi === 0 && nfcSupported && !nfcScanning" @click="startNfcScan">
+        <div class="ticket-card nfc-card" v-if="oi === 0 && order.status !== 'completed'">
           <div class="nfc-section">
             <div class="nfc-icon-wrap">
               <div class="nfc-ping"></div>
@@ -44,30 +44,12 @@
               </div>
             </div>
             <div class="nfc-text">
-              <div class="nfc-status">
-                <div class="nfc-dot nfc-dot-active"></div>
-                <span class="nfc-label">点击开始感应</span>
+              <p class="nfc-title">碰一下付款</p>
+              <p class="nfc-desc">拿出手机碰一下摊位 NFC 标签，即可打开付款</p>
+              <div class="nfc-pay-logos">
+                <span class="pay-logo">支付宝</span>
+                <span class="pay-logo">微信</span>
               </div>
-              <p class="nfc-title">NFC 感应取餐</p>
-              <p class="nfc-desc">靠近取餐柜 NFC 感应区，碰一碰即可取餐</p>
-            </div>
-          </div>
-        </button>
-        <div class="ticket-card" v-if="oi === 0 && nfcScanning">
-          <div class="nfc-section nfc-scanning">
-            <div class="nfc-icon-wrap">
-              <div class="nfc-ping"></div>
-              <div class="nfc-circle">
-                <span class="material-symbols-outlined nfc-icon">contactless</span>
-              </div>
-            </div>
-            <div class="nfc-text">
-              <div class="nfc-status">
-                <div class="nfc-dot nfc-dot-active"></div>
-                <span class="nfc-label">感应中...</span>
-              </div>
-              <p class="nfc-title">请将手机靠近 NFC 标签</p>
-              <p class="nfc-desc">保持靠近直至感应成功</p>
             </div>
           </div>
         </div>
@@ -146,9 +128,8 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 const orders = ref<any[]>([])
-const nfcSupported = ref(false)
-const nfcScanning = ref(false)
 const tab = ref('pending')
+const prevStatusMap = ref<Record<string, string>>({})
 
 const POLL_MS = 5000
 const BRANCH_ID = 'demo-branch'
@@ -184,6 +165,7 @@ const filteredOrders = computed(() =>
 
 function badgeCount(key: string) {
   if (key === 'pending') return orders.value.filter((o) => o.status === 'pending').length || ''
+  if (key === 'preparing') return orders.value.filter((o) => o.status === 'preparing').length || ''
   if (key === 'ready') return orders.value.filter((o) => o.status === 'ready').length || ''
   return ''
 }
@@ -225,31 +207,33 @@ function copyOrderNumbers() {
   navigator.clipboard?.writeText(nums).catch(() => {})
 }
 
-async function startNfcScan() {
-  if (!('NDEFReader' in window)) return
-  nfcScanning.value = true
+function notify(title: string, body: string) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return
+  new Notification(title, { body, icon: '/favicon.ico', tag: 'pickup' })
+}
+
+function speak(msg: string) {
+  if (!window.speechSynthesis) return
+  window.speechSynthesis.cancel()
+  const u = new SpeechSynthesisUtterance(msg)
+  u.lang = 'zh-CN'
+  u.rate = 0.9
+  window.speechSynthesis.speak(u)
+}
+
+function playBeep() {
   try {
-    const ndef = new (window as any).NDEFReader()
-    await ndef.scan()
-    ndef.addEventListener('reading', ({ message }: any) => {
-      for (const record of message.records) {
-        if (record.recordType === 'text') {
-          const decoder = new TextDecoder(record.encoding || 'utf-8')
-          const text = decoder.decode(record.data)
-          if (orders.value.some(o => o.orderNumber === text)) {
-            alert('✅ NFC 取餐验证成功！请到柜台取餐')
-            nfcScanning.value = false
-          }
-        }
-      }
-    })
-    ndef.addEventListener('readingerror', () => {
-      nfcScanning.value = false
-    })
-  } catch {
-    nfcScanning.value = false
-    alert('NFC 感应失败，请重试或到柜台取餐')
-  }
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.frequency.value = 880
+    gain.gain.value = 0.3
+    osc.start()
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4)
+    osc.stop(ctx.currentTime + 0.4)
+  } catch {}
 }
 
 const statuses = ['pending', 'preparing', 'ready', 'completed']
@@ -266,6 +250,15 @@ async function fetchOrders() {
     const merged = all.flat().sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
+    for (const o of merged) {
+      const prev = prevStatusMap.value[o.id]
+      if (prev && prev !== o.status && o.status === 'ready') {
+        speak(`请${o.orderNumber}取餐`)
+        notify('取餐提醒', `${o.orderNumber} 号已就绪，请到柜台取餐`)
+        playBeep()
+      }
+      prevStatusMap.value[o.id] = o.status
+    }
     orders.value = merged
   } catch {}
 }
@@ -273,8 +266,9 @@ async function fetchOrders() {
 let timer: ReturnType<typeof setInterval> | null = null
 
 onMounted(async () => {
-  nfcSupported.value = 'NDEFReader' in window
-
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission()
+  }
   // 1. 从 router state 拿订单列表（从 home 页"我的取餐"跳过来）
   if (history.state?.orders) {
     orders.value = history.state.orders
@@ -311,7 +305,7 @@ onUnmounted(() => {
 .close-btn { width: 40px; height: 40px; border-radius: 50%; border: none; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text); }
 .close-btn:active { background: var(--surface-container-high); }
 
-main { padding: 64px 16px 40px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+main { padding: 64px 16px 80px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
 
 .order-section-label { width: 100%; max-width: 448px; padding: 8px 0; display: flex; align-items: center; justify-content: center; }
 .section-divider { width: 40px; height: 4px; border-radius: 2px; background: var(--outline-variant); }
@@ -334,22 +328,18 @@ main { padding: 64px 16px 40px; min-height: 100vh; display: flex; flex-direction
 .status-hint { font-size: 14px; line-height: 20px; color: var(--secondary); margin: 0; }
 
 .ticket-card { width: 100%; max-width: 448px; background: var(--surface-container-lowest); border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.06); position: relative; }
-.nfc-trigger { display: block; width: 100%; max-width: 448px; padding: 0; border: none; background: transparent; cursor: pointer; text-align: center; border-radius: 12px; overflow: hidden; }
-.nfc-trigger:active { opacity: 0.8; }
-.nfc-section { background: rgba(160,65,0,0.04); padding: 20px 24px; border-bottom: 1px solid var(--surface-variant); display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.nfc-icon-wrap { position: relative; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; }
+.nfc-card { border: 1px solid var(--primary-container); }
+.nfc-section { background: rgba(160,65,0,0.04); padding: 20px 24px; display: flex; align-items: center; gap: 16px; }
+.nfc-icon-wrap { position: relative; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .nfc-ping { position: absolute; inset: 0; border-radius: 50%; background: rgba(160,65,0,0.15); animation: nfcPing 2s infinite; }
 @keyframes nfcPing { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.4); opacity: 0; } }
-.nfc-circle { position: relative; z-index: 10; width: 64px; height: 64px; background: var(--primary-container); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(255,107,0,0.3); }
-.nfc-icon { font-size: 32px; color: white; }
-.nfc-text { text-align: center; display: flex; flex-direction: column; gap: 4px; }
-.nfc-status { display: flex; align-items: center; justify-content: center; gap: 6px; }
-.nfc-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--outline); }
-.nfc-dot-active { background: var(--primary-container); animation: nfcBlink 1.5s infinite; }
-@keyframes nfcBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-.nfc-label { font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--primary-container); }
-.nfc-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--text); margin: 0; }
-.nfc-desc { font-size: 14px; line-height: 20px; color: var(--secondary); margin: 0; }
+.nfc-circle { position: relative; z-index: 10; width: 48px; height: 48px; background: var(--primary-container); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(255,107,0,0.3); }
+.nfc-icon { font-size: 24px; color: white; }
+.nfc-text { flex: 1; text-align: left; display: flex; flex-direction: column; gap: 4px; }
+.nfc-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--text); margin: 0; }
+.nfc-desc { font-size: 13px; line-height: 18px; color: var(--secondary); margin: 0; }
+.nfc-pay-logos { display: flex; gap: 8px; margin-top: 4px; }
+.pay-logo { font-size: 11px; font-weight: 700; color: var(--primary-container); background: rgba(160,65,0,0.08); padding: 2px 8px; border-radius: 4px; }
 
 .ticket-top-border { height: 8px; background: var(--primary-container); }
 .ticket-header { position: relative; text-align: center; padding: 24px; border-bottom: 1px dashed var(--outline-variant); }
