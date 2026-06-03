@@ -116,11 +116,63 @@ async function main() {
 
   await prisma.promotion.create({
     data: {
+      id: 'promo-welfare-daily',
+      merchantId: merchant.id,
+      name: '每日福利烤茄子',
+      type: 'welfare_item',
+      rules: JSON.stringify({}),
+      status: 'active',
+      items: {
+        create: {
+          dishId: 'dish-06',
+          promoPrice: 0.5,
+          limitType: 'daily',
+          maxQty: 10,
+        },
+      },
+    },
+  })
+
+  await prisma.promotion.create({
+    data: {
       id: 'promo-full-reduction',
       merchantId: merchant.id,
       name: '满50减5',
       type: 'full_reduction',
       rules: JSON.stringify({ threshold: 50, discount: 5 }),
+      status: 'active',
+    },
+  })
+
+  await prisma.promotion.create({
+    data: {
+      id: 'promo-new-user',
+      merchantId: merchant.id,
+      name: '新人立减5元',
+      type: 'new_user',
+      rules: JSON.stringify({ discount: 5, minAmount: 0 }),
+      status: 'active',
+    },
+  })
+
+  await prisma.promotion.create({
+    data: {
+      id: 'promo-first-order',
+      merchantId: merchant.id,
+      name: '首单直减3元',
+      type: 'first_order',
+      rules: JSON.stringify({ discount: 3 }),
+      status: 'active',
+    },
+  })
+
+  await prisma.promotion.create({
+    data: {
+      id: 'promo-free-gift',
+      merchantId: merchant.id,
+      name: '赠烤韭菜',
+      type: 'free_gift',
+      rules: JSON.stringify({ giftDishId: 'dish-07', giftQty: 1 }),
       status: 'active',
     },
   })

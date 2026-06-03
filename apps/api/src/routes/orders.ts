@@ -77,6 +77,20 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: `${oi.name} 限购 ${rule.maxQty} 份` })
           }
         }
+
+        if (rule.limitType === 'daily') {
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+          const dailyCount = await prisma.orderItem.count({
+            where: {
+              dishId,
+              order: { merchantId, createdAt: { gte: today } },
+            },
+          })
+          if (dailyCount + (oi.quantity || 0) > rule.maxQty) {
+            return res.status(400).json({ error: `${oi.name} 今日已售罄` })
+          }
+        }
       }
     }
   }

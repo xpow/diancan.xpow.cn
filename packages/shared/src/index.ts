@@ -135,8 +135,8 @@ export interface CartItem {
   limitType?: LimitType | string
 }
 
-export type PromotionType = 'full_reduction' | 'welfare_item' | 'buy_get' | 'time_discount'
-export type LimitType = 'none' | 'per_order' | 'global_promo'
+export type PromotionType = 'full_reduction' | 'welfare_item' | 'buy_get' | 'time_discount' | 'new_user' | 'first_order' | 'free_gift'
+export type LimitType = 'none' | 'per_order' | 'global_promo' | 'daily'
 
 export interface PromotionRule {
   threshold?: number

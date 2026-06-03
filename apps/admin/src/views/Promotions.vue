@@ -83,6 +83,44 @@
         <Button label="+ 添加福利品" severity="secondary" text @click="addItem" class="p-mt-2" />
       </template>
 
+      <!-- 新人福利：首单折扣 -->
+      <template v-if="form.type === 'new_user'">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>折扣金额 (¥)</label>
+            <InputNumber v-model="form.rules.discount" :min="0" class="w-full" placeholder="5" />
+          </div>
+          <div class="form-group flex-1">
+            <label>最低消费 (¥)</label>
+            <InputNumber v-model="form.rules.minAmount" :min="0" class="w-full" placeholder="0" />
+          </div>
+        </div>
+      </template>
+
+      <!-- 首单直减 -->
+      <template v-if="form.type === 'first_order'">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>直减金额 (¥)</label>
+            <InputNumber v-model="form.rules.discount" :min="0" class="w-full" placeholder="3" />
+          </div>
+        </div>
+      </template>
+
+      <!-- 赠送单品 -->
+      <template v-if="form.type === 'free_gift'">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>赠送菜品</label>
+            <Select v-model="form.rules.giftDishId" :options="dishes" optionLabel="name" optionValue="id" placeholder="选择赠送的菜品" filter class="w-full" />
+          </div>
+          <div class="form-group flex-1">
+            <label>赠送数量</label>
+            <InputNumber v-model="form.rules.giftQty" :min="1" class="w-full" placeholder="1" />
+          </div>
+        </div>
+      </template>
+
       <div class="form-group">
         <label>状态</label>
         <Select v-model="form.status" :options="statusOptions" optionLabel="label" optionValue="value" class="w-full" />
@@ -139,10 +177,14 @@ const editingId = ref('')
 const typeOptions = [
   { label: '满减', value: 'full_reduction' },
   { label: '福利品', value: 'welfare_item' },
+  { label: '新人福利', value: 'new_user' },
+  { label: '首单直减', value: 'first_order' },
+  { label: '赠送单品', value: 'free_gift' },
 ]
 const limitOptions = [
   { label: '每单限购', value: 'per_order' },
   { label: '全场限量', value: 'global_promo' },
+  { label: '单日限购', value: 'daily' },
 ]
 const statusOptions = [
   { label: '草稿', value: 'draft' },
@@ -250,9 +292,16 @@ function ruleText(p: Promotion): string {
   if (p.type === 'welfare_item') {
     const item = p.items?.[0]
     if (!item) return '-'
-    const limit = item.limitType === 'global_promo' ? '全场限量' : '每单限购'
+    const limitMap: Record<string, string> = { per_order: '每单限购', global_promo: '全场限量', daily: '单日限购' }
+    const limit = limitMap[item.limitType] || item.limitType
     const dish = dishes.value.find((d) => d.id === item.dishId)
     return `${dish?.name || item.dishId} ¥${item.promoPrice} (${limit} ${item.maxQty})`
+  }
+  if (p.type === 'new_user') return `新人立减 ¥${p.rules.discount || '?'}`
+  if (p.type === 'first_order') return `首单直减 ¥${p.rules.discount || '?'}`
+  if (p.type === 'free_gift') {
+    const dish = dishes.value.find((d) => d.id === p.rules.giftDishId)
+    return `赠${dish?.name || '?'} x${p.rules.giftQty || 1}`
   }
   return JSON.stringify(p.rules)
 }
