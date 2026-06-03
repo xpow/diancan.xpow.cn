@@ -273,7 +273,7 @@ async function remove(p: Promotion) {
 }
 
 function typeLabel(type: string): string {
-  const map: Record<string, string> = { full_reduction: '满减', welfare_item: '福利品', buy_get: '买赠', time_discount: '限时折扣' }
+  const map: Record<string, string> = { full_reduction: '满减', welfare_item: '福利品', buy_get: '买赠', time_discount: '限时折扣', new_user: '新人福利', first_order: '首单直减', free_gift: '赠送单品' }
   return map[type] || type
 }
 
