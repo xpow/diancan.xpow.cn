@@ -74,7 +74,7 @@
           <div class="dish-action">
             <input v-if="dish.specs?.qty" :id="`qty-input-${dish.id}`" maxlength="3" inputmode="numeric" class="qty-input" type="text" placeholder="其他数量"
               :value="qtyCustom[dish.id] || ''"
-              @input="const v = ($event.target as HTMLInputElement).value.replace(/\D/g, ''); dish.selectedQty = v + '串'; qtyCustom[dish.id] = v" />
+              @input="qtyCustom[dish.id] = ($event.target as HTMLInputElement).value.replace(/\D/g, ''); dish.selectedQty = qtyCustom[dish.id] + '串'" />
             <button class="add-card-btn" @click="addToCart(dish)">
               <span class="material-symbols-outlined">add</span>
             </button>
@@ -292,7 +292,7 @@ function addToCart(dish: DishItem) {
   if (dish.selectedSpice) specsParts.push(dish.selectedSpice)
   if (dish.selectedQty) specsParts.push(dish.selectedQty)
   const specsKey = specsParts.join(' · ')
-  const qty = dish.selectedQty ? parseInt(dish.selectedQty) || 1 : 1
+  const qty = qtyCustom[dish.id] ? parseInt(qtyCustom[dish.id]) || 1 : dish.selectedQty ? parseInt(dish.selectedQty) || 1 : 1
   const baseDishId = dish.apiDishId || dish.id
   const cartKey = `${baseDishId}|${specsKey}`
 
