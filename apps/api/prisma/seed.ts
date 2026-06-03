@@ -125,6 +125,21 @@ async function main() {
     },
   })
 
+  // Demo 用户
+  const users = [
+    { id: 'user-01', merchantId: merchant.id, phone: '13800001111', name: '张三', avatar: '' },
+    { id: 'user-02', merchantId: merchant.id, phone: '13800002222', name: '李四', avatar: '' },
+    { id: 'user-03', merchantId: merchant.id, phone: '13800003333', name: '王五', avatar: '' },
+  ]
+
+  for (const u of users) {
+    await prisma.user.upsert({
+      where: { id: u.id },
+      update: {},
+      create: u,
+    })
+  }
+
   console.log('Seed data created')
 }
 

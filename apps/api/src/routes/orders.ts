@@ -33,7 +33,7 @@ async function genOrderNumber(merchantId: string, branchId: string, customerName
 
 // Create order
 router.post('/', async (req, res) => {
-  const { merchantId, branchId, orderType, items, tableId, customerName, customerPhone, note, promotions } = req.body
+  const { merchantId, branchId, orderType, items, tableId, customerName, customerPhone, userId, userAvatar, note, promotions } = req.body
   if (!merchantId || !branchId || !items?.length) {
     return res.status(400).json({ error: 'merchantId, branchId, items required' })
   }
@@ -130,8 +130,10 @@ router.post('/', async (req, res) => {
       orderNumber,
       totalPrice,
       tableId,
+      userId: userId || null,
       customerName,
       customerPhone,
+      userAvatar: userAvatar || null,
       note,
       items: {
         create: items.map((i: any) => ({
@@ -146,7 +148,7 @@ router.post('/', async (req, res) => {
         create: orderPromotionCreate,
       },
     },
-    include: { items: true, promotions: true },
+    include: { items: true, promotions: true, user: true },
   })
 
   res.json(order)

@@ -21,6 +21,7 @@ model Merchant {
   dishes   Dish[]
   orders   Order[]
   promotions Promotion[]
+  users    User[]
 }
 
 model NightMarket {
@@ -105,21 +106,39 @@ model Table {
   updatedAt DateTime @updatedAt
 }
 
+model User {
+  id        String   @id @default(cuid())
+  merchantId String?
+  phone     String   @unique
+  name      String?
+  avatar    String?
+  status    String   @default("active")
+
+  merchant  Merchant? @relation(fields: [merchantId], references: [id])
+  orders    Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Order {
   id         String   @id @default(cuid())
   branchId   String
   merchantId String
   tableId    String?
+  userId     String?
   orderType  String   @default("takeaway")
   orderNumber String
   status     String   @default("pending")
   totalPrice Float
   customerName String?
   customerPhone String?
+  userAvatar String?
   note       String?
 
   branch   Branch   @relation(fields: [branchId], references: [id])
   merchant Merchant @relation(fields: [merchantId], references: [id])
+  user     User?    @relation(fields: [userId], references: [id])
   items    OrderItem[]
   promotions OrderPromotion[]
 

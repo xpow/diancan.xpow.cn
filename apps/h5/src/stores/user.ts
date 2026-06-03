@@ -1,13 +1,19 @@
 import { reactive } from 'vue'
 
 interface UserInfo {
+  id: string
   name: string
   initial: string
+  phone: string
+  avatar: string
 }
 
 const user = reactive<UserInfo>({
-  name: '都市烟火暖人心',
-  initial: 'D',
+  id: 'user-01',
+  name: '张三',
+  initial: 'Z',
+  phone: '13800001111',
+  avatar: '',
 })
 
 export function useUser() {

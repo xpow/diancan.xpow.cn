@@ -196,7 +196,9 @@ function confirmOrder() {
       merchantId: 'demo-merchant',
       branchId: 'demo-branch',
       orderType: orderType.value,
+      userId: user.id || undefined,
       customerName: user.name || undefined,
+      userAvatar: user.avatar || undefined,
       items: itemsData,
     }),
   })
