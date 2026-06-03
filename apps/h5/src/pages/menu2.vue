@@ -6,13 +6,13 @@
         <h1 class="top-title">Sizzling Skewers</h1>
       </div>
       <div class="top-right">
-        <button class="icon-btn">
-          <span class="material-symbols-outlined">search</span>
-        </button>
+        <router-link to="/pickup" class="ticket-btn">
+          <span class="material-symbols-outlined">receipt_long</span>
+          <span v-if="hasActiveOrder" class="badge-dot">1</span>
+        </router-link>
       </div>
     </header>
 
-    <!-- 通栏 Banner -->
     <div class="full-banner">
       <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqeOFCkRe-ogyZt9msUQ8Y95II2FqNwreGxURp0gftRhut7fp02ds1uGhH2n9Hfy7jwfBZ6FkCv-ZrKn00gAWI5ZGloBSZeHo0uKw7_BJLkcnDb-KXhzUQ78LGrQu0zvEK6MgNNiNEHA36xrQqcjz9Jhkljxce61HcqfdGXgVKzv86mnyOFAn-RpNOxeI9l2BCjYE3cJr_iVjLKBanRGPlKsDiICSgw3sEcEiTI2i8tlJED4hLAA1S7a4kM-2aN4mXfY-bAO-G_GI" alt="banner" class="full-banner-img" />
       <div class="full-banner-overlay">
@@ -22,89 +22,118 @@
     </div>
 
     <main class="main-layout">
-      <!-- 左侧分类导航 -->
       <aside class="sidebar">
-        <a
-          v-for="cat in categories" :key="cat.id"
+        <a v-for="cat in categories" :key="cat.id"
           :class="['cat-link', activeCat === cat.id && 'cat-active']"
-          @click="activeCat = cat.id"
-        >
+          @click="activeCat = cat.id">
           <span class="material-symbols-outlined cat-icon">{{ cat.icon }}</span>
           <span class="cat-label">{{ cat.name }}</span>
         </a>
       </aside>
 
-      <!-- 右侧内容 -->
       <section class="content">
-        <!-- 菜品列表 -->
-        <div v-for="cat in categories" :key="cat.id" :id="cat.id" class="section" v-show="activeCat === cat.id">
-          <div class="section-header">
-            <h3 class="section-title">{{ cat.name }}</h3>
-          </div>
-          <div class="dish-list">
-            <div v-for="dish in filteredDishes(cat.id)" :key="dish.id" class="dish-card">
-              <div class="dish-top">
-                <img :src="dish.image || placeholderImg" :alt="dish.name" class="dish-img" />
-                <div class="dish-body">
-                  <h4 class="dish-name">
-                    {{ dish.name }}
-                    <span v-if="dish.promotionId" class="promo-tag">福利</span>
-                    <span class="dish-price-inline">
-                      <span v-if="dish.promotionId" class="price-orig">¥{{ dish.price }}</span>
-                      ¥{{ dish.promotionId ? dish.promoPrice : dish.price }}
-                    </span>
-                  </h4>
-                  <p class="dish-desc">{{ dish.desc }}</p>
-                </div>
-              </div>
-              <div class="dish-specs" v-if="dish.spice.length || dish.qty.length">
-                <div class="spec-row" v-if="dish.spice.length">
-                  <span class="spec-label">口感</span>
-                  <div class="spec-options">
-                    <button v-for="opt in dish.spice" :key="opt"
-                      :class="['spec-chip', dish.selectedSpice === opt && 'chip-active']"
-                      @click="dish.selectedSpice = opt">{{ opt }}</button>
-                  </div>
-                </div>
-                <div class="spec-row" v-if="dish.qty.length">
-                  <span class="spec-label">份量</span>
-                  <div class="spec-options">
-                    <button v-for="opt in dish.qty" :key="opt"
-                      :class="['spec-chip', dish.selectedQty === opt && 'chip-active']"
-                      @click="dish.selectedQty = opt">{{ opt }}</button>
-                  </div>
-                </div>
-              </div>
-              <div class="dish-bottom">
-                <span class="dish-spec-hint">选好规格后加入</span>
-                <button class="add-btn" @click="addToCart(dish)">
-                  <span class="material-symbols-outlined">add</span>
-                </button>
+        <div class="section-header">
+          <h3 class="cat-title">{{ currentCat?.name || '' }}</h3>
+          <span class="cat-en">{{ currentCat?.en || '' }}</span>
+        </div>
+
+        <div v-for="dish in filteredDishes" :key="dish.id" class="dish-card">
+          <div class="dish-row">
+            <div class="dish-img">
+              <img :src="dish.image" :alt="dish.name" class="dish-img-el" />
+            </div>
+            <div class="dish-body">
+              <h4 class="dish-name">{{ dish.name }}</h4>
+              <p class="dish-desc">{{ dish.desc }}</p>
+              <div class="dish-price-row">
+                <span class="dish-price">{{ dish.price }}</span>
+                <span v-if="dish.promotionId" class="dish-promo-tag">福利 ¥{{ dish.promoPrice?.toFixed(2) }}</span>
               </div>
             </div>
           </div>
+
+          <div class="dish-specs" v-if="dish.specs">
+            <div class="spec-row">
+              <div class="spec-group" v-if="dish.specs.spice">
+                <p class="spec-label">口感选择</p>
+                <div class="spec-options">
+                  <button v-for="opt in dish.specs.spice" :key="opt"
+                    :class="['spec-chip', dish.selectedSpice === opt && 'chip-active']"
+                    @click="dish.selectedSpice = opt">{{ opt }}</button>
+                </div>
+              </div>
+            </div>
+            <div class="spec-group" v-if="dish.specs.qty">
+              <p class="spec-label">数量选择</p>
+              <div class="spec-options">
+                <button v-for="opt in dish.specs.qty" :key="opt"
+                  :class="['spec-chip', dish.selectedQty === opt && 'chip-active']"
+                  @click="dish.selectedQty = opt">{{ opt }}</button>
+                <input class="qty-input" type="number" placeholder="其他数量"
+                  @input="dish.selectedQty = ($event.target as HTMLInputElement).value + '串'" />
+              </div>
+            </div>
+          </div>
+
+          <button class="add-card-btn" @click="addToCart(dish)">
+            <span class="material-symbols-outlined">add</span>
+          </button>
         </div>
       </section>
     </main>
 
-    <!-- 购物车浮条 -->
-    <div :class="['cart-bar', totalCount > 0 && 'cart-visible']">
+    <div v-if="totalCount > 0" class="cart-floating" @click="showCart = true">
       <div class="cart-glass">
-        <div class="cart-left">
-          <div class="cart-icon-wrap">
-            <span class="material-symbols-outlined cart-icon">shopping_basket</span>
-            <span v-if="totalCount > 0" class="cart-badge">{{ totalCount }}</span>
+        <div class="cart-glass-left">
+          <div class="cart-icon-box">
+            <span class="material-symbols-outlined cart-basket">shopping_basket</span>
+            <span class="cart-badge">{{ totalCount }}</span>
           </div>
-          <div class="cart-info">
-            <span class="cart-label">合计金额</span>
-            <span class="cart-total">¥{{ totalPrice.toFixed(2) }}</span>
+          <div class="cart-glass-info">
+            <span class="cart-glass-label">合计金额</span>
+            <span class="cart-glass-price">¥{{ totalPrice.toFixed(2) }}</span>
           </div>
         </div>
-        <button class="cart-btn" @click="goCheckout">去结算</button>
+        <button class="cart-glass-btn" @click.stop="goCheckout">去结算</button>
       </div>
     </div>
 
-    <!-- 底部导航 -->
+    <van-action-sheet v-model:show="showCart" close-on-popup-close>
+      <div class="cart-sheet">
+        <div class="cart-sheet-header">
+          <span class="cart-sheet-title">购物车</span>
+          <button v-if="items.length" class="clear-btn" @click="clearCart">
+            <span class="material-symbols-outlined">delete</span>
+            清空
+          </button>
+        </div>
+        <div v-for="item in items" :key="item.dishId" class="cart-item-row">
+          <div class="cart-item-info">
+            <p class="cart-item-name">{{ item.name }}</p>
+            <p class="cart-item-spec" v-if="item.specs">{{ item.specs }}</p>
+            <p class="cart-item-price">¥{{ (item.price * item.quantity).toFixed(2) }}</p>
+          </div>
+          <div class="cart-qty">
+            <button class="qty-btn" @click="updateQuantity(item.dishId, -1)">
+              <span class="material-symbols-outlined">remove</span>
+            </button>
+            <span class="qty-num">{{ item.quantity }}</span>
+            <button class="qty-btn" @click="updateQuantity(item.dishId, 1)">
+              <span class="material-symbols-outlined">add</span>
+            </button>
+            <button class="delete-btn" @click="removeItem(item.dishId)">
+              <span class="material-symbols-outlined">delete</span>
+            </button>
+          </div>
+        </div>
+        <div v-if="items.length === 0" class="cart-empty">购物车是空的</div>
+        <div class="cart-bottom-bar">
+          <span class="cart-total-label">合计：<span class="cart-total-price">¥{{ totalPrice.toFixed(2) }}</span></span>
+          <button class="checkout-btn" @click="goCheckout">确认下单</button>
+        </div>
+      </div>
+    </van-action-sheet>
+
     <nav class="bottom-nav">
       <router-link to="/home" class="nav-item">
         <span class="material-symbols-outlined">home</span>
@@ -123,63 +152,79 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCart } from '@/stores/cart'
 import { showToast } from 'vant'
 import 'vant/es/toast/style'
 
 const router = useRouter()
-const { items, totalCount, totalPrice, add: cartAdd } = useCart()
+const { items, totalCount, totalPrice, add: cartAdd, updateQuantity, clear: clearCart } = useCart()
+const showCart = ref(false)
 const activeCat = ref('')
+const hasActiveOrder = ref(!!localStorage.getItem('currentOrder'))
 
-const placeholderImg = 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300&h=300&fit=crop'
-
-interface ApiDish {
-  id: string
-  name: string
-  price: number
-  image: string | null
-  desc: string | null
-  categoryId: string
-  specsPreset: string
-  category: { id: string; name: string; sort: number }
+interface DishSpecs {
+  spice?: string[]
+  qty?: string[]
 }
 
-interface ApiPromotion {
+interface DishItem {
   id: string
-  type: string
-  items: { dishId: string; promoPrice: number; limitType: string; maxQty: number }[]
+  apiDishId?: string
+  categoryId: string
+  name: string
+  price: string
+  desc: string
+  image: string
+  specs?: DishSpecs
+  selectedSpice?: string
+  selectedQty?: string
+  rawPrice?: number
+  promoPrice?: number
+  promotionId?: string
+  promotionItemId?: string
+  limitType?: string
+  maxQty?: number
 }
 
 interface CategoryItem {
   id: string
   name: string
+  en: string
   icon: string
 }
 
-interface DishItem {
+interface PromoItem {
+  id: string
+  dishId: string
+  promoPrice: number
+  limitType: string
+  maxQty: number
+}
+
+interface Promotion {
   id: string
   name: string
-  price: number
-  desc: string
-  image: string
-  categoryId: string
-  specsPreset: string
-  spice: string[]
-  qty: string[]
-  selectedSpice: string
-  selectedQty: string
-  promotionId?: string
-  promoPrice?: number
-  limitType?: string
-  maxQty?: number
-  apiDishId?: string
+  type: string
+  status: string
+  items: PromoItem[]
 }
 
 const categories = ref<CategoryItem[]>([])
-const dishes = ref<DishItem[]>([])
-const promotions = ref<ApiPromotion[]>([])
+
+const CAT_ICON_MAP: Record<string, string> = {
+  '肉串': 'kebab_dining',
+  '素菜': 'eco',
+  '饮品': 'local_bar',
+}
+
+function catIcon(name: string): string {
+  for (const [key, icon] of Object.entries(CAT_ICON_MAP)) {
+    if (name.includes(key)) return icon
+  }
+  return 'restaurant_menu'
+}
 
 const DISH_IMAGES: Record<string, string> = {
   'dish-01': '/src/assets/images/yrc-s1.jpg?raw=true',
@@ -196,41 +241,64 @@ const DISH_IMAGES: Record<string, string> = {
   'dish-12': '/src/assets/images/kqs.webp?raw=true',
 }
 
-const CAT_ICON_MAP: Record<string, string> = {
-  '肉串': 'kebab_dining',
-  '素菜': 'eco',
-  '饮品': 'local_bar',
-}
+const IMG_LAMB = '/src/assets/images/yrc-s1.jpg?raw=true'
+const IMG_LAMB_BIG = '/src/assets/images/yrc-x.webp?raw=true'
+const IMG_LAMB_HL = '/src/assets/images/hlyrc.jpg?raw=true'
+const IMG_NLT = '/src/assets/images/nlt.jpg?raw=true'
+const IMG_LEMON = '/src/assets/images/sdmmc.webp?raw=true'
+const IMG_SMT = '/src/assets/images/smt.jpg?raw=true'
+const IMG_KQS = '/src/assets/images/kqs.webp?raw=true'
 
 const SPECS_PRESETS: Record<string, { spice: string[]; qty: string[] }> = {
-  bbq: { spice: ['原味', '微辣', '加辣'], qty: ['1份', '2份', '3份'] },
+  bbq: { spice: ['原味', '微辣', '加辣'], qty: ['1份', '2份', '3份', '5份'] },
   none: { spice: [], qty: [] },
 }
 
-function catIcon(name: string): string {
-  for (const [key, icon] of Object.entries(CAT_ICON_MAP)) {
-    if (name.includes(key)) return icon
+function initDish(data: Omit<DishItem, 'selectedSpice' | 'selectedQty'>): DishItem {
+  return {
+    ...data,
+    selectedSpice: data.specs?.spice?.[0],
+    selectedQty: data.specs?.qty?.[0],
   }
-  return 'restaurant_menu'
 }
 
-function filteredDishes(categoryId: string) {
-  return dishes.value.filter((d) => d.categoryId === categoryId)
+const dishes = ref<DishItem[]>([])
+
+interface ApiDish {
+  id: string
+  name: string
+  price: number
+  image: string | null
+  desc: string | null
+  categoryId: string
+  specsPreset: string
+  category: { id: string; name: string; sort: number }
 }
+
+interface ApiPromotion {
+  id: string
+  type: string
+  items: { id: string; dishId: string; promoPrice: number; limitType: string; maxQty: number }[]
+}
+
+const currentCat = computed(() => categories.value.find((c) => c.id === activeCat.value))
+const filteredDishes = computed(() => dishes.value.filter((d) => d.categoryId === activeCat.value))
 
 function addToCart(dish: DishItem) {
-  const price = dish.promotionId ? dish.promoPrice! : dish.price
+  const unitPrice = parseFloat(dish.price.replace('¥', ''))
+  const price = dish.promotionId ? dish.promoPrice! : unitPrice
   const specsParts: string[] = []
   if (dish.selectedSpice) specsParts.push(dish.selectedSpice)
   if (dish.selectedQty) specsParts.push(dish.selectedQty)
   const specsKey = specsParts.join(' · ')
   const qty = dish.selectedQty ? parseInt(dish.selectedQty) || 1 : 1
-  const cartKey = `${dish.apiDishId || dish.id}|${specsKey}`
+  const baseDishId = dish.apiDishId || dish.id
+  const cartKey = `${baseDishId}|${specsKey}`
 
   if (dish.promotionId && dish.maxQty) {
     if (dish.limitType === 'per_order') {
       const existing = items
-        .filter((i: any) => i.promotionId === dish.promotionId && (i.baseDishId || i.dishId?.split('|')[0]) === dish.id)
+        .filter((i: any) => i.promotionId === dish.promotionId && (i.baseDishId || i.dishId?.split('|')[0]) === baseDishId)
         .reduce((s: number, i: any) => s + i.quantity, 0)
       if (existing + qty > dish.maxQty) {
         showToast(`该福利单品限购 ${dish.maxQty} 份`)
@@ -250,34 +318,72 @@ function addToCart(dish: DishItem) {
 
   cartAdd({
     dishId: cartKey,
-    baseDishId: dish.apiDishId,
+    baseDishId,
     name: dish.name + (dish.promotionId ? ' (福利)' : ''),
     price,
     quantity: qty,
     specs: specsKey || undefined,
-    originalPrice: dish.promotionId ? dish.price : undefined,
+    originalPrice: dish.promotionId ? unitPrice : undefined,
     promotionId: dish.promotionId,
+    promotionItemId: dish.promotionItemId,
     promoPrice: dish.promoPrice,
     limitType: dish.limitType,
   } as any)
   showToast('已加入购物车')
 }
 
+function removeItem(dishId: string) {
+  updateQuantity(dishId, -999)
+  if (items.length === 0) showCart.value = false
+}
+
 function goCheckout() {
+  showCart.value = false
   router.push('/checkout')
+}
+
+const promotions = ref<Promotion[]>([])
+
+function applyPromotions() {
+  for (const promo of promotions.value) {
+    if (promo.type !== 'welfare_item') continue
+    for (const pi of promo.items) {
+      const match = dishes.value.find((d) => d.apiDishId === pi.dishId) ||
+        dishes.value.find((d) => d.name.includes(nameFromId(pi.dishId)))
+      if (match) {
+        match.promotionId = promo.id
+        match.promotionItemId = pi.id
+        match.promoPrice = pi.promoPrice
+        match.limitType = pi.limitType
+        match.maxQty = pi.maxQty
+      }
+    }
+  }
+}
+
+function nameFromId(id: string): string {
+  const map: Record<string, string> = { 'dish-07': '烤韭菜', 'dish-08': '烤金针菇' }
+  return map[id] || id
 }
 
 onMounted(async () => {
   try {
+    fetch('/api/orders?branchId=demo-branch&status=preparing&limit=1')
+      .then(r => r.json())
+      .then(list => { if (list.length) hasActiveOrder.value = true })
+      .catch(() => {})
+    fetch('/api/orders?branchId=demo-branch&status=pending&limit=1')
+      .then(r => r.json())
+      .then(list => { if (list.length) hasActiveOrder.value = true })
+      .catch(() => {})
+
     const [dishRes, promoRes] = await Promise.all([
       fetch('/api/dishes'),
       fetch('/api/promotions?merchantId=demo-merchant&status=active'),
     ])
     const apiDishes: ApiDish[] = await dishRes.json()
     const apiPromos: ApiPromotion[] = await promoRes.json()
-    promotions.value = apiPromos
 
-    // Extract unique categories sorted by sort
     const catMap = new Map<string, { id: string; name: string; sort: number }>()
     for (const d of apiDishes) {
       if (d.category && !catMap.has(d.category.id)) {
@@ -285,40 +391,32 @@ onMounted(async () => {
       }
     }
     const sorted = [...catMap.values()].sort((a, b) => a.sort - b.sort)
-    categories.value = sorted.map((c) => ({ id: c.id, name: c.name, icon: catIcon(c.name) }))
+    categories.value = sorted.map((c) => ({ id: c.id, name: c.name, en: '', icon: catIcon(c.name) }))
     if (categories.value.length) activeCat.value = categories.value[0].id
 
-    // Build welfare promo lookup: dishId -> promo info
-    const welfareMap = new Map<string, { promotionId: string; promoPrice: number; limitType: string }>()
-    for (const p of apiPromos) {
-      if (p.type !== 'welfare_item') continue
-      for (const item of p.items) {
-        welfareMap.set(item.dishId, { promotionId: p.id, promoPrice: item.promoPrice, limitType: item.limitType })
-      }
-    }
+    promotions.value = apiPromos
 
-    dishes.value = apiDishes.map((d) => {
-      const promo = welfareMap.get(d.id)
+    for (const d of apiDishes) {
       const preset = SPECS_PRESETS[d.specsPreset] || SPECS_PRESETS.none
-      return {
+      let image = d.image || DISH_IMAGES[d.id] || ''
+      if (!image) {
+        if (d.category?.name?.includes('肉串')) image = IMG_LAMB
+        else if (d.category?.name?.includes('饮')) image = d.id === 'dish-10' ? IMG_SMT : d.id === 'dish-11' ? IMG_LEMON : IMG_KQS
+        else image = '/src/assets/images/kqz.jpg?raw=true'
+      }
+      dishes.value.push(initDish({
         id: d.id,
         apiDishId: d.id,
-        name: d.name,
-        price: d.price,
-        desc: d.desc || '',
-        image: d.image || DISH_IMAGES[d.id] || placeholderImg,
         categoryId: d.categoryId,
-        specsPreset: d.specsPreset,
-        spice: preset.spice,
-        qty: preset.qty,
-        selectedSpice: preset.spice[0] || '',
-        selectedQty: preset.qty[0] || '',
-        promotionId: promo?.promotionId,
-        promoPrice: promo?.promoPrice,
-        limitType: promo?.limitType,
-        maxQty: undefined,
-      }
-    })
+        name: d.name,
+        price: `¥${d.price}.00`,
+        desc: d.desc || '',
+        image,
+        specs: { spice: preset.spice.length ? preset.spice : undefined, qty: preset.qty.length ? preset.qty : undefined },
+      }))
+    }
+
+    applyPromotions()
   } catch {
     showToast('加载失败')
   }
@@ -348,15 +446,20 @@ onMounted(async () => {
 .top-left { display: flex; align-items: center; gap: 8px; }
 .top-icon { color: #ff6b00; font-size: 24px; }
 .top-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 700; color: #ff6b00; text-transform: uppercase; letter-spacing: -0.02em; margin: 0; }
-.icon-btn { width: 40px; height: 40px; border-radius: 50%; border: none; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #1c1b1b; }
+.ticket-btn {
+  position: relative; width: 40px; height: 40px; border-radius: 50%;
+  border: none; background: transparent; display: flex; align-items: center;
+  justify-content: center; cursor: pointer; color: #1c1b1b; text-decoration: none;
+}
+.badge-dot {
+  position: absolute; top: 4px; right: 4px; width: 10px; height: 10px;
+  border-radius: 50%; background: #ba1a1a; border: 2px solid #fff;
+}
 
 /* Full-width Banner */
 .full-banner {
-  position: relative;
-  width: 100%;
-  height: 140px;
-  flex-shrink: 0;
-  overflow: hidden;
+  position: relative; width: 100%; height: 140px;
+  flex-shrink: 0; overflow: hidden;
 }
 .full-banner-img { width: 100%; height: 100%; object-fit: cover; }
 .full-banner-overlay {
@@ -364,6 +467,11 @@ onMounted(async () => {
   background: linear-gradient(0deg, rgba(0,0,0,0.6) 0%, transparent 60%);
   display: flex; flex-direction: column; justify-content: flex-end; padding: 16px;
 }
+.banner-tag {
+  align-self: flex-start; background: #ff6b00; color: #fff;
+  font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 9999px; margin-bottom: 4px;
+}
+.banner-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 700; color: #fff; margin: 0; }
 
 /* Main Layout */
 .main-layout {
@@ -411,158 +519,163 @@ onMounted(async () => {
   padding: 12px 16px 100px;
 }
 
-.banner-tag {
-  align-self: flex-start;
-  background: #ff6b00; color: #fff;
-  font-size: 10px; font-weight: 700;
-  padding: 2px 8px; border-radius: 9999px; margin-bottom: 4px;
-}
-.banner-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 700; color: #fff; margin: 0; }
-
-/* Section */
-.section { margin-bottom: 16px; }
-.section-header { margin-bottom: 12px; }
-.section-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 700; margin: 0; }
+.section-header { margin-bottom: 12px; display: flex; align-items: baseline; gap: 8px; }
+.cat-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 700; margin: 0; color: #1c1b1b; }
+.cat-en { font-size: 14px; color: #5e5e5c; font-weight: 400; }
 
 /* Dish Card */
-.dish-list { display: flex; flex-direction: column; gap: 12px; }
 .dish-card {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-bottom: 12px;
   background: #fff;
   border-radius: 12px;
   padding: 12px;
   border: 1px solid rgba(226, 191, 176, 0.2);
   box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  position: relative;
 }
-.dish-top { display: flex; gap: 16px; }
-.dish-img {
-  width: 96px;
-  height: 96px;
-  border-radius: 10px;
-  object-fit: cover;
-  flex-shrink: 0;
-  background: #e5e2e1;
+.dish-row { display: flex; gap: 12px; }
+.dish-img { width: 96px; height: 96px; border-radius: 10px; overflow: hidden; flex-shrink: 0; }
+.dish-img-el { width: 100%; height: 100%; object-fit: cover; background: #e5e2e1; }
+.dish-body { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.dish-name { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 700; margin: 0; }
+.dish-desc { font-size: 13px; color: #5e5e5c; margin: 0; line-height: 1.3; }
+.dish-price-row { display: flex; align-items: center; gap: 8px; margin-top: auto; }
+.dish-price { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 800; color: #a04100; line-height: 1; }
+.dish-promo-tag {
+  padding: 1px 6px; border-radius: 4px; background: #ba1a1a; color: #fff;
+  font-size: 10px; font-weight: 700; white-space: nowrap;
 }
-.dish-body { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; text-align: right; }
-.dish-name { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-.dish-price-inline { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 800; color: #a04100; line-height: 1; display: flex; align-items: center; gap: 4px; }
-.price-orig { font-size: 14px; font-weight: 600; color: #8e7164; text-decoration: line-through; }
-.dish-desc { font-size: 13px; color: #5e5e5c; margin: 4px 0 0; line-height: 1.3; }
+
+/* Specs */
 .dish-specs { display: flex; flex-direction: column; gap: 6px; }
-.spec-row { display: flex; align-items: center; gap: 6px; }
-.spec-label { font-size: 11px; font-weight: 600; color: #5e5e5c; white-space: nowrap; min-width: 30px; }
-.spec-options { display: flex; gap: 4px; flex-wrap: wrap; }
+.spec-group { margin-bottom: 2px; }
+.spec-label { font-size: 12px; font-weight: 600; color: #5e5e5c; margin: 0 0 4px; }
+.spec-options { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .spec-chip {
-  padding: 2px 8px; border-radius: 9999px; border: 1px solid #e2bfb0;
-  background: #fff; font-size: 11px; color: #5e5e5c; cursor: pointer;
+  padding: 4px 12px; border-radius: 9999px; border: 1px solid #e2bfb0;
+  background: #fff; font-size: 12px; color: #5e5e5c; cursor: pointer;
   transition: all 0.15s; font-family: inherit;
 }
 .spec-chip:active { transform: scale(0.95); }
 .chip-active {
   background: #ff6b00; color: #fff; border-color: #ff6b00; font-weight: 700;
 }
-.dish-bottom { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
-.promo-tag {
-  display: inline-block;
-  margin-left: 6px;
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: #ba1a1a;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  vertical-align: middle;
+.qty-input {
+  width: 60px; padding: 4px 8px; border-radius: 9999px; border: 1px solid #e2bfb0;
+  font-size: 12px; text-align: center; outline: none; font-family: inherit;
 }
-.add-btn {
-  width: 32px; height: 32px; border-radius: 50%;
+.qty-input:focus { border-color: #ff6b00; }
+
+/* Add Button */
+.add-card-btn {
+  position: absolute; right: 12px; bottom: 12px;
+  width: 36px; height: 36px; border-radius: 50%;
   border: none; background: #ff6b00; color: #fff;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; box-shadow: 0 2px 8px rgba(255, 107, 0, 0.3);
   transition: transform 0.15s;
 }
-.add-btn:active { transform: scale(0.9); }
-.add-btn .material-symbols-outlined { font-size: 18px; }
+.add-card-btn:active { transform: scale(0.9); }
+.add-card-btn .material-symbols-outlined { font-size: 20px; }
 
-/* Cart Bar */
-.cart-bar {
-  position: fixed;
-  bottom: 64px;
-  left: 12px;
-  right: 12px;
-  z-index: 100;
-  transition: transform 0.3s;
-  transform: translateY(120%);
+/* Cart Floating */
+.cart-floating {
+  position: fixed; bottom: 64px; left: 12px; right: 12px; z-index: 100;
 }
-.cart-visible { transform: translateY(0); }
 .cart-glass {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: rgba(255,255,255,0.9);
-  backdrop-filter: blur(12px);
-  border-radius: 16px;
-  padding: 12px 12px 12px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(255,255,255,0.9); backdrop-filter: blur(12px);
+  border-radius: 16px; padding: 12px 12px 12px 16px;
   box-shadow: 0 8px 20px rgba(255, 107, 0, 0.15);
-  border: 1px solid rgba(255, 107, 0, 0.1);
+  border: 1px solid rgba(255, 107, 0, 0.1); cursor: pointer;
 }
-.cart-left { display: flex; align-items: center; gap: 12px; }
-.cart-icon-wrap { position: relative; }
-.cart-icon { font-size: 32px; color: #a04100; }
+.cart-glass-left { display: flex; align-items: center; gap: 12px; }
+.cart-icon-box { position: relative; }
+.cart-basket { font-size: 32px; color: #a04100; }
 .cart-badge {
-  position: absolute; top: -4px; right: -4px;
-  background: #ba1a1a; color: #fff;
-  font-size: 10px; font-weight: 700;
-  min-width: 20px; height: 20px; border-radius: 9999px;
-  display: flex; align-items: center; justify-content: center;
+  position: absolute; top: -4px; right: -4px; background: #ba1a1a; color: #fff;
+  font-size: 10px; font-weight: 700; min-width: 20px; height: 20px;
+  border-radius: 9999px; display: flex; align-items: center; justify-content: center;
   padding: 0 4px; border: 2px solid #fff;
 }
-.cart-info { display: flex; flex-direction: column; }
-.cart-label { font-size: 10px; font-weight: 700; color: #5e5e5c; text-transform: uppercase; letter-spacing: 0.04em; line-height: 1; }
-.cart-total { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 800; color: #a04100; line-height: 1.4; }
-.cart-btn {
-  background: #ff6b00; color: #fff;
-  border: none; border-radius: 9999px;
-  padding: 12px 24px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 16px; font-weight: 700;
-  cursor: pointer; transition: transform 0.15s;
+.cart-glass-info { display: flex; flex-direction: column; }
+.cart-glass-label { font-size: 10px; font-weight: 700; color: #5e5e5c; text-transform: uppercase; letter-spacing: 0.04em; line-height: 1; }
+.cart-glass-price { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 800; color: #a04100; line-height: 1.4; }
+.cart-glass-btn {
+  background: #ff6b00; color: #fff; border: none; border-radius: 9999px;
+  padding: 12px 24px; font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 16px; font-weight: 700; cursor: pointer; transition: transform 0.15s;
   box-shadow: 0 4px 8px rgba(255, 107, 0, 0.2);
 }
-.cart-btn:active { transform: scale(0.95); }
+.cart-glass-btn:active { transform: scale(0.95); }
+
+/* Cart Sheet */
+.cart-sheet { padding: 16px; }
+.cart-sheet-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+}
+.cart-sheet-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 700; }
+.clear-btn {
+  display: flex; align-items: center; gap: 4px; padding: 6px 12px;
+  border: 1px solid #e2bfb0; border-radius: 9999px; background: #fff;
+  font-size: 12px; color: #5e5e5c; cursor: pointer; font-family: inherit;
+}
+.clear-btn .material-symbols-outlined { font-size: 16px; }
+.cart-item-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 0; border-bottom: 1px solid #e5e2e1;
+}
+.cart-item-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.cart-item-name { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 600; margin: 0; }
+.cart-item-spec { font-size: 12px; color: #5e5e5c; margin: 0; }
+.cart-item-price { font-size: 14px; font-weight: 700; color: #a04100; margin: 0; }
+.cart-qty { display: flex; align-items: center; gap: 8px; }
+.qty-btn {
+  width: 28px; height: 28px; border-radius: 50%; border: 1px solid #e2bfb0;
+  background: #fff; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #5e5e5c;
+}
+.qty-btn:active { background: #e5e2e1; }
+.qty-btn .material-symbols-outlined { font-size: 16px; }
+.qty-num { font-size: 14px; font-weight: 600; min-width: 20px; text-align: center; }
+.delete-btn {
+  width: 28px; height: 28px; border-radius: 50%; border: none;
+  background: transparent; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #ba1a1a;
+}
+.cart-empty { text-align: center; padding: 32px; color: #5e5e5c; font-size: 14px; }
+.cart-bottom-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 0; margin-top: 8px;
+}
+.cart-total-label { font-size: 14px; font-weight: 600; }
+.cart-total-price { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 800; color: #a04100; }
+.checkout-btn {
+  background: #ff6b00; color: #fff; border: none; border-radius: 9999px;
+  padding: 12px 32px; font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 16px; font-weight: 700; cursor: pointer;
+}
+.checkout-btn:active { transform: scale(0.95); }
 
 /* Bottom Nav */
 .bottom-nav {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  z-index: 50;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  padding: 8px 12px;
-  padding-bottom: max(8px, env(safe-area-inset-bottom));
-  background: rgba(252,249,248,0.95);
-  backdrop-filter: blur(12px);
-  border-radius: 12px 12px 0 0;
-  box-shadow: 0 -4px 12px rgba(0,0,0,0.04);
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+  display: flex; justify-content: space-around; align-items: center;
+  padding: 8px 12px; padding-bottom: max(8px, env(safe-area-inset-bottom));
+  background: rgba(252,249,248,0.95); backdrop-filter: blur(12px);
+  border-radius: 12px 12px 0 0; box-shadow: 0 -4px 12px rgba(0,0,0,0.04);
 }
 .nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 16px;
-  text-decoration: none;
-  color: #5e5e5c;
-  transition: all 0.15s;
-  gap: 2px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 4px 16px; text-decoration: none; color: #5e5e5c;
+  transition: all 0.15s; gap: 2px;
 }
 .nav-active {
-  background: rgba(255, 107, 0, 0.1);
-  color: #572000;
-  border-radius: 9999px;
-  padding: 4px 16px;
+  background: rgba(255, 107, 0, 0.1); color: #572000;
+  border-radius: 9999px; padding: 4px 16px;
 }
 .nav-item .material-symbols-outlined { font-size: 24px; }
 .nav-label { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 600; }
