@@ -232,7 +232,7 @@ const DISH_IMAGES: Record<string, string> = {
   'dish-02': '/src/assets/images/yrc-x.webp?raw=true',
   'dish-03': '/src/assets/images/hlyrc.jpg?raw=true',
   'dish-04': '/src/assets/images/nlt.jpg?raw=true',
-  'dish-05': '/src/assets/images/kqs.webp?raw=true',
+  'dish-05': '/src/assets/images/kyy.webp?raw=true',
   'dish-06': '/src/assets/images/kqz.jpg?raw=true',
   'dish-07': '/src/assets/images/kjc.jpg?raw=true',
   'dish-08': '/src/assets/images/kqz.jpg?raw=true',
@@ -290,7 +290,6 @@ function addToCart(dish: DishItem) {
   const price = dish.promotionId ? dish.promoPrice! : unitPrice
   const specsParts: string[] = []
   if (dish.selectedSpice) specsParts.push(dish.selectedSpice)
-  if (dish.selectedQty) specsParts.push(dish.selectedQty)
   const specsKey = specsParts.join(' · ')
   const qty = qtyCustom[dish.id] ? parseInt(qtyCustom[dish.id]) || 1 : dish.selectedQty ? parseInt(dish.selectedQty) || 1 : 1
   const baseDishId = dish.apiDishId || dish.id
@@ -323,7 +322,7 @@ function addToCart(dish: DishItem) {
     name: dish.name + (dish.promotionId ? ' (福利)' : ''),
     price,
     quantity: qty,
-    specs: specsKey || undefined,
+    specs: dish.selectedSpice || undefined,
     originalPrice: dish.promotionId ? unitPrice : undefined,
     promotionId: dish.promotionId,
     promotionItemId: dish.promotionItemId,
