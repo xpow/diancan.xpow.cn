@@ -72,9 +72,9 @@
           </div>
 
           <div class="dish-action">
-            <input v-if="dish.specs?.qty" :maxlength="3" min="1" class="qty-input" type="number" placeholder="其他数量"
+            <input v-if="dish.specs?.qty" min="1" max="999" class="qty-input" type="number" placeholder="其他数量"
               :value="qtyCustom[dish.id] || ''"
-              @input="const v = ($event.target as HTMLInputElement).value; dish.selectedQty = v + '串'; qtyCustom[dish.id] = v" />
+              @input="const v = ($event.target as HTMLInputElement).value.slice(0, 3); dish.selectedQty = v + '串'; qtyCustom[dish.id] = v" />
             <button class="add-card-btn" @click="addToCart(dish)">
               <span class="material-symbols-outlined">add</span>
             </button>
