@@ -90,10 +90,10 @@ async function main() {
     await prisma.nightMarket.upsert({ where: { id: nm.id }, update: {}, create: nm })
   }
 
-  // Demo 营销活动
+  // Demo 营销活动 — 清空后重建
   await prisma.orderPromotion.deleteMany({ })
   await prisma.promotionItem.deleteMany({ })
-  await prisma.promotion.deleteMany({ where: { id: { startsWith: 'promo-' } } })
+  await prisma.promotion.deleteMany({ })
 
   await prisma.promotion.create({
     data: {
@@ -150,29 +150,29 @@ async function main() {
       merchantId: merchant.id,
       name: '新人立减5元',
       type: 'new_user',
-      rules: JSON.stringify({ discount: 5, minAmount: 0 }),
+      rules: JSON.stringify({ mode: 'first_order', discount: 5, minAmount: 0 }),
       status: 'active',
     },
   })
 
   await prisma.promotion.create({
     data: {
-      id: 'promo-first-order',
+      id: 'promo-new-user-gift',
       merchantId: merchant.id,
-      name: '首单直减3元',
-      type: 'first_order',
-      rules: JSON.stringify({ discount: 3 }),
+      name: '新人赠烤韭菜',
+      type: 'new_user',
+      rules: JSON.stringify({ mode: 'free_gift', giftDishId: 'dish-07', giftQty: 1 }),
       status: 'active',
     },
   })
 
   await prisma.promotion.create({
     data: {
-      id: 'promo-free-gift',
+      id: 'promo-holiday',
       merchantId: merchant.id,
-      name: '赠烤韭菜',
-      type: 'free_gift',
-      rules: JSON.stringify({ giftDishId: 'dish-07', giftQty: 1 }),
+      name: '端午节赠烤茄子',
+      type: 'holiday_gift',
+      rules: JSON.stringify({ holiday: '端午节', giftDishId: 'dish-06', giftQty: 2 }),
       status: 'active',
     },
   })
