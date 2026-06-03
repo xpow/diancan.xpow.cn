@@ -66,14 +66,15 @@
               <div class="spec-options">
                 <button v-for="opt in dish.specs.qty" :key="opt"
                   :class="['spec-chip', dish.selectedQty === opt && 'chip-active']"
-                  @click="dish.selectedQty = opt">{{ opt }}</button>
+                  @click="dish.selectedQty = opt; qtyCustom[dish.id] = ''">{{ opt }}</button>
               </div>
             </div>
           </div>
 
           <div class="dish-action">
-            <input v-if="dish.specs?.qty" class="qty-input" type="number" placeholder="其他数量"
-              @input="dish.selectedQty = ($event.target as HTMLInputElement).value + '串'" />
+            <input v-if="dish.specs?.qty" :maxlength="3" min="1" class="qty-input" type="number" placeholder="其他数量"
+              :value="qtyCustom[dish.id] || ''"
+              @input="const v = ($event.target as HTMLInputElement).value; dish.selectedQty = v + '串'; qtyCustom[dish.id] = v" />
             <button class="add-card-btn" @click="addToCart(dish)">
               <span class="material-symbols-outlined">add</span>
             </button>
@@ -343,6 +344,7 @@ function goCheckout() {
 }
 
 const promotions = ref<Promotion[]>([])
+const qtyCustom = ref<Record<string, string>>({})
 
 function applyPromotions() {
   for (const promo of promotions.value) {
@@ -564,7 +566,7 @@ onMounted(async () => {
   background: #ff6b00; color: #fff; border-color: #ff6b00; font-weight: 700;
 }
 .qty-input {
-  width: 60px; padding: 4px 8px; border-radius: 9999px; border: 1px solid #e2bfb0;
+  width: 120px; padding: 4px 8px; border-radius: 9999px; border: 1px solid #e2bfb0;
   font-size: 12px; text-align: center; outline: none; font-family: inherit;
 }
 .qty-input:focus { border-color: #ff6b00; }
