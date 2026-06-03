@@ -14,7 +14,7 @@
     </header>
 
     <div class="full-banner">
-      <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqeOFCkRe-ogyZt9msUQ8Y95II2FqNwreGxURp0gftRhut7fp02ds1uGhH2n9Hfy7jwfBZ6FkCv-ZrKn00gAWI5ZGloBSZeHo0uKw7_BJLkcnDb-KXhzUQ78LGrQu0zvEK6MgNNiNEHA36xrQqcjz9Jhkljxce61HcqfdGXgVKzv86mnyOFAn-RpNOxeI9l2BCjYE3cJr_iVjLKBanRGPlKsDiICSgw3sEcEiTI2i8tlJED4hLAA1S7a4kM-2aN4mXfY-bAO-G_GI" alt="banner" class="full-banner-img" />
+      <img src="/src/assets/images/hero.png" alt="banner" class="full-banner-img" />
       <div class="full-banner-overlay">
         <span class="banner-tag">今日推荐</span>
         <h2 class="banner-title">招牌秘制羊肉串</h2>
@@ -53,14 +53,12 @@
           </div>
 
           <div class="dish-specs" v-if="dish.specs">
-            <div class="spec-row">
-              <div class="spec-group" v-if="dish.specs.spice">
-                <p class="spec-label">口感选择</p>
-                <div class="spec-options">
-                  <button v-for="opt in dish.specs.spice" :key="opt"
-                    :class="['spec-chip', dish.selectedSpice === opt && 'chip-active']"
-                    @click="dish.selectedSpice = opt">{{ opt }}</button>
-                </div>
+            <div class="spec-group" v-if="dish.specs.spice">
+              <p class="spec-label">口感选择</p>
+              <div class="spec-options">
+                <button v-for="opt in dish.specs.spice" :key="opt"
+                  :class="['spec-chip', dish.selectedSpice === opt && 'chip-active']"
+                  @click="dish.selectedSpice = opt">{{ opt }}</button>
               </div>
             </div>
             <div class="spec-group" v-if="dish.specs.qty">
@@ -69,15 +67,17 @@
                 <button v-for="opt in dish.specs.qty" :key="opt"
                   :class="['spec-chip', dish.selectedQty === opt && 'chip-active']"
                   @click="dish.selectedQty = opt">{{ opt }}</button>
-                <input class="qty-input" type="number" placeholder="其他数量"
-                  @input="dish.selectedQty = ($event.target as HTMLInputElement).value + '串'" />
               </div>
             </div>
           </div>
 
-          <button class="add-card-btn" @click="addToCart(dish)">
-            <span class="material-symbols-outlined">add</span>
-          </button>
+          <div class="dish-action">
+            <input v-if="dish.specs?.qty" class="qty-input" type="number" placeholder="其他数量"
+              @input="dish.selectedQty = ($event.target as HTMLInputElement).value + '串'" />
+            <button class="add-card-btn" @click="addToCart(dish)">
+              <span class="material-symbols-outlined">add</span>
+            </button>
+          </div>
         </div>
       </section>
     </main>
@@ -570,13 +570,13 @@ onMounted(async () => {
 .qty-input:focus { border-color: #ff6b00; }
 
 /* Add Button */
+.dish-action { display: flex; justify-content: space-between; align-items: center; }
 .add-card-btn {
-  position: absolute; right: 12px; bottom: 12px;
   width: 36px; height: 36px; border-radius: 50%;
   border: none; background: #ff6b00; color: #fff;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; box-shadow: 0 2px 8px rgba(255, 107, 0, 0.3);
-  transition: transform 0.15s;
+  transition: transform 0.15s; flex-shrink: 0;
 }
 .add-card-btn:active { transform: scale(0.9); }
 .add-card-btn .material-symbols-outlined { font-size: 20px; }
