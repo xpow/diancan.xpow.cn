@@ -77,7 +77,7 @@
               <p class="success-value success-code">{{ createdOrder.pickupCode }}</p>
             </div>
           </div>
-          <p class="success-hint">当前为一期最小闭环，下一步将在此处接支付聚合能力。</p>
+          <p class="success-hint">正在跳转取餐页...</p>
         </section>
 
         <!-- Order Items -->
@@ -342,6 +342,8 @@ async function submitOrder() {
     createdOrder.value = await orderResponse.json() as CreatedOrder
     clearCart()
     cartItems.value = []
+    // 跳转到取餐页
+    router.push(`/pickup?orderNo=${createdOrder.value.orderNo}`)
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '下单失败'
   } finally {

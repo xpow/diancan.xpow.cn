@@ -262,7 +262,7 @@ app.post('/api/orders', async (req, res) => {
     data: {
       orderNo,
       pickupCode,
-      status: 'pending',
+      status: 'paid',
       merchantId,
       branchId,
       deviceId,
@@ -310,7 +310,10 @@ app.post('/api/orders', async (req, res) => {
       dishId: i.dishId,
       name: i.name,
       quantity: i.quantity,
+      unitPrice: i.unitPrice,
+      finalUnitPrice: i.finalUnitPrice,
       finalSubtotal: i.finalSubtotal,
+      promotionLabel: i.promotionLabel || undefined,
     })),
     createdAt: order.createdAt.toISOString(),
   })
@@ -341,6 +344,36 @@ app.get('/api/orders', async (_req, res) => {
       })),
       createdAt: o.createdAt.toISOString(),
     })),
+  })
+})
+
+app.get('/api/orders/:orderNo', async (req, res) => {
+  const { orderNo } = req.params
+  const order = await prisma.order.findUnique({
+    where: { orderNo },
+    include: { items: true, promotions: true },
+  })
+  if (!order) return res.status(404).json({ message: 'order not found' })
+
+  res.json({
+    orderNo: order.orderNo,
+    pickupCode: order.pickupCode,
+    status: order.status,
+    totals: {
+      originalAmount: order.originalAmount,
+      discountAmount: order.discountAmount,
+      payableAmount: order.payableAmount,
+    },
+    items: order.items.map((i) => ({
+      dishId: i.dishId,
+      name: i.name,
+      quantity: i.quantity,
+      unitPrice: i.unitPrice,
+      finalUnitPrice: i.finalUnitPrice,
+      finalSubtotal: i.finalSubtotal,
+      promotionLabel: i.promotionLabel || undefined,
+    })),
+    createdAt: order.createdAt.toISOString(),
   })
 })
 

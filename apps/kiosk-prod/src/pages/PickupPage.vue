@@ -68,9 +68,9 @@
               <img :src="getItemImage(item.name)" :alt="item.name" class="item-image" />
               <div class="item-info">
                 <p class="item-name">{{ item.name }}</p>
-                <p class="item-variant">{{ item.variant || '标准份' }}</p>
+                <p v-if="item.promotionLabel" class="item-variant">{{ item.promotionLabel }}</p>
               </div>
-              <span class="item-price">¥{{ item.price.toFixed(2) }}</span>
+              <span class="item-price">¥{{ item.finalUnitPrice.toFixed(2) }}</span>
             </li>
           </ul>
 
@@ -78,7 +78,7 @@
             <span>合计 {{ order?.items?.length || 0 }} 项商品</span>
             <div class="total-right">
               <span class="total-label">实付金额</span>
-              <span class="total-amount">¥{{ order?.total?.toFixed(2) || '37.00' }}</span>
+              <span class="total-amount">¥{{ order?.totals?.payableAmount.toFixed(2) || '0.00' }}</span>
             </div>
           </div>
         </div>
@@ -123,15 +123,17 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { getTheme, setTheme } from '@/utils/theme'
 
 interface OrderItem {
   dishId: string
   name: string
-  price: number
   quantity: number
-  variant?: string
+  unitPrice: number
+  finalUnitPrice: number
+  finalSubtotal: number
+  promotionLabel?: string
 }
 
 interface Order {
@@ -139,10 +141,15 @@ interface Order {
   pickupCode: string
   status: string
   items: OrderItem[]
-  total: number
+  totals: {
+    originalAmount: number
+    discountAmount: number
+    payableAmount: number
+  }
   createdAt?: string
 }
 
+const route = useRoute()
 const router = useRouter()
 
 function getIcon(): string {
@@ -155,20 +162,31 @@ function doToggleTheme(): string {
   return getIcon()
 }
 
+const loading = ref(false)
+const errorMessage = ref('')
 const order = ref<Order | null>(null)
 const merchantName = ref('Sizzling Skewers')
 
 function getItemImage(name: string): string {
   const images: Record<string, string> = {
-    '羊肉串': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&q=80',
-    '鸡翅': 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=200&q=80',
-    '玉米': 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=200&q=80',
+    '招牌牛肉串': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&q=80',
+    '秘制羊肉串': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&q=80',
+    '烤鸡翅': 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=200&q=80',
+    '烤排骨': 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=200&q=80',
+    '烤鱿鱼': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&q=80',
+    '烤茄子': 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=200&q=80',
+    '烤韭菜': 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=200&q=80',
+    '烤金针菇': 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=200&q=80',
+    '烤玉米': 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=200&q=80',
+    '冰镇酸梅汤': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=200&q=80',
+    '柠檬茶': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=200&q=80',
+    '矿泉水': 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=200&q=80',
   }
   return images[name] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&q=80'
 }
 
 function formatTime(date?: string): string {
-  if (!date) return '2024-10-24 19:42'
+  if (!date) return ''
   return new Date(date).toLocaleString('zh-CN', {
     year: 'numeric',
     month: '2-digit',
@@ -182,23 +200,26 @@ function goHome() {
   router.push('/')
 }
 
-// Mock data for demo
-function loadMockOrder() {
-  order.value = {
-    orderNo: 'ORD20241024001',
-    pickupCode: 'A08',
-    status: 'preparing',
-    items: [
-      { dishId: '1', name: '秘制羊肉串', price: 25.00, quantity: 1, variant: '微辣 · 5串' },
-      { dishId: '2', name: '炭烤甜玉米', price: 12.00, quantity: 1, variant: '刷酱 · 1份' },
-    ],
-    total: 37.00,
-    createdAt: new Date().toISOString()
+async function loadOrder() {
+  const orderNo = route.query.orderNo as string
+  if (!orderNo) return
+
+  loading.value = true
+  errorMessage.value = ''
+
+  try {
+    const res = await fetch(`/api/orders/${orderNo}`)
+    if (!res.ok) throw new Error('订单获取失败')
+    order.value = await res.json() as Order
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : '订单获取失败'
+  } finally {
+    loading.value = false
   }
 }
 
 onMounted(() => {
-  loadMockOrder()
+  void loadOrder()
 })
 </script>
 
