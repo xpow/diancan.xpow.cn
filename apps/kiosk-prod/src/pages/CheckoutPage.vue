@@ -252,7 +252,10 @@ async function reloadQuote() {
         merchantId: bootstrap.merchantId,
         branchId: bootstrap.branchId,
         deviceId: bootstrap.deviceId,
-        items: cartItems.value,
+        items: cartItems.value.map((item) => ({
+          dishId: item.baseDishId,
+          quantity: item.quantity,
+        })),
       }),
     })
 
@@ -294,7 +297,10 @@ async function submitOrder() {
         branchId: bootstrap.branchId,
         deviceId: bootstrap.deviceId,
         quoteId: quote.value.quoteId,
-        items: cartItems.value,
+        items: cartItems.value.map((item) => ({
+          dishId: item.baseDishId,
+          quantity: item.quantity,
+        })),
       }),
     })
 
