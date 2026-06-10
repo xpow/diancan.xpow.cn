@@ -116,7 +116,7 @@
         <section class="payment-card">
           <div class="payment-item">
             <span class="material-icons payment-icon">account_balance_wallet</span>
-            <span class="payment-name">微信支付</span>
+            <span class="payment-name">支付宝（默认）</span>
             <span class="material-icons payment-arrow">chevron_right</span>
           </div>
         </section>
@@ -147,13 +147,14 @@
       </button>
     </footer>
 
-    <!-- Back to Menu -->
-    <div v-if="!createdOrder" class="footer-actions">
-      <router-link to="/menu" class="back-menu-link">
-        <span class="material-icons">arrow_back</span>
-        <span>返回菜单</span>
+    <!-- Continue Ordering -->
+    <section v-if="!createdOrder" class="payment-card continue-ordering">
+      <router-link to="/menu" class="payment-item back-menu-link">
+        <span class="material-icons payment-icon">add_circle</span>
+        <span class="payment-name">继续点餐</span>
+        <span class="material-icons payment-arrow">chevron_right</span>
       </router-link>
-    </div>
+    </section>
   </main>
 </template>
 
@@ -821,21 +822,14 @@ onMounted(() => {
   to { transform: rotate(360deg); }
 }
 
-/* Footer Actions */
-.footer-actions {
-  padding: var(--spacing-md) var(--container-margin);
-  text-align: center;
+/* Continue Ordering */
+.continue-ordering {
+  margin-bottom: var(--spacing-lg);
 }
 
 .back-menu-link {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  color: var(--primary-container);
-  font-family: var(--font-display);
-  font-size: var(--text-label-lg);
-  font-weight: 600;
   text-decoration: none;
+  color: inherit;
 }
 
 @media (max-width: 720px) {
