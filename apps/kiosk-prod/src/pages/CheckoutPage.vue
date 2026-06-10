@@ -112,14 +112,23 @@
           </div>
         </section>
 
-        <!-- Payment Method -->
-        <section class="payment-card">
-          <div class="payment-item">
-            <span class="material-icons payment-icon">account_balance_wallet</span>
-            <span class="payment-name">支付宝（默认）</span>
-            <span class="material-icons payment-arrow">chevron_right</span>
-          </div>
-        </section>
+        <!-- Payment Row -->
+        <div class="payment-row">
+          <section v-if="!createdOrder" class="payment-card continue-ordering">
+            <router-link to="/menu" class="payment-item back-menu-link">
+              <span class="material-icons payment-arrow">chevron_left</span>
+              <span class="material-icons payment-icon">add_circle</span>
+              <span class="payment-name">继续点餐</span>
+            </router-link>
+          </section>
+
+          <section class="payment-card payment-alipay">
+            <div class="payment-item">
+              <span class="material-icons payment-icon">account_balance_wallet</span>
+              <span class="payment-name">支付宝（默认）</span>
+            </div>
+          </section>
+        </div>
       </template>
     </div>
 
@@ -146,15 +155,6 @@
         </template>
       </button>
     </footer>
-
-    <!-- Continue Ordering -->
-    <section v-if="!createdOrder" class="payment-card continue-ordering">
-      <router-link to="/menu" class="payment-item back-menu-link">
-        <span class="material-icons payment-icon">add_circle</span>
-        <span class="payment-name">继续点餐</span>
-        <span class="material-icons payment-arrow">chevron_right</span>
-      </router-link>
-    </section>
   </main>
 </template>
 
@@ -822,9 +822,38 @@ onMounted(() => {
   to { transform: rotate(360deg); }
 }
 
-/* Continue Ordering */
-.continue-ordering {
+/* Payment Row */
+.payment-row {
+  display: flex;
+  gap: var(--spacing-sm);
   margin-bottom: var(--spacing-lg);
+}
+
+.payment-row .payment-card {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+/* Continue Ordering - dark frosted glass */
+.continue-ordering {
+  background: rgba(30, 30, 30, 0.65) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.continue-ordering .payment-icon,
+.continue-ordering .payment-name {
+  color: #fff !important;
+}
+
+.continue-ordering .payment-arrow {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Alipay */
+.payment-alipay .payment-arrow {
+  display: none;
 }
 
 .back-menu-link {
