@@ -25,13 +25,16 @@
         </div>
       </section>
 
-      <nav class="category-nav">
-        <button
-          v-for="category in categories" :key="category.id"
-          :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
-          @click="selectedCategoryId = category.id"
-        >{{ category.name }}</button>
-      </nav>
+<nav class="category-nav">
+  <button
+    v-for="category in categories" :key="category.id"
+    :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
+    @click="selectedCategoryId = category.id"
+  >
+    <span class="material-icons">{{ categoryIcons[category.name] || 'restaurant' }}</span>
+    {{ category.name }}
+  </button>
+</nav>
 
       <section v-if="errorMessage" class="status-card error-card">
         <span class="material-icons">error_outline</span>
@@ -143,6 +146,12 @@ import { readCart, clearCart as clearCartStorage, addToCart as addToCartStorage,
 import { getTheme, setTheme } from '@/utils/theme'
 
 interface Category { id: string; name: string; sort: number }
+
+const categoryIcons: Record<string, string> = {
+  '肉串': 'outdoor_grill',
+  '素菜': 'eco',
+  '饮品': 'local_cafe',
+}
 interface Dish {
   id: string; categoryId: string; name: string
   price: number; desc: string; image: string; tags?: string[]
@@ -328,9 +337,9 @@ onMounted(() => {
 .featured-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: var(--spacing-md); background: linear-gradient(to top, rgba(0,0,0,0.6), transparent); }
 .featured-tag { width: fit-content; padding: 4px 8px; margin-bottom: var(--spacing-xs); border-radius: var(--radius-full); background: var(--primary-container); color: var(--on-primary); font-family: var(--font-display); font-size: 10px; font-weight: 700; }
 .featured-overlay h2 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: #fff; }
-.category-nav { display: flex; gap: var(--spacing-sm); overflow-x: auto; padding: var(--spacing-sm) 0 var(--spacing-md); margin: 0 calc(-1 * var(--container-margin)); padding-left: var(--container-margin); padding-right: var(--container-margin); position: sticky; top: 56px; z-index: 40; background: var(--frosted-bg-lighter); backdrop-filter: blur(4px); }
-.category-nav::-webkit-scrollbar { display: none; }
-.category-pill { flex-shrink: 0; padding: var(--spacing-sm) var(--spacing-lg); border: none; border-radius: var(--radius-full); background: var(--surface-container-high); color: var(--on-surface-variant); font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; cursor: pointer; transition: all var(--transition-fast); }
+.category-nav { display: flex; justify-content: center; gap: var(--spacing-sm); padding: var(--spacing-md) 0; position: sticky; top: 56px; z-index: 40; background: var(--frosted-bg-lighter); backdrop-filter: blur(4px); }
+.category-pill { display: flex; align-items: center; gap: var(--spacing-xs); padding: var(--spacing-sm) var(--spacing-lg); border: none; border-radius: var(--radius-full); background: var(--surface-container-high); color: var(--on-surface-variant); font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; cursor: pointer; transition: all var(--transition-fast); }
+.category-pill .material-icons { font-size: 18px !important; }
 .category-pill-active { background: var(--primary-container); color: var(--on-primary); }
 .status-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-md); padding: var(--spacing-xl); margin-top: var(--spacing-lg); border-radius: var(--radius-xl); background: var(--surface-container-low); }
 .status-card .material-icons { font-size: 48px !important; }
