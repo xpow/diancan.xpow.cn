@@ -235,6 +235,7 @@ app.post('/api/orders', async (req, res) => {
     .map((item: any) => ({
       dishId: String(item?.dishId ?? ''),
       quantity: Number(item?.quantity ?? 0),
+      specs: String(item?.specs ?? ''),
     }))
     .filter((item) => item.dishId && item.quantity > 0)
 
