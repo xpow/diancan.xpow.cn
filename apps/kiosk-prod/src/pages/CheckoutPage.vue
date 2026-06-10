@@ -94,7 +94,7 @@
                 <p v-if="item.promotionLabel" class="item-variant">{{ item.promotionLabel }}</p>
               </div>
               <div class="item-price-col">
-                <p class="item-price">¥{{ item.finalSubtotal.toFixed(2) }}</p>
+                <p class="item-price">¥{{ item.finalUnitPrice.toFixed(2) }}</p>
                 <p class="item-qty">x{{ item.quantity }}</p>
               </div>
             </div>
@@ -167,6 +167,8 @@ interface QuoteLineItem {
   dishId: string
   name: string
   quantity: number
+  unitPrice: number
+  finalUnitPrice: number
   finalSubtotal: number
   promotionLabel?: string
 }
