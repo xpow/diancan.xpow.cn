@@ -68,12 +68,13 @@ export const SPECS_PRESETS: Record<SpecPreset, SpecGroup[] | null> = {
       ],
     },
     {
-      name: '份量',
+      name: '串数',
       type: 'single',
       options: [
-        { label: '小份', priceDelta: -5 },
-        { label: '中份' },
-        { label: '大份', priceDelta: 10 },
+        { label: '5串' },
+        { label: '10串' },
+        { label: '15串' },
+        { label: '20串' },
       ],
     },
   ],
