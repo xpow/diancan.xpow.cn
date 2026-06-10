@@ -52,7 +52,7 @@ withDefaults(defineProps<{
   justify-content: space-between;
   gap: var(--spacing-md);
   padding: var(--spacing-sm) var(--container-margin);
-  background: rgba(252, 249, 248, 0.8);
+  background: var(--frosted-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }

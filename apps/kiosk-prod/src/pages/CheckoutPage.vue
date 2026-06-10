@@ -365,7 +365,7 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-sm) var(--container-margin);
-  background: rgba(252, 249, 248, 0.8);
+  background: var(--frosted-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
@@ -605,10 +605,10 @@ onMounted(() => {
   padding: var(--spacing-md);
   margin-bottom: var(--spacing-lg);
   border-radius: var(--radius-xl);
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--surface-container-lowest);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(226, 191, 176, 0.3);
+  border: 1px solid var(--card-border);
 }
 
 .card-header {
@@ -694,7 +694,7 @@ onMounted(() => {
 .order-summary {
   margin-top: var(--spacing-lg);
   padding-top: var(--spacing-md);
-  border-top: 1px solid rgba(226, 191, 176, 0.3);
+  border-top: 1px solid var(--card-border);
 }
 
 .summary-row {
@@ -753,7 +753,7 @@ onMounted(() => {
   justify-content: space-between;
   gap: var(--spacing-lg);
   padding: var(--spacing-md) var(--container-margin);
-  background: rgba(252, 249, 248, 0.9);
+  background: var(--frosted-bg-heavy);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-top-left-radius: var(--radius-xl);

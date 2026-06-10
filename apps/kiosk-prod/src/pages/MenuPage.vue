@@ -296,7 +296,7 @@ onMounted(() => {
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 .material-icons { font-family: 'Material Symbols Outlined'; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 24px; line-height: 1; }
 .page { min-height: 100vh; background: var(--surface); padding-bottom: 180px; }
-.top-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-sm) var(--container-margin); background: rgba(252, 249, 248, 0.8); backdrop-filter: blur(12px); }
+.top-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-sm) var(--container-margin); background: var(--frosted-bg); backdrop-filter: blur(12px); }
 .brand { display: flex; align-items: center; gap: var(--spacing-sm); }
 .brand .material-icons { color: var(--primary-container); font-size: 28px !important; }
 .brand h1 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-lg-mobile); font-weight: 700; color: var(--primary-container); text-transform: uppercase; }
@@ -308,7 +308,7 @@ onMounted(() => {
 .featured-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: var(--spacing-md); background: linear-gradient(to top, rgba(0,0,0,0.6), transparent); }
 .featured-tag { width: fit-content; padding: 4px 8px; margin-bottom: var(--spacing-xs); border-radius: var(--radius-full); background: var(--primary-container); color: var(--on-primary); font-family: var(--font-display); font-size: 10px; font-weight: 700; }
 .featured-overlay h2 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: #fff; }
-.category-nav { display: flex; gap: var(--spacing-sm); overflow-x: auto; padding: var(--spacing-sm) 0 var(--spacing-md); margin: 0 calc(-1 * var(--container-margin)); padding-left: var(--container-margin); padding-right: var(--container-margin); position: sticky; top: 56px; z-index: 40; background: rgba(252, 249, 248, 0.95); backdrop-filter: blur(4px); }
+.category-nav { display: flex; gap: var(--spacing-sm); overflow-x: auto; padding: var(--spacing-sm) 0 var(--spacing-md); margin: 0 calc(-1 * var(--container-margin)); padding-left: var(--container-margin); padding-right: var(--container-margin); position: sticky; top: 56px; z-index: 40; background: var(--frosted-bg-lighter); backdrop-filter: blur(4px); }
 .category-nav::-webkit-scrollbar { display: none; }
 .category-pill { flex-shrink: 0; padding: var(--spacing-sm) var(--spacing-lg); border: none; border-radius: var(--radius-full); background: var(--surface-container-high); color: var(--on-surface-variant); font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; cursor: pointer; transition: all var(--transition-fast); }
 .category-pill-active { background: var(--primary-container); color: var(--on-primary); }
@@ -320,7 +320,7 @@ onMounted(() => {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .dish-list { display: flex; flex-direction: column; gap: var(--spacing-md); }
-.dish-card { position: relative; padding: var(--spacing-md); background: var(--surface-container-lowest); border-radius: var(--radius-xl); border: 1px solid rgba(226, 191, 176, 0.2); box-shadow: var(--shadow-md); }
+.dish-card { position: relative; padding: var(--spacing-md); background: var(--surface-container-lowest); border-radius: var(--radius-xl); border: 1px solid var(--card-border-light); box-shadow: var(--shadow-md); }
 .dish-row { display: flex; gap: var(--spacing-md); }
 .dish-image { width: 128px; height: 128px; border-radius: var(--radius-lg); object-fit: cover; flex-shrink: 0; }
 .dish-body { flex: 1; display: flex; flex-direction: column; }
@@ -331,7 +331,7 @@ onMounted(() => {
 .dish-price-row { display: flex; align-items: center; gap: var(--spacing-sm); }
 .dish-price { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: var(--primary-container); }
 .dish-promo-tag { display: inline-block; padding: 1px 6px; border-radius: 4px; background: var(--error); color: #fff; font-family: var(--font-display); font-size: 11px; font-weight: 700; }
-.dish-specs { margin-top: var(--spacing-md); padding-top: var(--spacing-md); padding-bottom: var(--spacing-sm); border-top: 1px solid rgba(226, 191, 176, 0.1); display: flex; flex-direction: column; gap: var(--spacing-md); }
+.dish-specs { margin-top: var(--spacing-md); padding-top: var(--spacing-md); padding-bottom: var(--spacing-sm); border-top: 1px solid var(--card-border-subtle); display: flex; flex-direction: column; gap: var(--spacing-md); }
 .spec-group { display: flex; flex-direction: column; gap: var(--spacing-sm); }
 .spec-label { margin: 0; font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; color: var(--secondary); }
 .spec-options { display: flex; flex-wrap: wrap; gap: var(--spacing-sm); }
@@ -376,7 +376,7 @@ onMounted(() => {
 .cart-total-price { color: var(--primary-container); font-weight: 800; }
 .checkout-btn { padding: var(--spacing-md) var(--spacing-xl); border-radius: var(--radius-full); border: none; background: var(--primary-container); color: var(--on-primary); font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; cursor: pointer; }
 
-.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; display: flex; justify-content: space-around; align-items: center; padding: var(--spacing-xs) var(--gutter); background: rgba(252, 249, 248, 0.9); backdrop-filter: blur(12px); border-top-left-radius: var(--radius-xl); border-top-right-radius: var(--radius-xl); box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.04); }
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; display: flex; justify-content: space-around; align-items: center; padding: var(--spacing-xs) var(--gutter); background: var(--frosted-bg-heavy); backdrop-filter: blur(12px); border-top-left-radius: var(--radius-xl); border-top-right-radius: var(--radius-xl); box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.04); }
 .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--radius-full); color: var(--secondary); text-decoration: none; transition: all var(--transition-fast); }
 .nav-item-active { background: rgba(255, 107, 0, 0.1); color: var(--primary-container); }
 .nav-label { font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; }

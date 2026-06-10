@@ -196,7 +196,7 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-sm) var(--container-margin);
-  background: rgba(252, 249, 248, 0.8);
+  background: var(--frosted-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
@@ -599,7 +599,7 @@ onMounted(() => {
   justify-content: space-around;
   align-items: center;
   padding: var(--spacing-xs) var(--gutter);
-  background: rgba(252, 249, 248, 0.9);
+  background: var(--frosted-bg-heavy);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-top-left-radius: var(--radius-xl);
