@@ -1,0 +1,213 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Merchant {
+  id        String   @id @default(cuid())
+  name      String
+  slogan    String   @default("")
+  businessHours String @default("")
+  statusText String  @default("营业中")
+  logoUrl   String?
+  features  String   @default("{}") // JSON: { quote, payment, pickup }
+
+  branches  Branch[]
+  dishes    Dish[]
+  promotions Promotion[]
+  promotionBanners PromotionBanner[]
+  featuredItems   FeaturedItem[]
+  orders    Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Branch {
+  id        String   @id @default(cuid())
+  merchantId String
+  name      String
+  address   String?
+  lat       Float?
+  lng       Float?
+  todayLocation String?
+  locationHint String?
+  bannerUrl String?
+  status    String   @default("active")
+
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+  devices  Device[]
+  categories Category[]
+  orders   Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Device {
+  id        String   @id @default(cuid())
+  branchId  String
+  name      String   @default("")
+  mode      String   @default("kiosk") // kiosk | h5
+  status    String   @default("active")
+
+  branch Branch @relation(fields: [branchId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PromotionBanner {
+  id        String   @id @default(cuid())
+  merchantId String
+  title     String
+  subtitle  String   @default("")
+  tag       String?
+  tone      String   @default("neutral") // primary | neutral
+  sort      Int      @default(0)
+  active    Boolean  @default(true)
+
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FeaturedItem {
+  id        String   @id @default(cuid())
+  merchantId String
+  title     String
+  description String @default("")
+  priceText String   @default("")
+  badge     String   @default("")
+  badgeTone String   @default("hot") // hot | new
+  sort      Int      @default(0)
+  active    Boolean  @default(true)
+
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id       String @id @default(cuid())
+  branchId String
+  name     String
+  sort     Int    @default(0)
+
+  branch Branch @relation(fields: [branchId], references: [id])
+  dishes Dish[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Dish {
+  id          String   @id @default(cuid())
+  merchantId  String
+  categoryId  String
+  name        String
+  price       Float
+  desc        String   @default("")
+  image       String?
+  tags        String   @default("[]") // JSON array
+  specsPreset String   @default("none") // none | bbq | tea | hotpot | dessert
+  status      String   @default("active")
+
+  merchant   Merchant       @relation(fields: [merchantId], references: [id])
+  category   Category       @relation(fields: [categoryId], references: [id])
+  promotions PromotionItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Promotion {
+  id         String   @id @default(cuid())
+  merchantId String
+  name       String
+  type       String   // welfare_item | full_reduction | buy_get | time_discount | new_user | holiday_gift
+  rules      String   @default("{}") // JSON string
+  startDate  DateTime?
+  endDate    DateTime?
+  status     String   @default("draft") // draft | active | paused | ended
+
+  merchant Merchant       @relation(fields: [merchantId], references: [id])
+  items    PromotionItem[]
+  orders   OrderPromotion[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PromotionItem {
+  id          String @id @default(cuid())
+  promotionId String
+  dishId      String
+  promoPrice  Float?
+  limitType   String @default("per_order") // per_order | global_promo | daily
+  maxQty      Int    @default(1)
+
+  promotion Promotion @relation(fields: [promotionId], references: [id])
+  dish      Dish      @relation(fields: [dishId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id              String   @id @default(cuid())
+  orderNo         String   @unique
+  pickupCode      String
+  status          String   @default("pending") // pending | preparing | ready | completed | cancelled
+  merchantId      String
+  branchId        String
+  deviceId        String
+  originalAmount  Float    @default(0)
+  discountAmount  Float    @default(0)
+  payableAmount   Float    @default(0)
+
+  branch   Branch   @relation(fields: [branchId], references: [id])
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+  items    OrderItem[]
+  promotions OrderPromotion[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrderItem {
+  id             String  @id @default(cuid())
+  orderId        String
+  dishId         String
+  name           String
+  quantity       Int
+  unitPrice      Float
+  finalUnitPrice Float
+  subtotal       Float
+  finalSubtotal  Float
+  promotionLabel String?
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model OrderPromotion {
+  id           String @id @default(cuid())
+  orderId      String
+  promotionId  String
+  name         String
+  type         String
+  discount     Float  @default(0)
+  description  String @default("")
+
+  order     Order     @relation(fields: [orderId], references: [id])
+  promotion Promotion @relation(fields: [promotionId], references: [id])
+
+  createdAt DateTime @default(now())
+}

@@ -5,7 +5,11 @@
     "dev": "pnpm -r run dev",
     "dev:h5": "pnpm --filter @diancan/h5 dev",
     "dev:api": "pnpm --filter @diancan/api dev",
+    "dev:kiosk": "pnpm --filter @diancan/kiosk-prod dev",
+    "dev:api-core": "pnpm --filter @diancan/api-core dev",
     "build": "pnpm -r run build",
+    "build:kiosk": "pnpm --filter @diancan/kiosk-prod build",
+    "build:api-core": "pnpm --filter @diancan/api-core build",
     "lint": "eslint . --ext .ts,.vue"
   },
   "engines": {

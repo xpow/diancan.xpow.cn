@@ -1,0 +1,258 @@
+/**
+ * Vibrant Cravings Design System
+ * 点餐系统全局样式变量
+ */
+
+:root {
+  /* Colors - Primary */
+  --primary: #a04100;
+  --primary-container: #ff6b00;
+  --on-primary: #ffffff;
+  --on-primary-container: #572000;
+  --primary-fixed: #ffdbcc;
+  --primary-fixed-dim: #ffb693;
+  --on-primary-fixed: #351000;
+  --on-primary-fixed-variant: #7a3000;
+
+  /* Colors - Secondary */
+  --secondary: #5e5e5c;
+  --secondary-container: #e1dfdc;
+  --on-secondary: #ffffff;
+  --on-secondary-container: #636360;
+  --secondary-fixed: #e4e2de;
+  --secondary-fixed-dim: #c8c6c3;
+  --on-secondary-fixed: #1b1c1a;
+  --on-secondary-fixed-variant: #474744;
+
+  /* Colors - Tertiary */
+  --tertiary: #006e1c;
+  --tertiary-container: #4aad4e;
+  --on-tertiary: #ffffff;
+  --on-tertiary-container: #003a0b;
+  --tertiary-fixed: #94f990;
+  --tertiary-fixed-dim: #78dc77;
+  --on-tertiary-fixed: #002204;
+  --on-tertiary-fixed-variant: #005313;
+
+  /* Colors - Error */
+  --error: #ba1a1a;
+  --error-container: #ffdad6;
+  --on-error: #ffffff;
+  --on-error-container: #93000a;
+
+  /* Colors - Surface */
+  --surface: #fcf9f8;
+  --surface-dim: #dcd9d9;
+  --surface-bright: #fcf9f8;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f6f3f2;
+  --surface-container: #f0eded;
+  --surface-container-high: #eae7e7;
+  --surface-container-highest: #e5e2e1;
+  --on-surface: #1c1b1b;
+  --on-surface-variant: #5a4136;
+  --surface-variant: #e5e2e1;
+
+  /* Colors - Inverse */
+  --inverse-surface: #313030;
+  --inverse-on-surface: #f3f0ef;
+  --inverse-primary: #ffb693;
+  --surface-tint: #a04100;
+
+  /* Colors - Outline */
+  --outline: #8e7164;
+  --outline-variant: #e2bfb0;
+
+  /* Colors - Background */
+  --background: #fcf9f8;
+  --on-background: #1c1b1b;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --container-margin: 16px;
+  --gutter: 12px;
+
+  /* Border Radius */
+  --radius-sm: 0.25rem;
+  --radius-default: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Typography */
+  --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+
+  /* Font Sizes */
+  --text-display-lg: 32px;
+  --text-headline-lg: 24px;
+  --text-headline-lg-mobile: 20px;
+  --text-headline-md: 18px;
+  --text-body-lg: 16px;
+  --text-body-md: 14px;
+  --text-label-lg: 14px;
+  --text-label-sm: 12px;
+  --text-price-display: 20px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 30px rgba(87, 32, 0, 0.05);
+  --shadow-primary: 0 8px 20px rgba(255, 107, 0, 0.15);
+  --shadow-float: 0 24px 60px rgba(87, 32, 0, 0.1);
+
+  /* Animation */
+  --transition-fast: 150ms ease;
+  --transition-normal: 300ms ease;
+  --transition-spring: 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Font utility classes */
+.font-display-lg {
+  font-family: var(--font-display);
+  font-size: var(--text-display-lg);
+  font-weight: 800;
+  line-height: 40px;
+  letter-spacing: -0.02em;
+}
+
+.font-headline-lg {
+  font-family: var(--font-display);
+  font-size: var(--text-headline-lg);
+  font-weight: 700;
+  line-height: 32px;
+}
+
+.font-headline-md {
+  font-family: var(--font-display);
+  font-size: var(--text-headline-md);
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.font-body-lg {
+  font-family: var(--font-body);
+  font-size: var(--text-body-lg);
+  font-weight: 400;
+  line-height: 24px;
+}
+
+.font-body-md {
+  font-family: var(--font-body);
+  font-size: var(--text-body-md);
+  font-weight: 400;
+  line-height: 20px;
+}
+
+.font-label-lg {
+  font-family: var(--font-display);
+  font-size: var(--text-label-lg);
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.font-label-sm {
+  font-family: var(--font-display);
+  font-size: var(--text-label-sm);
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.02em;
+}
+
+.font-price-display {
+  font-family: var(--font-display);
+  font-size: var(--text-price-display);
+  font-weight: 800;
+  line-height: 24px;
+}
+
+/* Glass morphism utility */
+.glass-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--outline-variant);
+}
+
+/* Hide scrollbar utility */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Primary button style */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--primary-container);
+  color: var(--on-primary);
+  font-family: var(--font-display);
+  font-size: var(--text-headline-md);
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--shadow-primary);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 12px 28px rgba(255, 107, 0, 0.25);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Card style */
+.card {
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(226, 191, 176, 0.45);
+  box-shadow: var(--shadow-md);
+}
+
+/* Status chip style */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-full);
+  font-family: var(--font-display);
+  font-size: var(--text-label-sm);
+  font-weight: 600;
+}
+
+.status-chip-tertiary {
+  background: rgba(0, 110, 28, 0.1);
+  color: var(--tertiary);
+}
+
+.status-chip-primary {
+  background: rgba(255, 107, 0, 0.1);
+  color: var(--primary-container);
+}
+
+.status-chip-error {
+  background: rgba(186, 26, 26, 0.1);
+  color: var(--error);
+}

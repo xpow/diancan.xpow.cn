@@ -1,0 +1,347 @@
+import cors from 'cors'
+import express from 'express'
+import { PrismaClient } from '@prisma/client'
+
+const app = express()
+const port = Number(process.env.PORT || 3011)
+const prisma = new PrismaClient()
+
+app.use(cors())
+app.use(express.json())
+
+app.get('/api/health', (_req, res) => {
+  res.json({ ok: true, service: 'api-core' })
+})
+
+app.get('/api/system/bootstrap', async (_req, res) => {
+  const merchant = await prisma.merchant.findFirst()
+  if (!merchant) return res.status(404).json({ message: 'merchant not found' })
+
+  const branch = await prisma.branch.findFirst({ where: { merchantId: merchant.id } })
+  const device = await prisma.device.findFirst({ where: { branchId: branch?.id } })
+  const banners = await prisma.promotionBanner.findMany({
+    where: { merchantId: merchant.id, active: true },
+    orderBy: { sort: 'asc' },
+  })
+  const features = JSON.parse(merchant.features)
+  const featuredItems = await prisma.featuredItem.findMany({
+    where: { merchantId: merchant.id, active: true },
+    orderBy: { sort: 'asc' },
+  })
+
+  res.json({
+    merchantId: merchant.id,
+    merchantName: merchant.name,
+    branchId: branch?.id ?? '',
+    branchName: branch?.name ?? '',
+    deviceId: device?.id ?? '',
+    deviceMode: device?.mode ?? 'kiosk',
+    slogan: merchant.slogan,
+    businessHours: merchant.businessHours,
+    todayLocation: branch?.todayLocation ?? '',
+    locationHint: branch?.locationHint ?? '',
+    statusText: merchant.statusText,
+    features,
+    promotions: banners.map((b) => ({
+      id: b.id,
+      title: b.title,
+      subtitle: b.subtitle,
+      tag: b.tag,
+      tone: b.tone,
+    })),
+    featuredItems: featuredItems.map((f) => ({
+      id: f.id,
+      title: f.title,
+      description: f.description,
+      priceText: f.priceText,
+      badge: f.badge,
+      badgeTone: f.badgeTone,
+    })),
+  })
+})
+
+app.get('/api/catalog/menu', async (_req, res) => {
+  const merchant = await prisma.merchant.findFirst()
+  if (!merchant) return res.status(404).json({ message: 'merchant not found' })
+
+  const categories = await prisma.category.findMany({
+    where: { branch: { merchantId: merchant.id } },
+    orderBy: { sort: 'asc' },
+  })
+
+  const dishes = await prisma.dish.findMany({
+    where: { merchantId: merchant.id, status: 'active' },
+  })
+
+  res.json({
+    merchant: { id: merchant.id, name: merchant.name },
+    branch: { id: '', name: '' },
+    categories: categories.map((c) => ({ id: c.id, name: c.name, sort: c.sort })),
+    dishes: dishes.map((d) => ({
+      id: d.id,
+      categoryId: d.categoryId,
+      name: d.name,
+      price: d.price,
+      desc: d.desc,
+      image: d.image,
+      tags: JSON.parse(d.tags) as string[],
+      specsPreset: d.specsPreset,
+    })),
+  })
+})
+
+app.post('/api/cart/quote', async (req, res) => {
+  const { items } = req.body ?? {}
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ message: 'items is required' })
+  }
+
+  const normalizedItems = items
+    .map((item: any) => ({
+      dishId: String(item?.dishId ?? ''),
+      quantity: Number(item?.quantity ?? 0),
+    }))
+    .filter((item) => item.dishId && item.quantity > 0)
+
+  if (normalizedItems.length === 0) {
+    return res.status(400).json({ message: 'valid items is required' })
+  }
+
+  // 查询所有菜品和活动
+  const dishIds = [...new Set(normalizedItems.map((i) => i.dishId))]
+  const dishes = await prisma.dish.findMany({ where: { id: { in: dishIds } } })
+  const dishMap = new Map(dishes.map((d) => [d.id, d]))
+
+  const activePromotions = await prisma.promotion.findMany({
+    where: { status: 'active' },
+    include: { items: true },
+  })
+  const welfarePromos = activePromotions.filter((p) => p.type === 'welfare_item')
+  const fullReductionPromos = activePromotions.filter((p) => p.type === 'full_reduction')
+
+  const itemDetails: any[] = []
+  const appliedPromotions: any[] = []
+  const hints: string[] = []
+
+  let originalAmount = 0
+  let payableAmount = 0
+  const welfareAppliedDishIds = new Set<string>()
+
+  for (const item of normalizedItems) {
+    const dish = dishMap.get(item.dishId)
+    if (!dish) continue
+
+    const subtotal = dish.price * item.quantity
+    originalAmount += subtotal
+
+    let finalUnitPrice = dish.price
+    let finalSubtotal = subtotal
+    let promotionLabel: string | undefined
+
+    // 检查福利品
+    const welfarePromo = welfarePromos.find((p) =>
+      p.items.some((pi) => pi.dishId === item.dishId),
+    )
+    if (welfarePromo) {
+      const promoItem = welfarePromo.items.find((pi) => pi.dishId === item.dishId)
+      if (promoItem) {
+        const isRedeemed = welfareAppliedDishIds.has(item.dishId)
+        const welfareQty = isRedeemed ? 0 : Math.min(item.quantity, promoItem.maxQty)
+        const normalQty = item.quantity - welfareQty
+        finalSubtotal = welfareQty * (promoItem.promoPrice ?? dish.price) + normalQty * dish.price
+        finalUnitPrice = welfareQty === item.quantity ? (promoItem.promoPrice ?? dish.price) : dish.price
+        welfareAppliedDishIds.add(item.dishId)
+
+        if (welfareQty > 0) {
+          appliedPromotions.push({
+            id: welfarePromo.id,
+            name: welfarePromo.name,
+            type: 'welfare_item',
+            discount: Number((dish.price * welfareQty - (promoItem.promoPrice ?? 0) * welfareQty).toFixed(2)),
+            description: `福利价 ¥${promoItem.promoPrice?.toFixed(2)}，单笔订单仅 ${promoItem.maxQty} 份享受福利价`,
+          })
+          promotionLabel = '福利价'
+        }
+
+        if (item.quantity > promoItem.maxQty) {
+          hints.push(`${welfarePromo.name}本单仅首份按 ${promoItem.promoPrice?.toFixed(2)} 元计算，其余按原价计算。`)
+        }
+      }
+    }
+
+    payableAmount += finalSubtotal
+
+    itemDetails.push({
+      dishId: dish.id,
+      name: dish.name,
+      quantity: item.quantity,
+      unitPrice: dish.price,
+      finalUnitPrice: Number(finalUnitPrice.toFixed(2)),
+      subtotal: Number(subtotal.toFixed(2)),
+      finalSubtotal: Number(finalSubtotal.toFixed(2)),
+      promotionLabel,
+    })
+  }
+
+  // 满减
+  for (const promo of fullReductionPromos) {
+    const rules = JSON.parse(promo.rules)
+    const threshold = rules.threshold ?? 0
+    const discount = rules.discount ?? 0
+
+    if (payableAmount >= threshold && discount > 0) {
+      payableAmount -= discount
+      appliedPromotions.push({
+        id: promo.id,
+        name: promo.name,
+        type: 'full_reduction',
+        discount,
+        description: `订单满 ¥${threshold} 自动减 ¥${discount}`,
+      })
+    } else if (payableAmount > 0 && threshold > 0) {
+      const diff = Number((threshold - payableAmount).toFixed(2))
+      hints.push(`再点 ¥${diff.toFixed(2)} 可享${promo.name}。`)
+    }
+  }
+
+  const discountAmount = Number((originalAmount - payableAmount).toFixed(2))
+
+  return res.json({
+    quoteId: `quote-${Date.now()}`,
+    itemDetails,
+    appliedPromotions,
+    totals: {
+      originalAmount: Number(originalAmount.toFixed(2)),
+      discountAmount,
+      payableAmount: Number(payableAmount.toFixed(2)),
+    },
+    hints,
+  })
+})
+
+app.post('/api/orders', async (req, res) => {
+  const { merchantId, branchId, deviceId, items } = req.body ?? {}
+
+  if (!merchantId || !branchId || !deviceId) {
+    return res.status(400).json({ message: 'merchantId, branchId and deviceId are required' })
+  }
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ message: 'items is required' })
+  }
+
+  const normalizedItems = items
+    .map((item: any) => ({
+      dishId: String(item?.dishId ?? ''),
+      quantity: Number(item?.quantity ?? 0),
+    }))
+    .filter((item) => item.dishId && item.quantity > 0)
+
+  if (normalizedItems.length === 0) {
+    return res.status(400).json({ message: 'valid items is required' })
+  }
+
+  // 重新计算 quote
+  const quoteReq = { body: { items: normalizedItems } } as any
+  const quoteRes = await fetch(`http://localhost:${port}/api/cart/quote`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ items: normalizedItems }),
+  })
+  const quote = await quoteRes.json()
+
+  // 生成订单号
+  const orderCount = await prisma.order.count()
+  const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+  const seq = String(orderCount + 1001).padStart(4, '0')
+  const orderNo = `DC${dateStr}${seq}`
+  const pickupCode = String(orderCount + 1).padStart(3, '0')
+
+  const order = await prisma.order.create({
+    data: {
+      orderNo,
+      pickupCode,
+      status: 'pending',
+      merchantId,
+      branchId,
+      deviceId,
+      originalAmount: quote.totals.originalAmount,
+      discountAmount: quote.totals.discountAmount,
+      payableAmount: quote.totals.payableAmount,
+      items: {
+        create: quote.itemDetails.map((item: any) => ({
+          dishId: item.dishId,
+          name: item.name,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          finalUnitPrice: item.finalUnitPrice,
+          subtotal: item.subtotal,
+          finalSubtotal: item.finalSubtotal,
+          promotionLabel: item.promotionLabel,
+        })),
+      },
+      promotions: {
+        create: quote.appliedPromotions.map((p: any) => ({
+          promotionId: p.id,
+          name: p.name,
+          type: p.type,
+          discount: p.discount,
+          description: p.description,
+        })),
+      },
+    },
+    include: { items: true, promotions: true },
+  })
+
+  res.status(201).json({
+    orderNo: order.orderNo,
+    pickupCode: order.pickupCode,
+    status: order.status,
+    merchantId: order.merchantId,
+    branchId: order.branchId,
+    deviceId: order.deviceId,
+    totals: {
+      originalAmount: order.originalAmount,
+      discountAmount: order.discountAmount,
+      payableAmount: order.payableAmount,
+    },
+    items: order.items.map((i) => ({
+      dishId: i.dishId,
+      name: i.name,
+      quantity: i.quantity,
+      finalSubtotal: i.finalSubtotal,
+    })),
+    createdAt: order.createdAt.toISOString(),
+  })
+})
+
+app.get('/api/orders', async (_req, res) => {
+  const orders = await prisma.order.findMany({
+    orderBy: { createdAt: 'desc' },
+    include: { items: true, promotions: true },
+    take: 50,
+  })
+
+  res.json({
+    items: orders.map((o) => ({
+      orderNo: o.orderNo,
+      pickupCode: o.pickupCode,
+      status: o.status,
+      totals: {
+        originalAmount: o.originalAmount,
+        discountAmount: o.discountAmount,
+        payableAmount: o.payableAmount,
+      },
+      items: o.items.map((i) => ({
+        dishId: i.dishId,
+        name: i.name,
+        quantity: i.quantity,
+        finalSubtotal: i.finalSubtotal,
+      })),
+      createdAt: o.createdAt.toISOString(),
+    })),
+  })
+})
+
+app.listen(port, () => {
+  console.log(`API Core server running on http://localhost:${port}`)
+})
