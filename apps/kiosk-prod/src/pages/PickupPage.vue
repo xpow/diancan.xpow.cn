@@ -90,7 +90,7 @@
         <!-- Footer Message -->
         <div class="ticket-footer">
           <p class="footer-title">感谢您选择滋滋烤串！</p>
-          <p class="footer-desc">凭此界面到柜台取餐</p>
+          <p class="footer-desc">请拍照保存</p>
         </div>
       </div>
 
