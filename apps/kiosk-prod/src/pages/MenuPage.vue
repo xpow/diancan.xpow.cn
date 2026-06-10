@@ -373,7 +373,7 @@ onMounted(() => {
 .add-card-btn .material-icons { font-size: 20px !important; }
 .add-card-btn:active { transform: scale(0.9); }
 
-.cart-bar { position: fixed; bottom: 80px; left: var(--container-margin); right: var(--container-margin); z-index: 80; display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-md); background: var(--frosted-bg); backdrop-filter: blur(12px); border-radius: var(--radius-xl); border: 1px solid var(--card-border-strong); box-shadow: var(--shadow-lg); cursor: pointer; }
+.cart-bar { position: fixed; bottom: 80px; left: 0; right: 0; z-index: 80; max-width: 600px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-md); background: var(--frosted-bg); backdrop-filter: blur(12px); border-radius: var(--radius-xl); border: 1px solid var(--card-border-strong); box-shadow: var(--shadow-lg); cursor: pointer; }
 .cart-bar:active { transform: scale(0.99); }
 .cart-left { display: flex; align-items: center; gap: var(--spacing-md); }
 .cart-icon-wrap { position: relative; display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: var(--radius-lg); background: var(--primary-container); box-shadow: var(--shadow-primary); }
