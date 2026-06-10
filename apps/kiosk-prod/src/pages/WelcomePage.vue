@@ -293,6 +293,9 @@ onMounted(() => {
 .hero-section {
   margin-top: 60px;
   padding: var(--spacing-md);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .hero-gradient {
