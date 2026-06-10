@@ -486,24 +486,16 @@ onMounted(() => {
 /* Featured Items */
 .featured-scroll {
   display: flex;
+  flex-direction: column;
   gap: var(--spacing-md);
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: var(--spacing-sm);
-}
-
-.featured-scroll::-webkit-scrollbar {
-  display: none;
 }
 
 .featured-card {
-  min-width: 280px;
+  width: 100%;
   background: var(--surface-container-lowest);
   border-radius: var(--radius-xl);
   border: 1px solid var(--outline-variant);
   overflow: hidden;
-  scroll-snap-align: start;
   box-shadow: var(--shadow-md);
 }
 
