@@ -380,5 +380,5 @@ onMounted(() => {
 .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--radius-full); color: var(--secondary); text-decoration: none; transition: all var(--transition-fast); }
 .nav-item-active { background: rgba(255, 107, 0, 0.1); color: var(--primary-container); }
 .nav-label { font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; }
-@media (max-width: 720px) { .dish-row { flex-direction: column; } .dish-image { width: 100%; height: 160px; } }
+
 </style>
