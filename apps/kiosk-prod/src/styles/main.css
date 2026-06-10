@@ -43,10 +43,20 @@ img {
 /* Vant component dark mode support */
 .van-action-sheet,
 .van-action-sheet__content,
-.van-action-sheet__header,
+.van-action-sheet__header {
+  background: var(--surface-container-lowest) !important;
+  color: var(--on-surface);
+}
 .van-popup {
   background: var(--surface-container-lowest) !important;
   color: var(--on-surface);
+}
+.van-popup--bottom {
+  max-width: 600px !important;
+  margin: 0 auto !important;
+  left: 0 !important;
+  right: 0 !important;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0 !important;
 }
 .van-overlay {
   background: rgba(0, 0, 0, 0.5) !important;

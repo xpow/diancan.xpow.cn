@@ -383,7 +383,7 @@ onMounted(() => {
 .cart-label { font-family: var(--font-display); font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--secondary); }
 .cart-total { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: var(--primary-container); }
 .cart-btn { padding: var(--spacing-md) var(--spacing-xl); border: none; border-radius: var(--radius-xl); background: var(--primary-container); color: var(--on-primary); font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; cursor: pointer; box-shadow: var(--shadow-primary); }
-.cart-sheet { padding: 0 var(--container-margin) var(--container-margin); min-height: 200px; }
+.cart-sheet { padding: 0 var(--container-margin) var(--container-margin); min-height: 200px; max-width: 600px; margin: 0 auto; }
 .cart-sheet-header { display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-md) 0; border-bottom: 1px solid var(--surface-variant); position: sticky; top: 0; background: var(--surface-container-lowest); z-index: 1; }
 .cart-sheet-title { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; }
 .clear-btn { display: flex; align-items: center; gap: var(--spacing-xs); border: none; background: transparent; color: var(--secondary); font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; cursor: pointer; padding: var(--spacing-xs) var(--spacing-sm); border-radius: var(--radius-md); }
