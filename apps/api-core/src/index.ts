@@ -100,6 +100,7 @@ app.post('/api/cart/quote', async (req, res) => {
     .map((item: any) => ({
       dishId: String(item?.dishId ?? ''),
       quantity: Number(item?.quantity ?? 0),
+      specs: String(item?.specs ?? ''),
     }))
     .filter((item) => item.dishId && item.quantity > 0)
 
@@ -179,6 +180,7 @@ app.post('/api/cart/quote', async (req, res) => {
       finalUnitPrice: Number(finalUnitPrice.toFixed(2)),
       subtotal: Number(subtotal.toFixed(2)),
       finalSubtotal: Number(finalSubtotal.toFixed(2)),
+      specs: item.specs,
       promotionLabel,
     })
   }

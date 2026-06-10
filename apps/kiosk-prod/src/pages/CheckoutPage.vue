@@ -91,6 +91,7 @@
               <img :src="getItemImage(item.dishId)" :alt="item.name" class="item-image" />
               <div class="item-info">
                 <p class="item-name">{{ item.name }}</p>
+                <p v-if="item.specs" class="item-variant">{{ item.specs }}</p>
                 <p v-if="item.promotionLabel" class="item-variant">{{ item.promotionLabel }}</p>
               </div>
               <div class="item-price-col">
@@ -170,6 +171,7 @@ interface QuoteLineItem {
   unitPrice: number
   finalUnitPrice: number
   finalSubtotal: number
+  specs?: string
   promotionLabel?: string
 }
 
@@ -266,6 +268,7 @@ async function reloadQuote() {
         items: cartItems.value.map((item) => ({
           dishId: item.baseDishId,
           quantity: item.quantity,
+          specs: item.specs ?? '',
         })),
       }),
     })
@@ -311,6 +314,7 @@ async function submitOrder() {
         items: cartItems.value.map((item) => ({
           dishId: item.baseDishId,
           quantity: item.quantity,
+          specs: item.specs ?? '',
         })),
       }),
     })
