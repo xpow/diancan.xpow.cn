@@ -100,14 +100,14 @@
 
       <!-- Utility Actions -->
       <div class="utility-actions">
-        <button class="utility-btn">
-          <span class="material-icons">content_copy</span>
-          <span>复制单号</span>
-        </button>
-        <button class="utility-btn">
-          <span class="material-icons">share</span>
-          <span>分享票据</span>
-        </button>
+        <router-link to="/" class="utility-btn">
+          <span class="material-icons">home</span>
+          <span>回到首页</span>
+        </router-link>
+        <router-link to="/menu" class="utility-btn">
+          <span class="material-icons">add_circle</span>
+          <span>继续点餐</span>
+        </router-link>
       </div>
     </div>
 
@@ -713,6 +713,7 @@ onMounted(() => {
   font-size: var(--text-label-lg);
   font-weight: 600;
   cursor: pointer;
+  text-decoration: none;
   transition: transform var(--transition-fast);
 }
 
