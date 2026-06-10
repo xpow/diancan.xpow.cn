@@ -39,3 +39,15 @@ img {
 
 /* Google Fonts Import */
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap');
+
+/* Vant component dark mode support */
+.van-action-sheet,
+.van-action-sheet__content,
+.van-action-sheet__header,
+.van-popup {
+  background: var(--surface-container-lowest) !important;
+  color: var(--on-surface);
+}
+.van-overlay {
+  background: rgba(0, 0, 0, 0.5) !important;
+}

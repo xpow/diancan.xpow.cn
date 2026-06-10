@@ -395,7 +395,7 @@ onMounted(() => {
 .cart-item-spec { margin: var(--spacing-xs) 0 0; font-size: var(--text-label-sm); color: var(--secondary); }
 .cart-item-price { margin: var(--spacing-xs) 0 0; font-size: var(--text-body-md); font-weight: 700; color: var(--primary-container); }
 .cart-item-qty { display: flex; align-items: center; gap: var(--spacing-sm); }
-.qty-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--outline-variant); background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.qty-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--outline-variant); background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--on-surface-variant); }
 .qty-btn .material-icons { font-size: 16px !important; }
 .qty-btn-plus { background: var(--primary-container); border-color: var(--primary-container); color: var(--on-primary); }
 .qty-num { font-size: var(--text-body-lg); font-weight: 600; min-width: 20px; text-align: center; }
