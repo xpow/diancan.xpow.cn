@@ -29,8 +29,9 @@
 
       <!-- Ticket Card -->
       <div class="ticket-card">
-        <!-- NFC Section -->
-        <div class="nfc-section">
+        <!-- NFC Section (hidden) -->
+        <!-- NFC Section (hidden) -->
+        <div v-if="false" class="nfc-section">
           <div class="nfc-icon-wrap">
             <div class="nfc-ping"></div>
             <div class="nfc-icon">
