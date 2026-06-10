@@ -68,9 +68,13 @@
               <img :src="getItemImage(item.name)" :alt="item.name" class="item-image" />
               <div class="item-info">
                 <p class="item-name">{{ item.name }}</p>
-                <p v-if="item.promotionLabel" class="item-variant">{{ item.promotionLabel }}</p>
+                <p v-if="item.specs" class="item-variant">{{ item.specs }}</p>
+                <p v-if="item.promotionLabel" class="item-variant-promo">{{ item.promotionLabel }}</p>
               </div>
-              <span class="item-price">¥{{ item.finalUnitPrice.toFixed(2) }}</span>
+              <div class="item-qty-col">
+                <span class="item-qty">x{{ item.quantity }}</span>
+                <span class="item-price">¥{{ item.finalUnitPrice.toFixed(2) }}</span>
+              </div>
             </li>
           </ul>
 
@@ -133,6 +137,7 @@ interface OrderItem {
   unitPrice: number
   finalUnitPrice: number
   finalSubtotal: number
+  specs?: string
   promotionLabel?: string
 }
 
@@ -593,6 +598,25 @@ onMounted(() => {
   font-family: var(--font-display);
   font-size: var(--text-label-sm);
   color: var(--secondary);
+}
+
+.item-variant-promo {
+  margin: var(--spacing-xs) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--text-label-sm);
+  color: var(--tertiary);
+}
+
+.item-qty-col {
+  text-align: right;
+}
+
+.item-qty {
+  display: block;
+  font-family: var(--font-display);
+  font-size: var(--text-label-sm);
+  color: var(--secondary);
+  margin-bottom: var(--spacing-xs);
 }
 
 .item-price {

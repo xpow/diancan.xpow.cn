@@ -190,6 +190,7 @@ model OrderItem {
   finalUnitPrice Float
   subtotal       Float
   finalSubtotal  Float
+  specs          String?
   promotionLabel String?
 
   order Order @relation(fields: [orderId], references: [id])
