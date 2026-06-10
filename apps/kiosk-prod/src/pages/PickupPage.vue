@@ -90,7 +90,10 @@
         <!-- Footer Message -->
         <div class="ticket-footer">
           <p class="footer-title">感谢您选择滋滋烤串！</p>
-          <p class="footer-desc">请拍照保存</p>
+          <p class="footer-desc">
+            <span class="material-icons footer-icon">photo_camera</span>
+            请拍照保存
+          </p>
         </div>
       </div>
 
@@ -676,6 +679,14 @@ onMounted(() => {
   font-family: var(--font-display);
   font-size: var(--text-label-sm);
   color: var(--secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+}
+
+.footer-icon {
+  font-size: 16px !important;
 }
 
 /* Utility Actions */
