@@ -10,6 +10,9 @@
         <span class="status-dot"></span>
         <span>{{ bootstrap?.statusText || '营业中' }}</span>
       </div>
+      <button class="theme-btn" @click="themeIcon = doToggleTheme()" :title="themeTooltip">
+        <span class="material-icons">{{ themeIcon }}</span>
+      </button>
     </header>
 
     <!-- Hero Section -->
@@ -125,6 +128,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { getTheme, setTheme } from '@/utils/theme'
 
 interface BootstrapPromotion {
   id: string
@@ -157,6 +161,21 @@ interface BootstrapResponse {
 
 const bootstrap = ref<BootstrapResponse | null>(null)
 const heroImage = ref<string>('https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=80')
+
+function getThemeIcon(): string {
+  const t = getTheme()
+  if (t === 'auto') return 'brightness_auto'
+  return t === 'dark' ? 'dark_mode' : 'light_mode'
+}
+const themeIcon = ref(getThemeIcon())
+function doToggleTheme(): string {
+  setTheme(getTheme() === 'dark' ? 'light' : 'dark')
+  return getThemeIcon()
+}
+function themeTooltip(): string {
+  const t = getTheme()
+  return t === 'dark' ? '切换到亮色' : '切换到深色'
+}
 
 async function loadBootstrap() {
   const response = await fetch('/api/system/bootstrap')
@@ -246,6 +265,28 @@ onMounted(() => {
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
+}
+
+.theme-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  margin-left: var(--spacing-sm);
+}
+
+.theme-btn .material-icons {
+  font-size: 22px !important;
+}
+
+.theme-btn:hover {
+  background: var(--surface-container-high);
 }
 
 /* Hero Section */

@@ -6,9 +6,14 @@
         <span class="material-icons">restaurant_menu</span>
         <h1>{{ merchantName || 'Sizzling Skewers' }}</h1>
       </div>
-      <button class="close-btn" @click="goHome">
-        <span class="material-icons">close</span>
-      </button>
+      <div class="top-bar-right">
+        <button class="theme-btn" @click="themeIcon = doToggleTheme()">
+          <span class="material-icons">{{ themeIcon }}</span>
+        </button>
+        <button class="close-btn" @click="goHome">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
     </header>
 
     <!-- Content -->
@@ -163,6 +168,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { clearCart, readCart } from '@/utils/cart'
+import { getTheme, setTheme } from '@/utils/theme'
 
 interface QuoteLineItem {
   dishId: string
@@ -202,6 +208,16 @@ interface CreatedOrder {
 
 const router = useRouter()
 const cartItems = ref(readCart())
+
+const themeIcon = ref(getIcon())
+function getIcon(): string {
+  const t = getTheme()
+  return t === 'auto' ? 'brightness_auto' : t === 'dark' ? 'dark_mode' : 'light_mode'
+}
+function doToggleTheme(): string {
+  setTheme(getTheme() === 'dark' ? 'light' : 'dark')
+  return getIcon()
+}
 const loading = ref(false)
 const submitting = ref(false)
 const errorMessage = ref('')
@@ -401,6 +417,33 @@ onMounted(() => {
   background: transparent;
   color: var(--secondary);
   cursor: pointer;
+}
+
+.top-bar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.theme-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+}
+
+.theme-btn .material-icons {
+  font-size: 22px !important;
+}
+
+.theme-btn:hover {
+  background: var(--surface-container-high);
 }
 
 /* Page Content */

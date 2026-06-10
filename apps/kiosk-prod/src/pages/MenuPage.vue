@@ -5,10 +5,15 @@
         <span class="material-icons">restaurant_menu</span>
         <h1>{{ branchName || 'Sizzling Skewers' }}</h1>
       </div>
-      <router-link to="/pickup" class="ticket-btn">
-        <span class="material-icons">receipt_long</span>
-        <span v-if="hasActiveOrder" class="badge-dot">1</span>
-      </router-link>
+      <div class="top-bar-right">
+        <button class="theme-btn" @click="themeIcon = doToggleTheme()">
+          <span class="material-icons">{{ themeIcon }}</span>
+        </button>
+        <router-link to="/pickup" class="ticket-btn">
+          <span class="material-icons">receipt_long</span>
+          <span v-if="hasActiveOrder" class="badge-dot">1</span>
+        </router-link>
+      </div>
     </header>
 
     <div class="page-content">
@@ -135,6 +140,7 @@ import { showToast } from 'vant'
 import 'vant/es/toast/style'
 import { SPECS_PRESETS, type SpecGroup, type SpecPreset } from '@diancan/shared'
 import { readCart, clearCart as clearCartStorage, addToCart as addToCartStorage, updateCartQuantity as updateCartQuantityStorage, StoredCartItem } from '@/utils/cart'
+import { getTheme, setTheme } from '@/utils/theme'
 
 interface Category { id: string; name: string; sort: number }
 interface Dish {
@@ -158,6 +164,16 @@ const hasActiveOrder = ref(false)
 const cartItems = ref<StoredCartItem[]>([])
 
 const qtyGroupIndex = 1
+
+function getThemeIcon(): string {
+  const t = getTheme()
+  return t === 'auto' ? 'brightness_auto' : t === 'dark' ? 'dark_mode' : 'light_mode'
+}
+const themeIcon = ref(getThemeIcon())
+function doToggleTheme(): string {
+  setTheme(getTheme() === 'dark' ? 'light' : 'dark')
+  return getThemeIcon()
+}
 
 const cartCount = computed(() => cartItems.value.reduce((s, i) => s + i.quantity, 0))
 const cartTotal = computed(() => cartItems.value.reduce((t, i) => t + i.price * i.quantity, 0))
@@ -301,6 +317,10 @@ onMounted(() => {
 .brand .material-icons { color: var(--primary-container); font-size: 28px !important; }
 .brand h1 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-lg-mobile); font-weight: 700; color: var(--primary-container); text-transform: uppercase; }
 .ticket-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; border-radius: 50%; cursor: pointer; color: var(--secondary); text-decoration: none; position: relative; }
+.top-bar-right { display: flex; align-items: center; gap: var(--spacing-xs); }
+.theme-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: none; border-radius: var(--radius-full); background: transparent; color: var(--on-surface-variant); cursor: pointer; }
+.theme-btn .material-icons { font-size: 22px !important; }
+.theme-btn:hover { background: var(--surface-container-high); }
 .badge-dot { position: absolute; top: 2px; right: 2px; background: var(--error); color: #fff; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; padding: 0 3px; border: 1.5px solid var(--surface); }
 .page-content { padding: 70px var(--container-margin) var(--spacing-lg); max-width: 600px; margin: 0 auto; }
 .featured-banner { position: relative; width: 100%; aspect-ratio: 2 / 1; border-radius: var(--radius-xl); overflow: hidden; margin-bottom: var(--spacing-lg); }
