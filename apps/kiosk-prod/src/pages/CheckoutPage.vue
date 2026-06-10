@@ -88,7 +88,7 @@
               :key="item.dishId"
               class="order-item"
             >
-              <img :src="getItemImage(item.name)" :alt="item.name" class="item-image" />
+              <img :src="getItemImage(item.dishId)" :alt="item.name" class="item-image" />
               <div class="item-info">
                 <p class="item-name">{{ item.name }}</p>
                 <p v-if="item.promotionLabel" class="item-variant">{{ item.promotionLabel }}</p>
@@ -206,13 +206,21 @@ const createdOrder = ref<CreatedOrder | null>(null)
 const merchantName = ref('Sizzling Skewers')
 const orderType = ref<'dine-in' | 'takeaway'>('dine-in')
 
-function getItemImage(name: string): string {
-  const images: Record<string, string> = {
-    '羊肉串': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&q=80',
-    '鸡翅': 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=200&q=80',
-    '韭菜': 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=200&q=80',
+function getItemImage(dishId: string): string {
+  const cartItem = cartItems.value.find((i) => i.baseDishId === dishId)
+  if (cartItem?.image) return cartItem.image
+  const fallback: Record<string, string> = {
+    'dish-01': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&q=80',
+    'dish-02': 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=200&q=80',
+    'dish-03': 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=200&q=80',
+    'dish-04': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=200&q=80',
+    'dish-05': 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=200&q=80',
+    'dish-07': 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=200&q=80',
+    'dish-08': 'https://images.unsplash.com/photo-1506280754576-f6fa8a873550?w=200&q=80',
+    'dish-11': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=200&q=80',
+    'dish-12': 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=200&q=80',
   }
-  return images[name] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&q=80'
+  return fallback[dishId] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&q=80'
 }
 
 function goHome() {
