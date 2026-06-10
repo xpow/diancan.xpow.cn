@@ -253,7 +253,7 @@ onMounted(() => {
 /* Page Content */
 .page-content {
   padding: 80px var(--container-margin) var(--spacing-lg);
-  max-width: 500px;
+  max-width: 600px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;

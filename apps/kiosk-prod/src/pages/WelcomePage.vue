@@ -33,75 +33,77 @@
       </div>
     </section>
 
-    <!-- Promotions Section -->
-    <section v-if="bootstrap?.promotions?.length" class="section">
-      <div class="section-header">
-        <h3>优惠活动</h3>
-      </div>
-      <div class="promo-list">
-        <article
-          v-for="promotion in bootstrap.promotions"
-          :key="promotion.id"
-          :class="['promo-card', promotion.tone === 'primary' ? 'promo-primary' : 'promo-default']"
-        >
-          <div class="promo-icon-wrap">
-            <span class="material-icons promo-icon">redeem</span>
-          </div>
-          <div class="promo-content">
-            <p class="promo-tag" v-if="promotion.tag">{{ promotion.tag }}</p>
-            <h4 class="promo-title">{{ promotion.title }}</h4>
-            <p class="promo-subtitle">{{ promotion.subtitle }}</p>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <!-- Featured Items Section -->
-    <section v-if="bootstrap?.featuredItems?.length" class="section">
-      <div class="section-header">
-        <h3>今日招牌</h3>
-        <span class="section-more">查看全部</span>
-      </div>
-      <div class="featured-scroll">
-        <article
-          v-for="item in bootstrap.featuredItems"
-          :key="item.id"
-          class="featured-card"
-        >
-          <div class="featured-image" :class="item.badgeTone === 'hot' ? 'badge-hot' : 'badge-new'">
-            <span class="featured-badge">{{ item.badge }}</span>
-          </div>
-          <div class="featured-body">
-            <div class="featured-row">
-              <h4 class="featured-name">{{ item.title }}</h4>
-              <span class="featured-price">{{ item.priceText }}</span>
+    <div class="page-content">
+      <!-- Promotions Section -->
+      <section v-if="bootstrap?.promotions?.length" class="section">
+        <div class="section-header">
+          <h3>优惠活动</h3>
+        </div>
+        <div class="promo-list">
+          <article
+            v-for="promotion in bootstrap.promotions"
+            :key="promotion.id"
+            :class="['promo-card', promotion.tone === 'primary' ? 'promo-primary' : 'promo-default']"
+          >
+            <div class="promo-icon-wrap">
+              <span class="material-icons promo-icon">redeem</span>
             </div>
-            <p class="featured-desc">{{ item.description }}</p>
-          </div>
+            <div class="promo-content">
+              <p class="promo-tag" v-if="promotion.tag">{{ promotion.tag }}</p>
+              <h4 class="promo-title">{{ promotion.title }}</h4>
+              <p class="promo-subtitle">{{ promotion.subtitle }}</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Featured Items Section -->
+      <section v-if="bootstrap?.featuredItems?.length" class="section">
+        <div class="section-header">
+          <h3>今日招牌</h3>
+          <span class="section-more">查看全部</span>
+        </div>
+        <div class="featured-scroll">
+          <article
+            v-for="item in bootstrap.featuredItems"
+            :key="item.id"
+            class="featured-card"
+          >
+            <div class="featured-image" :class="item.badgeTone === 'hot' ? 'badge-hot' : 'badge-new'">
+              <span class="featured-badge">{{ item.badge }}</span>
+            </div>
+            <div class="featured-body">
+              <div class="featured-row">
+                <h4 class="featured-name">{{ item.title }}</h4>
+                <span class="featured-price">{{ item.priceText }}</span>
+              </div>
+              <p class="featured-desc">{{ item.description }}</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Info Grid -->
+      <section class="section info-grid">
+        <article class="info-card">
+          <span class="material-icons info-icon">schedule</span>
+          <p class="info-label">营业时间</p>
+          <p class="info-value">{{ bootstrap?.businessHours || '17:00 - 02:00' }}</p>
         </article>
-      </div>
-    </section>
+        <article class="info-card">
+          <span class="material-icons info-icon">location_on</span>
+          <p class="info-label">当前位置</p>
+          <p class="info-value">{{ bootstrap?.todayLocation || '解放路美食街' }}</p>
+          <p v-if="bootstrap?.locationHint" class="info-hint">{{ bootstrap.locationHint }}</p>
+        </article>
+      </section>
 
-    <!-- Info Grid -->
-    <section class="section info-grid">
-      <article class="info-card">
-        <span class="material-icons info-icon">schedule</span>
-        <p class="info-label">营业时间</p>
-        <p class="info-value">{{ bootstrap?.businessHours || '17:00 - 02:00' }}</p>
-      </article>
-      <article class="info-card">
-        <span class="material-icons info-icon">location_on</span>
-        <p class="info-label">当前位置</p>
-        <p class="info-value">{{ bootstrap?.todayLocation || '解放路美食街' }}</p>
-        <p v-if="bootstrap?.locationHint" class="info-hint">{{ bootstrap.locationHint }}</p>
-      </article>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-      <p>© 2024 {{ bootstrap?.merchantName || 'Sizzling Skewers' }}</p>
-      <p class="footer-tagline">用心做好每一串，传递市井烟火气</p>
-    </footer>
+      <!-- Footer -->
+      <footer class="footer">
+        <p>© 2024 {{ bootstrap?.merchantName || 'Sizzling Skewers' }}</p>
+        <p class="footer-tagline">用心做好每一串，传递市井烟火气</p>
+      </footer>
+    </div>
 
     <!-- Bottom Navigation -->
     <nav class="bottom-nav">
@@ -332,9 +334,16 @@ onMounted(() => {
   font-size: 20px !important;
 }
 
+/* Page Content */
+.page-content {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 var(--container-margin);
+}
+
 /* Sections */
 .section {
-  padding: var(--spacing-lg) var(--container-margin);
+  padding: var(--spacing-lg) 0;
 }
 
 .section-header {
@@ -564,7 +573,7 @@ onMounted(() => {
 
 /* Footer */
 .footer {
-  padding: var(--spacing-xl) var(--container-margin);
+  padding: var(--spacing-xl) 0;
   text-align: center;
 }
 

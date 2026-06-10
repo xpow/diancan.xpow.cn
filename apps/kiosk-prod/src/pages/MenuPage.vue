@@ -302,7 +302,7 @@ onMounted(() => {
 .brand h1 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-lg-mobile); font-weight: 700; color: var(--primary-container); text-transform: uppercase; }
 .ticket-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; border-radius: 50%; cursor: pointer; color: var(--secondary); text-decoration: none; position: relative; }
 .badge-dot { position: absolute; top: 2px; right: 2px; background: var(--error); color: #fff; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; padding: 0 3px; border: 1.5px solid var(--surface); }
-.page-content { padding: 70px var(--container-margin) var(--spacing-lg); }
+.page-content { padding: 70px var(--container-margin) var(--spacing-lg); max-width: 600px; margin: 0 auto; }
 .featured-banner { position: relative; width: 100%; aspect-ratio: 2 / 1; border-radius: var(--radius-xl); overflow: hidden; margin-bottom: var(--spacing-lg); }
 .featured-img { width: 100%; height: 100%; object-fit: cover; }
 .featured-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: var(--spacing-md); background: linear-gradient(to top, rgba(0,0,0,0.6), transparent); }
