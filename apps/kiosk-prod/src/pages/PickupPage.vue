@@ -1,6 +1,5 @@
 <template>
   <main class="page">
-    <!-- Top Bar -->
     <header class="top-bar">
       <div class="brand">
         <span class="material-icons">restaurant_menu</span>
@@ -16,89 +15,45 @@
       </div>
     </header>
 
-    <!-- Content -->
     <div class="page-content">
-      <!-- Status Indicator -->
-      <div class="status-indicator">
-        <div class="status-badge pulse-soft">
-          <span class="material-icons">local_fire_department</span>
-          <span>制作中</span>
-        </div>
-        <p class="status-hint">请耐心等待，美味即将出炉</p>
-      </div>
+      <section v-if="!orders.length && !loading" class="empty-state">
+        <span class="material-icons">receipt_long</span>
+        <p>暂无订单</p>
+        <router-link to="/menu" class="back-link">
+          <span class="material-icons">add_circle</span>
+          <span>去点餐</span>
+        </router-link>
+      </section>
 
-      <!-- Ticket Card -->
-      <div class="ticket-card">
-        <!-- NFC Section (hidden) -->
-        <!-- NFC Section (hidden) -->
-        <div v-if="false" class="nfc-section">
-          <div class="nfc-icon-wrap">
-            <div class="nfc-ping"></div>
-            <div class="nfc-icon">
-              <span class="material-icons">contactless</span>
-            </div>
-          </div>
-          <div class="nfc-info">
-            <div class="nfc-ready">
-              <span class="nfc-dot"></span>
-              <span>NFC Ready</span>
-            </div>
-            <h3 class="nfc-title">NFC 感应取餐</h3>
-            <p class="nfc-desc">靠近取餐柜 NFC 感应区，碰一碰即可取餐</p>
-          </div>
+      <template v-else>
+        <div class="orders-header">
+          <h3>当前订单</h3>
+          <span class="orders-count">{{ orders.length }} 笔</span>
         </div>
 
-        <!-- Pickup Code -->
-        <div class="pickup-section">
-          <span class="pickup-label">取餐号</span>
-          <div class="pickup-code">{{ order?.pickupCode || 'A08' }}</div>
-          <!-- Decorative holes -->
-          <div class="hole hole-left"></div>
-          <div class="hole hole-right"></div>
-        </div>
-
-        <!-- Order Details -->
-        <div class="details-section">
-          <div class="details-header">
-            <h4>订单详情</h4>
-            <span class="details-time">{{ formatTime(order?.createdAt) }}</span>
-          </div>
-
-          <ul class="order-items">
-            <li v-for="item in order?.items ?? []" :key="item.dishId" class="order-item">
-              <img :src="getItemImage(item.name)" :alt="item.name" class="item-image" />
-              <div class="item-info">
-                <p class="item-name">{{ item.name }}</p>
-                <p v-if="item.specs" class="item-variant">{{ item.specs }}</p>
-                <p v-if="item.promotionLabel" class="item-variant-promo">{{ item.promotionLabel }}</p>
+        <div class="orders-list">
+          <article v-for="o in orders" :key="o.orderNo" class="order-card">
+            <div class="order-top">
+              <div class="pickup-code-section">
+                <span class="pickup-label">取餐号</span>
+                <span class="pickup-code">{{ o.pickupCode }}</span>
               </div>
-              <div class="item-qty-col">
-                <span class="item-qty">x{{ item.quantity }}</span>
-                <span class="item-price">¥{{ item.finalUnitPrice.toFixed(2) }}</span>
+              <div class="status-section">
+                <span :class="['status-badge', statusClass(o.status)]">{{ statusText(o.status) }}</span>
               </div>
-            </li>
-          </ul>
-
-          <div class="order-total">
-            <span>合计 {{ order?.items?.length || 0 }} 项商品</span>
-            <div class="total-right">
-              <span class="total-label">实付金额</span>
-              <span class="total-amount">¥{{ order?.totals?.payableAmount.toFixed(2) || '0.00' }}</span>
             </div>
-          </div>
+            <div class="order-meta">
+              <span class="order-no">{{ o.orderNo }}</span>
+              <span class="order-time">{{ formatTime(o.createdAt) }}</span>
+            </div>
+            <div class="order-summary">
+              <span class="order-items-count">{{ o.items.length }} 项商品</span>
+              <span class="order-amount">¥{{ o.totals.payableAmount.toFixed(2) }}</span>
+            </div>
+          </article>
         </div>
+      </template>
 
-        <!-- Footer Message -->
-        <div class="ticket-footer">
-          <p class="footer-title">感谢您选择滋滋烤串！</p>
-          <p class="footer-desc">
-            <span class="material-icons footer-icon">photo_camera</span>
-            请拍照保存
-          </p>
-        </div>
-      </div>
-
-      <!-- Utility Actions -->
       <div class="utility-actions">
         <router-link to="/" class="utility-btn">
           <span class="material-icons">home</span>
@@ -111,7 +66,6 @@
       </div>
     </div>
 
-    <!-- Bottom Navigation -->
     <nav class="bottom-nav">
       <router-link to="/" class="nav-item">
         <span class="material-icons">home</span>
@@ -131,34 +85,31 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { getTheme, setTheme } from '@/utils/theme'
+
+interface OrderTotals {
+  originalAmount: number
+  discountAmount: number
+  payableAmount: number
+}
 
 interface OrderItem {
   dishId: string
   name: string
   quantity: number
-  unitPrice: number
-  finalUnitPrice: number
   finalSubtotal: number
-  specs?: string
-  promotionLabel?: string
 }
 
-interface Order {
+interface OrderSummary {
   orderNo: string
   pickupCode: string
   status: string
   items: OrderItem[]
-  totals: {
-    originalAmount: number
-    discountAmount: number
-    payableAmount: number
-  }
-  createdAt?: string
+  totals: OrderTotals
+  createdAt: string
 }
 
-const route = useRoute()
 const router = useRouter()
 
 function getIcon(): string {
@@ -172,36 +123,36 @@ function doToggleTheme(): string {
 }
 
 const loading = ref(false)
-const errorMessage = ref('')
-const order = ref<Order | null>(null)
+const orders = ref<OrderSummary[]>([])
 const merchantName = ref('Sizzling Skewers')
 
-function getItemImage(name: string): string {
-  const images: Record<string, string> = {
-    '招牌牛肉串': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&q=80',
-    '秘制羊肉串': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&q=80',
-    '烤鸡翅': 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=200&q=80',
-    '烤排骨': 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=200&q=80',
-    '烤鱿鱼': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&q=80',
-    '烤茄子': 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=200&q=80',
-    '烤韭菜': 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=200&q=80',
-    '烤金针菇': 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=200&q=80',
-    '烤玉米': 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=200&q=80',
-    '冰镇酸梅汤': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=200&q=80',
-    '柠檬茶': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=200&q=80',
-    '矿泉水': 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=200&q=80',
+function statusClass(status: string): string {
+  switch (status) {
+    case 'paid': return 'status-paid'
+    case 'preparing': return 'status-preparing'
+    case 'ready': return 'status-ready'
+    case 'completed': return 'status-completed'
+    default: return ''
   }
-  return images[name] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&q=80'
+}
+
+function statusText(status: string): string {
+  switch (status) {
+    case 'paid': return '已支付'
+    case 'preparing': return '制作中'
+    case 'ready': return '可取餐'
+    case 'completed': return '已完成'
+    default: return status
+  }
 }
 
 function formatTime(date?: string): string {
   if (!date) return ''
   return new Date(date).toLocaleString('zh-CN', {
-    year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   })
 }
 
@@ -209,26 +160,22 @@ function goHome() {
   router.push('/')
 }
 
-async function loadOrder() {
-  const orderNo = route.query.orderNo as string
-  if (!orderNo) return
-
+async function loadOrders() {
   loading.value = true
-  errorMessage.value = ''
-
   try {
-    const res = await fetch(`/api/orders/${orderNo}`)
+    const res = await fetch('/api/orders')
     if (!res.ok) throw new Error('订单获取失败')
-    order.value = await res.json() as Order
-  } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : '订单获取失败'
+    const data = await res.json() as { items: OrderSummary[] }
+    orders.value = data.items ?? []
+  } catch {
+    orders.value = []
   } finally {
     loading.value = false
   }
 }
 
 onMounted(() => {
-  void loadOrder()
+  void loadOrders()
 })
 </script>
 
@@ -329,21 +276,32 @@ onMounted(() => {
   padding: 80px var(--container-margin) var(--spacing-lg);
   max-width: 600px;
   margin: 0 auto;
+}
+
+/* Empty State */
+.empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: var(--spacing-xl);
+  text-align: center;
 }
 
-/* Status Indicator */
-.status-indicator {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-lg);
+.empty-state .material-icons {
+  font-size: 64px !important;
+  color: var(--secondary);
+  opacity: 0.4;
+  margin-bottom: var(--spacing-md);
 }
 
-.status-badge {
+.empty-state p {
+  margin: 0 0 var(--spacing-lg);
+  color: var(--secondary);
+  font-family: var(--font-body);
+  font-size: var(--text-body-md);
+}
+
+.back-link {
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-sm);
@@ -354,126 +312,18 @@ onMounted(() => {
   font-family: var(--font-display);
   font-size: var(--text-label-lg);
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.2);
+  text-decoration: none;
 }
 
-.status-badge .material-icons {
-  font-size: 18px !important;
-}
-
-.pulse-soft {
-  animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes pulse-soft {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(0.98); }
-}
-
-.status-hint {
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: var(--text-body-md);
-  color: var(--secondary);
-}
-
-/* Ticket Card */
-.ticket-card {
-  width: 100%;
-  border-radius: var(--radius-xl);
-  background: var(--surface-container-lowest);
-  box-shadow: var(--shadow-float);
-  overflow: hidden;
-}
-
-/* NFC Section */
-.nfc-section {
-  padding: var(--spacing-lg);
-  background: rgba(160, 65, 0, 0.05);
-  border-bottom: 1px solid var(--surface-variant);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-md);
-  text-align: center;
-}
-
-.nfc-icon-wrap {
-  position: relative;
-  width: 80px;
-  height: 80px;
+/* Orders Header */
+.orders-header {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-lg);
 }
 
-.nfc-ping {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: rgba(160, 65, 0, 0.2);
-  animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
-}
-
-@keyframes ping {
-  75%, 100% {
-    transform: scale(1.5);
-    opacity: 0;
-  }
-}
-
-.nfc-icon {
-  position: relative;
-  z-index: 1;
-  width: 64px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: var(--primary);
-  box-shadow: 0 4px 12px rgba(160, 65, 0, 0.2);
-}
-
-.nfc-icon .material-icons {
-  font-size: 32px !important;
-  color: var(--on-primary);
-}
-
-.nfc-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-xs);
-}
-
-.nfc-ready {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-}
-
-.nfc-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--primary);
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
-
-.nfc-ready span:last-child {
-  font-family: var(--font-display);
-  font-size: var(--text-label-lg);
-  font-weight: 600;
-  color: var(--primary);
-}
-
-.nfc-title {
+.orders-header h3 {
   margin: 0;
   font-family: var(--font-display);
   font-size: var(--text-headline-md);
@@ -481,213 +331,110 @@ onMounted(() => {
   color: var(--on-surface);
 }
 
-.nfc-desc {
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: var(--text-body-md);
+.orders-count {
+  font-family: var(--font-display);
+  font-size: var(--text-label-sm);
   color: var(--secondary);
 }
 
-/* Pickup Section */
-.pickup-section {
-  position: relative;
-  padding: var(--spacing-lg);
-  text-align: center;
-  border-bottom: 1px dashed var(--outline-variant);
+/* Orders List */
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.order-card {
+  padding: var(--spacing-md);
+  border-radius: var(--radius-xl);
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--card-border);
+}
+
+.order-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+}
+
+.pickup-code-section {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-sm);
 }
 
 .pickup-label {
-  display: block;
-  margin-bottom: var(--spacing-xs);
   font-family: var(--font-display);
-  font-size: var(--text-label-lg);
-  font-weight: 600;
+  font-size: var(--text-label-sm);
   color: var(--secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
 }
 
 .pickup-code {
   font-family: var(--font-display);
-  font-size: var(--text-display-lg);
+  font-size: var(--text-headline-lg);
   font-weight: 800;
   color: var(--on-surface-variant);
   letter-spacing: -0.02em;
 }
 
-.hole {
-  position: absolute;
-  bottom: -12px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--surface);
-}
-
-.hole-left {
-  left: -12px;
-}
-
-.hole-right {
-  right: -12px;
-}
-
-/* Details Section */
-.details-section {
-  padding: var(--spacing-lg);
-}
-
-.details-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--spacing-lg);
-}
-
-.details-header h4 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--text-headline-md);
-  font-weight: 700;
-  color: var(--on-surface);
-}
-
-.details-time {
+.status-badge {
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
   font-family: var(--font-display);
   font-size: var(--text-label-sm);
   font-weight: 600;
-  color: var(--secondary);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background: var(--surface-container);
-  border-radius: var(--radius-default);
 }
 
-.order-items {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-}
-
-.order-item {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-}
-
-.item-image {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-lg);
-  object-fit: cover;
-  background: var(--surface-container);
-}
-
-.item-info {
-  flex: 1;
-}
-
-.item-name {
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: var(--text-body-lg);
-  font-weight: 600;
-  color: var(--on-surface);
-}
-
-.item-variant {
-  margin: var(--spacing-xs) 0 0;
-  font-family: var(--font-display);
-  font-size: var(--text-label-sm);
-  color: var(--secondary);
-}
-
-.item-variant-promo {
-  margin: var(--spacing-xs) 0 0;
-  font-family: var(--font-display);
-  font-size: var(--text-label-sm);
+.status-paid {
+  background: rgba(0, 110, 28, 0.1);
   color: var(--tertiary);
 }
 
-.item-qty-col {
-  text-align: right;
-}
-
-.item-qty {
-  display: block;
-  font-family: var(--font-display);
-  font-size: var(--text-label-sm);
-  color: var(--secondary);
-  margin-bottom: var(--spacing-xs);
-}
-
-.item-price {
-  font-family: var(--font-display);
-  font-size: var(--text-price-display);
-  font-weight: 800;
+.status-preparing {
+  background: rgba(255, 107, 0, 0.1);
   color: var(--primary-container);
 }
 
-.order-total {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-top: var(--spacing-lg);
-  padding-top: var(--spacing-lg);
-  border-top: 1px solid var(--surface-variant);
-  font-family: var(--font-body);
-  font-size: var(--text-body-md);
+.status-ready {
+  background: rgba(0, 110, 28, 0.15);
+  color: var(--tertiary);
+}
+
+.status-completed {
+  background: var(--surface-container);
   color: var(--secondary);
 }
 
-.total-right {
-  text-align: right;
-}
-
-.total-label {
-  display: block;
-  font-family: var(--font-display);
-  font-size: var(--text-label-lg);
-  color: var(--secondary);
-}
-
-.total-amount {
-  font-family: var(--font-display);
-  font-size: var(--text-display-lg);
-  font-weight: 800;
-  color: var(--on-surface);
-}
-
-/* Ticket Footer */
-.ticket-footer {
-  padding: var(--spacing-md);
-  background: var(--surface-container-low);
-  text-align: center;
-}
-
-.footer-title {
-  margin: 0 0 var(--spacing-xs);
-  font-family: var(--font-display);
-  font-size: var(--text-label-lg);
-  font-weight: 600;
-  color: var(--primary-container);
-}
-
-.footer-desc {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--text-label-sm);
-  color: var(--secondary);
+.order-meta {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+  font-family: var(--font-body);
+  font-size: var(--text-label-sm);
+  color: var(--secondary);
 }
 
-.footer-icon {
-  font-size: 16px !important;
+.order-no {
+  font-family: monospace;
+}
+
+.order-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--card-border);
+  font-family: var(--font-display);
+  font-size: var(--text-label-sm);
+  color: var(--secondary);
+}
+
+.order-amount {
+  font-weight: 700;
+  color: var(--primary-container);
+  font-size: var(--text-price-display);
 }
 
 /* Utility Actions */
@@ -696,7 +443,6 @@ onMounted(() => {
   grid-template-columns: repeat(2, 1fr);
   gap: var(--spacing-md);
   margin-top: var(--spacing-lg);
-  width: 100%;
 }
 
 .utility-btn {

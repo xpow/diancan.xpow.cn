@@ -342,8 +342,8 @@ async function submitOrder() {
     createdOrder.value = await orderResponse.json() as CreatedOrder
     clearCart()
     cartItems.value = []
-    // 跳转到取餐页
-    router.push(`/pickup?orderNo=${createdOrder.value.orderNo}`)
+    // 跳转到订单页
+    router.push('/orders')
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '下单失败'
   } finally {
