@@ -112,6 +112,12 @@ const prevItemStatus = ref<Record<string, string>>({})
 let wakeLock: any = null
 let announcedReadyOrders = new Set<string>()
 
+const tabs = [
+  { key: 'pending' as const, label: '等待' },
+  { key: 'preparing' as const, label: '制作中' },
+  { key: 'ready' as const, label: '待取餐' },
+]
+
 async function requestWakeLock() {
   try {
     if ('wakeLock' in navigator) {
