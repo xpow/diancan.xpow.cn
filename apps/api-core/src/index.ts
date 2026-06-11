@@ -133,6 +133,7 @@ app.post('/api/cart/quote', async (req, res) => {
   })
   const welfarePromos = activePromotions.filter((p) => p.type === 'welfare_item')
   const fullReductionPromos = activePromotions.filter((p) => p.type === 'full_reduction')
+  const timeDiscountPromos = activePromotions.filter((p) => p.type === 'time_discount')
 
   const itemDetails: any[] = []
   const appliedPromotions: any[] = []
@@ -180,6 +181,31 @@ app.post('/api/cart/quote', async (req, res) => {
 
         if (item.quantity > promoItem.maxQty) {
           hints.push(`${welfarePromo.name}本单仅首份按 ${promoItem.promoPrice?.toFixed(2)} 元计算，其余按原价计算。`)
+        }
+      }
+    }
+
+    // 限时折扣
+    if (!promotionLabel) {
+      const timeDiscountPromo = timeDiscountPromos.find((p) =>
+        p.items.some((pi) => pi.dishId === item.dishId),
+      )
+      if (timeDiscountPromo) {
+        const promoItem = timeDiscountPromo.items.find((pi) => pi.dishId === item.dishId)
+        if (promoItem?.promoPrice) {
+          finalUnitPrice = promoItem.promoPrice
+          finalSubtotal = promoItem.promoPrice * item.quantity
+          const discount = Number(((dish.price - promoItem.promoPrice) * item.quantity).toFixed(2))
+          if (discount > 0) {
+            appliedPromotions.push({
+              id: timeDiscountPromo.id,
+              name: timeDiscountPromo.name,
+              type: 'time_discount',
+              discount,
+              description: `${timeDiscountPromo.name}，¥${dish.price.toFixed(2)} → ¥${promoItem.promoPrice.toFixed(2)}`,
+            })
+            promotionLabel = '限时折扣'
+          }
         }
       }
     }

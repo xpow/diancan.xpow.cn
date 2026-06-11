@@ -139,6 +139,7 @@ async function main() {
     { id: 'dish-10', categoryId: 'cat-drink', name: '冰镇酸梅汤', price: 8, desc: '冰爽解腻，经典搭配', tags: [], specsPreset: 'tea' },
     { id: 'dish-11', categoryId: 'cat-drink', name: '柠檬茶', price: 6, desc: '清爽回甘，饭后推荐', tags: [], specsPreset: 'tea' },
     { id: 'dish-12', categoryId: 'cat-drink', name: '矿泉水', price: 3, desc: '常温矿泉水', tags: [], specsPreset: 'none' },
+    { id: 'dish-13', categoryId: 'cat-skewer', name: '新鲜牛肋条（大串）', price: 12, desc: '精选进口高品质牛肋条（可溯源），肉质鲜娕，奶香十足', tags: ['推荐'], specsPreset: 'bbq' },
   ]
 
   for (const d of dishes) {
@@ -199,6 +200,25 @@ async function main() {
       type: 'full_reduction',
       rules: JSON.stringify({ threshold: 50, discount: 5 }),
       status: 'active',
+    },
+  })
+
+  await prisma.promotion.create({
+    data: {
+      id: 'promo-rib-50',
+      merchantId: merchant.id,
+      name: '限时5折 · 牛肋条',
+      type: 'time_discount',
+      rules: JSON.stringify({ discount: 0.5 }),
+      status: 'active',
+      items: {
+        create: {
+          dishId: 'dish-13',
+          promoPrice: 6,
+          limitType: 'per_order',
+          maxQty: 99,
+        },
+      },
     },
   })
 
