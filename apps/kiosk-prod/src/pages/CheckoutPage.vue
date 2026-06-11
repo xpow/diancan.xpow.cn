@@ -325,6 +325,21 @@ async function submitOrder() {
   errorMessage.value = ''
 
   try {
+    // Verify device SN
+    const savedSN = localStorage.getItem('kiosk-device-sn')
+    if (!savedSN) throw new Error('设备未认证，请返回首页重新认证')
+    const authRes = await fetch('/api/system/device-auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sn: savedSN }),
+    })
+    if (!authRes.ok) {
+      localStorage.removeItem('kiosk-device-id')
+      localStorage.removeItem('kiosk-device-code')
+      localStorage.removeItem('kiosk-device-sn')
+      throw new Error('设备码已失效，请返回首页重新认证')
+    }
+
     const bootstrapResponse = await fetch('/api/system/bootstrap')
     if (!bootstrapResponse.ok) {
       throw new Error('点菜机启动配置获取失败')

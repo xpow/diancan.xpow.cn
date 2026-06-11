@@ -1,5 +1,6 @@
 ﻿<template>
   <main class="page">
+    <template v-if="deviceAuthed">
     <!-- Top Bar -->
     <header class="top-bar">
       <div class="brand">
@@ -104,35 +105,6 @@
       </footer>
     </div>
 
-    <!-- Device SN Login Dialog -->
-    <div v-if="showDeviceAuth" class="device-overlay">
-      <div class="device-dialog">
-        <div class="device-dialog-header">
-          <span class="material-icons">devices</span>
-          <h3>设备认证</h3>
-        </div>
-        <p class="device-dialog-hint">请输入点餐机背面的8位设备码</p>
-        <div class="sn-input-row">
-          <input
-            ref="snInputRef"
-            v-model="snInput"
-            type="text"
-            maxlength="8"
-            class="sn-input"
-            placeholder="00000000"
-            @input="onSNInput"
-            @keyup.enter="submitSN"
-          />
-        </div>
-        <p v-if="snError" class="sn-error">{{ snError }}</p>
-        <button
-          class="device-confirm-btn"
-          :disabled="snInput.length !== 8 || snLoading"
-          @click="submitSN"
-        >{{ snLoading ? '验证中...' : '确认' }}</button>
-      </div>
-    </div>
-
     <!-- Bottom Navigation -->
     <nav class="bottom-nav">
       <router-link to="/" class="nav-item nav-item-active">
@@ -148,6 +120,38 @@
         <span class="nav-label">订单</span>
       </router-link>
     </nav>
+    </template>
+
+    <!-- Device SN Auth Gate -->
+    <div v-if="!deviceAuthed" class="device-overlay">
+      <div class="device-dialog">
+        <div class="device-dialog-header">
+          <span class="material-icons">devices</span>
+          <h3>设备认证</h3>
+        </div>
+        <p class="device-dialog-hint" v-if="!snLoading">请输入点餐机背面的8位设备码</p>
+        <p class="device-dialog-hint" v-else>验证中...</p>
+        <div class="sn-input-row">
+          <input
+            ref="snInputRef"
+            v-model="snInput"
+            type="text"
+            maxlength="8"
+            class="sn-input"
+            placeholder="00000000"
+            :disabled="snLoading"
+            @input="onSNInput"
+            @keyup.enter="submitSN"
+          />
+        </div>
+        <p v-if="snError" class="sn-error">{{ snError }}</p>
+        <button
+          class="device-confirm-btn"
+          :disabled="snInput.length !== 8 || snLoading"
+          @click="submitSN"
+        >{{ snLoading ? '验证中...' : '确认' }}</button>
+      </div>
+    </div>
   </main>
 </template>
 
@@ -194,6 +198,7 @@ interface BootstrapResponse {
 }
 
 const bootstrap = ref<BootstrapResponse | null>(null)
+const deviceAuthed = ref(false)
 const displayTitle = computed(() => {
   const m = bootstrap.value?.merchantName
   const b = bootstrap.value?.branchName
@@ -206,7 +211,6 @@ const heroImages = [
 ]
 
 /* Device SN auth */
-const showDeviceAuth = ref(false)
 const snInput = ref('')
 const snError = ref('')
 const snLoading = ref(false)
@@ -236,7 +240,7 @@ async function submitSN() {
     localStorage.setItem('kiosk-device-id', data.deviceId)
     localStorage.setItem('kiosk-device-code', data.deviceCode)
     localStorage.setItem('kiosk-device-sn', snInput.value)
-    showDeviceAuth.value = false
+    deviceAuthed.value = true
   } catch {
     snError.value = '网络错误，请重试'
   } finally {
@@ -269,13 +273,13 @@ async function loadBootstrap() {
   const savedDeviceId = localStorage.getItem('kiosk-device-id')
   const savedDeviceSN = localStorage.getItem('kiosk-device-sn')
   if (savedDeviceId && savedDeviceSN) {
-    // Verify SN still valid
+    deviceAuthed.value = true
     return
   }
   // Show SN login
   snInput.value = ''
   snError.value = ''
-  showDeviceAuth.value = true
+  deviceAuthed.value = false
 }
 
 onMounted(() => {
