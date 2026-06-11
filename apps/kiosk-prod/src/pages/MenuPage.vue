@@ -115,7 +115,13 @@
                 {{ item.specs }}
                 <span class="spec-edit-icon material-icons">edit</span>
               </p>
-              <p class="cart-item-price">¥{{ (item.price * item.quantity).toFixed(2) }}</p>
+              <p class="cart-item-price">
+                <template v-if="item.originalPrice">
+                  <span class="price-original">¥{{ item.originalPrice }}</span>
+                  <span class="price-promo">¥{{ (item.price * item.quantity).toFixed(2) }}</span>
+                </template>
+                <span v-else>¥{{ (item.price * item.quantity).toFixed(2) }}</span>
+              </p>
             </div>
             <div class="cart-item-qty">
               <button class="qty-btn" @click="updateCartQuantity(item.dishId, -1)"><span class="material-icons">remove</span></button>
@@ -289,19 +295,18 @@ function addToCart(dish: Dish) {
     }
   }
   const specsKey = specsParts.join(' · ')
-  const price = dish.promotionId && dish.promoPrice ? dish.promoPrice : dish.price
+  const price = dish.promoPrice ?? dish.price
 
   addToCartStorage({
     dishId: `${dish.id}|${specsKey}`,
     baseDishId: dish.id,
-    name: dish.name + (dish.promotionId ? ' (福利)' : ''),
+    name: dish.name + (dish.promoPrice ? ' (折扣)' : ''),
     price,
     quantity: qty,
     specs: specsKey || undefined,
     image: dish.image,
-    promotionId: dish.promotionId,
     promoPrice: dish.promoPrice,
-    originalPrice: dish.promotionId ? dish.price : undefined,
+    originalPrice: dish.promoPrice ? dish.price : undefined,
   })
 
   hydrateCart()
@@ -469,6 +474,8 @@ onMounted(() => {
 .cart-item-spec { margin: var(--spacing-xs) 0 0; font-size: var(--text-label-sm); color: var(--secondary); display: flex; align-items: center; gap: 4px; cursor: pointer; }
 .spec-edit-icon { font-size: 14px !important; opacity: 0.5; }
 .cart-item-price { margin: var(--spacing-xs) 0 0; font-size: var(--text-body-md); font-weight: 700; color: var(--primary-container); }
+.cart-item-price .price-original { font-size: 12px; font-weight: 600; color: var(--secondary); text-decoration: line-through; margin-right: 6px; }
+.cart-item-price .price-promo { color: var(--error); }
 .cart-item-qty { display: flex; align-items: center; gap: var(--spacing-sm); }
 .qty-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--outline-variant); background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--on-surface-variant); }
 .qty-btn .material-icons { font-size: 16px !important; }
