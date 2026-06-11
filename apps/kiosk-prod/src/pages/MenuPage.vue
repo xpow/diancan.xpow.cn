@@ -117,7 +117,7 @@
               </p>
               <p class="cart-item-price">
                 <span>¥{{ (item.price * item.quantity).toFixed(2) }}</span>
-                <span v-if="item.originalPrice" class="cart-promo-tag">限时5折</span>
+                <span v-if="item.promotionName" class="cart-promo-tag">{{ item.promotionName }}</span>
               </p>
             </div>
             <div class="cart-item-qty">
@@ -297,13 +297,14 @@ function addToCart(dish: Dish) {
   addToCartStorage({
     dishId: `${dish.id}|${specsKey}`,
     baseDishId: dish.id,
-    name: dish.name + (dish.promoPrice ? ' (折扣)' : ''),
+    name: dish.name,
     price,
     quantity: qty,
     specs: specsKey || undefined,
     image: dish.image,
     promoPrice: dish.promoPrice,
     originalPrice: dish.promoPrice ? dish.price : undefined,
+    promotionName: dish.promotionName,
   })
 
   hydrateCart()

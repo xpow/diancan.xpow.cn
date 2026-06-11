@@ -222,7 +222,7 @@ app.post('/api/cart/quote', async (req, res) => {
               discount,
               description: `${timeDiscountPromo.name}，¥${dish.price.toFixed(2)} → ¥${promoItem.promoPrice.toFixed(2)}`,
             })
-            promotionLabel = '限时折扣'
+            promotionLabel = timeDiscountPromo.name
           }
         }
       }

@@ -101,7 +101,7 @@
               <div class="item-price-col">
                 <p class="item-price">¥{{ item.finalUnitPrice.toFixed(2) }}</p>
                 <p class="item-qty">x{{ item.quantity }}</p>
-                <p v-if="item.promotionLabel === '限时折扣'" class="item-promo-tag">限时5折</p>
+                <p v-if="item.promotionLabel" class="item-promo-tag">{{ item.promotionLabel }}</p>
               </div>
             </div>
           </div>
