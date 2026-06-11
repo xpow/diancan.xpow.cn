@@ -335,7 +335,6 @@ async function submitOrder() {
     })
     if (!authRes.ok) {
       localStorage.removeItem('kiosk-device-id')
-      localStorage.removeItem('kiosk-device-code')
       localStorage.removeItem('kiosk-device-sn')
       throw new Error('设备码已失效，请返回首页重新认证')
     }

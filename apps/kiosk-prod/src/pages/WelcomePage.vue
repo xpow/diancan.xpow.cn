@@ -238,7 +238,6 @@ async function submitSN() {
     }
     const data = await res.json()
     localStorage.setItem('kiosk-device-id', data.deviceId)
-    localStorage.setItem('kiosk-device-code', data.deviceCode)
     localStorage.setItem('kiosk-device-sn', snInput.value)
     deviceAuthed.value = true
   } catch {
