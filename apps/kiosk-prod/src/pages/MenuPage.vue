@@ -350,9 +350,9 @@ onMounted(() => {
 
 .dish-list { display: flex; flex-direction: column; gap: var(--spacing-md); }
 .dish-card { position: relative; padding: var(--spacing-md); background: var(--surface-container-lowest); border-radius: var(--radius-xl); border: 1px solid var(--card-border-light); box-shadow: var(--shadow-md); }
-.dish-row { display: flex; gap: var(--spacing-md); }
-.dish-image { width: 128px; height: 128px; border-radius: var(--radius-lg); object-fit: cover; flex-shrink: 0; }
-.dish-body { flex: 1; display: flex; flex-direction: column; }
+.dish-row { display: flex; flex-direction: column; gap: var(--spacing-md); }
+.dish-image { width: 100%; height: 200px; border-radius: var(--radius-lg); object-fit: cover; }
+.dish-body { display: flex; flex-direction: column; }
 .dish-header { display: flex; align-items: center; gap: var(--spacing-sm); flex-wrap: wrap; margin-bottom: var(--spacing-xs); }
 .dish-name { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: var(--on-surface); }
 .dish-tag { padding: 2px 8px; border-radius: var(--radius-full); background: rgba(255, 107, 0, 0.1); color: var(--primary-container); font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; }
