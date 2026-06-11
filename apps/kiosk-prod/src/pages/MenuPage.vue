@@ -194,7 +194,10 @@ const filteredDishes = computed(() => dishes.value.filter(d => d.categoryId === 
 function initSpecs(preset: SpecPreset): { groups: SpecGroup[]; defaults: string[] } | null {
   const specDefs = SPECS_PRESETS[preset]
   if (!specDefs || specDefs.length === 0) return null
-  const defaults = specDefs.map((g) => g.options[0]?.label ?? '')
+  const defaults = specDefs.map((g) => {
+    if (g.name === '辣度') return g.options[1]?.label ?? g.options[0]?.label ?? ''
+    return g.options[0]?.label ?? ''
+  })
   return { groups: specDefs, defaults }
 }
 
