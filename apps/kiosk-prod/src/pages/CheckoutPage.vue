@@ -100,8 +100,17 @@
                 <p v-if="item.promotionLabel" class="item-variant">{{ item.promotionLabel }}</p>
               </div>
               <div class="item-price-col">
-                <p class="item-price">¥{{ item.finalUnitPrice.toFixed(2) }}</p>
-                <p class="item-qty">x{{ item.quantity }}</p>
+                <template v-if="item.promotionLabel === '限时折扣'">
+                  <p class="item-price-original">¥{{ item.unitPrice.toFixed(2) }}</p>
+                  <p class="item-price item-price-promo">¥{{ item.finalUnitPrice.toFixed(2) }}</p>
+                  <p class="item-qty">x{{ item.quantity }}</p>
+                  <p class="item-promo-tag">限时5折</p>
+                </template>
+                <template v-else>
+                  <p class="item-price">¥{{ item.finalUnitPrice.toFixed(2) }}</p>
+                  <p class="item-qty">x{{ item.quantity }}</p>
+                  <p v-if="item.promotionLabel" class="item-promo-tag">{{ item.promotionLabel }}</p>
+                </template>
               </div>
             </div>
           </div>
@@ -112,7 +121,7 @@
               <span>¥{{ quote?.totals.originalAmount.toFixed(2) || '0.00' }}</span>
             </div>
             <div v-if="quote?.totals.discountAmount" class="summary-row summary-discount">
-              <span>限时满减</span>
+              <span>优惠折扣</span>
               <span>-¥{{ quote.totals.discountAmount.toFixed(2) }}</span>
             </div>
           </div>
@@ -756,6 +765,10 @@ onMounted(() => {
 
 .item-price-col {
   text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
 }
 
 .item-price {
@@ -764,6 +777,28 @@ onMounted(() => {
   font-size: var(--text-price-display);
   font-weight: 800;
   color: var(--primary-container);
+}
+
+.item-price-original {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--secondary);
+  text-decoration: line-through;
+}
+
+.item-price-promo {
+  color: var(--primary-container);
+}
+
+.item-promo-tag {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 4px;
+  background: var(--primary-container);
+  color: var(--on-primary);
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .item-qty {
