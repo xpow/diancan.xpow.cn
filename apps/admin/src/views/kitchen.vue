@@ -37,9 +37,9 @@
         >
           <div class="item-info">
             <div class="item-name">{{ item.name }}</div>
-            <div class="item-meta">
-              <span class="item-qty">x{{ item.quantity }}</span>
-              <span v-if="item.specs" class="item-specs">· {{ item.specs }}</span>
+            <div class="item-tags">
+              <span class="tag-qty">x{{ item.quantity }}</span>
+              <span v-if="item.specs" class="tag-specs">{{ item.specs }}</span>
             </div>
           </div>
           <button
@@ -237,8 +237,8 @@ async function updateItemStatus(item: OrderItem, newStatus: string) {
 
 async function startCook(item: OrderItem) {
   await updateItemStatus(item, 'preparing')
-  const code = orders.value.find((o) => o.items.some((i) => i.id === item.id))?.pickupCode
-  if (code) speak(`订单${code} ${item.name} 开始制作`)
+  const order = orders.value.find((o) => o.items.some((i) => i.id === item.id))
+  if (order) speak(`订单${order.pickupCode}正在制作`)
 }
 
 async function finishCook(item: OrderItem) {
@@ -276,12 +276,16 @@ async function fetchOrders() {
     orders.value = active
 
     for (const order of active) {
-      for (const item of order.items) {
+      const anyNew = order.items.some((item) => {
+        if (announcedReadyOrders.has(order.pickupCode)) return false
         const prev = prevItemStatus.value[item.id]
-        if (!prev && item.status === 'pending' && !announcedReadyOrders.has(order.pickupCode)) {
-          speakTwice(`新订单${order.pickupCode}，请开始制作`)
-          notify('新订单', `取餐号 ${order.pickupCode}`)
-        }
+        return !prev && item.status === 'pending'
+      })
+      if (anyNew) {
+        speakTwice(`新订单${order.pickupCode}，请开始制作`)
+        notify('新订单', `取餐号 ${order.pickupCode}`)
+      }
+      for (const item of order.items) {
         prevItemStatus.value[item.id] = item.status
       }
     }
@@ -370,8 +374,9 @@ main { padding: 12px 16px; display: flex; flex-direction: column; gap: 16px; }
 
 .item-info { flex: 1; min-width: 0; }
 .item-name { font-size: 15px; font-weight: 700; line-height: 1.3; }
-.item-meta { display: flex; gap: 4px; font-size: 13px; color: var(--secondary); margin-top: 2px; }
-.item-specs { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-tags { display: flex; gap: 6px; margin-top: 6px; }
+.tag-qty { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; background: var(--primary-container); color: var(--on-primary); font-size: 13px; font-weight: 800; }
+.tag-specs { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; background: var(--surface-container-high); color: var(--secondary); font-size: 13px; font-weight: 600; }
 
 .action-btn {
   display: flex; align-items: center; gap: 4px;
