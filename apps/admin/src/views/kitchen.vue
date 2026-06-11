@@ -58,10 +58,14 @@
             <span class="material-symbols-outlined">task_alt</span>
             制作完成
           </button>
-          <div v-if="item.status === 'ready'" class="ready-badge">
-            <span class="material-symbols-outlined">check_circle</span>
-            已出餐
-          </div>
+          <button
+            v-if="item.status === 'ready'"
+            class="action-btn action-remind"
+            @click="remindPickup(item)"
+          >
+            <span class="material-symbols-outlined">volume_up</span>
+            再次提醒
+          </button>
         </div>
         <button
           v-if="group.canComplete && tab === 'ready'"
@@ -197,6 +201,11 @@ function speak(msg: string) {
   speechQueue = []
   speechQueue.push(msg)
   processQueue()
+}
+
+function remindPickup(item: OrderItem) {
+  const order = orders.value.find((o) => o.items.some((i) => i.id === item.id))
+  if (order) speakTwice(`请${order.pickupCode}取餐`)
 }
 
 function speakTwice(msg: string) {
@@ -372,15 +381,9 @@ main { padding: 12px 16px; display: flex; flex-direction: column; gap: 16px; }
 }
 .action-cook { background: var(--primary-container); color: var(--on-primary); }
 .action-ready { background: var(--tertiary-container); color: #fff; }
+.action-remind { background: var(--surface-container-high); color: var(--primary-container); }
 .action-done { background: var(--tertiary); color: #fff; }
 .order-done { margin: 0 12px 12px; justify-content: center; }
-
-.ready-badge {
-  display: flex; align-items: center; gap: 4px;
-  padding: 8px 16px; border-radius: 9999px;
-  background: var(--surface-container-high); color: var(--tertiary);
-  font-size: 13px; font-weight: 600; flex-shrink: 0;
-}
 
 .empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 80px 0; color: var(--secondary); font-size: 14px; }
 .empty-icon { font-size: 64px; color: var(--outline-variant); }
