@@ -7,6 +7,8 @@ import Column from 'primevue/column'
 import Tag from 'primevue/tag'
 import SelectButton from 'primevue/selectbutton'
 import InputText from 'primevue/inputtext'
+import InputNumber from 'primevue/inputnumber'
+import Select from 'primevue/select'
 import Dialog from 'primevue/dialog'
 import App from './App.vue'
 import router from './router'
@@ -19,6 +21,8 @@ app.component('Column', Column)
 app.component('Tag', Tag)
 app.component('SelectButton', SelectButton)
 app.component('InputText', InputText)
+app.component('InputNumber', InputNumber)
+app.component('Select', Select)
 app.component('Dialog', Dialog)
 app.use(router)
 app.mount('#app')

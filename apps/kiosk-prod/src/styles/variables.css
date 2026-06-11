@@ -78,6 +78,9 @@
   --card-border-light: rgba(226, 191, 176, 0.2);
   --card-border-subtle: rgba(226, 191, 176, 0.1);
 
+  /* Ticket card - light mode: no border */
+  --ticket-card-border: #00000021;
+
   /* Spacing */
   --spacing-xs: 4px;
   --spacing-sm: 8px;
@@ -313,6 +316,7 @@
     --card-border-strong: rgba(255, 255, 255, 0.12);
     --card-border-light: rgba(255, 255, 255, 0.06);
     --card-border-subtle: rgba(255, 255, 255, 0.04);
+    --ticket-card-border: #00000021;
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
     --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
     --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.4);
@@ -365,6 +369,7 @@
   --card-border-strong: rgba(255, 255, 255, 0.12);
   --card-border-light: rgba(255, 255, 255, 0.06);
   --card-border-subtle: rgba(255, 255, 255, 0.04);
+  --ticket-card-border: #3b2e15;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.4);

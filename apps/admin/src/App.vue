@@ -6,11 +6,13 @@
     <aside class="sidebar">
       <h2 class="sidebar-title">商家后台</h2>
       <nav>
-        <router-link to="/orders" class="nav-link">订单管理</router-link>
-        <router-link to="/users" class="nav-link">用户管理</router-link>
-        <router-link to="/promotions" class="nav-link">营销活动</router-link>
-        <router-link to="/night-markets" class="nav-link">夜市管理</router-link>
-        <router-link to="/kitchen" class="nav-link">📱 出餐管理（手机版）</router-link>
+        <router-link to="/dashboard" class="nav-link"><span class="nav-icon">📊</span> 总览</router-link>
+        <router-link to="/orders" class="nav-link"><span class="nav-icon">📋</span> 订单管理</router-link>
+        <router-link to="/menu" class="nav-link"><span class="nav-icon">🍽️</span> 菜单管理</router-link>
+        <router-link to="/promotions" class="nav-link"><span class="nav-icon">🏷️</span> 营销活动</router-link>
+        <router-link to="/merchant" class="nav-link"><span class="nav-icon">⚙️</span> 商家设置</router-link>
+        <router-link to="/users" class="nav-link"><span class="nav-icon">👥</span> 用户管理</router-link>
+        <router-link to="/kitchen" class="nav-link"><span class="nav-icon">📱</span> 出餐管理</router-link>
       </nav>
     </aside>
     <main class="content">

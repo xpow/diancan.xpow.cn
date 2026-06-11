@@ -17,16 +17,16 @@
     </header>
 
     <div class="tabs">
-      <button :class="['tab', tab === 'all' && 'tab-active']" @click="tab = 'all'">全部</button>
-      <button :class="['tab', tab === 'pending' && 'tab-active']" @click="tab = 'pending'">等待</button>
-      <button :class="['tab', tab === 'preparing' && 'tab-active']" @click="tab = 'preparing'">制作中</button>
-      <button :class="['tab', tab === 'ready' && 'tab-active']" @click="tab = 'ready'">待取餐</button>
+      <button v-for="t in tabs" :key="t.key" :class="['tab', tab === t.key && 'tab-active']" @click="tab = t.key">
+        {{ t.label }}
+        <span v-if="tabCounts[t.key]" class="tab-badge">{{ tabCounts[t.key] }}</span>
+      </button>
     </div>
 
     <main>
       <div v-for="order in filteredOrders" :key="order.id" class="order-card" :class="`card-${order.status}`">
         <div class="card-header">
-          <div class="card-number">{{ order.orderNumber }}</div>
+          <div class="card-number">{{ order.pickupCode }}</div>
           <div class="card-status" :class="`status-${order.status}`">
             {{ statusText(order.status) }}
           </div>
@@ -44,7 +44,7 @@
 
         <div class="card-actions">
           <button
-            v-if="order.status === 'pending'"
+            v-if="order.status === 'paid'"
             class="action-btn action-cook"
             @click="updateStatus(order, 'preparing')"
           >
@@ -68,7 +68,7 @@
             已取餐
           </button>
           <button
-            v-if="order.status === 'pending'"
+            v-if="order.status === 'paid'"
             class="action-btn action-cancel"
             @click="updateStatus(order, 'cancelled')"
           >
@@ -80,7 +80,7 @@
 
       <div v-if="!filteredOrders.length" class="empty">
         <span class="material-symbols-outlined empty-icon">checklist</span>
-        <p>暂无{{ tab === 'all' ? '' : statusText(tab) }}订单</p>
+        <p>暂无{{ statusText(tab) }}订单</p>
       </div>
     </main>
   </div>
@@ -94,7 +94,7 @@ const POLL_MS = 5000
 const STORAGE_KEY = 'kitchen_announced'
 
 const orders = ref<any[]>([])
-const tab = ref<'all' | 'pending' | 'preparing' | 'ready'>('all')
+const tab = ref<'paid' | 'preparing' | 'ready'>('paid')
 const voiceEnabled = ref(true)
 const prevStatusMap = ref<Record<string, string>>({})
 let wakeLock: any = null
@@ -128,17 +128,29 @@ function saveAnnounced(ids: Set<string>) {
 }
 const announcedIds = loadAnnounced()
 
-const statuses = ['pending', 'preparing', 'ready']
+const statuses = ['paid', 'preparing', 'ready']
+
+const tabs = [
+  { key: 'paid' as const, label: '等待' },
+  { key: 'preparing' as const, label: '制作中' },
+  { key: 'ready' as const, label: '待取餐' },
+]
+
+const tabCounts = computed(() => {
+  const m: Record<string, number> = {}
+  for (const o of orders.value) {
+    m[o.status] = (m[o.status] || 0) + 1
+  }
+  return m
+})
 
 const filteredOrders = computed(() =>
-  tab.value === 'all'
-    ? orders.value
-    : orders.value.filter((o) => o.status === tab.value)
+  orders.value.filter((o) => o.status === tab.value)
 )
 
 function statusText(s: string) {
   const map: Record<string, string> = {
-    pending: '等待中',
+    paid: '等待中',
     preparing: '制作中',
     ready: '待取餐',
     completed: '已完成',
@@ -186,28 +198,28 @@ async function announcePickup(order: any) {
   if (order.status === 'preparing') {
     await updateStatus(order, 'ready')
   } else {
-    speakTwice(`请${order.orderNumber}取餐`)
-    notify('取餐提醒', `${order.orderNumber} 号，请尽快取餐`)
+    speakTwice(`请${order.pickupCode}取餐`)
+    notify('取餐提醒', `${order.pickupCode} 号，请尽快取餐`)
   }
 }
 
 async function updateStatus(order: any, newStatus: string) {
   try {
-    await fetch(`/api/orders/${order.id}/status`, {
-      method: 'PATCH',
+    await fetch(`/api/admin/orders/${order.id}/status`, {
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus }),
     })
     order.status = newStatus
-    prevStatusMap.value[order.id] = newStatus
-    announcedIds.add(order.id)
+    prevStatusMap.value[order.orderNo] = newStatus
+    announcedIds.add(order.orderNo)
     saveAnnounced(announcedIds)
-    const num = order.orderNumber
+    const code = order.pickupCode
     if (newStatus === 'preparing') {
-      speak(`订单${num}正在制作`)
-      notify('开始制作', `取餐号 ${num} 正在制作`)
+      speak(`订单${code}正在制作`)
+      notify('开始制作', `取餐号 ${code} 正在制作`)
     }
-    else if (newStatus === 'ready') speakTwice(`请${num}取餐`)
+    else if (newStatus === 'ready') speakTwice(`请${code}取餐`)
   } catch {
     // 静默失败，下次轮询恢复
   }
@@ -215,35 +227,29 @@ async function updateStatus(order: any, newStatus: string) {
 
 async function fetchOrders() {
   try {
-    const all = await Promise.all(
-      statuses.map((s) =>
-        fetch(`/api/orders?branchId=${BRANCH_ID}&status=${s}&limit=20`).then((r) =>
-          r.json()
-        )
-      )
+    const res = await fetch('/api/orders')
+    const body = await res.json()
+    const all: any[] = (body.items ?? []).filter((o: any) =>
+      statuses.includes(o.status)
     )
-    const merged = all.flat().sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
-    orders.value = merged
+    all.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    orders.value = all
 
-    for (const o of merged) {
-      const prev = prevStatusMap.value[o.id]
-      if (!prev && o.status === 'pending' && !announcedIds.has(o.id)) {
-        // 新订单（未播报过的）
-        announcedIds.add(o.id)
+    for (const o of all) {
+      const prev = prevStatusMap.value[o.orderNo]
+      if (!prev && o.status === 'paid' && !announcedIds.has(o.orderNo)) {
+        announcedIds.add(o.orderNo)
         saveAnnounced(announcedIds)
-        speakTwice(`新订单${o.orderNumber}，请开始制作`)
-        notify('新订单', `取餐号 ${o.orderNumber}，请开始制作`)
+        speakTwice(`新订单${o.pickupCode}，请开始制作`)
+        notify('新订单', `取餐号 ${o.pickupCode}，请开始制作`)
       } else if (prev && prev !== o.status) {
-        // 外部状态变更（桌面端操作）
-        if (o.status === 'preparing') speak(`订单${o.orderNumber}正在制作`)
+        if (o.status === 'preparing') speak(`订单${o.pickupCode}正在制作`)
         else if (o.status === 'ready') {
-          speakTwice(`请${o.orderNumber}取餐`)
-          notify('取餐提醒', `${o.orderNumber} 号已就绪`)
+          speakTwice(`请${o.pickupCode}取餐`)
+          notify('取餐提醒', `${o.pickupCode} 号已就绪`)
         }
       }
-      prevStatusMap.value[o.id] = o.status
+      prevStatusMap.value[o.orderNo] = o.status
     }
   } catch {
     // ignore
@@ -279,7 +285,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.kitchen { background: var(--bg); min-height: 100dvh; padding-bottom: 32px; }
+.kitchen { background: var(--bg); min-height: 100dvh; padding-bottom: 32px; max-width: 600px; margin: 0 auto; }
 
 .top-bar {
   position: sticky; top: 0; z-index: 50;
@@ -310,6 +316,8 @@ onUnmounted(() => {
   transition: all 0.2s;
 }
 .tab-active { background: var(--primary-container); color: var(--on-primary); }
+.tab-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 9999px; background: var(--on-primary); color: var(--primary-container); font-size: 11px; font-weight: 700; margin-left: 6px; }
+.tab-active .tab-badge { background: rgba(255,255,255,0.25); color: var(--on-primary); }
 
 main { padding: 12px 16px; display: flex; flex-direction: column; gap: 16px; }
 
@@ -320,14 +328,14 @@ main { padding: 12px 16px; display: flex; flex-direction: column; gap: 16px; }
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
   border-left: 4px solid var(--outline);
 }
-.card-pending { border-left-color: var(--outline); }
+.card-paid { border-left-color: var(--outline); }
 .card-preparing { border-left-color: var(--primary-container); }
 .card-ready { border-left-color: var(--tertiary); }
 
 .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
 .card-number { font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--text); letter-spacing: -0.02em; line-height: 1; }
 .card-status { padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
-.status-pending { background: var(--surface-container-high); color: var(--secondary); }
+.status-paid { background: var(--surface-container-high); color: var(--secondary); }
 .status-preparing { background: rgba(255,107,0,0.12); color: var(--primary-container); }
 .status-ready { background: rgba(0,110,28,0.1); color: var(--tertiary); }
 

@@ -1,6 +1,7 @@
 import cors from 'cors'
 import express from 'express'
 import { PrismaClient } from '@prisma/client'
+import adminRouter from './admin.js'
 
 const app = express()
 const port = Number(process.env.PORT || 3011)
@@ -8,6 +9,8 @@ const prisma = new PrismaClient()
 
 app.use(cors())
 app.use(express.json())
+
+app.use('/api/admin', adminRouter)
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, service: 'api-core' })
@@ -19,6 +22,7 @@ app.get('/api/system/bootstrap', async (_req, res) => {
 
   const branch = await prisma.branch.findFirst({ where: { merchantId: merchant.id } })
   const device = await prisma.device.findFirst({ where: { branchId: branch?.id } })
+  const allDevices = branch ? await prisma.device.findMany({ where: { branchId: branch.id, status: 'active' } }) : []
   const banners = await prisma.promotionBanner.findMany({
     where: { merchantId: merchant.id, active: true },
     orderBy: { sort: 'asc' },
@@ -34,8 +38,11 @@ app.get('/api/system/bootstrap', async (_req, res) => {
     merchantName: merchant.name,
     branchId: branch?.id ?? '',
     branchName: branch?.name ?? '',
+    branchCode: branch?.code ?? '',
     deviceId: device?.id ?? '',
+    deviceCode: device?.code ?? '',
     deviceMode: device?.mode ?? 'kiosk',
+    devices: allDevices.map((d) => ({ id: d.id, code: d.code, name: d.name, mode: d.mode })),
     slogan: merchant.slogan,
     businessHours: merchant.businessHours,
     todayLocation: branch?.todayLocation ?? '',
@@ -222,7 +229,7 @@ app.post('/api/cart/quote', async (req, res) => {
 })
 
 app.post('/api/orders', async (req, res) => {
-  const { merchantId, branchId, deviceId, items } = req.body ?? {}
+  const { merchantId, branchId, deviceId, items, orderType } = req.body ?? {}
 
   if (!merchantId || !branchId || !deviceId) {
     return res.status(400).json({ message: 'merchantId, branchId and deviceId are required' })
@@ -252,18 +259,31 @@ app.post('/api/orders', async (req, res) => {
   })
   const quote = await quoteRes.json()
 
-  // 生成订单号
-  const orderCount = await prisma.order.count()
+  // 取餐号: branchCode(字母) + deviceCode(2位数字) + 当日流水(3位)
+  const branch = await prisma.branch.findUnique({ where: { id: branchId } })
+  const device = await prisma.device.findUnique({ where: { id: deviceId } })
+  const branchCode = branch?.code?.toUpperCase() || 'X'
+  const devCode = (device?.code || '00').padStart(2, '0')
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  const todayOrderCount = await prisma.order.count({
+    where: { createdAt: { gte: todayStart } },
+  })
+  const dailySeq = String(todayOrderCount + 1).padStart(3, '0')
+  const pickupCode = `${branchCode}${devCode}${dailySeq}`
+
+  // 订单号
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '')
-  const seq = String(orderCount + 1001).padStart(4, '0')
-  const orderNo = `DC${dateStr}${seq}`
-  const pickupCode = String(orderCount + 1).padStart(3, '0')
+  const orderNo = `DC${dateStr}${dailySeq}${devCode}`
+
+  const type = orderType === 'takeaway' ? 'takeaway' : 'dine-in'
 
   const order = await prisma.order.create({
     data: {
       orderNo,
       pickupCode,
       status: 'paid',
+      orderType: type,
       merchantId,
       branchId,
       deviceId,
@@ -300,6 +320,7 @@ app.post('/api/orders', async (req, res) => {
     orderNo: order.orderNo,
     pickupCode: order.pickupCode,
     status: order.status,
+    orderType: order.orderType,
     merchantId: order.merchantId,
     branchId: order.branchId,
     deviceId: order.deviceId,
@@ -331,9 +352,11 @@ app.get('/api/orders', async (_req, res) => {
 
   res.json({
     items: orders.map((o) => ({
+      id: o.id,
       orderNo: o.orderNo,
       pickupCode: o.pickupCode,
       status: o.status,
+      orderType: o.orderType,
       totals: {
         originalAmount: o.originalAmount,
         discountAmount: o.discountAmount,
@@ -343,8 +366,10 @@ app.get('/api/orders', async (_req, res) => {
         dishId: i.dishId,
         name: i.name,
         quantity: i.quantity,
+        finalUnitPrice: i.finalUnitPrice,
         finalSubtotal: i.finalSubtotal,
         specs: i.specs || undefined,
+        promotionLabel: i.promotionLabel || undefined,
       })),
       createdAt: o.createdAt.toISOString(),
     })),
@@ -363,6 +388,7 @@ app.get('/api/orders/:orderNo', async (req, res) => {
     orderNo: order.orderNo,
     pickupCode: order.pickupCode,
     status: order.status,
+    orderType: order.orderType,
     totals: {
       originalAmount: order.originalAmount,
       discountAmount: order.discountAmount,
@@ -379,6 +405,24 @@ app.get('/api/orders/:orderNo', async (req, res) => {
       promotionLabel: i.promotionLabel || undefined,
     })),
     createdAt: order.createdAt.toISOString(),
+  })
+})
+
+// 设备认证：通过8位SN匹配点餐机
+app.post('/api/system/device-auth', async (req, res) => {
+  const { sn } = req.body ?? {}
+  if (!sn || typeof sn !== 'string' || sn.length !== 8) {
+    return res.status(400).json({ message: '请输入8位设备码' })
+  }
+  const device = await prisma.device.findUnique({ where: { sn } })
+  if (!device) {
+    return res.status(404).json({ message: '设备码无效，请确认后重新输入' })
+  }
+  res.json({
+    deviceId: device.id,
+    deviceCode: device.code,
+    deviceName: device.name,
+    branchId: device.branchId,
   })
 })
 

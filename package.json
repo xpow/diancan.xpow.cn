@@ -6,6 +6,7 @@
     "dev:h5": "pnpm --filter @diancan/h5 dev",
     "dev:api": "pnpm --filter @diancan/api dev",
     "dev:kiosk": "pnpm --filter @diancan/kiosk-prod dev",
+    "dev:admin": "pnpm --filter @diancan/merchant dev",
     "dev:api-core": "pnpm --filter @diancan/api-core dev",
     "build": "pnpm -r run build",
     "build:kiosk": "pnpm --filter @diancan/kiosk-prod build",

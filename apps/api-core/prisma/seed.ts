@@ -1,5 +1,9 @@
 import { PrismaClient } from '@prisma/client'
 
+function randomSN(): string {
+  return String(Math.floor(10000000 + Math.random() * 90000000))
+}
+
 const prisma = new PrismaClient()
 
 async function main() {
@@ -21,7 +25,7 @@ async function main() {
   const merchant = await prisma.merchant.create({
     data: {
       id: 'demo-merchant',
-      name: '炭火烧烤小摊',
+      name: '典韦烤串',
       slogan: '地道炭火 · 鲜嫩多汁 · 现烤现卖',
       businessHours: '17:00 - 02:00',
       statusText: '营业中',
@@ -35,6 +39,7 @@ async function main() {
     data: {
       id: 'demo-branch',
       merchantId: merchant.id,
+      code: 'A',
       name: '夜市总摊',
       address: '东阳市振兴路夜市 A 区 08 号',
       todayLocation: '东阳市振兴路夜市 A 区 08 号',
@@ -48,6 +53,8 @@ async function main() {
     data: {
       id: 'kiosk-a01',
       branchId: branch.id,
+      code: '01',
+      sn: randomSN(),
       name: '一号点餐机',
       mode: 'kiosk',
     },

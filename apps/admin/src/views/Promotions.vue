@@ -270,10 +270,9 @@ function removeItem(idx: number) {
 
 async function save() {
   const body = {
-    merchantId: 'demo-merchant',
     ...form.value,
   }
-  const url = editing.value ? `/api/promotions/${editingId.value}` : '/api/promotions'
+  const url = editing.value ? `/api/admin/promotions/${editingId.value}` : '/api/admin/promotions'
   const method = editing.value ? 'PUT' : 'POST'
 
   try {
@@ -296,7 +295,7 @@ async function save() {
 
 async function remove(p: Promotion) {
   if (!confirm(`确认删除活动「${p.name}」？`)) return
-  await fetch(`/api/promotions/${p.id}`, { method: 'DELETE' })
+  await fetch(`/api/admin/promotions/${p.id}`, { method: 'DELETE' })
   fetchPromotions()
 }
 
@@ -340,13 +339,13 @@ function ruleText(p: Promotion): string {
 }
 
 async function fetchPromotions() {
-  const res = await fetch('/api/promotions?merchantId=demo-merchant')
+  const res = await fetch('/api/admin/promotions')
   promotions.value = await res.json()
 }
 
 async function fetchDishes() {
   try {
-    const res = await fetch('/api/dishes')
+    const res = await fetch('/api/admin/dishes')
     dishes.value = await res.json()
   } catch {
     // 可能没有 /api/dishes 接口

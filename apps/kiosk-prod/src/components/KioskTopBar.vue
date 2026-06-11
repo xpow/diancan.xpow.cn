@@ -6,7 +6,7 @@
         <span>返回首页</span>
       </router-link>
       <div class="brand-area">
-        <span class="material-icons brand-icon">restaurant_menu</span>
+        <img :src="logoImage" alt="Logo" class="brand-logo" />
         <h1 class="brand-title">{{ title }}</h1>
       </div>
       <p v-if="subtitle" class="top-subtitle">{{ subtitle }}</p>
@@ -19,6 +19,8 @@
 </template>
 
 <script setup lang="ts">
+import logoImage from '@/assets/images/pages/logo.png'
+
 withDefaults(defineProps<{
   title: string
   subtitle?: string
@@ -93,10 +95,7 @@ withDefaults(defineProps<{
   gap: var(--spacing-sm);
 }
 
-.brand-icon {
-  color: var(--primary-container);
-  font-size: 28px !important;
-}
+.brand-logo { height: 32px; width: auto; border-radius: var(--radius-sm); }
 
 .brand-title {
   margin: 0;

@@ -3,8 +3,8 @@
     <!-- Top Bar -->
     <header class="top-bar">
       <div class="brand">
-        <span class="material-icons">restaurant_menu</span>
-        <h1>{{ bootstrap?.merchantName || 'Sizzling Skewers' }}</h1>
+        <img :src="logoImage" alt="Logo" class="brand-logo" />
+        <h1>{{ displayTitle }}</h1>
       </div>
       <div class="status-badge">
         <span class="status-dot"></span>
@@ -15,24 +15,20 @@
       </button>
     </header>
 
-    <!-- Hero Section -->
+    <!-- Hero Carousel -->
     <section class="hero-section">
-      <div class="hero-gradient">
-        <img
-          v-if="heroImage"
-          :src="heroImage"
-          :alt="bootstrap?.branchName || '夜市总摊'"
-          class="hero-image"
-        />
-        <div class="hero-overlay">
-          <span class="hero-tag">今日营业</span>
-          <h2 class="hero-title">{{ bootstrap?.branchName || '炭火烧烤小摊' }}</h2>
-          <p class="hero-summary">{{ bootstrap?.slogan || '地道炭火 · 鲜嫩多汁 · 现烤现卖' }}</p>
-          <router-link to="/menu" class="hero-cta">
-            <span>开始点餐</span>
-            <span class="material-icons">arrow_forward</span>
-          </router-link>
-        </div>
+      <van-swipe class="hero-swipe" :autoplay="4000" indicator-color="#fff" :height="280">
+        <van-swipe-item v-for="(img, i) in heroImages" :key="i">
+          <div class="hero-slide" :style="{ backgroundImage: `url(${img})` }"></div>
+        </van-swipe-item>
+      </van-swipe>
+      <div class="hero-overlay">
+        <h2 class="hero-title">{{ displayTitle }}</h2>
+        <p class="hero-summary">{{ bootstrap?.slogan || '地道炭火 · 鲜嫩多汁 · 现烤现卖' }}</p>
+        <router-link to="/menu" class="hero-cta">
+          <span>开始点餐</span>
+          <span class="material-icons">arrow_forward</span>
+        </router-link>
       </div>
     </section>
 
@@ -103,9 +99,38 @@
 
       <!-- Footer -->
       <footer class="footer">
-        <p>© 2024 {{ bootstrap?.merchantName || 'Sizzling Skewers' }}</p>
+        <p>© 2024 {{ displayTitle }}</p>
         <p class="footer-tagline">用心做好每一串，传递市井烟火气</p>
       </footer>
+    </div>
+
+    <!-- Device SN Login Dialog -->
+    <div v-if="showDeviceAuth" class="device-overlay">
+      <div class="device-dialog">
+        <div class="device-dialog-header">
+          <span class="material-icons">devices</span>
+          <h3>设备认证</h3>
+        </div>
+        <p class="device-dialog-hint">请输入点餐机背面的8位设备码</p>
+        <div class="sn-input-row">
+          <input
+            ref="snInputRef"
+            v-model="snInput"
+            type="text"
+            maxlength="8"
+            class="sn-input"
+            placeholder="00000000"
+            @input="onSNInput"
+            @keyup.enter="submitSN"
+          />
+        </div>
+        <p v-if="snError" class="sn-error">{{ snError }}</p>
+        <button
+          class="device-confirm-btn"
+          :disabled="snInput.length !== 8 || snLoading"
+          @click="submitSN"
+        >{{ snLoading ? '验证中...' : '确认' }}</button>
+      </div>
     </div>
 
     <!-- Bottom Navigation -->
@@ -127,8 +152,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { getTheme, setTheme } from '@/utils/theme'
+import logoImage from '@/assets/images/pages/logo.png'
 
 interface BootstrapPromotion {
   id: string
@@ -147,6 +173,13 @@ interface FeaturedItem {
   badgeTone: 'hot' | 'new'
 }
 
+interface DeviceInfo {
+  id: string
+  code: string
+  name: string
+  mode: string
+}
+
 interface BootstrapResponse {
   merchantName: string
   branchName: string
@@ -157,10 +190,59 @@ interface BootstrapResponse {
   statusText: string
   promotions: BootstrapPromotion[]
   featuredItems: FeaturedItem[]
+  devices?: DeviceInfo[]
 }
 
 const bootstrap = ref<BootstrapResponse | null>(null)
-const heroImage = ref<string>('https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=80')
+const displayTitle = computed(() => {
+  const m = bootstrap.value?.merchantName
+  const b = bootstrap.value?.branchName
+  return m && b ? `${m}（${b}）` : m || b || 'Sizzling Skewers'
+})
+const heroImages = [
+  'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=80',
+  'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=800&q=80',
+  'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=80',
+]
+
+/* Device SN auth */
+const showDeviceAuth = ref(false)
+const snInput = ref('')
+const snError = ref('')
+const snLoading = ref(false)
+const snInputRef = ref<HTMLInputElement | null>(null)
+
+function onSNInput() {
+  snInput.value = snInput.value.replace(/\D/g, '').slice(0, 8)
+  snError.value = ''
+}
+
+async function submitSN() {
+  if (snInput.value.length !== 8) return
+  snLoading.value = true
+  snError.value = ''
+  try {
+    const res = await fetch('/api/system/device-auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sn: snInput.value }),
+    })
+    if (!res.ok) {
+      const err = await res.json()
+      snError.value = err.message || '设备码无效'
+      return
+    }
+    const data = await res.json()
+    localStorage.setItem('kiosk-device-id', data.deviceId)
+    localStorage.setItem('kiosk-device-code', data.deviceCode)
+    localStorage.setItem('kiosk-device-sn', snInput.value)
+    showDeviceAuth.value = false
+  } catch {
+    snError.value = '网络错误，请重试'
+  } finally {
+    snLoading.value = false
+  }
+}
 
 function getThemeIcon(): string {
   const t = getTheme()
@@ -180,7 +262,20 @@ function themeTooltip(): string {
 async function loadBootstrap() {
   const response = await fetch('/api/system/bootstrap')
   if (!response.ok) return
-  bootstrap.value = await response.json() as BootstrapResponse
+  const data = await response.json() as BootstrapResponse
+  bootstrap.value = data
+
+  // Device auth via SN
+  const savedDeviceId = localStorage.getItem('kiosk-device-id')
+  const savedDeviceSN = localStorage.getItem('kiosk-device-sn')
+  if (savedDeviceId && savedDeviceSN) {
+    // Verify SN still valid
+    return
+  }
+  // Show SN login
+  snInput.value = ''
+  snError.value = ''
+  showDeviceAuth.value = true
 }
 
 onMounted(() => {
@@ -226,10 +321,7 @@ onMounted(() => {
   gap: var(--spacing-sm);
 }
 
-.brand .material-icons {
-  color: var(--primary-container);
-  font-size: 28px !important;
-}
+.brand-logo { height: 32px; width: auto; border-radius: var(--radius-sm); }
 
 .brand h1 {
   margin: 0;
@@ -291,27 +383,16 @@ onMounted(() => {
 
 /* Hero Section */
 .hero-section {
-  margin-top: 60px;
+  margin-top: 80px;
   padding: var(--spacing-md);
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
-}
-
-.hero-gradient {
   position: relative;
-  width: 100%;
-  height: 400px;
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  background: linear-gradient(135deg, #5b2500 0%, #1c1b1b 100%);
 }
 
-.hero-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+.hero-swipe { width: 100%; border-radius: var(--radius-xl); overflow: hidden; }
+.hero-slide { width: 100%; height: 100%; background-size: cover; background-position: center; }
 
 .hero-overlay {
   position: absolute;
@@ -320,20 +401,11 @@ onMounted(() => {
   flex-direction: column;
   justify-content: flex-end;
   padding: var(--spacing-lg);
-  background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 60%);
+  /* border-radius: var(--radius-xl);
+  background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 60%); */
+  pointer-events: none;
 }
-
-.hero-tag {
-  width: fit-content;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  margin-bottom: var(--spacing-sm);
-  border-radius: var(--radius-full);
-  background: rgba(255, 107, 0, 0.2);
-  color: #fff;
-  font-family: var(--font-display);
-  font-size: var(--text-label-sm);
-  font-weight: 600;
-}
+.hero-overlay > * { pointer-events: auto; }
 
 .hero-title {
   margin: 0 0 var(--spacing-sm);
@@ -664,6 +736,82 @@ onMounted(() => {
   font-family: var(--font-display);
   font-size: var(--text-label-sm);
   font-weight: 600;
+}
+
+/* Device selection dialog */
+.device-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+.device-dialog {
+  width: 90%;
+  max-width: 400px;
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-lg);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+}
+.device-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+.device-dialog-header h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-headline-md);
+}
+.device-dialog-header .material-icons {
+  font-size: 28px;
+  color: var(--primary-container);
+}
+.device-dialog-hint {
+  margin: 0 0 var(--spacing-lg);
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.sn-input-row {
+  margin-bottom: var(--spacing-md);
+}
+.sn-input {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  font-size: 28px;
+  font-family: monospace;
+  letter-spacing: 6px;
+  text-align: center;
+  outline: none;
+  transition: border-color var(--transition-fast);
+  color: var(--text);
+}
+.sn-input:focus { border-color: var(--primary-container); }
+.sn-error { color: var(--danger, #e53935); font-size: var(--text-body-sm); margin: 0 0 var(--spacing-md); text-align: center; }
+.device-confirm-btn {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--primary-container);
+  color: var(--on-primary);
+  font-family: var(--font-display);
+  font-size: var(--text-headline-md);
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+.device-confirm-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 @media (max-width: 720px) {

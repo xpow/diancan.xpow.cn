@@ -30,6 +30,7 @@ model Merchant {
 model Branch {
   id        String   @id @default(cuid())
   merchantId String
+  code      String   @default("")
   name      String
   address   String?
   lat       Float?
@@ -51,6 +52,8 @@ model Branch {
 model Device {
   id        String   @id @default(cuid())
   branchId  String
+  code      String   @default("")
+  sn        String   @unique @default("")
   name      String   @default("")
   mode      String   @default("kiosk") // kiosk | h5
   status    String   @default("active")
@@ -163,7 +166,8 @@ model Order {
   id              String   @id @default(cuid())
   orderNo         String   @unique
   pickupCode      String
-  status          String   @default("pending") // pending | preparing | ready | completed | cancelled
+  status          String   @default("pending") // pending | paid | preparing | ready | completed | cancelled
+  orderType       String   @default("dine-in") // dine-in | takeaway
   merchantId      String
   branchId        String
   deviceId        String

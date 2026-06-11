@@ -3,8 +3,8 @@
     <!-- Top Bar -->
     <header class="top-bar">
       <div class="brand">
-        <span class="material-icons">restaurant_menu</span>
-        <h1>{{ merchantName || 'Sizzling Skewers' }}</h1>
+        <img :src="logoImage" alt="Logo" class="brand-logo" />
+        <h1>{{ displayTitle }}</h1>
       </div>
       <div class="top-bar-right">
         <button class="theme-btn" @click="themeIcon = doToggleTheme()">
@@ -27,7 +27,7 @@
         />
         <div class="hero-overlay">
           <h2>订单确认</h2>
-          <p>感谢选择 {{ merchantName || 'Sizzling Skewers' }}</p>
+          <p>感谢选择 {{ displayTitle }}</p>
         </div>
       </section>
 
@@ -165,10 +165,11 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { clearCart, readCart } from '@/utils/cart'
 import { getTheme, setTheme } from '@/utils/theme'
+import logoImage from '@/assets/images/pages/logo.png'
 
 interface QuoteLineItem {
   dishId: string
@@ -224,6 +225,12 @@ const errorMessage = ref('')
 const quote = ref<QuoteResponse | null>(null)
 const createdOrder = ref<CreatedOrder | null>(null)
 const merchantName = ref('Sizzling Skewers')
+const branchName = ref('')
+const displayTitle = computed(() => {
+  const m = merchantName.value
+  const b = branchName.value
+  return m && b ? `${m}（${b}）` : m || b || '典韦烤串'
+})
 const orderType = ref<'dine-in' | 'takeaway'>('dine-in')
 
 function getItemImage(dishId: string): string {
@@ -268,10 +275,20 @@ async function reloadQuote() {
       branchId: string
       deviceId: string
       merchantName?: string
+      branchName?: string
     }
 
     if (bootstrap.merchantName) {
       merchantName.value = bootstrap.merchantName
+    }
+    if (bootstrap.branchName) {
+      branchName.value = bootstrap.branchName
+    }
+
+    // 使用 localStorage 中保存的设备 ID，覆盖 bootstrap 返回的默认值
+    const savedDeviceId = localStorage.getItem('kiosk-device-id')
+    if (savedDeviceId) {
+      bootstrap.deviceId = savedDeviceId
     }
 
     const quoteResponse = await fetch('/api/cart/quote', {
@@ -326,6 +343,7 @@ async function submitOrder() {
         merchantId: bootstrap.merchantId,
         branchId: bootstrap.branchId,
         deviceId: bootstrap.deviceId,
+        orderType: orderType.value,
         quoteId: quote.value.quoteId,
         items: cartItems.value.map((item) => ({
           dishId: item.baseDishId,
@@ -394,10 +412,7 @@ onMounted(() => {
   gap: var(--spacing-sm);
 }
 
-.brand .material-icons {
-  color: var(--primary-container);
-  font-size: 28px !important;
-}
+.brand-logo { height: 32px; width: auto; border-radius: var(--radius-sm); }
 
 .brand h1 {
   margin: 0;

@@ -2,8 +2,8 @@
   <main class="page">
     <header class="top-bar">
       <div class="brand">
-        <span class="material-icons">restaurant_menu</span>
-        <h1>{{ branchName || 'Sizzling Skewers' }}</h1>
+        <img :src="logoImage" alt="Logo" class="brand-logo" />
+        <h1>{{ displayTitle }}</h1>
       </div>
       <div class="top-bar-right">
         <button class="theme-btn" @click="themeIcon = doToggleTheme()">
@@ -64,24 +64,18 @@
 
           <div v-if="dish.specGroups" class="dish-specs">
             <div v-for="(group, gi) in dish.specGroups" :key="gi" class="spec-group">
-              <p class="spec-label">{{ group.name }}</p>
-              <div class="spec-options">
-                <button
-                  v-for="(opt, oi) in group.options" :key="oi"
-                  :class="['spec-chip', dish.selectedLabels?.[gi] === opt.label && 'spec-chip-active']"
-                  @click="dish.selectedLabels![gi] = opt.label"
-                >
-                  <span v-if="group.name === '辣度'" class="chili-icons">{{ '🌶️'.repeat(getChiliCount(opt.label)) }}</span>
-                  {{ opt.label }}{{ opt.priceDelta ? (opt.priceDelta > 0 ? ` +¥${opt.priceDelta}` : ` -¥${-opt.priceDelta}`) : '' }}
-                </button>
-                <input v-if="gi === qtyGroupIndex" class="qty-input" type="number" placeholder="其他数量"
-                  @input="onCustomQty(dish, gi, ($event.target as HTMLInputElement).value)" />
-              </div>
+              <SpecSelector
+                :group="group"
+                :model-value="dish.selectedLabels?.[gi] ?? ''"
+                @update:model-value="dish.selectedLabels![gi] = $event"
+              />
+              <input v-if="gi === qtyGroupIndex" class="qty-input" type="number" placeholder="其他数量"
+                @input="onCustomQty(dish, gi, ($event.target as HTMLInputElement).value)" />
             </div>
           </div>
 
-          <button class="add-card-btn" @click="addToCart(dish)">
-            <span class="material-icons">add</span>
+          <button class="add-card-btn" :class="{ 'in-cart': cartDishIds.has(dish.id) }" @click="addToCart(dish)">
+            <span class="material-icons">{{ cartDishIds.has(dish.id) ? 'check_circle' : 'add' }}</span>
           </button>
         </article>
       </section>
@@ -113,7 +107,10 @@
           <div v-for="item in cartItems" :key="item.dishId" class="cart-item">
             <div class="cart-item-info">
               <p class="cart-item-name">{{ item.name }}</p>
-              <p v-if="item.specs" class="cart-item-spec">{{ item.specs }}</p>
+              <p class="cart-item-spec" @click="startEditSpice(item)">
+                {{ item.specs }}
+                <span class="spec-edit-icon material-icons">edit</span>
+              </p>
               <p class="cart-item-price">¥{{ (item.price * item.quantity).toFixed(2) }}</p>
             </div>
             <div class="cart-item-qty">
@@ -123,6 +120,18 @@
             </div>
           </div>
         </div>
+
+        <!-- Spiciness Editor -->
+        <van-action-sheet v-model:show="showSpecEditor" title="修改辣度" close-on-popup-close>
+          <div class="spec-editor-content">
+            <SpecSelector
+              v-if="getSpicinessGroup()"
+              :group="getSpicinessGroup()!"
+              :model-value="editingSpiciness"
+              @update:model-value="confirmSpiceChange"
+            />
+          </div>
+        </van-action-sheet>
         <div v-if="cartItems.length === 0" class="cart-empty">购物车是空的</div>
         <div class="cart-sheet-footer">
           <span class="cart-total-label">合计：<span class="cart-total-price">¥{{ cartTotal.toFixed(2) }}</span></span>
@@ -145,8 +154,10 @@ import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import 'vant/es/toast/style'
 import { SPECS_PRESETS, type SpecGroup, type SpecPreset } from '@diancan/shared'
-import { readCart, clearCart as clearCartStorage, addToCart as addToCartStorage, updateCartQuantity as updateCartQuantityStorage, StoredCartItem } from '@/utils/cart'
+import SpecSelector from '@/components/SpecSelector.vue'
+import { readCart, clearCart as clearCartStorage, addToCart as addToCartStorage, saveCart, updateCartQuantity as updateCartQuantityStorage, StoredCartItem } from '@/utils/cart'
 import { getTheme, setTheme } from '@/utils/theme'
+import logoImage from '@/assets/images/pages/logo.png'
 
 interface Category { id: string; name: string; sort: number }
 
@@ -167,7 +178,13 @@ interface Dish {
 const router = useRouter()
 const loading = ref(true)
 const errorMessage = ref('')
+const merchantName = ref('')
 const branchName = ref('')
+const displayTitle = computed(() => {
+  const m = merchantName.value
+  const b = branchName.value
+  return m && b ? `${m}（${b}）` : m || b || '典韦烤串'
+})
 const categories = ref<Category[]>([])
 const dishes = ref<Dish[]>([])
 const selectedCategoryId = ref('')
@@ -189,6 +206,7 @@ function doToggleTheme(): string {
 
 const cartCount = computed(() => cartItems.value.reduce((s, i) => s + i.quantity, 0))
 const cartTotal = computed(() => cartItems.value.reduce((t, i) => t + i.price * i.quantity, 0))
+const cartDishIds = computed(() => new Set(cartItems.value.map((i) => i.dishId)))
 const filteredDishes = computed(() => dishes.value.filter(d => d.categoryId === selectedCategoryId.value))
 
 function initSpecs(preset: SpecPreset): { groups: SpecGroup[]; defaults: string[] } | null {
@@ -201,15 +219,6 @@ function initSpecs(preset: SpecPreset): { groups: SpecGroup[]; defaults: string[
   return { groups: specDefs, defaults }
 }
 
-function getChiliCount(label: string): number {
-  if (label.includes('不辣')) return 0
-  if (label.includes('微辣')) return 1
-  if (label.includes('中辣')) return 2
-  if (label.includes('特辣')) return 3
-  if (label.includes('麻辣')) return 3
-  return 0
-}
-
 function onCustomQty(dish: Dish, gi: number, value: string) {
   if (!dish.selectedLabels) return
   dish.selectedLabels[gi] = value ? `x${value}` : dish.specGroups?.[gi]?.options?.[0]?.label || 'x2'
@@ -219,6 +228,48 @@ function hydrateCart() {
   cartItems.value = readCart()
 }
 
+const showSpecEditor = ref(false)
+const editingCartItem = ref<StoredCartItem | null>(null)
+const editingSpiciness = ref('微辣')
+
+function getSpicinessGroup(): SpecGroup | null {
+  if (!editingCartItem.value) return null
+  const dish = dishes.value.find((d) => d.id === editingCartItem.value!.baseDishId)
+  if (!dish?.specsPreset) return null
+  const groups = SPECS_PRESETS[dish.specsPreset]
+  return groups?.find((g) => g.name === '辣度') || null
+}
+
+function startEditSpice(item: StoredCartItem) {
+  editingCartItem.value = item
+  const parts = (item.specs || '').split(' · ')
+  editingSpiciness.value = parts[0] || '微辣'
+  showSpecEditor.value = true
+}
+
+function confirmSpiceChange(newSpiciness: string) {
+  editingSpiciness.value = newSpiciness
+  const item = editingCartItem.value
+  if (!item) return
+  const parts = (item.specs || '').split(' · ')
+  parts[0] = newSpiciness
+  const newSpecs = parts.filter((p, i) => i === 0 || !p.startsWith('x')).join(' · ')
+  const newDishId = `${item.baseDishId}|${newSpecs}`
+  const existing = cartItems.value.find((i) => i.dishId === newDishId)
+  if (existing) {
+    existing.quantity += item.quantity
+    const idx = cartItems.value.findIndex((i) => i.dishId === item.dishId)
+    if (idx > -1) cartItems.value.splice(idx, 1)
+  } else {
+    item.dishId = newDishId
+    item.specs = newSpecs
+  }
+  saveCart(cartItems.value)
+  hydrateCart()
+  showSpecEditor.value = false
+  editingCartItem.value = null
+}
+
 function addToCart(dish: Dish) {
   const specsParts: string[] = []
   let qty = 1
@@ -226,9 +277,10 @@ function addToCart(dish: Dish) {
     for (let gi = 0; gi < dish.selectedLabels.length; gi++) {
       const label = dish.selectedLabels[gi]
       if (!label) continue
-      specsParts.push(label)
       if (gi === qtyGroupIndex) {
         qty = parseInt(label.replace(/^x/i, '')) || 1
+      } else {
+        specsParts.push(label)
       }
     }
   }
@@ -249,7 +301,7 @@ function addToCart(dish: Dish) {
   })
 
   hydrateCart()
-  showToast('已加入购物车')
+  showToast({ message: '已加入购物车', icon: 'success' })
 }
 
 function updateCartQuantity(dishId: string, delta: number) {
@@ -293,12 +345,13 @@ async function loadData() {
     ])
     if (!bootstrapResponse.ok || !menuResponse.ok) throw new Error('接口返回异常，请检查 api-core 是否已启动')
 
-    const bootstrap = await bootstrapResponse.json() as { branchName: string }
+    const bootstrap = await bootstrapResponse.json() as { merchantName?: string; branchName: string }
     const menu = await menuResponse.json() as {
       categories: Category[]
       dishes: { id: string; categoryId: string; name: string; price: number; desc: string; image?: string; tags?: string[]; specsPreset?: SpecPreset }[]
     }
 
+    merchantName.value = bootstrap.merchantName ?? ''
     branchName.value = bootstrap.branchName
     categories.value = [...menu.categories].sort((a, b) => a.sort - b.sort)
 
@@ -338,7 +391,7 @@ onMounted(() => {
 .page { min-height: 100vh; background: var(--surface); padding-bottom: 180px; }
 .top-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-sm) var(--container-margin); background: var(--frosted-bg); backdrop-filter: blur(12px); }
 .brand { display: flex; align-items: center; gap: var(--spacing-sm); }
-.brand .material-icons { color: var(--primary-container); font-size: 28px !important; }
+.brand-logo { height: 32px; width: auto; border-radius: var(--radius-sm); }
 .brand h1 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-lg-mobile); font-weight: 700; color: var(--primary-container); text-transform: uppercase; }
 .ticket-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; border-radius: 50%; cursor: pointer; color: var(--secondary); text-decoration: none; position: relative; }
 .top-bar-right { display: flex; align-items: center; gap: var(--spacing-xs); }
@@ -377,19 +430,15 @@ onMounted(() => {
 .dish-promo-tag { display: inline-block; padding: 1px 6px; border-radius: 4px; background: var(--error); color: #fff; font-family: var(--font-display); font-size: 11px; font-weight: 700; }
 .dish-specs { margin-top: var(--spacing-md); padding-top: var(--spacing-md); padding-bottom: var(--spacing-sm); border-top: 1px solid var(--card-border-subtle); display: flex; flex-direction: column; gap: var(--spacing-md); }
 .spec-group { display: flex; flex-direction: column; gap: var(--spacing-sm); }
-.spec-label { margin: 0; font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; color: var(--secondary); }
-.spec-options { display: flex; flex-wrap: wrap; gap: var(--spacing-sm); }
-.spec-chip { padding: 6px 12px; border-radius: var(--radius-md); border: 1px solid var(--outline-variant); background: transparent; color: var(--on-surface); font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; cursor: pointer; transition: all var(--transition-fast); }
-
-.chili-icons { font-size: 14px; margin-right: 4px; }
-.spec-chip-active { border-color: var(--primary-container); background: rgba(255, 107, 0, 0.08); color: var(--primary-container); }
 .qty-input { width: 96px; padding: 6px 12px; border-radius: var(--radius-md); border: 1px solid var(--outline-variant); background: transparent; font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; color: var(--on-surface); outline: none; }
 .qty-input:focus { border-color: var(--primary-container); }
 .qty-input::placeholder { color: var(--outline); }
 .add-card-btn { position: absolute; bottom: var(--spacing-md); right: var(--spacing-md); width: 36px; height: 36px; border: none; border-radius: 50%; background: var(--primary-container); color: var(--on-primary); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(255, 107, 0, 0.3); transition: transform var(--transition-fast); }
 .add-card-btn .material-icons { font-size: 20px !important; }
+
 .add-card-btn:active { transform: scale(0.9); }
 
+.add-card-btn.in-cart { background: #4caf50; box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3); }
 .cart-bar { position: fixed; bottom: 80px; left: 0; right: 0; z-index: 80; max-width: 600px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-md); background: var(--frosted-bg); backdrop-filter: blur(12px); border-radius: var(--radius-xl); border: 1px solid var(--card-border-strong); box-shadow: var(--shadow-lg); cursor: pointer; }
 .cart-bar:active { transform: scale(0.99); }
 .cart-left { display: flex; align-items: center; gap: var(--spacing-md); }
@@ -409,7 +458,8 @@ onMounted(() => {
 .cart-item { display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--surface-variant); }
 .cart-item-info { flex: 1; }
 .cart-item-name { margin: 0; font-family: var(--font-display); font-size: var(--text-body-lg); font-weight: 600; }
-.cart-item-spec { margin: var(--spacing-xs) 0 0; font-size: var(--text-label-sm); color: var(--secondary); }
+.cart-item-spec { margin: var(--spacing-xs) 0 0; font-size: var(--text-label-sm); color: var(--secondary); display: flex; align-items: center; gap: 4px; cursor: pointer; }
+.spec-edit-icon { font-size: 14px !important; opacity: 0.5; }
 .cart-item-price { margin: var(--spacing-xs) 0 0; font-size: var(--text-body-md); font-weight: 700; color: var(--primary-container); }
 .cart-item-qty { display: flex; align-items: center; gap: var(--spacing-sm); }
 .qty-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--outline-variant); background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--on-surface-variant); }
@@ -421,6 +471,7 @@ onMounted(() => {
 .cart-total-label { font-size: var(--text-body-lg); font-weight: 600; }
 .cart-total-price { color: var(--primary-container); font-weight: 800; }
 .checkout-btn { padding: var(--spacing-md) var(--spacing-xl); border-radius: var(--radius-full); border: none; background: var(--primary-container); color: var(--on-primary); font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; cursor: pointer; }
+.spec-editor-content { padding: var(--spacing-lg); display: flex; flex-direction: column; align-items: center; }
 
 .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; display: flex; justify-content: space-around; align-items: center; padding: var(--spacing-xs) var(--gutter); background: var(--frosted-bg-heavy); backdrop-filter: blur(12px); border-top-left-radius: var(--radius-xl); border-top-right-radius: var(--radius-xl); box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.04); }
 .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--radius-full); color: var(--secondary); text-decoration: none; transition: all var(--transition-fast); }
