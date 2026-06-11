@@ -87,20 +87,38 @@ app.get('/api/catalog/menu', async (_req, res) => {
     where: { merchantId: merchant.id, status: 'active' },
   })
 
+  const activePromotions = await prisma.promotion.findMany({
+    where: { status: 'active' },
+    include: { items: true },
+  })
+  const promoDishMap = new Map<string, { promoPrice: number; type: string; name: string }>()
+  for (const promo of activePromotions) {
+    for (const pi of promo.items) {
+      if (promo.type === 'time_discount' && pi.promoPrice) {
+        promoDishMap.set(pi.dishId, { promoPrice: pi.promoPrice, type: promo.type, name: promo.name })
+      }
+    }
+  }
+
   res.json({
     merchant: { id: merchant.id, name: merchant.name },
     branch: { id: '', name: '' },
     categories: categories.map((c) => ({ id: c.id, name: c.name, sort: c.sort })),
-    dishes: dishes.map((d) => ({
-      id: d.id,
-      categoryId: d.categoryId,
-      name: d.name,
-      price: d.price,
-      desc: d.desc,
-      image: d.image,
-      tags: JSON.parse(d.tags) as string[],
-      specsPreset: d.specsPreset,
-    })),
+    dishes: dishes.map((d) => {
+      const promo = promoDishMap.get(d.id)
+      return {
+        id: d.id,
+        categoryId: d.categoryId,
+        name: d.name,
+        price: d.price,
+        desc: d.desc,
+        image: d.image,
+        tags: JSON.parse(d.tags) as string[],
+        specsPreset: d.specsPreset,
+        promoPrice: promo?.promoPrice ?? null,
+        promotionName: promo?.name ?? null,
+      }
+    }),
   })
 })
 

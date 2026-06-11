@@ -56,8 +56,12 @@
               </div>
               <p class="dish-desc">{{ dish.desc }}</p>
               <div class="dish-price-row">
-                <span class="dish-price">¥{{ dish.price.toFixed(2) }}</span>
-                <span v-if="dish.promotionId" class="dish-promo-tag">福利 ¥{{ dish.promoPrice?.toFixed(2) }}</span>
+                <template v-if="dish.promoPrice">
+                  <span class="dish-price dish-price-original">¥{{ dish.price.toFixed(2) }}</span>
+                  <span class="dish-promo-price">¥{{ dish.promoPrice.toFixed(2) }}</span>
+                  <span class="dish-promo-tag">{{ dish.promotionName || '限时折扣' }}</span>
+                </template>
+                <span v-else class="dish-price">¥{{ dish.price.toFixed(2) }}</span>
               </div>
             </div>
           </div>
@@ -172,7 +176,7 @@ interface Dish {
   specsPreset?: SpecPreset
   specGroups?: SpecGroup[]
   selectedLabels?: string[]
-  promotionId?: string; promoPrice?: number
+  promotionId?: string; promoPrice?: number; promotionName?: string
 }
 
 const router = useRouter()
@@ -427,6 +431,8 @@ onMounted(() => {
 .dish-desc { margin: 0 0 var(--spacing-sm); font-family: var(--font-body); font-size: var(--text-body-md); color: var(--secondary); line-height: 20px; flex: 1; }
 .dish-price-row { display: flex; align-items: center; gap: var(--spacing-sm); }
 .dish-price { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: var(--primary-container); }
+.dish-price-original { font-size: 13px; font-weight: 600; color: var(--secondary); text-decoration: line-through; }
+.dish-promo-price { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: var(--error); }
 .dish-promo-tag { display: inline-block; padding: 1px 6px; border-radius: 4px; background: var(--error); color: #fff; font-family: var(--font-display); font-size: 11px; font-weight: 700; }
 .dish-specs { margin-top: var(--spacing-md); padding-top: var(--spacing-md); padding-bottom: var(--spacing-sm); border-top: 1px solid var(--card-border-subtle); display: flex; flex-direction: column; gap: var(--spacing-md); }
 .spec-group { display: flex; flex-direction: column; gap: var(--spacing-sm); }
