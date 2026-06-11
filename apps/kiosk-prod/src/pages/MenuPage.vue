@@ -70,7 +70,10 @@
                   v-for="(opt, oi) in group.options" :key="oi"
                   :class="['spec-chip', dish.selectedLabels?.[gi] === opt.label && 'spec-chip-active']"
                   @click="dish.selectedLabels![gi] = opt.label"
-                >{{ opt.label }}{{ opt.priceDelta ? (opt.priceDelta > 0 ? ` +¥${opt.priceDelta}` : ` -¥${-opt.priceDelta}`) : '' }}</button>
+                >
+                  <span v-if="group.name === '辣度'" class="chili-icons">{{ '🌶️'.repeat(getChiliCount(opt.label)) }}</span>
+                  {{ opt.label }}{{ opt.priceDelta ? (opt.priceDelta > 0 ? ` +¥${opt.priceDelta}` : ` -¥${-opt.priceDelta}`) : '' }}
+                </button>
                 <input v-if="gi === qtyGroupIndex" class="qty-input" type="number" placeholder="其他数量"
                   @input="onCustomQty(dish, gi, ($event.target as HTMLInputElement).value)" />
               </div>
@@ -193,6 +196,15 @@ function initSpecs(preset: SpecPreset): { groups: SpecGroup[]; defaults: string[
   if (!specDefs || specDefs.length === 0) return null
   const defaults = specDefs.map((g) => g.options[0]?.label ?? '')
   return { groups: specDefs, defaults }
+}
+
+function getChiliCount(label: string): number {
+  if (label.includes('不辣')) return 0
+  if (label.includes('微辣')) return 1
+  if (label.includes('中辣')) return 2
+  if (label.includes('特辣')) return 3
+  if (label.includes('麻辣')) return 3
+  return 0
 }
 
 function onCustomQty(dish: Dish, gi: number, value: string) {
@@ -365,6 +377,8 @@ onMounted(() => {
 .spec-label { margin: 0; font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; color: var(--secondary); }
 .spec-options { display: flex; flex-wrap: wrap; gap: var(--spacing-sm); }
 .spec-chip { padding: 6px 12px; border-radius: var(--radius-md); border: 1px solid var(--outline-variant); background: transparent; color: var(--on-surface); font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; cursor: pointer; transition: all var(--transition-fast); }
+
+.chili-icons { font-size: 14px; margin-right: 4px; }
 .spec-chip-active { border-color: var(--primary-container); background: rgba(255, 107, 0, 0.08); color: var(--primary-container); }
 .qty-input { width: 96px; padding: 6px 12px; border-radius: var(--radius-md); border: 1px solid var(--outline-variant); background: transparent; font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; color: var(--on-surface); outline: none; }
 .qty-input:focus { border-color: var(--primary-container); }
