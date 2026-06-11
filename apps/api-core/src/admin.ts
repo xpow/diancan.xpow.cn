@@ -1,8 +1,46 @@
-import { Router } from 'express'
+import { Router, Request, Response, NextFunction } from 'express'
 import { PrismaClient } from '@prisma/client'
+import crypto from 'node:crypto'
 
-const router = Router()
+const router: ReturnType<typeof Router> = Router()
 const prisma = new PrismaClient()
+
+const ADMIN_PASSWORD_HASH = crypto.createHash('md5').update('xpow!1234').digest('hex')
+console.log('[admin] password hash:', ADMIN_PASSWORD_HASH)
+
+declare module 'express-session' {
+  interface SessionData {
+    adminAuthed?: boolean
+  }
+}
+
+function requireAuth(req: Request, res: Response, next: NextFunction) {
+  if (req.session?.adminAuthed) return next()
+  res.status(401).json({ message: '请先登录' })
+}
+
+/* ===== Auth ===== */
+router.post('/auth/login', (req, res) => {
+  const { password } = req.body ?? {}
+  const hash = crypto.createHash('md5').update(String(password ?? '')).digest('hex')
+  if (hash !== ADMIN_PASSWORD_HASH) {
+    return res.status(403).json({ message: '密码错误' })
+  }
+  req.session.adminAuthed = true
+  res.json({ success: true })
+})
+
+router.get('/auth/check', (req, res) => {
+  res.json({ authed: !!req.session?.adminAuthed })
+})
+
+router.post('/auth/logout', (req, res) => {
+  req.session.destroy(() => {})
+  res.json({ success: true })
+})
+
+/* ===== All routes below require auth ===== */
+router.use(requireAuth)
 
 /* ===== Orders ===== */
 

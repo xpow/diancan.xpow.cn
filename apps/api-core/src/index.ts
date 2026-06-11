@@ -1,5 +1,6 @@
 import cors from 'cors'
 import express from 'express'
+import session from 'express-session'
 import { PrismaClient } from '@prisma/client'
 import adminRouter from './admin.js'
 
@@ -7,8 +8,14 @@ const app = express()
 const port = Number(process.env.PORT || 3011)
 const prisma = new PrismaClient()
 
-app.use(cors())
+app.use(cors({ origin: true, credentials: true }))
 app.use(express.json())
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'diancan-dev-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { httpOnly: true, sameSite: 'lax', maxAge: 24 * 60 * 60 * 1000 },
+}))
 
 app.use('/api/admin', adminRouter)
 
