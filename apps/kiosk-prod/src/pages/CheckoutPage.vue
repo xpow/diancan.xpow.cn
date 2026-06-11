@@ -99,7 +99,7 @@
                 <p v-if="item.specs" class="item-variant">{{ item.specs }}</p>
               </div>
               <div class="item-price-col">
-                <p class="item-price">¥{{ item.finalUnitPrice.toFixed(2) }}</p>
+                <p class="item-price"><small class="c-sign">¥</small>{{ item.finalUnitPrice.toFixed(2) }}</p>
                 <p class="item-qty">x{{ item.quantity }}</p>
                 <p v-if="item.promotionLabel" class="item-promo-tag">{{ item.promotionLabel }}</p>
               </div>
@@ -109,11 +109,11 @@
           <div class="order-summary">
             <div class="summary-row">
               <span>商品总计</span>
-              <span>¥{{ quote?.totals.originalAmount.toFixed(2) || '0.00' }}</span>
+              <span><small class="c-sign">¥</small>{{ quote?.totals.originalAmount.toFixed(2) || '0.00' }}</span>
             </div>
             <div v-if="quote?.totals.discountAmount" class="summary-row summary-discount">
               <span>优惠折扣</span>
-              <span>-¥{{ quote.totals.discountAmount.toFixed(2) }}</span>
+              <span>-<small class="c-sign">¥</small>{{ quote.totals.discountAmount.toFixed(2) }}</span>
             </div>
           </div>
         </section>
@@ -143,7 +143,7 @@
       <div class="action-left">
         <span class="action-label">待支付金额</span>
         <div class="action-amount">
-          <span class="currency">¥</span>
+          <span class="currency"><small class="c-sign">¥</small></span>
           <span class="amount">{{ quote?.totals.payableAmount.toFixed(2) || '0.00' }}</span>
         </div>
       </div>
@@ -992,4 +992,5 @@ onMounted(() => {
     max-width: 100%;
   }
 }
+.c-sign { font-size: 0.65em; }
 </style>

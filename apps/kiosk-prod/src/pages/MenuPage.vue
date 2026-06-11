@@ -57,11 +57,11 @@
               <p class="dish-desc">{{ dish.desc }}</p>
               <div class="dish-price-row">
                 <template v-if="dish.promoPrice">
-                  <span class="dish-price dish-price-original">¥{{ dish.price.toFixed(2) }}</span>
-                  <span class="dish-promo-price">¥{{ dish.promoPrice.toFixed(2) }}</span>
+                  <span class="dish-price dish-price-original"><small class="c-sign">¥</small>{{ dish.price.toFixed(2) }}</span>
+                  <span class="dish-promo-price"><small class="c-sign">¥</small>{{ dish.promoPrice.toFixed(2) }}</span>
                   <span class="dish-promo-tag">{{ dish.promotionName || '限时折扣' }}</span>
                 </template>
-                <span v-else class="dish-price">¥{{ dish.price.toFixed(2) }}</span>
+                <span v-else class="dish-price"><small class="c-sign">¥</small>{{ dish.price.toFixed(2) }}</span>
               </div>
             </div>
           </div>
@@ -93,7 +93,7 @@
         </div>
         <div class="cart-info">
           <span class="cart-label">合计金额</span>
-          <span class="cart-total">¥{{ cartTotal.toFixed(2) }}</span>
+          <span class="cart-total"><small class="c-sign">¥</small>{{ cartTotal.toFixed(2) }}</span>
         </div>
       </div>
       <button class="cart-btn" @click.stop="goCheckout">去结算</button>
@@ -115,10 +115,7 @@
                 {{ item.specs }}
                 <span class="spec-edit-icon material-icons">edit</span>
               </p>
-              <p class="cart-item-price">
-                <span>¥{{ (item.price * item.quantity).toFixed(2) }}</span>
-                <span v-if="item.promotionName" class="cart-promo-tag">{{ item.promotionName }}</span>
-              </p>
+              <p class="cart-item-price" v-html="displayCartItemPrice(item)"></p>
             </div>
             <div class="cart-item-qty">
               <button class="qty-btn" @click="updateCartQuantity(item.dishId, -1)"><span class="material-icons">remove</span></button>
@@ -126,6 +123,30 @@
               <button class="qty-btn qty-btn-plus" @click="updateCartQuantity(item.dishId, 1)"><span class="material-icons">add</span></button>
             </div>
           </div>
+        </div>
+
+        <!-- 营销活动区 -->
+        <div v-if="cartQuote" class="cart-promo-section">
+          <div v-for="promo in cartQuote.appliedPromotions" :key="promo.id" class="promo-row">
+            <span class="promo-icon material-icons">sell</span>
+            <div class="promo-info">
+              <span class="promo-name">{{ promo.name }}</span>
+              <!-- <span class="promo-desc">{{ promo.description }}</span> -->
+            </div>
+            <span class="promo-saving">- <small class="c-sign">¥</small>{{ promo.discount.toFixed(2) }}</span>
+          </div>
+          <div v-for="hint in cartQuote.hints" :key="hint" class="promo-hint">
+            <span class="material-icons">lightbulb</span>
+            <span v-html="highlightAmount(hint)"></span>
+          </div>
+          <div v-if="cartQuote.totals.discountAmount > 0" class="promo-summary">
+            <span>已优惠</span>
+            <span class="promo-summary-amount">- <small class="c-sign">¥</small>{{ cartQuote.totals.discountAmount.toFixed(2) }}</span>
+          </div>
+        </div>
+        <div v-if="quoteLoading" class="cart-quote-loading">
+          <span class="spinner-sm"></span>
+          <span>计算中...</span>
         </div>
 
         <!-- Spiciness Editor -->
@@ -141,7 +162,13 @@
         </van-action-sheet>
         <div v-if="cartItems.length === 0" class="cart-empty">购物车是空的</div>
         <div class="cart-sheet-footer">
-          <span class="cart-total-label">合计：<span class="cart-total-price">¥{{ cartTotal.toFixed(2) }}</span></span>
+          <span class="cart-total-label">
+            合计：
+            <template v-if="cartQuote && cartQuote.totals.discountAmount > 0">
+              <span class="strikethrough-price"><small class="c-sign">¥</small>{{ cartQuote.totals.originalAmount.toFixed(2) }}</span>
+            </template>
+            <span class="cart-total-price"><small class="c-sign">¥</small>{{ cartTotal.toFixed(2) }}</span>
+          </span>
           <button class="checkout-btn" @click="goCheckout">确认下单</button>
         </div>
       </div>
@@ -156,7 +183,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import 'vant/es/toast/style'
@@ -165,6 +192,22 @@ import SpecSelector from '@/components/SpecSelector.vue'
 import { readCart, clearCart as clearCartStorage, addToCart as addToCartStorage, saveCart, updateCartQuantity as updateCartQuantityStorage, StoredCartItem } from '@/utils/cart'
 import { getTheme, setTheme } from '@/utils/theme'
 import logoImage from '@/assets/images/pages/logo.png'
+
+interface QuoteLineItem {
+  dishId: string; name: string; quantity: number
+  unitPrice: number; finalUnitPrice: number; finalSubtotal: number
+  specs?: string; promotionLabel?: string
+}
+interface AppliedPromotion {
+  id: string; name: string; discount: number; description: string
+}
+interface QuoteResponse {
+  quoteId: string
+  itemDetails: QuoteLineItem[]
+  appliedPromotions: AppliedPromotion[]
+  totals: { originalAmount: number; discountAmount: number; payableAmount: number }
+  hints: string[]
+}
 
 interface Category { id: string; name: string; sort: number }
 
@@ -198,8 +241,68 @@ const selectedCategoryId = ref('')
 const showCart = ref(false)
 const hasActiveOrder = ref(false)
 const cartItems = ref<StoredCartItem[]>([])
+const cartQuote = ref<QuoteResponse | null>(null)
+const quoteLoading = ref(false)
 
 const qtyGroupIndex = 1
+
+watch(showCart, (val) => {
+  if (val) fetchQuote()
+})
+
+function quoteItemForDishId(dishId: string) {
+  return cartQuote.value?.itemDetails.find((i) => i.dishId === dishId)
+}
+
+function displayCartItemPrice(item: StoredCartItem) {
+  const qi = quoteItemForDishId(item.baseDishId)
+  const promo = cartItemPromotionLabel(item)
+  const tag = promo ? `<span class="cart-promo-tag">${promo}</span>` : ''
+
+  if (qi && qi.finalUnitPrice !== item.price) {
+    const orig = (item.price * item.quantity).toFixed(2)
+    const final = (qi.finalUnitPrice * item.quantity).toFixed(2)
+    return `<span class="strikethrough-price"><small class="c-sign">¥</small>${orig}</span> <small class="c-sign">¥</small>${final} ${tag}`
+  }
+  return `<small class="c-sign">¥</small>${(item.price * item.quantity).toFixed(2)} ${tag}`
+}
+
+function cartItemPromotionLabel(item: StoredCartItem) {
+  const qi = quoteItemForDishId(item.baseDishId)
+  if (qi?.promotionLabel) return qi.promotionLabel
+  return item.promotionName || ''
+}
+
+function highlightAmount(text: string) {
+  return text.replace(/(¥)([\d.]+)/g, '<small class="c-sign">$1</small><strong class="hl-amount">$2</strong>')
+    .replace(/(满减|折扣|优惠|活动)/g, '<strong class="hl-promo">$1</strong>')
+}
+
+async function fetchQuote() {
+  const items = readCart()
+  if (!items.length) { cartQuote.value = null; return }
+
+  quoteLoading.value = true
+  try {
+    const res = await fetch('/api/cart/quote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: items.map((i) => ({
+          dishId: i.baseDishId,
+          quantity: i.quantity,
+          specs: i.specs ?? '',
+        })),
+      }),
+    })
+    if (!res.ok) throw new Error('试算失败')
+    cartQuote.value = (await res.json()) as QuoteResponse
+  } catch {
+    cartQuote.value = null
+  } finally {
+    quoteLoading.value = false
+  }
+}
 
 function getThemeIcon(): string {
   const t = getTheme()
@@ -212,7 +315,10 @@ function doToggleTheme(): string {
 }
 
 const cartCount = computed(() => cartItems.value.reduce((s, i) => s + i.quantity, 0))
-const cartTotal = computed(() => cartItems.value.reduce((t, i) => t + i.price * i.quantity, 0))
+const cartTotal = computed(() => {
+  if (cartQuote.value) return cartQuote.value.totals.payableAmount
+  return cartItems.value.reduce((t, i) => t + i.price * i.quantity, 0)
+})
 const cartDishIds = computed(() => new Set(cartItems.value.map((i) => i.dishId)))
 const filteredDishes = computed(() => dishes.value.filter(d => d.categoryId === selectedCategoryId.value))
 
@@ -314,12 +420,14 @@ function addToCart(dish: Dish) {
 function updateCartQuantity(dishId: string, delta: number) {
   updateCartQuantityStorage(dishId, delta)
   hydrateCart()
-  if (cartItems.value.length === 0) showCart.value = false
+  if (cartItems.value.length === 0) { showCart.value = false; return }
+  if (showCart.value) fetchQuote()
 }
 
 function clearCart() {
   clearCartStorage()
   cartItems.value = []
+  cartQuote.value = null
   showCart.value = false
 }
 
@@ -484,6 +592,25 @@ onMounted(() => {
 .cart-total-price { color: var(--primary-container); font-weight: 800; }
 .checkout-btn { padding: var(--spacing-md) var(--spacing-xl); border-radius: var(--radius-full); border: none; background: var(--primary-container); color: var(--on-primary); font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; cursor: pointer; }
 .spec-editor-content { padding: var(--spacing-lg); display: flex; flex-direction: column; align-items: center; }
+
+/* 营销活动区 */
+.cart-promo-section { margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--surface-container-low); border-radius: var(--radius-lg); display: flex; flex-direction: column; gap: var(--spacing-sm); }
+.promo-row { display: flex; align-items: center; gap: var(--spacing-sm); font-size: var(--text-label-sm); }
+.promo-icon { font-size: 16px !important; color: var(--primary-container); flex-shrink: 0; }
+.promo-info { flex: 1; display: flex; flex-direction: column; }
+.promo-name { font-weight: 600; color: var(--on-surface); }
+.promo-desc { font-size: 11px; color: var(--secondary); }
+.promo-saving { font-weight: 700; color: var(--error); flex-shrink: 0; }
+.promo-hint { display: flex; align-items: center; gap: var(--spacing-sm); font-size: 11px; color: var(--secondary); }
+.promo-hint .material-icons { font-size: 14px !important; color: var(--primary-container); }
+.promo-hint .hl-amount { color: var(--primary-container); font-weight: 800; }
+.promo-hint .hl-promo { color: var(--primary-container); font-weight: 700; }
+.promo-summary { display: flex; justify-content: space-between; align-items: center; padding-top: var(--spacing-sm); border-top: 1px dashed var(--outline-variant); font-size: var(--text-label-sm); font-weight: 600; }
+.promo-summary-amount { color: var(--error); font-weight: 700; }
+.cart-quote-loading { display: flex; align-items: center; justify-content: center; gap: var(--spacing-sm); padding: var(--spacing-sm); font-size: var(--text-label-sm); color: var(--secondary); }
+.spinner-sm { width: 16px; height: 16px; border: 2px solid var(--surface-container); border-top-color: var(--primary-container); border-radius: 50%; animation: spin 1s linear infinite; }
+.strikethrough-price { text-decoration: line-through; color: var(--secondary); font-weight: 400; font-size: var(--text-label-sm); }
+.c-sign { font-size: 0.85em; }
 
 .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; display: flex; justify-content: space-around; align-items: center; padding: var(--spacing-xs) var(--gutter); background: var(--frosted-bg-heavy); backdrop-filter: blur(12px); border-top-left-radius: var(--radius-xl); border-top-right-radius: var(--radius-xl); box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.04); }
 .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--radius-full); color: var(--secondary); text-decoration: none; transition: all var(--transition-fast); }

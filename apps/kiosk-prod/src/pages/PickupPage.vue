@@ -73,7 +73,7 @@
               </div>
               <div class="ticket-item-right">
                 <span class="ticket-item-qty">x{{ item.quantity }}</span>
-                <span class="ticket-item-price">¥{{ (item.finalUnitPrice * item.quantity).toFixed(2) }}</span>
+                <span class="ticket-item-price"><small class="c-sign">¥</small>{{ (item.finalUnitPrice * item.quantity).toFixed(2) }}</span>
               </div>
             </div>
 
@@ -81,7 +81,7 @@
               <span class="ticket-total-label">合计 {{ (order.items || []).length }} 项商品</span>
               <div class="ticket-total-right">
                 <span class="ticket-total-sub">实付金额</span>
-                <span class="ticket-total-price">¥{{ (order.totals?.payableAmount || 0).toFixed(2) }}</span>
+                <span class="ticket-total-price"><small class="c-sign">¥</small>{{ (order.totals?.payableAmount || 0).toFixed(2) }}</span>
               </div>
             </div>
           </div>
@@ -452,4 +452,5 @@ onUnmounted(() => {
 .toast-leave-active { transition: all 0.2s ease-in; }
 .toast-enter-from { opacity: 0; transform: translateX(-50%) translateY(12px); }
 .toast-leave-to { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+.c-sign { font-size: 0.65em; }
 </style>
