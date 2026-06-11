@@ -603,15 +603,15 @@ onMounted(() => {
   font-family: var(--font-display);
   font-size: 20px;
   font-weight: 800;
-  color: var(--error);
+  color: var(--primary-container);
 }
 
 .dish-promo-tag {
   display: inline-block;
-  padding: 1px 6px;
+  padding: 2px 8px;
   border-radius: 4px;
-  background: var(--error);
-  color: #fff;
+  background: var(--primary-container);
+  color: var(--on-primary);
   font-size: 11px;
   font-weight: 700;
 }
