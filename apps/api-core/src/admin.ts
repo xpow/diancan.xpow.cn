@@ -86,6 +86,7 @@ router.get('/orders', async (_req, res) => {
         finalSubtotal: i.finalSubtotal,
         specs: i.specs || undefined,
         promotionLabel: i.promotionLabel || undefined,
+        status: i.status,
       })),
       createdAt: o.createdAt.toISOString(),
     })),
@@ -113,6 +114,41 @@ router.put('/orders/:id/status', async (req, res) => {
   })
 
   res.json({ id: updated.id, status: updated.status })
+})
+
+router.put('/orders/:orderId/items/:itemId/status', async (req, res) => {
+  const { orderId, itemId } = req.params
+  const { status } = req.body ?? {}
+  if (!['pending', 'preparing', 'ready'].includes(status)) {
+    return res.status(400).json({ message: '无效状态' })
+  }
+
+  const item = await prisma.orderItem.findUnique({ where: { id: itemId } })
+  if (!item || item.orderId !== orderId) {
+    return res.status(404).json({ message: '菜品不存在' })
+  }
+
+  await prisma.orderItem.update({ where: { id: itemId }, data: { status } })
+
+  // 检查订单下所有菜品是否都已 ready，是则自动将订单设为 ready
+  const allItems = await prisma.orderItem.findMany({ where: { orderId } })
+  const allReady = allItems.length > 0 && allItems.every((i) => i.status === 'ready')
+  if (allReady) {
+    await prisma.order.update({ where: { id: orderId }, data: { status: 'ready' } })
+    return res.json({ itemId, status, orderStatus: 'ready' })
+  }
+
+  // 如果有菜品正在制作且订单还不是 preparing，自动设为 preparing
+  const hasPreparing = allItems.some((i) => i.status === 'preparing')
+  if (hasPreparing) {
+    const order = await prisma.order.findUnique({ where: { id: orderId }, select: { status: true } })
+    if (order?.status === 'paid') {
+      await prisma.order.update({ where: { id: orderId }, data: { status: 'preparing' } })
+      return res.json({ itemId, status, orderStatus: 'preparing' })
+    }
+  }
+
+  res.json({ itemId, status })
 })
 
 /* ===== Dishes ===== */

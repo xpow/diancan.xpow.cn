@@ -6,7 +6,7 @@
         <h1 class="top-title">出餐管理</h1>
       </div>
       <div class="top-right">
-        <span class="order-count-badge">{{ orders.length }}</span>
+        <span class="order-count-badge">{{ totalItems }}</span>
         <button class="settings-btn" @click="toggleVoice">
           <span class="material-symbols-outlined">{{ voiceEnabled ? 'volume_up' : 'volume_off' }}</span>
         </button>
@@ -19,85 +19,98 @@
     <div class="tabs">
       <button v-for="t in tabs" :key="t.key" :class="['tab', tab === t.key && 'tab-active']" @click="tab = t.key">
         {{ t.label }}
-        <span v-if="tabCounts[t.key]" class="tab-badge">{{ tabCounts[t.key] }}</span>
+        <span class="tab-badge">{{ itemCounts[t.key] }}</span>
       </button>
     </div>
 
     <main>
-      <div v-for="order in filteredOrders" :key="order.id" class="order-card" :class="`card-${order.status}`">
-        <div class="card-header">
-          <div class="card-number">{{ order.pickupCode }}</div>
-          <div class="card-status" :class="`status-${order.status}`">
-            {{ statusText(order.status) }}
-          </div>
+      <div v-for="group in filtered" :key="group.pickupCode" class="order-group">
+        <div class="group-header">
+          <span class="group-code">{{ group.pickupCode }}</span>
+          <span class="group-time">{{ group.time }}</span>
         </div>
-
-        <div class="card-time">{{ new Date(order.createdAt).toLocaleString('zh-CN') }}</div>
-
-        <div class="card-items">
-          <div v-for="item in (order.items || [])" :key="item.dishId" class="card-item">
-            <span class="card-item-name">{{ item.name }}</span>
-            <span class="card-item-meta" v-if="item.specs">· {{ item.specs }}</span>
-            <span class="card-item-qty">x{{ item.quantity }}</span>
+        <div
+          v-for="item in group.items"
+          :key="item.id"
+          class="item-card"
+          :class="`card-${item.status}`"
+        >
+          <div class="item-info">
+            <div class="item-name">{{ item.name }}</div>
+            <div class="item-meta">
+              <span class="item-qty">x{{ item.quantity }}</span>
+              <span v-if="item.specs" class="item-specs">· {{ item.specs }}</span>
+            </div>
           </div>
-        </div>
-
-        <div class="card-actions">
           <button
-            v-if="order.status === 'paid'"
+            v-if="item.status === 'pending'"
             class="action-btn action-cook"
-            @click="updateStatus(order, 'preparing')"
+            @click="startCook(item)"
           >
             <span class="material-symbols-outlined">local_fire_department</span>
             开始制作
           </button>
           <button
-            v-if="order.status === 'preparing' || order.status === 'ready'"
+            v-if="item.status === 'preparing'"
             class="action-btn action-ready"
-            @click="announcePickup(order)"
+            @click="finishCook(item)"
           >
-            <span class="material-symbols-outlined">{{ order.status === 'ready' ? 'volume_up' : 'task_alt' }}</span>
-            {{ order.status === 'ready' ? '再次提醒' : '出餐' }}
+            <span class="material-symbols-outlined">task_alt</span>
+            制作完成
           </button>
-          <button
-            v-if="order.status === 'preparing' || order.status === 'ready'"
-            class="action-btn action-done"
-            @click="updateStatus(order, 'completed')"
-          >
+          <div v-if="item.status === 'ready'" class="ready-badge">
             <span class="material-symbols-outlined">check_circle</span>
-            已取餐
-          </button>
-          <button
-            v-if="order.status === 'paid'"
-            class="action-btn action-cancel"
-            @click="updateStatus(order, 'cancelled')"
-          >
-            <span class="material-symbols-outlined">cancel</span>
-            取消
-          </button>
+            已出餐
+          </div>
         </div>
+        <button
+          v-if="group.canComplete && tab === 'ready'"
+          class="action-btn action-done order-done"
+          @click="completeOrder(group)"
+        >
+          <span class="material-symbols-outlined">checklist</span>
+          全部取餐 ({{ group.pickupCode }})
+        </button>
       </div>
 
-      <div v-if="!filteredOrders.length" class="empty">
+      <div v-if="!filtered.length" class="empty">
         <span class="material-symbols-outlined empty-icon">checklist</span>
-        <p>暂无{{ statusText(tab) }}订单</p>
+        <p>暂无出餐项</p>
       </div>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, onActivated, onDeactivated } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
-const BRANCH_ID = 'demo-branch'
 const POLL_MS = 5000
-const STORAGE_KEY = 'kitchen_announced'
+const STORAGE_KEY = 'kitchen_announced_items'
 
-const orders = ref<any[]>([])
-const tab = ref<'paid' | 'preparing' | 'ready'>('paid')
+interface OrderItem {
+  id: string
+  dishId: string
+  name: string
+  quantity: number
+  specs?: string
+  status: string
+}
+
+interface Order {
+  id: string
+  orderNo: string
+  pickupCode: string
+  status: string
+  items: OrderItem[]
+  createdAt: string
+}
+
+const orders = ref<Order[]>([])
+const tab = ref<'pending' | 'preparing' | 'ready'>('pending')
 const voiceEnabled = ref(true)
-const prevStatusMap = ref<Record<string, string>>({})
+const prevItemStatus = ref<Record<string, string>>({})
 let wakeLock: any = null
+let announcedReadyOrders = new Set<string>()
 
 async function requestWakeLock() {
   try {
@@ -115,49 +128,42 @@ async function releaseWakeLock() {
   }
 }
 
-// 页面可见性变化时重新请求（用户切回来时）
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') requestWakeLock()
 })
 
-function loadAnnounced(): Set<string> {
-  try { return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')) } catch { return new Set() }
-}
-function saveAnnounced(ids: Set<string>) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify([...ids]))
-}
-const announcedIds = loadAnnounced()
+const allItems = computed(() => orders.value.flatMap((o) => o.items))
 
-const statuses = ['paid', 'preparing', 'ready']
+const totalItems = computed(() => allItems.value.length)
 
-const tabs = [
-  { key: 'paid' as const, label: '等待' },
-  { key: 'preparing' as const, label: '制作中' },
-  { key: 'ready' as const, label: '待取餐' },
-]
-
-const tabCounts = computed(() => {
-  const m: Record<string, number> = {}
-  for (const o of orders.value) {
-    m[o.status] = (m[o.status] || 0) + 1
+const itemCounts = computed(() => {
+  const m: Record<string, number> = { pending: 0, preparing: 0, ready: 0 }
+  for (const item of allItems.value) {
+    if (item.status in m) m[item.status]++
   }
   return m
 })
 
-const filteredOrders = computed(() =>
-  orders.value.filter((o) => o.status === tab.value)
-)
-
-function statusText(s: string) {
-  const map: Record<string, string> = {
-    paid: '等待中',
-    preparing: '制作中',
-    ready: '待取餐',
-    completed: '已完成',
-    cancelled: '已取消',
+const filtered = computed(() => {
+  const groups: Record<string, { pickupCode: string; time: string; orderId: string; items: OrderItem[] }> = {}
+  for (const order of orders.value) {
+    const filteredItems = order.items.filter((item) => item.status === tab.value)
+    if (!filteredItems.length) continue
+    if (!groups[order.pickupCode]) {
+      groups[order.pickupCode] = {
+        pickupCode: order.pickupCode,
+        time: new Date(order.createdAt).toLocaleString('zh-CN'),
+        orderId: order.id,
+        items: [],
+      }
+    }
+    groups[order.pickupCode].items.push(...filteredItems)
   }
-  return map[s] || s
-}
+  return Object.values(groups).map((g) => ({
+    ...g,
+    canComplete: tab.value === 'ready' && orders.value.find((o) => o.id === g.orderId)?.items.every((i) => i.status === 'ready'),
+  }))
+})
 
 let speechQueue: string[] = []
 let speaking = false
@@ -194,78 +200,83 @@ function speakTwice(msg: string) {
   processQueue()
 }
 
-async function announcePickup(order: any) {
-  if (order.status === 'preparing') {
-    await updateStatus(order, 'ready')
-  } else {
-    speakTwice(`请${order.pickupCode}取餐`)
-    notify('取餐提醒', `${order.pickupCode} 号，请尽快取餐`)
-  }
+function notify(title: string, body: string) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return
+  const n = new Notification(title, { body, icon: '/favicon.ico', tag: 'kitchen' })
+  setTimeout(() => n.close(), 5000)
 }
 
-async function updateStatus(order: any, newStatus: string) {
+async function updateItemStatus(item: OrderItem, newStatus: string) {
+  const order = orders.value.find((o) => o.items.some((i) => i.id === item.id))
+  if (!order) return
   try {
-    await fetch(`/api/admin/orders/${order.id}/status`, {
+    await fetch(`/api/admin/orders/${order.id}/items/${item.id}/status`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus }),
     })
-    order.status = newStatus
-    prevStatusMap.value[order.orderNo] = newStatus
-    announcedIds.add(order.orderNo)
-    saveAnnounced(announcedIds)
-    const code = order.pickupCode
-    if (newStatus === 'preparing') {
-      speak(`订单${code}正在制作`)
-      notify('开始制作', `取餐号 ${code} 正在制作`)
-    }
-    else if (newStatus === 'ready') speakTwice(`请${code}取餐`)
-  } catch {
-    // 静默失败，下次轮询恢复
+    item.status = newStatus
+    prevItemStatus.value[item.id] = newStatus
+  } catch {}
+}
+
+async function startCook(item: OrderItem) {
+  await updateItemStatus(item, 'preparing')
+  const code = orders.value.find((o) => o.items.some((i) => i.id === item.id))?.pickupCode
+  if (code) speak(`订单${code} ${item.name} 开始制作`)
+}
+
+async function finishCook(item: OrderItem) {
+  await updateItemStatus(item, 'ready')
+  const order = orders.value.find((o) => o.items.some((i) => i.id === item.id))
+  if (!order) return
+  const allReady = order.items.every((i) => i.status === 'ready')
+  if (allReady && !announcedReadyOrders.has(order.pickupCode)) {
+    announcedReadyOrders.add(order.pickupCode)
+    speakTwice(`请${order.pickupCode}取餐`)
+    notify('取餐提醒', `${order.pickupCode} 号已全部出餐`)
   }
+}
+
+async function completeOrder(group: { pickupCode: string; orderId: string }) {
+  try {
+    await fetch(`/api/admin/orders/${group.orderId}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'completed' }),
+    })
+    const order = orders.value.find((o) => o.id === group.orderId)
+    if (order) order.status = 'completed'
+  } catch {}
 }
 
 async function fetchOrders() {
   try {
     const res = await fetch('/api/orders')
     const body = await res.json()
-    const all: any[] = (body.items ?? []).filter((o: any) =>
-      statuses.includes(o.status)
+    const active: Order[] = (body.items ?? []).filter((o: any) =>
+      ['paid', 'preparing', 'ready'].includes(o.status)
     )
-    all.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    orders.value = all
+    active.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    orders.value = active
 
-    for (const o of all) {
-      const prev = prevStatusMap.value[o.orderNo]
-      if (!prev && o.status === 'paid' && !announcedIds.has(o.orderNo)) {
-        announcedIds.add(o.orderNo)
-        saveAnnounced(announcedIds)
-        speakTwice(`新订单${o.pickupCode}，请开始制作`)
-        notify('新订单', `取餐号 ${o.pickupCode}，请开始制作`)
-      } else if (prev && prev !== o.status) {
-        if (o.status === 'preparing') speak(`订单${o.pickupCode}正在制作`)
-        else if (o.status === 'ready') {
-          speakTwice(`请${o.pickupCode}取餐`)
-          notify('取餐提醒', `${o.pickupCode} 号已就绪`)
+    for (const order of active) {
+      for (const item of order.items) {
+        const prev = prevItemStatus.value[item.id]
+        if (!prev && item.status === 'pending' && !announcedReadyOrders.has(order.pickupCode)) {
+          speakTwice(`新订单${order.pickupCode}，请开始制作`)
+          notify('新订单', `取餐号 ${order.pickupCode}`)
         }
+        prevItemStatus.value[item.id] = item.status
       }
-      prevStatusMap.value[o.orderNo] = o.status
     }
-  } catch {
-    // ignore
-  }
+  } catch {}
 }
 
 let timer: ReturnType<typeof setInterval> | null = null
 
 function toggleVoice() {
   voiceEnabled.value = !voiceEnabled.value
-}
-
-function notify(title: string, body: string) {
-  if (!('Notification' in window) || Notification.permission !== 'granted') return
-  const n = new Notification(title, { body, icon: '/favicon.ico', tag: 'kitchen' })
-  setTimeout(() => n.close(), 5000)
 }
 
 onMounted(() => {
@@ -301,19 +312,17 @@ onUnmounted(() => {
 .settings-btn { width: 36px; height: 36px; border-radius: 50%; border: none; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--secondary); }
 .settings-btn:active { background: var(--surface-container-high); }
 .back-link { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--secondary); text-decoration: none; }
-.back-link:active { background: var(--surface-container-high); }
 
 .tabs {
   position: sticky; top: 52px; z-index: 49;
   display: flex; gap: 8px; padding: 8px 16px;
   background: rgba(252, 249, 248, 0.95); backdrop-filter: blur(12px);
-  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  overflow-x: auto;
 }
 .tab {
   flex-shrink: 0; padding: 8px 20px; border-radius: 9999px; border: none;
   font-family: var(--font-display); font-size: 14px; font-weight: 600;
   background: var(--surface-container-high); color: var(--secondary); cursor: pointer;
-  transition: all 0.2s;
 }
 .tab-active { background: var(--primary-container); color: var(--on-primary); }
 .tab-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 9999px; background: var(--on-primary); color: var(--primary-container); font-size: 11px; font-weight: 700; margin-left: 6px; }
@@ -321,44 +330,51 @@ onUnmounted(() => {
 
 main { padding: 12px 16px; display: flex; flex-direction: column; gap: 16px; }
 
-.order-card {
+.order-group {
   background: var(--surface-container-lowest);
   border-radius: 16px;
-  padding: 16px;
+  overflow: hidden;
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+.group-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 16px 0;
+}
+.group-code { font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--text); }
+.group-time { font-size: 11px; color: var(--secondary); }
+
+.item-card {
+  display: flex; align-items: center; gap: 12px;
+  margin: 8px 12px; padding: 12px 16px;
+  border-radius: 12px;
   border-left: 4px solid var(--outline);
 }
-.card-paid { border-left-color: var(--outline); }
+.card-pending { border-left-color: var(--outline); }
 .card-preparing { border-left-color: var(--primary-container); }
 .card-ready { border-left-color: var(--tertiary); }
 
-.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-.card-number { font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--text); letter-spacing: -0.02em; line-height: 1; }
-.card-status { padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
-.status-paid { background: var(--surface-container-high); color: var(--secondary); }
-.status-preparing { background: rgba(255,107,0,0.12); color: var(--primary-container); }
-.status-ready { background: rgba(0,110,28,0.1); color: var(--tertiary); }
+.item-info { flex: 1; min-width: 0; }
+.item-name { font-size: 15px; font-weight: 700; line-height: 1.3; }
+.item-meta { display: flex; gap: 4px; font-size: 13px; color: var(--secondary); margin-top: 2px; }
+.item-specs { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.card-time { font-size: 12px; color: var(--secondary); margin-bottom: 12px; }
-
-.card-items { margin-bottom: 16px; }
-.card-item { display: flex; align-items: center; gap: 4px; padding: 4px 0; font-size: 14px; line-height: 20px; }
-.card-item-name { font-weight: 600; }
-.card-item-meta { color: var(--secondary); }
-.card-item-qty { margin-left: auto; color: var(--secondary); font-weight: 600; }
-
-.card-actions { display: flex; gap: 8px; }
 .action-btn {
-  flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px;
-  padding: 12px; border-radius: 9999px; border: none;
-  font-family: var(--font-display); font-size: 15px; font-weight: 700;
-  cursor: pointer; transition: transform 0.12s;
+  display: flex; align-items: center; gap: 4px;
+  padding: 8px 16px; border-radius: 9999px; border: none;
+  font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap;
+  flex-shrink: 0;
 }
-.action-btn:active { transform: scale(0.96); }
-.action-cook { background: var(--primary-container); color: var(--on-primary); box-shadow: 0 4px 12px rgba(255,107,0,0.25); }
-.action-ready { background: var(--tertiary-container); color: #fff; box-shadow: 0 4px 12px rgba(0,110,28,0.25); }
+.action-cook { background: var(--primary-container); color: var(--on-primary); }
+.action-ready { background: var(--tertiary-container); color: #fff; }
 .action-done { background: var(--tertiary); color: #fff; }
-.action-cancel { flex: none; padding: 12px 16px; background: var(--error-container); color: var(--error); }
+.order-done { margin: 0 12px 12px; justify-content: center; }
+
+.ready-badge {
+  display: flex; align-items: center; gap: 4px;
+  padding: 8px 16px; border-radius: 9999px;
+  background: var(--surface-container-high); color: var(--tertiary);
+  font-size: 13px; font-weight: 600; flex-shrink: 0;
+}
 
 .empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 80px 0; color: var(--secondary); font-size: 14px; }
 .empty-icon { font-size: 64px; color: var(--outline-variant); }

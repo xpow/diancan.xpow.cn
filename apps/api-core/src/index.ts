@@ -370,6 +370,7 @@ app.get('/api/orders', async (_req, res) => {
         payableAmount: o.payableAmount,
       },
       items: o.items.map((i) => ({
+        id: i.id,
         dishId: i.dishId,
         name: i.name,
         quantity: i.quantity,
@@ -377,6 +378,7 @@ app.get('/api/orders', async (_req, res) => {
         finalSubtotal: i.finalSubtotal,
         specs: i.specs || undefined,
         promotionLabel: i.promotionLabel || undefined,
+        status: i.status,
       })),
       createdAt: o.createdAt.toISOString(),
     })),

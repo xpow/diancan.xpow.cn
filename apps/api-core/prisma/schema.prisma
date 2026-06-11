@@ -196,6 +196,7 @@ model OrderItem {
   finalSubtotal  Float
   specs          String?
   promotionLabel String?
+  status         String  @default("pending") // pending | preparing | ready
 
   order Order @relation(fields: [orderId], references: [id])
 
