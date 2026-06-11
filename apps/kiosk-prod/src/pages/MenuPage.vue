@@ -352,7 +352,7 @@ async function loadData() {
     const bootstrap = await bootstrapResponse.json() as { merchantName?: string; branchName: string }
     const menu = await menuResponse.json() as {
       categories: Category[]
-      dishes: { id: string; categoryId: string; name: string; price: number; desc: string; image?: string; tags?: string[]; specsPreset?: SpecPreset }[]
+      dishes: { id: string; categoryId: string; name: string; price: number; desc: string; image?: string; tags?: string[]; specsPreset?: SpecPreset; promoPrice?: number | null; promotionName?: string | null }[]
     }
 
     merchantName.value = bootstrap.merchantName ?? ''
@@ -372,6 +372,8 @@ async function loadData() {
         specsPreset: d.specsPreset,
         specGroups: specResult?.groups,
         selectedLabels: specResult?.defaults ? [...specResult.defaults] : undefined,
+        promoPrice: d.promoPrice ?? undefined,
+        promotionName: d.promotionName ?? undefined,
       }
     })
 
