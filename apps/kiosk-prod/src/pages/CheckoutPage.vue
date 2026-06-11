@@ -97,7 +97,6 @@
               <div class="item-info">
                 <p class="item-name">{{ item.name }}</p>
                 <p v-if="item.specs" class="item-variant">{{ item.specs }}</p>
-                <p v-if="item.promotionLabel" class="item-variant">{{ item.promotionLabel }}</p>
               </div>
               <div class="item-price-col">
                 <p class="item-price">¥{{ item.finalUnitPrice.toFixed(2) }}</p>
