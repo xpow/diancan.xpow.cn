@@ -116,11 +116,8 @@
                 <span class="spec-edit-icon material-icons">edit</span>
               </p>
               <p class="cart-item-price">
-                <template v-if="item.originalPrice">
-                  <span class="price-original">¥{{ item.originalPrice }}</span>
-                  <span class="price-promo">¥{{ (item.price * item.quantity).toFixed(2) }}</span>
-                </template>
-                <span v-else>¥{{ (item.price * item.quantity).toFixed(2) }}</span>
+                <span>¥{{ (item.price * item.quantity).toFixed(2) }}</span>
+                <span v-if="item.originalPrice" class="cart-promo-tag">限时5折</span>
               </p>
             </div>
             <div class="cart-item-qty">
@@ -473,9 +470,8 @@ onMounted(() => {
 .cart-item-name { margin: 0; font-family: var(--font-display); font-size: var(--text-body-lg); font-weight: 600; }
 .cart-item-spec { margin: var(--spacing-xs) 0 0; font-size: var(--text-label-sm); color: var(--secondary); display: flex; align-items: center; gap: 4px; cursor: pointer; }
 .spec-edit-icon { font-size: 14px !important; opacity: 0.5; }
-.cart-item-price { margin: var(--spacing-xs) 0 0; font-size: var(--text-body-md); font-weight: 700; color: var(--primary-container); }
-.cart-item-price .price-original { font-size: 12px; font-weight: 600; color: var(--secondary); text-decoration: line-through; margin-right: 6px; }
-.cart-item-price .price-promo { color: var(--error); }
+.cart-item-price { margin: var(--spacing-xs) 0 0; font-size: var(--text-body-md); font-weight: 700; color: var(--primary-container); display: flex; align-items: center; gap: 6px; }
+.cart-promo-tag { display: inline-block; padding: 1px 6px; border-radius: 4px; background: var(--error); color: #fff; font-size: 11px; font-weight: 700; }
 .cart-item-qty { display: flex; align-items: center; gap: var(--spacing-sm); }
 .qty-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--outline-variant); background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--on-surface-variant); }
 .qty-btn .material-icons { font-size: 16px !important; }
