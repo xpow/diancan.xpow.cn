@@ -71,10 +71,8 @@ export const SPECS_PRESETS: Record<SpecPreset, SpecGroup[] | null> = {
       name: '串数',
       type: 'single',
       options: [
-        { label: '5串' },
-        { label: '10串' },
-        { label: '15串' },
-        { label: '20串' },
+        { label: 'x2' },
+        { label: 'x5' },
       ],
     },
   ],

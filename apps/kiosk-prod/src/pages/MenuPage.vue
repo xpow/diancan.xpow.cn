@@ -212,7 +212,7 @@ function getChiliCount(label: string): number {
 
 function onCustomQty(dish: Dish, gi: number, value: string) {
   if (!dish.selectedLabels) return
-  dish.selectedLabels[gi] = value ? `${value}${dish.specGroups?.[gi]?.options?.[0]?.label?.replace(/\d+/g, '') || '串'}` : dish.specGroups?.[gi]?.options?.[0]?.label || ''
+  dish.selectedLabels[gi] = value ? `x${value}` : dish.specGroups?.[gi]?.options?.[0]?.label || 'x2'
 }
 
 function hydrateCart() {
@@ -228,7 +228,7 @@ function addToCart(dish: Dish) {
       if (!label) continue
       specsParts.push(label)
       if (gi === qtyGroupIndex) {
-        qty = parseInt(label) || 1
+        qty = parseInt(label.replace(/^x/i, '')) || 1
       }
     }
   }
