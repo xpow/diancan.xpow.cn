@@ -237,7 +237,6 @@ async function submitSN() {
       return
     }
     const data = await res.json()
-    localStorage.setItem('kiosk-device-id', data.deviceId)
     localStorage.setItem('kiosk-device-sn', snInput.value)
     deviceAuthed.value = true
   } catch {
@@ -269,9 +268,8 @@ async function loadBootstrap() {
   bootstrap.value = data
 
   // Device auth via SN
-  const savedDeviceId = localStorage.getItem('kiosk-device-id')
   const savedDeviceSN = localStorage.getItem('kiosk-device-sn')
-  if (savedDeviceId && savedDeviceSN) {
+  if (savedDeviceSN) {
     deviceAuthed.value = true
     return
   }

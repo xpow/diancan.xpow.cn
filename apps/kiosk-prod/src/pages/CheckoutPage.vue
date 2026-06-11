@@ -285,10 +285,18 @@ async function reloadQuote() {
       branchName.value = bootstrap.branchName
     }
 
-    // 使用 localStorage 中保存的设备 ID，覆盖 bootstrap 返回的默认值
-    const savedDeviceId = localStorage.getItem('kiosk-device-id')
-    if (savedDeviceId) {
-      bootstrap.deviceId = savedDeviceId
+    // 使用 SN 认证获取当前有效设备 ID
+    const savedSN = localStorage.getItem('kiosk-device-sn')
+    if (savedSN) {
+      const authRes = await fetch('/api/system/device-auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sn: savedSN }),
+      })
+      if (authRes.ok) {
+        const auth = await authRes.json()
+        bootstrap.deviceId = auth.deviceId
+      }
     }
 
     const quoteResponse = await fetch('/api/cart/quote', {
@@ -334,10 +342,10 @@ async function submitOrder() {
       body: JSON.stringify({ sn: savedSN }),
     })
     if (!authRes.ok) {
-      localStorage.removeItem('kiosk-device-id')
       localStorage.removeItem('kiosk-device-sn')
       throw new Error('设备码已失效，请返回首页重新认证')
     }
+    const authData = await authRes.json()
 
     const bootstrapResponse = await fetch('/api/system/bootstrap')
     if (!bootstrapResponse.ok) {
@@ -356,7 +364,7 @@ async function submitOrder() {
       body: JSON.stringify({
         merchantId: bootstrap.merchantId,
         branchId: bootstrap.branchId,
-        deviceId: bootstrap.deviceId,
+        deviceId: authData.deviceId,
         orderType: orderType.value,
         quoteId: quote.value.quoteId,
         items: cartItems.value.map((item) => ({
