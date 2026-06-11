@@ -4,7 +4,7 @@
   </div>
   <div v-else class="layout">
     <aside class="sidebar">
-      <h2 class="sidebar-title">商家后台</h2>
+      <h2 class="sidebar-title">{{ merchantName }}</h2>
       <nav>
         <router-link to="/dashboard" class="nav-link"><span class="nav-icon">📊</span> 总览</router-link>
         <router-link to="/orders" class="nav-link"><span class="nav-icon">📋</span> 订单管理</router-link>
@@ -22,8 +22,21 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 const route = useRoute()
+const merchantName = ref('商家后台')
+
+onMounted(async () => {
+  try {
+    const res = await fetch('/api/admin/merchant')
+    const data = await res.json()
+    if (data?.name) {
+      merchantName.value = data.name
+      document.title = data.name
+    }
+  } catch {}
+})
 </script>
 
 <style>
