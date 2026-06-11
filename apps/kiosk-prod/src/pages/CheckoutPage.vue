@@ -100,17 +100,9 @@
                 <p v-if="item.promotionLabel" class="item-variant">{{ item.promotionLabel }}</p>
               </div>
               <div class="item-price-col">
-                <template v-if="item.promotionLabel === '限时折扣'">
-                  <p class="item-price-original">¥{{ item.unitPrice.toFixed(2) }}</p>
-                  <p class="item-price item-price-promo">¥{{ item.finalUnitPrice.toFixed(2) }}</p>
-                  <p class="item-qty">x{{ item.quantity }}</p>
-                  <p class="item-promo-tag">限时5折</p>
-                </template>
-                <template v-else>
-                  <p class="item-price">¥{{ item.finalUnitPrice.toFixed(2) }}</p>
-                  <p class="item-qty">x{{ item.quantity }}</p>
-                  <p v-if="item.promotionLabel" class="item-promo-tag">{{ item.promotionLabel }}</p>
-                </template>
+                <p class="item-price">¥{{ item.finalUnitPrice.toFixed(2) }}</p>
+                <p class="item-qty">x{{ item.quantity }}</p>
+                <p v-if="item.promotionLabel === '限时折扣'" class="item-promo-tag">限时5折</p>
               </div>
             </div>
           </div>
@@ -776,18 +768,6 @@ onMounted(() => {
   font-family: var(--font-display);
   font-size: var(--text-price-display);
   font-weight: 800;
-  color: var(--primary-container);
-}
-
-.item-price-original {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--secondary);
-  text-decoration: line-through;
-}
-
-.item-price-promo {
   color: var(--primary-container);
 }
 
