@@ -89,7 +89,21 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 const POLL_MS = 5000
-const STORAGE_KEY = 'kitchen_announced_items'
+const STORAGE_KEY = 'kitchen_announced'
+const STORAGE_KEY_READY = 'kitchen_announced_ready'
+
+function loadAnnounced(): Set<string> {
+  try { return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')) } catch { return new Set() }
+}
+function saveAnnounced(s: Set<string>) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify([...s]))
+}
+function loadAnnouncedReady(): Set<string> {
+  try { return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY_READY) || '[]')) } catch { return new Set() }
+}
+function saveAnnouncedReady(s: Set<string>) {
+  localStorage.setItem(STORAGE_KEY_READY, JSON.stringify([...s]))
+}
 
 interface OrderItem {
   id: string
@@ -112,9 +126,9 @@ interface Order {
 const orders = ref<Order[]>([])
 const tab = ref<'pending' | 'preparing' | 'ready'>('pending')
 const voiceEnabled = ref(true)
-const prevItemStatus = ref<Record<string, string>>({})
 let wakeLock: any = null
-let announcedReadyOrders = new Set<string>()
+let announcedReadyOrders = loadAnnouncedReady()
+let announcedNewOrders = loadAnnounced()
 
 const tabs = [
   { key: 'pending' as const, label: '等待' },
@@ -231,7 +245,6 @@ async function updateItemStatus(item: OrderItem, newStatus: string) {
       body: JSON.stringify({ status: newStatus }),
     })
     item.status = newStatus
-    prevItemStatus.value[item.id] = newStatus
   } catch {}
 }
 
@@ -248,6 +261,7 @@ async function finishCook(item: OrderItem) {
   const allReady = order.items.every((i) => i.status === 'ready')
   if (allReady && !announcedReadyOrders.has(order.pickupCode)) {
     announcedReadyOrders.add(order.pickupCode)
+    saveAnnouncedReady(announcedReadyOrders)
     speakTwice(`请${order.pickupCode}取餐`)
     notify('取餐提醒', `${order.pickupCode} 号已全部出餐`)
   }
@@ -276,17 +290,12 @@ async function fetchOrders() {
     orders.value = active
 
     for (const order of active) {
-      const anyNew = order.items.some((item) => {
-        if (announcedReadyOrders.has(order.pickupCode)) return false
-        const prev = prevItemStatus.value[item.id]
-        return !prev && item.status === 'pending'
-      })
-      if (anyNew) {
+      const allPending = order.items.every((item) => item.status === 'pending')
+      if (allPending && !announcedNewOrders.has(order.pickupCode)) {
+        announcedNewOrders.add(order.pickupCode)
+        saveAnnounced(announcedNewOrders)
         speakTwice(`新订单${order.pickupCode}，请开始制作`)
         notify('新订单', `取餐号 ${order.pickupCode}`)
-      }
-      for (const item of order.items) {
-        prevItemStatus.value[item.id] = item.status
       }
     }
   } catch {}
