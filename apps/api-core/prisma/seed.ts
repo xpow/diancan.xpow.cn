@@ -56,6 +56,7 @@ async function main() {
       code: '01',
       sn: randomSN(),
       name: '一号点餐机',
+      contact: '13800138001',
       mode: 'kiosk',
     },
   })

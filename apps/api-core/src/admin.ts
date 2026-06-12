@@ -568,6 +568,7 @@ router.get('/devices', async (_req, res) => {
       code: d.code,
       sn: d.sn,
       name: d.name,
+      contact: d.contact,
       mode: d.mode,
       status: d.status,
       branchId: d.branchId,
@@ -577,12 +578,40 @@ router.get('/devices', async (_req, res) => {
 })
 
 router.post('/devices', async (req, res) => {
-  const { branchId, code, name, mode } = req.body ?? {}
+  const { branchId, code, name, mode, contact } = req.body ?? {}
   if (!branchId) return res.status(400).json({ message: 'branchId 必填' })
   const sn = String(Math.floor(10000000 + Math.random() * 90000000))
 
+  // 自动递增编号和名称
+  const existing = await prisma.device.findMany({
+    where: { branchId },
+    select: { code: true },
+    orderBy: { createdAt: 'desc' },
+  })
+  let devCode = code
+  let devName = name
+  if (!code) {
+    const maxNum = existing.reduce((max, d) => {
+      const n = parseInt(d.code, 10)
+      return isNaN(n) ? max : Math.max(max, n)
+    }, 0)
+    devCode = String(maxNum + 1).padStart(2, '0')
+  }
+  if (!name) {
+    const CHINESE_NUMS = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十']
+    const idx = existing.length + 1
+    devName = `${CHINESE_NUMS[idx] ?? idx}号点餐机`
+  }
+
   const device = await prisma.device.create({
-    data: { branchId, code: code ?? '', sn, name: name ?? '', mode: mode ?? 'kiosk' },
+    data: {
+      branchId,
+      code: devCode,
+      sn,
+      name: devName,
+      contact: contact ?? '',
+      mode: mode ?? 'kiosk',
+    },
   })
 
   res.status(201).json({ id: device.id })
@@ -590,12 +619,13 @@ router.post('/devices', async (req, res) => {
 
 router.put('/devices/:id', async (req, res) => {
   const { id } = req.params
-  const { code, name, mode, status } = req.body ?? {}
+  const { code, name, mode, status, contact } = req.body ?? {}
   const data: any = {}
   if (code !== undefined) data.code = code
   if (name !== undefined) data.name = name
   if (mode !== undefined) data.mode = mode
   if (status !== undefined) data.status = status
+  if (contact !== undefined) data.contact = contact
 
   await prisma.device.update({ where: { id }, data })
   res.json({ success: true })

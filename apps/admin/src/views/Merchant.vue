@@ -92,6 +92,7 @@
     <DataTable :value="devices" striped-rows>
       <Column field="code" header="编号" style="width:60px" />
       <Column field="name" header="名称" />
+      <Column field="contact" header="联系方式" />
       <Column field="mode" header="模式">
         <template #body="{ data }">
           <Tag :value="data.mode === 'kiosk' ? '自助点餐' : 'H5点单'" :severity="data.mode === 'kiosk' ? 'info' : 'contrast'" />
@@ -123,11 +124,15 @@
     <Dialog v-model:visible="showDevice" :header="editingDevice ? '编辑设备' : '新增设备'" style="width:400px">
       <div class="form-group">
         <label>编号（2位）</label>
-        <InputText v-model="deviceForm.code" class="w-full" maxlength="2" placeholder="01" />
+        <InputText v-model="deviceForm.code" class="w-full" maxlength="2" placeholder="不填自动递增" />
       </div>
       <div class="form-group">
         <label>设备名称</label>
-        <InputText v-model="deviceForm.name" class="w-full" />
+        <InputText v-model="deviceForm.name" class="w-full" placeholder="不填自动生成" />
+      </div>
+      <div class="form-group">
+        <label>联系方式</label>
+        <InputText v-model="deviceForm.contact" class="w-full" placeholder="手机号/微信号" />
       </div>
       <div class="form-group">
         <label>模式</label>
@@ -165,7 +170,7 @@ const branchForm = ref({ code: '', name: '', address: '', todayLocation: '', loc
 const devices = ref<any[]>([])
 const showDevice = ref(false)
 const editingDevice = ref(false)
-const deviceForm = ref({ code: '', name: '', mode: 'kiosk', branchId: '' })
+const deviceForm = ref({ code: '', name: '', contact: '', mode: 'kiosk', branchId: '' })
 
 async function fetchMerchant() {
   const res = await fetch('/api/admin/merchant')
@@ -225,8 +230,8 @@ async function fetchDevices() {
 function openDeviceDialog(device?: any) {
   editingDevice.value = !!device
   deviceForm.value = device
-    ? { code: device.code || '', name: device.name, mode: device.mode, branchId: device.branchId }
-    : { code: '', name: '', mode: 'kiosk', branchId: branches.value[0]?.id || '' }
+    ? { code: device.code || '', name: device.name, contact: device.contact || '', mode: device.mode, branchId: device.branchId }
+    : { code: '', name: '', contact: '', mode: 'kiosk', branchId: branches.value[0]?.id || '' }
   showDevice.value = true
 }
 

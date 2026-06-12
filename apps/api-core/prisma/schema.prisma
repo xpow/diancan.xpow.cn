@@ -55,6 +55,7 @@ model Device {
   code      String   @default("")
   sn        String   @unique @default("")
   name      String   @default("")
+  contact   String   @default("")
   mode      String   @default("kiosk") // kiosk | h5
   status    String   @default("active")
 
