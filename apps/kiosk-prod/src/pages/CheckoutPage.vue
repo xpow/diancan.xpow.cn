@@ -128,6 +128,12 @@
               <span class="promo-saving">-<small class="c-sign">¥</small>{{ p.discount.toFixed(2) }}</span>
             </div>
           </div>
+
+          <div class="total-divider"></div>
+          <div class="total-row">
+            <span class="total-label">合计</span>
+            <span class="total-amount"><small class="c-sign">¥</small>{{ quote?.totals.payableAmount.toFixed(2) || '0.00' }}</span>
+          </div>
         </section>
 
         <!-- Payment Method -->
@@ -863,6 +869,33 @@ onMounted(() => {
 .summary-discount span:last-child {
   color: var(--error);
   font-weight: 600;
+}
+
+.total-divider {
+  border: none;
+  border-top: 1px dashed var(--card-border);
+  margin: var(--spacing-md) 0;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.total-label {
+  font-family: var(--font-display);
+  font-size: var(--text-headline-md);
+  font-weight: 700;
+  color: var(--on-surface);
+}
+
+.total-amount {
+  font-family: var(--font-display);
+  font-size: var(--text-display-lg);
+  font-weight: 800;
+  color: var(--primary-container);
+  line-height: 1;
 }
 
 /* Payment Card */
