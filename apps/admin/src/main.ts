@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import PrimeVue from 'primevue/config'
 import Aura from '@primevue/themes/aura'
+import 'primeicons/primeicons.css'
 import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'

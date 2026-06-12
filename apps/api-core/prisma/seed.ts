@@ -127,19 +127,19 @@ async function main() {
 
   // 菜品
   const dishes = [
-    { id: 'dish-01', categoryId: 'cat-skewer', name: '招牌牛肉串', price: 5, desc: '肥瘦均匀，焦香多汁', tags: ['招牌'], specsPreset: 'bbq' },
-    { id: 'dish-02', categoryId: 'cat-skewer', name: '秘制羊肉串', price: 6, desc: '孜然风味，现烤现卖', tags: ['推荐'], specsPreset: 'bbq' },
-    { id: 'dish-03', categoryId: 'cat-skewer', name: '烤鸡翅', price: 8, desc: '外脆里嫩，鲜香入味', tags: [], specsPreset: 'bbq' },
-    { id: 'dish-04', categoryId: 'cat-skewer', name: '烤排骨', price: 10, desc: '焦香带汁，肉感满足', tags: [], specsPreset: 'bbq' },
-    { id: 'dish-05', categoryId: 'cat-skewer', name: '烤鱿鱼', price: 8, desc: '弹嫩有嚼劲，海鲜控必点', tags: [], specsPreset: 'bbq' },
-    { id: 'dish-06', categoryId: 'cat-veg', name: '烤茄子', price: 6, desc: '蒜香浓郁，软糯入味', tags: [], specsPreset: 'none' },
-    { id: 'dish-07', categoryId: 'cat-veg', name: '烤韭菜', price: 4, desc: '清香脆嫩，解腻搭档', tags: [], specsPreset: 'none' },
-    { id: 'dish-08', categoryId: 'cat-veg', name: '烤金针菇', price: 5, desc: '福利品示例，一单限 1 份', tags: ['福利'], specsPreset: 'none' },
-    { id: 'dish-09', categoryId: 'cat-veg', name: '烤玉米', price: 5, desc: '香甜软糯，口感扎实', tags: [], specsPreset: 'none' },
-    { id: 'dish-10', categoryId: 'cat-drink', name: '冰镇酸梅汤', price: 8, desc: '冰爽解腻，经典搭配', tags: [], specsPreset: 'tea' },
-    { id: 'dish-11', categoryId: 'cat-drink', name: '柠檬茶', price: 6, desc: '清爽回甘，饭后推荐', tags: [], specsPreset: 'tea' },
-    { id: 'dish-12', categoryId: 'cat-drink', name: '矿泉水', price: 3, desc: '常温矿泉水', tags: [], specsPreset: 'none' },
-    { id: 'dish-13', categoryId: 'cat-skewer', name: '新鲜牛肋条（大串）', price: 12, desc: '精选进口高品质牛肋条（可溯源），肉质鲜娕，奶香十足', tags: ['推荐'], specsPreset: 'bbq' },
+    { id: 'dish-01', categoryId: 'cat-skewer', name: '招牌牛肉串', price: 5, desc: '肥瘦均匀，焦香多汁', tags: ['招牌'], specsPreset: 'bbq', sort: 0 },
+    { id: 'dish-02', categoryId: 'cat-skewer', name: '秘制羊肉串', price: 6, desc: '孜然风味，现烤现卖', tags: ['推荐'], specsPreset: 'bbq', sort: 1 },
+    { id: 'dish-03', categoryId: 'cat-skewer', name: '烤鸡翅', price: 8, desc: '外脆里嫩，鲜香入味', tags: [], specsPreset: 'bbq', sort: 2 },
+    { id: 'dish-04', categoryId: 'cat-skewer', name: '烤排骨', price: 10, desc: '焦香带汁，肉感满足', tags: [], specsPreset: 'bbq', sort: 3 },
+    { id: 'dish-05', categoryId: 'cat-skewer', name: '烤鱿鱼', price: 8, desc: '弹嫩有嚼劲，海鲜控必点', tags: [], specsPreset: 'bbq', sort: 4 },
+    { id: 'dish-06', categoryId: 'cat-veg', name: '烤茄子', price: 6, desc: '蒜香浓郁，软糯入味', tags: [], specsPreset: 'none', sort: 5 },
+    { id: 'dish-07', categoryId: 'cat-veg', name: '烤韭菜', price: 4, desc: '清香脆嫩，解腻搭档', tags: [], specsPreset: 'none', sort: 6 },
+    { id: 'dish-08', categoryId: 'cat-veg', name: '烤金针菇', price: 5, desc: '福利品示例，一单限 1 份', tags: ['福利'], specsPreset: 'none', sort: 7 },
+    { id: 'dish-09', categoryId: 'cat-veg', name: '烤玉米', price: 5, desc: '香甜软糯，口感扎实', tags: [], specsPreset: 'none', sort: 8 },
+    { id: 'dish-10', categoryId: 'cat-drink', name: '冰镇酸梅汤', price: 8, desc: '冰爽解腻，经典搭配', tags: [], specsPreset: 'tea', sort: 9 },
+    { id: 'dish-11', categoryId: 'cat-drink', name: '柠檬茶', price: 6, desc: '清爽回甘，饭后推荐', tags: [], specsPreset: 'tea', sort: 10 },
+    { id: 'dish-12', categoryId: 'cat-drink', name: '矿泉水', price: 3, desc: '常温矿泉水', tags: [], specsPreset: 'none', sort: 11 },
+    { id: 'dish-13', categoryId: 'cat-skewer', name: '新鲜牛肋条（大串）', price: 12, desc: '精选进口高品质牛肋条（可溯源），肉质鲜娕，奶香十足', tags: ['推荐'], specsPreset: 'bbq', sort: 12 },
   ]
 
   for (const d of dishes) {

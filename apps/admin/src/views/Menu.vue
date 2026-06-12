@@ -15,6 +15,15 @@
         <Button label="新增菜品" icon="pi pi-plus" @click="openDishDialog()" />
       </div>
       <DataTable :value="dishes" striped-rows>
+        <Column header="排序" style="width:80px">
+          <template #body="{ data, index }">
+            <div class="sort-btns">
+              <Button icon="pi pi-angle-up" severity="info" text size="small" :disabled="index === 0" @click="moveDish(index, -1)" />
+              <Button icon="pi pi-angle-down" severity="info" text size="small" :disabled="index === dishes.length - 1" @click="moveDish(index, 1)" />
+            </div>
+          </template>
+        </Column>
+        <Column field="id" header="ID" style="width:180px" />
         <Column field="name" header="名称" />
         <Column field="categoryName" header="分类" />
         <Column field="price" header="价格">
@@ -30,10 +39,10 @@
             <Tag :value="data.status === 'active' ? '上架' : '下架'" :severity="data.status === 'active' ? 'success' : 'danger'" />
           </template>
         </Column>
-        <Column header="操作" style="width:120px">
+        <Column header="操作" style="width:160px">
           <template #body="{ data }">
-            <Button icon="pi pi-pencil" severity="secondary" text @click="openDishDialog(data)" />
-            <Button icon="pi pi-trash" severity="danger" text @click="deleteDish(data.id)" />
+            <Button icon="pi pi-pencil" label="编辑" severity="info" text size="small" @click="openDishDialog(data)" />
+            <Button icon="pi pi-trash" label="删除" severity="danger" size="small" @click="deleteDish(data.id)" />
           </template>
         </Column>
       </DataTable>
@@ -48,10 +57,10 @@
       <DataTable :value="categories" striped-rows>
         <Column field="name" header="名称" />
         <Column field="sort" header="排序" />
-        <Column header="操作" style="width:120px">
+        <Column header="操作" style="width:160px">
           <template #body="{ data }">
-            <Button icon="pi pi-pencil" severity="secondary" text @click="openCategoryDialog(data)" />
-            <Button icon="pi pi-trash" severity="danger" text @click="deleteCategory(data.id)" />
+            <Button icon="pi pi-pencil" label="编辑" severity="info" text size="small" @click="openCategoryDialog(data)" />
+            <Button icon="pi pi-trash" label="删除" severity="danger" size="small" @click="deleteCategory(data.id)" />
           </template>
         </Column>
       </DataTable>
@@ -249,6 +258,19 @@ async function fetchDishes() {
   dishes.value = await res.json()
 }
 
+function moveDish(index: number, dir: -1 | 1) {
+  const arr = dishes.value
+  const target = index + dir
+  if (target < 0 || target >= arr.length) return
+  ;[arr[index], arr[target]] = [arr[target], arr[index]]
+  const ids = arr.map((d: any) => d.id)
+  fetch('/api/admin/dishes/reorder', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids }),
+  })
+}
+
 async function fetchCategories() {
   const res = await fetch('/api/admin/categories')
   categories.value = await res.json()
@@ -272,4 +294,5 @@ onMounted(() => {
 .form-row { display: flex; gap: 12px; }
 .flex-1 { flex: 1; }
 .w-full { width: 100%; }
+.sort-btns { display: flex; gap: 2px; }
 </style>

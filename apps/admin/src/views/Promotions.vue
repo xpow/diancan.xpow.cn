@@ -24,8 +24,8 @@
       </Column>
       <Column header="操作" style="width:160px">
         <template #body="{ data }">
-          <Button icon="pi pi-pencil" severity="secondary" text @click="openEdit(data)" />
-          <Button icon="pi pi-trash" severity="danger" text @click="remove(data)" />
+          <Button icon="pi pi-pencil" label="编辑" severity="info" text size="small" @click="openEdit(data)" />
+          <Button icon="pi pi-trash" label="删除" severity="danger" size="small" @click="remove(data)" />
         </template>
       </Column>
     </DataTable>

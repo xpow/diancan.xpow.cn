@@ -85,6 +85,7 @@ app.get('/api/catalog/menu', async (_req, res) => {
 
   const dishes = await prisma.dish.findMany({
     where: { merchantId: merchant.id, status: 'active' },
+    orderBy: [{ sort: 'asc' }, { createdAt: 'desc' }],
   })
 
   const activePromotions = await prisma.promotion.findMany({
@@ -94,7 +95,7 @@ app.get('/api/catalog/menu', async (_req, res) => {
   const promoDishMap = new Map<string, { promoPrice: number; type: string; name: string }>()
   for (const promo of activePromotions) {
     for (const pi of promo.items) {
-      if (promo.type === 'time_discount' && pi.promoPrice) {
+      if ((promo.type === 'time_discount' || promo.type === 'welfare_item') && pi.promoPrice) {
         promoDishMap.set(pi.dishId, { promoPrice: pi.promoPrice, type: promo.type, name: promo.name })
       }
     }

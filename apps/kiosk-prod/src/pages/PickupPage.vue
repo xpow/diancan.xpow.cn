@@ -127,6 +127,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { getDishImage } from '@/utils/dishImages'
 import { getTheme, setTheme } from '@/utils/theme'
 import logoImage from '@/assets/images/pages/logo.png'
 
@@ -182,23 +183,8 @@ function doToggleTheme(): string {
   return getIcon()
 }
 
-const DISH_IMAGES: Record<string, string> = {
-  'dish-01': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&q=80',
-  'dish-02': 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=200&q=80',
-  'dish-03': 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=200&q=80',
-  'dish-04': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=200&q=80',
-  'dish-05': 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=200&q=80',
-  'dish-06': 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=200&q=80',
-  'dish-07': 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=200&q=80',
-  'dish-08': 'https://images.unsplash.com/photo-1506280754576-f6fa8a873550?w=200&q=80',
-  'dish-09': 'https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=200&q=80',
-  'dish-10': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=200&q=80',
-  'dish-11': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=200&q=80',
-  'dish-12': 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=200&q=80',
-}
-
 function dishImage(item: OrderItem): string {
-  return DISH_IMAGES[item.dishId] || 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&q=80'
+  return getDishImage(item.dishId)
 }
 
 const tabs = [

@@ -56,7 +56,7 @@ router.get('/orders', async (_req, res) => {
   const [items, total] = await Promise.all([
     prisma.order.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+    orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
       skip,
       take,
       include: { items: true, promotions: true },
@@ -160,7 +160,7 @@ router.get('/dishes', async (_req, res) => {
   const dishes = await prisma.dish.findMany({
     where: { merchantId: merchant.id },
     include: { category: { select: { id: true, name: true } } },
-    orderBy: { createdAt: 'desc' },
+    orderBy: [{ sort: 'asc' }, { createdAt: 'desc' }],
   })
 
   res.json(
@@ -175,6 +175,7 @@ router.get('/dishes', async (_req, res) => {
       categoryId: d.categoryId,
       categoryName: d.category.name,
       status: d.status,
+      sort: d.sort,
       createdAt: d.createdAt.toISOString(),
     })),
   )
@@ -206,6 +207,17 @@ router.post('/dishes', async (req, res) => {
   })
 
   res.status(201).json({ id: dish.id, name: dish.name })
+})
+
+// 批量排序（必须在 /dishes/:id 之前）
+router.put('/dishes/reorder', async (req, res) => {
+  const { ids } = req.body ?? {}
+  if (!Array.isArray(ids)) return res.status(400).json({ message: 'ids 必填' })
+
+  for (let i = 0; i < ids.length; i++) {
+    await prisma.dish.update({ where: { id: ids[i] }, data: { sort: i } })
+  }
+  res.json({ success: true })
 })
 
 router.put('/dishes/:id', async (req, res) => {

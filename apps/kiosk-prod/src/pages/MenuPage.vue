@@ -59,7 +59,7 @@
                 <template v-if="dish.promoPrice">
                   <span class="dish-price dish-price-original"><small class="c-sign">¥</small>{{ dish.price.toFixed(2) }}</span>
                   <span class="dish-promo-price"><small class="c-sign">¥</small>{{ dish.promoPrice.toFixed(2) }}</span>
-                  <span class="dish-promo-tag">{{ dish.promotionName || '限时折扣' }}</span>
+                  <span class="dish-promo-tag">{{ dish.promotionName }}</span>
                 </template>
                 <span v-else class="dish-price"><small class="c-sign">¥</small>{{ dish.price.toFixed(2) }}</span>
               </div>
@@ -109,18 +109,27 @@
         </div>
         <div class="cart-items">
           <div v-for="item in cartItems" :key="item.dishId" class="cart-item">
-            <div class="cart-item-info">
-              <p class="cart-item-name">{{ item.name }}</p>
+            <div class="cart-item-left">
+              <div class="cart-item-name-row">
+                <span class="cart-item-name">{{ item.name }}</span>
+                <template v-if="isItemDiscounted(item)">
+                  <span class="cart-original-price"><small class="c-sign">¥</small>{{ getItemOriginalPrice(item).toFixed(2) }}</span>
+                  <span class="cart-final-price"><small class="c-sign">¥</small>{{ getItemFinalPrice(item).toFixed(2) }}</span>
+                </template>
+                <span v-else class="cart-final-price"><small class="c-sign">¥</small>{{ item.price.toFixed(2) }}</span>
+              </div>
               <p class="cart-item-spec" @click="startEditSpice(item)">
                 {{ item.specs }}
                 <span class="spec-edit-icon material-icons">edit</span>
               </p>
-              <p class="cart-item-price" v-html="displayCartItemPrice(item)"></p>
             </div>
-            <div class="cart-item-qty">
-              <button class="qty-btn" @click="updateCartQuantity(item.dishId, -1)"><span class="material-icons">remove</span></button>
-              <span class="qty-num">{{ item.quantity }}</span>
-              <button class="qty-btn qty-btn-plus" @click="updateCartQuantity(item.dishId, 1)"><span class="material-icons">add</span></button>
+            <div class="cart-item-right">
+              <div class="cart-item-qty">
+                <button class="qty-btn" @click="updateCartQuantity(item.dishId, -1)"><span class="material-icons">remove</span></button>
+                <span class="qty-num">{{ item.quantity }}</span>
+                <button class="qty-btn qty-btn-plus" @click="updateCartQuantity(item.dishId, 1)"><span class="material-icons">add</span></button>
+              </div>
+              <span v-if="cartItemPromotionLabel(item)" class="cart-promo-tag">{{ cartItemPromotionLabel(item) }}</span>
             </div>
           </div>
         </div>
@@ -138,17 +147,13 @@
           <div v-for="hint in cartQuote.hints" :key="hint" class="promo-hint">
             <span class="material-icons">lightbulb</span>
             <span v-html="highlightAmount(hint)"></span>
+            <button class="continue-order-btn" @click="showCart = false">继续点餐</button>
           </div>
           <div v-if="cartQuote.totals.discountAmount > 0" class="promo-summary">
             <span>已优惠</span>
             <span class="promo-summary-amount">- <small class="c-sign">¥</small>{{ cartQuote.totals.discountAmount.toFixed(2) }}</span>
           </div>
         </div>
-        <div v-if="quoteLoading" class="cart-quote-loading">
-          <span class="spinner-sm"></span>
-          <span>计算中...</span>
-        </div>
-
         <!-- Spiciness Editor -->
         <van-action-sheet v-model:show="showSpecEditor" title="修改辣度" close-on-popup-close>
           <div class="spec-editor-content">
@@ -167,7 +172,7 @@
             <template v-if="cartQuote && cartQuote.totals.discountAmount > 0">
               <span class="strikethrough-price"><small class="c-sign">¥</small>{{ cartQuote.totals.originalAmount.toFixed(2) }}</span>
             </template>
-            <span class="cart-total-price"><small class="c-sign">¥</small>{{ cartTotal.toFixed(2) }}</span>
+            <span class="cart-total-price">&nbsp;<small class="c-sign">¥</small>{{ cartTotal.toFixed(2) }}</span>
           </span>
           <button class="checkout-btn" @click="goCheckout">确认下单</button>
         </div>
@@ -190,6 +195,7 @@ import 'vant/es/toast/style'
 import { SPECS_PRESETS, type SpecGroup, type SpecPreset } from '@diancan/shared'
 import SpecSelector from '@/components/SpecSelector.vue'
 import { readCart, clearCart as clearCartStorage, addToCart as addToCartStorage, saveCart, updateCartQuantity as updateCartQuantityStorage, StoredCartItem } from '@/utils/cart'
+import { getDishImage } from '@/utils/dishImages'
 import { getTheme, setTheme } from '@/utils/theme'
 import logoImage from '@/assets/images/pages/logo.png'
 
@@ -242,29 +248,36 @@ const showCart = ref(false)
 const hasActiveOrder = ref(false)
 const cartItems = ref<StoredCartItem[]>([])
 const cartQuote = ref<QuoteResponse | null>(null)
-const quoteLoading = ref(false)
+let quoteTimer: ReturnType<typeof setTimeout> | undefined
 
 const qtyGroupIndex = 1
 
 watch(showCart, (val) => {
-  if (val) fetchQuote()
+  if (val) debouncedFetchQuote()
 })
+
+function debouncedFetchQuote() {
+  clearTimeout(quoteTimer)
+  quoteTimer = setTimeout(fetchQuote, 300)
+}
 
 function quoteItemForDishId(dishId: string) {
   return cartQuote.value?.itemDetails.find((i) => i.dishId === dishId)
 }
 
-function displayCartItemPrice(item: StoredCartItem) {
+function isItemDiscounted(item: StoredCartItem) {
   const qi = quoteItemForDishId(item.baseDishId)
-  const promo = cartItemPromotionLabel(item)
-  const tag = promo ? `<span class="cart-promo-tag">${promo}</span>` : ''
+  return qi ? qi.finalUnitPrice !== qi.unitPrice : !!item.promoPrice
+}
 
-  if (qi && qi.finalUnitPrice !== item.price) {
-    const orig = (item.price * item.quantity).toFixed(2)
-    const final = (qi.finalUnitPrice * item.quantity).toFixed(2)
-    return `<span class="strikethrough-price"><small class="c-sign">¥</small>${orig}</span> <small class="c-sign">¥</small>${final} ${tag}`
-  }
-  return `<small class="c-sign">¥</small>${(item.price * item.quantity).toFixed(2)} ${tag}`
+function getItemOriginalPrice(item: StoredCartItem) {
+  const qi = quoteItemForDishId(item.baseDishId)
+  return qi ? qi.unitPrice : (item.originalPrice ?? item.price)
+}
+
+function getItemFinalPrice(item: StoredCartItem) {
+  const qi = quoteItemForDishId(item.baseDishId)
+  return qi ? qi.finalUnitPrice : item.price
 }
 
 function cartItemPromotionLabel(item: StoredCartItem) {
@@ -282,7 +295,6 @@ async function fetchQuote() {
   const items = readCart()
   if (!items.length) { cartQuote.value = null; return }
 
-  quoteLoading.value = true
   try {
     const res = await fetch('/api/cart/quote', {
       method: 'POST',
@@ -299,8 +311,6 @@ async function fetchQuote() {
     cartQuote.value = (await res.json()) as QuoteResponse
   } catch {
     cartQuote.value = null
-  } finally {
-    quoteLoading.value = false
   }
 }
 
@@ -415,13 +425,14 @@ function addToCart(dish: Dish) {
 
   hydrateCart()
   showToast({ message: '已加入购物车', icon: 'success' })
+  debouncedFetchQuote()
 }
 
 function updateCartQuantity(dishId: string, delta: number) {
   updateCartQuantityStorage(dishId, delta)
   hydrateCart()
   if (cartItems.value.length === 0) { showCart.value = false; return }
-  if (showCart.value) fetchQuote()
+  debouncedFetchQuote()
 }
 
 function clearCart() {
@@ -436,20 +447,6 @@ function goCheckout() {
   router.push('/checkout')
 }
 
-const dishImages: Record<string, string> = {
-  'dish-01': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&q=80',
-  'dish-02': 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=400&q=80',
-  'dish-03': 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=400&q=80',
-  'dish-04': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&q=80',
-  'dish-05': 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400&q=80',
-  'dish-06': 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400&q=80',
-  'dish-07': 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400&q=80',
-  'dish-08': 'https://images.unsplash.com/photo-1506280754576-f6fa8a873550?w=400&q=80',
-  'dish-09': 'https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=400&q=80',
-  'dish-10': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=400&q=80',
-  'dish-11': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=400&q=80',
-  'dish-12': 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=400&q=80',
-}
 
 async function loadData() {
   loading.value = true; errorMessage.value = ''
@@ -478,7 +475,7 @@ async function loadData() {
         name: d.name,
         price: d.price,
         desc: d.desc,
-        image: d.image || dishImages[d.id] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80',
+        image: d.image || getDishImage(d.id),
         tags: d.tags,
         specsPreset: d.specsPreset,
         specGroups: specResult?.groups,
@@ -574,12 +571,15 @@ onMounted(() => {
 .clear-btn { display: flex; align-items: center; gap: var(--spacing-xs); border: none; background: transparent; color: var(--secondary); font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; cursor: pointer; padding: var(--spacing-xs) var(--spacing-sm); border-radius: var(--radius-md); }
 .clear-btn:active { background: var(--surface-container-high); }
 .cart-items { display: flex; flex-direction: column; gap: var(--spacing-sm); }
-.cart-item { display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--surface-variant); }
-.cart-item-info { flex: 1; }
-.cart-item-name { margin: 0; font-family: var(--font-display); font-size: var(--text-body-lg); font-weight: 600; }
+.cart-item { display: flex; justify-content: space-between; align-items: flex-start; padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--surface-variant); gap: var(--spacing-sm); }
+.cart-item-left { flex: 1; min-width: 0; }
+.cart-item-name-row { display: flex; align-items: center; gap: var(--spacing-xs); flex-wrap: wrap; }
+.cart-item-name { font-family: var(--font-display); font-size: var(--text-body-lg); font-weight: 600; }
+.cart-original-price { text-decoration: line-through; color: var(--secondary); font-size: 11px; font-weight: 400; }
+.cart-final-price { font-size: var(--text-body-md); font-weight: 700; color: var(--primary-container); }
 .cart-item-spec { margin: var(--spacing-xs) 0 0; font-size: var(--text-label-sm); color: var(--secondary); display: flex; align-items: center; gap: 4px; cursor: pointer; }
 .spec-edit-icon { font-size: 14px !important; opacity: 0.5; }
-.cart-item-price { margin: var(--spacing-xs) 0 0; font-size: var(--text-body-md); font-weight: 700; color: var(--primary-container); display: flex; align-items: center; gap: 6px; }
+.cart-item-right { display: flex; flex-direction: column; align-items: flex-end; gap: var(--spacing-xs); flex-shrink: 0; }
 .cart-promo-tag { display: inline-block; padding: 1px 8px; border-radius: 4px; background: var(--primary-container); color: var(--on-primary); font-size: 11px; font-weight: 700; }
 .cart-item-qty { display: flex; align-items: center; gap: var(--spacing-sm); }
 .qty-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--outline-variant); background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--on-surface-variant); }
@@ -602,13 +602,13 @@ onMounted(() => {
 .promo-desc { font-size: 11px; color: var(--secondary); }
 .promo-saving { font-weight: 700; color: var(--error); flex-shrink: 0; }
 .promo-hint { display: flex; align-items: center; gap: var(--spacing-sm); font-size: 11px; color: var(--secondary); }
-.promo-hint .material-icons { font-size: 14px !important; color: var(--primary-container); }
+.promo-hint .material-icons { font-size: 14px !important; color: var(--primary-container); flex-shrink: 0; }
 .promo-hint .hl-amount { color: var(--primary-container); font-weight: 800; }
 .promo-hint .hl-promo { color: var(--primary-container); font-weight: 700; }
+.promo-hint .continue-order-btn { flex-shrink: 0; padding: 2px 12px; border: 1px dashed var(--primary-container); border-radius: var(--radius-full); background: transparent; color: var(--primary-container); font-family: var(--font-display); font-size: 11px; font-weight: 600; cursor: pointer; }
+.promo-hint .continue-order-btn:active { background: var(--surface-container-high); }
 .promo-summary { display: flex; justify-content: space-between; align-items: center; padding-top: var(--spacing-sm); border-top: 1px dashed var(--outline-variant); font-size: var(--text-label-sm); font-weight: 600; }
 .promo-summary-amount { color: var(--error); font-weight: 700; }
-.cart-quote-loading { display: flex; align-items: center; justify-content: center; gap: var(--spacing-sm); padding: var(--spacing-sm); font-size: var(--text-label-sm); color: var(--secondary); }
-.spinner-sm { width: 16px; height: 16px; border: 2px solid var(--surface-container); border-top-color: var(--primary-container); border-radius: 50%; animation: spin 1s linear infinite; }
 .strikethrough-price { text-decoration: line-through; color: var(--secondary); font-weight: 400; font-size: var(--text-label-sm); }
 .c-sign { font-size: 0.85em; }
 

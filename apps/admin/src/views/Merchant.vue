@@ -47,10 +47,10 @@
           <Tag :value="data.status === 'active' ? '营业中' : '已关闭'" :severity="data.status === 'active' ? 'success' : 'danger'" />
         </template>
       </Column>
-      <Column header="操作" style="width:120px">
+      <Column header="操作" style="width:160px">
         <template #body="{ data }">
-          <Button icon="pi pi-pencil" severity="secondary" text @click="openBranchDialog(data)" />
-          <Button icon="pi pi-trash" severity="danger" text @click="deleteBranch(data.id)" />
+          <Button icon="pi pi-pencil" label="编辑" severity="info" text size="small" @click="openBranchDialog(data)" />
+          <Button icon="pi pi-trash" label="删除" severity="danger" size="small" @click="deleteBranch(data.id)" />
         </template>
       </Column>
     </DataTable>
@@ -109,12 +109,12 @@
           <Tag :value="data.status === 'active' ? '在线' : '离线'" :severity="data.status === 'active' ? 'success' : 'danger'" />
         </template>
       </Column>
-      <Column header="操作" style="width:200px">
+      <Column header="操作" style="width:280px">
         <template #body="{ data }">
-          <Button v-if="data.sn" icon="pi pi-copy" severity="info" text @click="copySN(data.sn)" />
-          <Button icon="pi pi-refresh" severity="secondary" text @click="regenerateSN(data.id)" />
-          <Button icon="pi pi-pencil" severity="secondary" text @click="openDeviceDialog(data)" />
-          <Button icon="pi pi-trash" severity="danger" text @click="deleteDevice(data.id)" />
+          <Button v-if="data.sn" icon="pi pi-copy" label="复制" severity="info" text size="small" @click="copySN(data.sn)" />
+          <Button icon="pi pi-refresh" label="重置" severity="info" text size="small" @click="regenerateSN(data.id)" />
+          <Button icon="pi pi-pencil" label="编辑" severity="info" text size="small" @click="openDeviceDialog(data)" />
+          <Button icon="pi pi-trash" label="删除" severity="danger" size="small" @click="deleteDevice(data.id)" />
         </template>
       </Column>
     </DataTable>

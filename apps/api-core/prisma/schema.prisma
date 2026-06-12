@@ -121,6 +121,7 @@ model Dish {
   tags        String   @default("[]") // JSON array
   specsPreset String   @default("none") // none | bbq | tea | hotpot | dessert
   status      String   @default("active")
+  sort        Int      @default(0)
 
   merchant   Merchant       @relation(fields: [merchantId], references: [id])
   category   Category       @relation(fields: [categoryId], references: [id])

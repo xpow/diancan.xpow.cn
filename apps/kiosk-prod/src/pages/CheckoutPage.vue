@@ -35,6 +35,7 @@
       <section v-if="!cartItems.length" class="empty-state">
         <span class="material-icons">shopping_cart_off</span>
         <p>购物车为空，请先返回菜单页添加菜品。</p>
+        <p v-if="errorMessage" class="page-error">{{ errorMessage }}</p>
         <router-link to="/menu" class="back-link">
           <span class="material-icons">arrow_back</span>
           <span>返回菜单</span>
@@ -116,9 +117,20 @@
               <span>-<small class="c-sign">¥</small>{{ quote.totals.discountAmount.toFixed(2) }}</span>
             </div>
           </div>
+
+          <div v-if="quote?.appliedPromotions?.length" class="promo-card">
+            <div v-for="p in quote.appliedPromotions" :key="p.id" class="promo-row">
+              <span class="material-icons promo-icon">sell</span>
+              <div class="promo-info">
+                <span class="promo-name">{{ p.name }}</span>
+                <!-- <span class="promo-desc">{{ p.description }}</span> -->
+              </div>
+              <span class="promo-saving">-<small class="c-sign">¥</small>{{ p.discount.toFixed(2) }}</span>
+            </div>
+          </div>
         </section>
 
-        <!-- Payment Row -->
+        <!-- Payment Method -->
         <div class="payment-row">
           <section v-if="!createdOrder" class="payment-card continue-ordering">
             <router-link to="/menu" class="payment-item back-menu-link">
@@ -128,13 +140,53 @@
             </router-link>
           </section>
 
-          <section class="payment-card payment-alipay">
+          <section class="payment-card" :class="{ 'payment-active': paymentMethod === 'wechat' }" @click="paymentMethod = 'wechat'">
+            <div class="payment-item">
+              <span class="payment-icon-wechat">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M8.5 11a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm7 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zM12 2C6.48 2 2 5.48 2 9.5c0 2.18 1.08 4.17 2.9 5.7L4 19l3.9-2.03c1.3.38 2.69.53 4.1.53 5.52 0 10-3.48 10-7.5S17.52 2 12 2z"/></svg>
+              </span>
+              <span class="payment-name">微信支付</span>
+            </div>
+          </section>
+
+          <section class="payment-card" :class="{ 'payment-active': paymentMethod === 'alipay' }" @click="paymentMethod = 'alipay'">
             <div class="payment-item">
               <span class="material-icons payment-icon">account_balance_wallet</span>
-              <span class="payment-name">支付宝（默认）</span>
+              <span class="payment-name">支付宝</span>
             </div>
           </section>
         </div>
+
+        <!-- Payment Popup -->
+        <Teleport to="body">
+          <div v-if="showPaymentPopup" class="payment-overlay" @click.self="showPaymentPopup = false">
+            <div class="payment-popup">
+              <div class="popup-header">
+                <span class="popup-icon">
+                  <span class="material-icons">qr_code_scanner</span>
+                </span>
+                <h3>请扫码支付</h3>
+                <p class="popup-amount"><small class="c-sign">¥</small>{{ quote?.totals.payableAmount.toFixed(2) || '0.00' }}</p>
+              </div>
+              <div class="popup-qr">
+                <img :src="paymentQrImage" :alt="paymentMethod === 'wechat' ? '微信支付' : '支付宝支付'" class="qr-img" />
+              </div>
+              <p class="popup-hint">打开{{ paymentMethod === 'wechat' ? '微信' : '支付宝' }}扫一扫付款</p>
+              <p v-if="orderError" class="popup-error">{{ orderError }}</p>
+              <button class="popup-paid-btn" :disabled="submitting" @click="submitOrder">
+                <template v-if="submitting">
+                  <span class="spinner"></span>
+                  <span>处理中...</span>
+                </template>
+                <template v-else>
+                  <span class="material-icons">check_circle</span>
+                  <span>我已支付</span>
+                </template>
+              </button>
+              <button class="popup-cancel-btn" @click="showPaymentPopup = false">取消支付</button>
+            </div>
+          </div>
+        </Teleport>
       </template>
     </div>
 
@@ -150,15 +202,9 @@
       <button
         class="action-btn"
         :disabled="submitting || !quote"
-        @click="submitOrder"
+        @click="showPaymentPopup = true"
       >
-        <template v-if="submitting">
-          <span class="spinner"></span>
-          <span>提交中...</span>
-        </template>
-        <template v-else>
-          确认并支付
-        </template>
+        确认支付
       </button>
     </footer>
   </main>
@@ -168,6 +214,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { clearCart, readCart } from '@/utils/cart'
+import { getDishImage } from '@/utils/dishImages'
 import { getTheme, setTheme } from '@/utils/theme'
 import logoImage from '@/assets/images/pages/logo.png'
 
@@ -221,6 +268,7 @@ function doToggleTheme(): string {
 }
 const loading = ref(false)
 const submitting = ref(false)
+const orderError = ref('')
 const errorMessage = ref('')
 const quote = ref<QuoteResponse | null>(null)
 const createdOrder = ref<CreatedOrder | null>(null)
@@ -232,22 +280,20 @@ const displayTitle = computed(() => {
   return m && b ? `${m}（${b}）` : m || b || '典韦烤串'
 })
 const orderType = ref<'dine-in' | 'takeaway'>('dine-in')
+const paymentMethod = ref<'wechat' | 'alipay'>('wechat')
+const showPaymentPopup = ref(false)
+
+const qrModules = import.meta.glob('@/assets/images/payments/*.{jpg,png,webp}', { eager: true, query: '?url', import: 'default' })
+const qrMap: Record<string, string> = {}
+for (const [path, url] of Object.entries(qrModules)) {
+  const match = path.match(/([^/\\]+)\.(jpg|png|webp)$/)
+  if (match) qrMap[match[1]] = url as string
+}
+const paymentQrImage = computed(() => qrMap[paymentMethod.value] || '')
 
 function getItemImage(dishId: string): string {
   const cartItem = cartItems.value.find((i) => i.baseDishId === dishId)
-  if (cartItem?.image) return cartItem.image
-  const fallback: Record<string, string> = {
-    'dish-01': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&q=80',
-    'dish-02': 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=200&q=80',
-    'dish-03': 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=200&q=80',
-    'dish-04': 'https://images.unsplash.com/photo-1544025162-d76694265947?w=200&q=80',
-    'dish-05': 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=200&q=80',
-    'dish-07': 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=200&q=80',
-    'dish-08': 'https://images.unsplash.com/photo-1506280754576-f6fa8a873550?w=200&q=80',
-    'dish-11': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=200&q=80',
-    'dish-12': 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=200&q=80',
-  }
-  return fallback[dishId] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&q=80'
+  return cartItem?.image || getDishImage(dishId)
 }
 
 function goHome() {
@@ -330,7 +376,7 @@ async function submitOrder() {
   if (!quote.value || !cartItems.value.length || submitting.value) return
 
   submitting.value = true
-  errorMessage.value = ''
+  orderError.value = ''
 
   try {
     // Verify device SN
@@ -380,12 +426,16 @@ async function submitOrder() {
     }
 
     createdOrder.value = await orderResponse.json() as CreatedOrder
+    showPaymentPopup.value = false
     clearCart()
     cartItems.value = []
-    // 跳转到订单页
-    router.push('/orders')
+    try {
+      await router.push('/orders')
+    } catch {
+      window.location.hash = '#/orders'
+    }
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : '下单失败'
+    orderError.value = error instanceof Error ? error.message : '下单失败'
   } finally {
     submitting.value = false
   }
@@ -793,6 +843,14 @@ onMounted(() => {
   border-top: 1px solid var(--card-border);
 }
 
+.promo-card { padding: var(--spacing-md); margin-bottom: var(--spacing-lg); border-radius: var(--radius-xl); background: var(--surface-container); }
+.promo-card .promo-row { display: flex; align-items: center; gap: var(--spacing-sm); margin-bottom: var(--spacing-sm); font-size: var(--text-label-sm); }
+.promo-card .promo-icon { font-size: 16px !important; color: var(--primary-container); flex-shrink: 0; }
+.promo-card .promo-info { flex: 1; display: flex; flex-direction: column; }
+.promo-card .promo-name { font-weight: 600; color: var(--on-surface); }
+.promo-card .promo-desc { font-size: 11px; color: var(--secondary); }
+.promo-card .promo-saving { font-weight: 700; color: var(--error); flex-shrink: 0; }
+
 .summary-row {
   display: flex;
   justify-content: space-between;
@@ -961,11 +1019,6 @@ onMounted(() => {
   color: rgba(255, 255, 255, 0.6) !important;
 }
 
-/* Alipay */
-.payment-alipay .payment-arrow {
-  display: none;
-}
-
 .back-menu-link {
   text-decoration: none;
   color: inherit;
@@ -992,5 +1045,51 @@ onMounted(() => {
     max-width: 100%;
   }
 }
+/* Payment method toggle */
+.payment-card { cursor: pointer; transition: all var(--transition-fast); }
+.payment-card.payment-active { outline: 2px solid var(--primary-container); outline-offset: -2px; }
+.payment-icon-wechat { width: 24px; height: 24px; color: var(--primary-container); display: flex; align-items: center; }
+
+/* Payment Popup */
+.payment-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+}
+.payment-popup {
+  background: var(--surface); border-radius: var(--radius-xl);
+  padding: var(--spacing-xl); width: 360px; max-width: 90vw;
+  text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.popup-header { margin-bottom: var(--spacing-lg); }
+.popup-icon .material-icons { font-size: 48px; color: var(--primary-container); }
+.popup-header h3 { margin: var(--spacing-sm) 0 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; }
+.popup-amount { font-family: var(--font-display); font-size: var(--text-display-lg); font-weight: 800; color: var(--primary-container); margin: var(--spacing-sm) 0 0; }
+.popup-qr {
+  width: 260px; height: 260px; margin: 0 auto var(--spacing-lg);
+  background: var(--surface-container-low); border-radius: var(--radius-lg);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.qr-img { width: 100%; height: 100%; object-fit: contain; }
+.popup-hint { font-size: var(--text-body-sm); color: var(--secondary); margin-bottom: var(--spacing-lg); }
+.popup-error { color: var(--error); font-size: var(--text-body-sm); margin-bottom: var(--spacing-md); padding: 8px; background: var(--error-container); border-radius: var(--radius-md); }
+.popup-paid-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm);
+  width: 100%; padding: var(--spacing-md);
+  border: none; border-radius: var(--radius-full);
+  background: var(--primary-container); color: var(--on-primary);
+  font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700;
+  cursor: pointer; transition: transform var(--transition-fast);
+}
+.popup-paid-btn:active { transform: scale(0.98); }
+.popup-paid-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.popup-cancel-btn {
+  display: block; margin: var(--spacing-md) auto 0;
+  background: none; border: none;
+  font-family: var(--font-display); font-size: var(--text-body-sm); color: var(--secondary);
+  cursor: pointer; text-decoration: underline;
+}
+
 .c-sign { font-size: 0.65em; }
 </style>

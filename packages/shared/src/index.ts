@@ -72,7 +72,10 @@ export const SPECS_PRESETS: Record<SpecPreset, SpecGroup[] | null> = {
       type: 'single',
       options: [
         { label: 'x2' },
+        { label: 'x3' },
         { label: 'x5' },
+        { label: 'x6' },
+        { label: 'x10' },
       ],
     },
   ],
