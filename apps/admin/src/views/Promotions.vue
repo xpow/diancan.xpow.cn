@@ -37,7 +37,7 @@
       </div>
       <div class="form-group">
         <label>活动类型</label>
-        <SelectButton v-model="form.type" :options="typeOptions" optionLabel="label" optionValue="value" class="w-full" />
+        <SelectButton v-model="form.type" :options="typeOptions" optionLabel="label" optionValue="value" class="w-full" :disabled="editing" />
       </div>
 
       <!-- 满减配置 -->
