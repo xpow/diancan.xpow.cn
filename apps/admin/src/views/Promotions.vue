@@ -31,7 +31,6 @@
     </DataTable>
 
     <Dialog v-model:visible="showDialog" :header="editing ? '编辑活动' : '新增活动'" style="width:540px">
-      <div class="promo-form-body">
       <div class="form-group">
         <label>活动名称</label>
         <InputText v-model="form.name" class="w-full" placeholder="例：满50减5" />
@@ -64,20 +63,20 @@
           </div>
           <div class="form-group">
             <label>选择菜品</label>
-            <Select v-model="item.dishId" :options="dishes" optionLabel="name" optionValue="id" placeholder="搜索并选择菜品" filter class="w-full" />
+            <Select v-model="item.dishId" :options="dishes" optionLabel="name" optionValue="id" placeholder="搜索并选择菜品" filter />
           </div>
           <div class="form-group">
             <label>福利价 (¥)</label>
-            <InputNumber v-model="item.promoPrice" :min="0" class="w-full" placeholder="0.1" />
+            <InputNumber v-model="item.promoPrice" :min="0" placeholder="0.1" />
           </div>
           <div class="form-row">
             <div class="form-group flex-1">
               <label>限购类型</label>
-              <Select v-model="item.limitType" :options="limitOptions" optionLabel="label" optionValue="value" class="w-full" />
+              <Select v-model="item.limitType" :options="limitOptions" optionLabel="label" optionValue="value" />
             </div>
             <div class="form-group" style="width:80px">
               <label>限购数量</label>
-              <InputNumber v-model="item.maxQty" :min="1" class="w-full" placeholder="1" />
+              <InputNumber v-model="item.maxQty" :min="1" placeholder="1" />
             </div>
           </div>
         </div>
@@ -156,7 +155,6 @@
           <label>可与其他活动叠加</label>
           <InputSwitch v-model="form.stackable" />
         </div>
-      </div>
       </div>
 
       <template #footer>
@@ -487,7 +485,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.promo-form-body { max-width: 360px; }
 .promo-page { max-width: none; }
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .page-title { margin: 0; font-size: 22px; font-weight: 700; }
