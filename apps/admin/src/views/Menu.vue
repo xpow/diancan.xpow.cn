@@ -262,6 +262,7 @@ async function updateSort(dish: any) {
     body: JSON.stringify({ sort: dish.sort }),
   })
   if (!res.ok) console.error('sort update failed', await res.text())
+  else fetchDishes()
 }
 
 async function fetchCategories() {
