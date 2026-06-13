@@ -262,21 +262,23 @@ function themeTooltip(): string {
 }
 
 async function loadBootstrap() {
+  // 先检查本地缓存的设备码，跳过认证弹窗
+  const savedDeviceSN = localStorage.getItem('kiosk-device-sn')
+  if (savedDeviceSN) {
+    deviceAuthed.value = true
+  }
+
   const response = await fetch('/api/system/bootstrap')
   if (!response.ok) return
   const data = await response.json() as BootstrapResponse
   bootstrap.value = data
 
-  // Device auth via SN
-  const savedDeviceSN = localStorage.getItem('kiosk-device-sn')
-  if (savedDeviceSN) {
-    deviceAuthed.value = true
-    return
+  // 无缓存设备码 → 显示认证弹窗
+  if (!savedDeviceSN) {
+    snInput.value = ''
+    snError.value = ''
+    deviceAuthed.value = false
   }
-  // Show SN login
-  snInput.value = ''
-  snError.value = ''
-  deviceAuthed.value = false
 }
 
 onMounted(() => {
