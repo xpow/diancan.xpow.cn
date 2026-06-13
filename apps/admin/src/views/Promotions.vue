@@ -153,7 +153,7 @@
       <div class="form-group">
         <div class="stackable-row">
           <label>可与其他活动叠加</label>
-          <InputSwitch v-model="form.stackable" />
+          <ToggleSwitch v-model="form.stackable" />
         </div>
       </div>
 
@@ -175,7 +175,7 @@ import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import Select from 'primevue/select'
 import SelectButton from 'primevue/selectbutton'
-import InputSwitch from 'primevue/inputswitch'
+import ToggleSwitch from 'primevue/toggleswitch'
 import Tag from 'primevue/tag'
 
 interface PromoItem {
