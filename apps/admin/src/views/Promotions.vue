@@ -65,16 +65,16 @@
             <label>选择菜品</label>
             <Select v-model="item.dishId" :options="dishes" optionLabel="name" optionValue="id" placeholder="搜索并选择菜品" filter class="w-full" />
           </div>
+          <div class="form-group">
+            <label>福利价 (¥)</label>
+            <InputNumber v-model="item.promoPrice" :min="0" class="w-full" placeholder="0.1" />
+          </div>
           <div class="form-row">
-            <div class="form-group flex-1">
-              <label>福利价 (¥)</label>
-              <InputNumber v-model="item.promoPrice" :min="0" class="w-full" placeholder="0.1" />
-            </div>
             <div class="form-group flex-1">
               <label>限购类型</label>
               <Select v-model="item.limitType" :options="limitOptions" optionLabel="label" optionValue="value" class="w-full" />
             </div>
-            <div class="form-group flex-1">
+            <div class="form-group" style="width:120px">
               <label>限购数量</label>
               <InputNumber v-model="item.maxQty" :min="1" class="w-full" placeholder="1" />
             </div>
