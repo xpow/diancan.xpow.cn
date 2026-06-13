@@ -70,11 +70,11 @@
             <InputNumber v-model="item.promoPrice" :min="0" placeholder="0.1" />
           </div>
           <div class="form-row">
-            <div class="form-group flex-1">
+            <div class="form-group">
               <label>限购类型</label>
               <Select v-model="item.limitType" :options="limitOptions" optionLabel="label" optionValue="value" />
             </div>
-            <div class="form-group" style="width:80px">
+            <div class="form-group">
               <label>限购数量</label>
               <InputNumber v-model="item.maxQty" :min="1" placeholder="1" />
             </div>
