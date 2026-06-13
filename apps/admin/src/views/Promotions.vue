@@ -137,6 +137,12 @@
             <Select v-model="form.rules.discountRate" :options="discountOptions" optionLabel="label" optionValue="value" placeholder="选择折扣" class="w-full" />
           </div>
         </div>
+        <div class="form-row">
+          <div class="form-group" style="width: 200px">
+            <label>有效天数 <span class="text-muted">(留空不限)</span></label>
+            <InputNumber v-model="form.rules.durationDays" :min="1" :max="365" class="w-full" placeholder="不限" />
+          </div>
+        </div>
       </template>
 
       <div class="form-group">
@@ -334,7 +340,10 @@ function autoGenerateName(): string {
     if (item?.dishId && form.value.rules.discountRate) {
       const dish = dishes.value.find((d) => d.id === item.dishId)
       const label = discountOptions.find((o) => o.value === form.value.rules.discountRate)?.label || `${form.value.rules.discountRate * 100}折`
-      if (dish) return `${dish.name}限时${label}`
+      let text = ''
+      if (dish) text = `${dish.name}限时${label}`
+      if (form.value.rules.durationDays) text += `(${form.value.rules.durationDays}天)`
+      return text || undefined
     }
   }
   return form.value.name
@@ -347,7 +356,7 @@ watch(
       form.value.name = ''
       if (form.value.type === 'welfare_item' || form.value.type === 'time_discount') {
         if (form.value.items.length === 0) {
-          form.value.items.push({ dishId: '', promoPrice: 0, limitType: 'per_order', maxQty: 1 })
+          form.value.items.push({ dishId: '', promoPrice: null, limitType: 'per_order', maxQty: 1 })
         }
       }
     }
@@ -364,8 +373,15 @@ watch(
 )
 
 async function save() {
-  const body = {
+  const body: any = {
     ...form.value,
+  }
+  if (body.type === 'time_discount' && body.rules.durationDays) {
+    body.startDate = new Date().toISOString()
+    body.endDate = new Date(Date.now() + body.rules.durationDays * 24 * 60 * 60 * 1000).toISOString()
+  } else if (body.type === 'time_discount') {
+    body.startDate = null
+    body.endDate = null
   }
   const url = editing.value ? `/api/admin/promotions/${editingId.value}` : '/api/admin/promotions'
   const method = editing.value ? 'PUT' : 'POST'
@@ -441,7 +457,9 @@ function ruleText(p: Promotion): string {
     if (!item) return '-'
     const dish = dishes.value.find((d) => d.id === item.dishId)
     const label = discountOptions.find((o) => o.value === p.rules.discountRate)?.label || `${(p.rules.discountRate || 1) * 100}折`
-    return `${dish?.name || item.dishId} ${label}`
+    let text = `${dish?.name || item.dishId} ${label}`
+    if (p.rules.durationDays) text += ` (${p.rules.durationDays}天)`
+    return text
   }
   return JSON.stringify(p.rules)
 }

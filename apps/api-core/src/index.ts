@@ -95,9 +95,12 @@ app.get('/api/catalog/menu', async (_req, res) => {
   })
   const promoDishMap = new Map<string, { promoPrice: number; type: string; name: string }>()
   for (const promo of activePromotions) {
+    // 已过期的限时折扣跳过
+    if (promo.endDate && new Date(promo.endDate) < new Date()) continue
+    if (promo.startDate && new Date(promo.startDate) > new Date()) continue
+
     for (const pi of promo.items) {
       if (promo.type === 'time_discount' && pi.promoPrice === null) {
-        // 折扣率模式：从 rules.discountRate 计算折后价
         const rules = JSON.parse(promo.rules)
         const rate = rules.discountRate ?? 1
         const origPrice = dishPriceMap.get(pi.dishId) ?? 0
@@ -157,9 +160,12 @@ app.post('/api/cart/quote', async (req, res) => {
     where: { status: 'active' },
     include: { items: true },
   })
+  const now = new Date()
   const welfarePromos = activePromotions.filter((p) => p.type === 'welfare_item')
   const fullReductionPromos = activePromotions.filter((p) => p.type === 'full_reduction')
-  const timeDiscountPromos = activePromotions.filter((p) => p.type === 'time_discount')
+  const timeDiscountPromos = activePromotions.filter(
+    (p) => p.type === 'time_discount' && (!p.endDate || new Date(p.endDate) >= now) && (!p.startDate || new Date(p.startDate) <= now),
+  )
 
   const itemDetails: any[] = []
   const appliedPromotions: any[] = []

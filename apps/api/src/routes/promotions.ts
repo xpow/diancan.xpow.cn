@@ -36,7 +36,7 @@ router.get('/:id', async (req, res) => {
 
 // 新增活动
 router.post('/', async (req, res) => {
-  const { merchantId, name, type, rules, items, status } = req.body
+  const { merchantId, name, type, rules, items, status, startDate, endDate } = req.body
   if (!merchantId || !name || !type) {
     return res.status(400).json({ error: 'merchantId, name, type required' })
   }
@@ -47,6 +47,8 @@ router.post('/', async (req, res) => {
       type,
       rules: JSON.stringify(rules || {}),
       status: status || 'draft',
+      startDate: startDate || null,
+      endDate: endDate || null,
       items: items?.length ? {
         create: items.map((i: any) => ({
           dishId: i.dishId,
@@ -63,7 +65,7 @@ router.post('/', async (req, res) => {
 
 // 更新活动
 router.put('/:id', async (req, res) => {
-  const { name, type, rules, items, status } = req.body
+  const { name, type, rules, items, status, startDate, endDate } = req.body
   // 先删子表再重建
   await prisma.promotionItem.deleteMany({ where: { promotionId: req.params.id } })
   const p = await prisma.promotion.update({
@@ -73,6 +75,8 @@ router.put('/:id', async (req, res) => {
       type,
       rules: JSON.stringify(rules || {}),
       status,
+      startDate: startDate || null,
+      endDate: endDate || null,
       items: items?.length ? {
         create: items.map((i: any) => ({
           dishId: i.dishId,
