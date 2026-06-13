@@ -134,7 +134,7 @@
           </div>
           <div class="form-group flex-1">
             <label>折扣</label>
-            <SelectButton v-model="form.rules.discountRate" :options="discountOptions" optionLabel="label" optionValue="value" class="w-full" />
+            <Select v-model="form.rules.discountRate" :options="discountOptions" optionLabel="label" optionValue="value" placeholder="选择折扣" class="w-full" />
           </div>
         </div>
       </template>
