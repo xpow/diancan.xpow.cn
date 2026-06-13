@@ -17,7 +17,7 @@
           <Tag :value="statusLabel(data.status)" :severity="statusSeverity(data.status)" />
         </template>
       </Column>
-      <Column field="rules" header="规则">
+      <Column field="rules" header="规则" style="max-width:300px">
         <template #body="{ data }">
           <span class="rule-text">{{ ruleText(data) }}</span>
         </template>
@@ -425,7 +425,7 @@ onMounted(() => {
 .form-row { display: flex; gap: 12px; }
 .flex-1 { flex: 1; }
 .w-full { width: 100%; }
-.rule-text { font-size: 13px; }
+.rule-text { font-size: 13px; white-space: normal; }
 .promo-item-card { background: #f9f9f9; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
 .promo-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .promo-item-label { font-size: 13px; font-weight: 600; color: #666; }
