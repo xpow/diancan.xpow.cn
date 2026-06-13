@@ -353,74 +353,84 @@ router.get('/promotions', async (_req, res) => {
 })
 
 router.post('/promotions', async (req, res) => {
-  const merchant = await prisma.merchant.findFirst()
-  if (!merchant) return res.status(404).json({ message: 'merchant not found' })
+  try {
+    const merchant = await prisma.merchant.findFirst()
+    if (!merchant) return res.status(404).json({ message: 'merchant not found' })
 
-  const { name, type, rules, items, status, stackable, startDate, endDate } = req.body ?? {}
-  if (!name || !type) return res.status(400).json({ message: 'name, type 必填' })
+    const { name, type, rules, items, status, stackable, startDate, endDate } = req.body ?? {}
+    if (!name || !type) return res.status(400).json({ message: 'name, type 必填' })
 
-  const promo = await prisma.promotion.create({
-    data: {
-      merchantId: merchant.id,
-      name,
-      type,
-      stackable: stackable ?? true,
-      rules: JSON.stringify(rules ?? {}),
-      status: status ?? 'draft',
-      startDate: startDate ? new Date(startDate) : null,
-      endDate: endDate ? new Date(endDate) : null,
-      items: items?.length
-        ? {
-            create: items.map((item: any) => ({
-              dishId: item.dishId,
-              promoPrice: item.promoPrice ?? null,
-              limitType: item.limitType ?? 'per_order',
-              maxQty: item.maxQty ?? 1,
-            })),
-          }
-        : undefined,
-    },
-    include: { items: true },
-  })
+    const promo = await prisma.promotion.create({
+      data: {
+        merchantId: merchant.id,
+        name,
+        type,
+        stackable: stackable ?? true,
+        rules: JSON.stringify(rules ?? {}),
+        status: status ?? 'draft',
+        startDate: startDate ? new Date(startDate) : null,
+        endDate: endDate ? new Date(endDate) : null,
+        items: items?.length
+          ? {
+              create: items.map((item: any) => ({
+                dishId: item.dishId,
+                promoPrice: item.promoPrice ?? null,
+                limitType: item.limitType ?? 'per_order',
+                maxQty: item.maxQty ?? 1,
+              })),
+            }
+          : undefined,
+      },
+      include: { items: true },
+    })
 
-  res.status(201).json({ id: promo.id, name: promo.name })
+    res.status(201).json({ id: promo.id, name: promo.name })
+  } catch (e: any) {
+    console.error('[promotions] create error:', e)
+    res.status(500).json({ message: e.message, stack: e.stack })
+  }
 })
 
 router.put('/promotions/:id', async (req, res) => {
-  const { id } = req.params
-  const { name, type, rules, items, status, stackable, startDate, endDate } = req.body ?? {}
+  try {
+    const { id } = req.params
+    const { name, type, rules, items, status, stackable, startDate, endDate } = req.body ?? {}
 
-  const promo = await prisma.promotion.findUnique({ where: { id } })
-  if (!promo) return res.status(404).json({ message: '活动不存在' })
+    const promo = await prisma.promotion.findUnique({ where: { id } })
+    if (!promo) return res.status(404).json({ message: '活动不存在' })
 
-  const data: any = {}
-  if (name !== undefined) data.name = name
-  if (type !== undefined) data.type = type
-  if (rules !== undefined) data.rules = JSON.stringify(rules)
-  if (status !== undefined) data.status = status
-  if (stackable !== undefined) data.stackable = stackable
-  if (startDate !== undefined) data.startDate = startDate ? new Date(startDate) : null
-  if (endDate !== undefined) data.endDate = endDate ? new Date(endDate) : null
+    const data: any = {}
+    if (name !== undefined) data.name = name
+    if (type !== undefined) data.type = type
+    if (rules !== undefined) data.rules = JSON.stringify(rules)
+    if (status !== undefined) data.status = status
+    if (stackable !== undefined) data.stackable = stackable
+    if (startDate !== undefined) data.startDate = startDate ? new Date(startDate) : null
+    if (endDate !== undefined) data.endDate = endDate ? new Date(endDate) : null
 
-  await prisma.promotion.update({ where: { id }, data })
+    await prisma.promotion.update({ where: { id }, data })
 
-  // 重建关联商品
-  if (items !== undefined) {
-    await prisma.promotionItem.deleteMany({ where: { promotionId: id } })
-    if (items.length > 0) {
-      await prisma.promotionItem.createMany({
-        data: items.map((item: any) => ({
-          promotionId: id,
-          dishId: item.dishId,
-          promoPrice: item.promoPrice ?? null,
-          limitType: item.limitType ?? 'per_order',
-          maxQty: item.maxQty ?? 1,
-        })),
-      })
+    // 重建关联商品
+    if (items !== undefined) {
+      await prisma.promotionItem.deleteMany({ where: { promotionId: id } })
+      if (items.length > 0) {
+        await prisma.promotionItem.createMany({
+          data: items.map((item: any) => ({
+            promotionId: id,
+            dishId: item.dishId,
+            promoPrice: item.promoPrice ?? null,
+            limitType: item.limitType ?? 'per_order',
+            maxQty: item.maxQty ?? 1,
+          })),
+        })
+      }
     }
-  }
 
-  res.json({ success: true })
+    res.json({ success: true })
+  } catch (e: any) {
+    console.error('[promotions] update error:', e)
+    res.status(500).json({ message: e.message, stack: e.stack })
+  }
 })
 
 router.delete('/promotions/:id', async (req, res) => {
