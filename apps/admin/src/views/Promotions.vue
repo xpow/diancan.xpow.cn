@@ -334,7 +334,7 @@ function autoGenerateName(): string {
     if (item?.dishId && form.value.rules.discountRate) {
       const dish = dishes.value.find((d) => d.id === item.dishId)
       const label = discountOptions.find((o) => o.value === form.value.rules.discountRate)?.label || `${form.value.rules.discountRate * 100}折`
-      if (dish) return `${dish.name}${label}`
+      if (dish) return `${dish.name}限时${label}`
     }
   }
   return form.value.name
