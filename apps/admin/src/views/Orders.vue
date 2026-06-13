@@ -90,9 +90,9 @@ interface Order {
 }
 
 const orders = ref<Order[]>([])
-const statusFilter = ref<string>('')
+const statusFilter = ref<string>('all')
 const statusOptions = [
-  { label: '全部', value: '' },
+  { label: '全部', value: 'all' },
   { label: '待处理', value: 'pending' },
   { label: '制作中', value: 'preparing' },
   { label: '可取餐', value: 'ready' },
@@ -113,7 +113,7 @@ async function fetchOrders() {
   const params = new URLSearchParams()
   if (statusFilter.value === 'pending') {
     params.set('status', 'pending')
-  } else if (statusFilter.value) {
+  } else if (statusFilter.value && statusFilter.value !== 'all') {
     params.set('status', statusFilter.value)
   }
   const res = await fetch(`/api/admin/orders?${params}`)
