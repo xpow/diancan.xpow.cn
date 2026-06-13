@@ -241,7 +241,7 @@ router.put('/dishes/:id', async (req, res) => {
     if (newSort !== dish.sort) {
       // 将冲突位置及之后的菜品排序后移
       const toShift = await prisma.dish.findMany({
-        where: { merchantId: dish.merchantId, id: { not: id }, sort: { gte: newSort } },
+        where: { merchantId: dish.merchantId, categoryId: dish.categoryId, id: { not: id }, sort: { gte: newSort } },
         orderBy: { sort: 'asc' },
       })
       await Promise.all(
