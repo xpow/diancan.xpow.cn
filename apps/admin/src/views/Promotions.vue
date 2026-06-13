@@ -31,6 +31,7 @@
     </DataTable>
 
     <Dialog v-model:visible="showDialog" :header="editing ? '编辑活动' : '新增活动'" style="width:540px">
+      <div class="promo-form-body">
       <div class="form-group">
         <label>活动名称</label>
         <InputText v-model="form.name" class="w-full" placeholder="例：满50减5" />
@@ -155,6 +156,7 @@
           <label>可与其他活动叠加</label>
           <InputSwitch v-model="form.stackable" />
         </div>
+      </div>
       </div>
 
       <template #footer>
@@ -485,6 +487,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.promo-form-body { max-width: 360px; }
 .promo-page { max-width: none; }
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .page-title { margin: 0; font-size: 22px; font-weight: 700; }
