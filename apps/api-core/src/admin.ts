@@ -336,6 +336,7 @@ router.get('/promotions', async (_req, res) => {
       name: p.name,
       type: p.type,
       status: p.status,
+      stackable: p.stackable,
       rules: JSON.parse(p.rules),
       items: p.items.map((i) => ({
         id: i.id,
@@ -355,7 +356,7 @@ router.post('/promotions', async (req, res) => {
   const merchant = await prisma.merchant.findFirst()
   if (!merchant) return res.status(404).json({ message: 'merchant not found' })
 
-  const { name, type, rules, items, status, startDate, endDate } = req.body ?? {}
+  const { name, type, rules, items, status, stackable, startDate, endDate } = req.body ?? {}
   if (!name || !type) return res.status(400).json({ message: 'name, type 必填' })
 
   const promo = await prisma.promotion.create({
@@ -363,6 +364,7 @@ router.post('/promotions', async (req, res) => {
       merchantId: merchant.id,
       name,
       type,
+      stackable: stackable ?? false,
       rules: JSON.stringify(rules ?? {}),
       status: status ?? 'draft',
       startDate: startDate ? new Date(startDate) : null,
@@ -386,7 +388,7 @@ router.post('/promotions', async (req, res) => {
 
 router.put('/promotions/:id', async (req, res) => {
   const { id } = req.params
-  const { name, type, rules, items, status, startDate, endDate } = req.body ?? {}
+  const { name, type, rules, items, status, stackable, startDate, endDate } = req.body ?? {}
 
   const promo = await prisma.promotion.findUnique({ where: { id } })
   if (!promo) return res.status(404).json({ message: '活动不存在' })
@@ -396,6 +398,7 @@ router.put('/promotions/:id', async (req, res) => {
   if (type !== undefined) data.type = type
   if (rules !== undefined) data.rules = JSON.stringify(rules)
   if (status !== undefined) data.status = status
+  if (stackable !== undefined) data.stackable = stackable
   if (startDate !== undefined) data.startDate = startDate ? new Date(startDate) : null
   if (endDate !== undefined) data.endDate = endDate ? new Date(endDate) : null
 

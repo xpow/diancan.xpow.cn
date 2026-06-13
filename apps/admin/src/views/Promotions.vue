@@ -80,7 +80,7 @@
             </div>
           </div>
         </div>
-        <Button label="+ 添加福利品" severity="secondary" text @click="addItem" class="p-mt-2" />
+        <Button label="+ 添加福利品" severity="secondary" text @click="addItem" class="p-mt-2" v-if="form.type !== 'welfare_item'" />
       </template>
 
       <!-- 新人福利配置 -->
@@ -142,6 +142,13 @@
         <Select v-model="form.status" :options="statusOptions" optionLabel="label" optionValue="value" class="w-full" />
       </div>
 
+      <div class="form-group">
+        <div class="stackable-row">
+          <label>可与其他活动叠加</label>
+          <InputSwitch v-model="form.stackable" />
+        </div>
+      </div>
+
       <template #footer>
         <Button label="取消" severity="secondary" @click="showDialog = false" />
         <Button label="保存" @click="save" />
@@ -160,6 +167,7 @@ import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import Select from 'primevue/select'
 import SelectButton from 'primevue/selectbutton'
+import InputSwitch from 'primevue/inputswitch'
 import Tag from 'primevue/tag'
 
 interface PromoItem {
@@ -217,12 +225,14 @@ const form = ref<{
   type: string
   rules: Record<string, any>
   items: PromoItem[]
+  stackable: boolean
   status: string
 }>({
   name: '',
   type: 'full_reduction',
   rules: {},
   items: [],
+  stackable: false,
   status: 'draft',
 })
 
@@ -232,6 +242,7 @@ function resetForm() {
     type: 'full_reduction',
     rules: { mode: 'first_order' },
     items: [],
+    stackable: false,
     status: 'draft',
   }
 }
@@ -255,6 +266,7 @@ function openEdit(p: Promotion) {
       limitType: i.limitType || 'per_order',
       maxQty: i.maxQty || 1,
     })),
+    stackable: (p as any).stackable ?? false,
     status: p.status,
   }
   showDialog.value = true
@@ -395,4 +407,6 @@ onMounted(() => {
 .promo-item-card { background: #f9f9f9; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
 .promo-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .promo-item-label { font-size: 13px; font-weight: 600; color: #666; }
+.stackable-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; }
+.stackable-row label { margin: 0; font-size: 14px; font-weight: 600; color: #333; }
 </style>
