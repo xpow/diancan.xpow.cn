@@ -13,7 +13,7 @@
           <Tag :value="data.pickupCode" severity="warn" style="font-size:16px;font-weight:800;padding:4px 12px" />
         </template>
       </Column>
-      <Column field="orderNo" header="订单号" style="width:160px" />
+      <Column field="orderNo" header="订单号" />
       <Column field="createdAt" header="下单时间">
         <template #body="{ data }">
           {{ new Date(data.createdAt).toLocaleString('zh-CN') }}
@@ -145,7 +145,7 @@ onMounted(fetchOrders)
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .page-title { margin: 0; font-size: 20px; font-weight: 700; }
 .header-actions { display: flex; gap: 12px; align-items: center; }
-.order-item-line { display: flex; align-items: center; gap: 4px; padding: 2px 0; }
+.order-item-line { display: flex; align-items: center; gap: 4px; padding: 2px 0; white-space: nowrap; }
 .item-name { font-weight: 600; }
 .item-meta { color: var(--text-color-secondary); font-size: 13px; }
 .item-spec { color: var(--text-color-secondary); font-size: 12px; margin-left: 4px; }

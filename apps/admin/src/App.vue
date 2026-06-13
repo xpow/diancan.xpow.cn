@@ -46,4 +46,9 @@ onMounted(async () => {
 .nav-link { display: block; padding: 10px 12px; color: rgba(255,255,255,0.7); text-decoration: none; border-radius: 8px; font-size: 14px; }
 .nav-link:hover, .nav-link.router-link-active { background: rgba(255,255,255,0.1); color: #fff; }
 .content { flex: 1; padding: 24px; background: #f8f9fa; }
+
+.p-datatable .p-datatable-tbody > tr > td,
+.p-datatable .p-datatable-thead > tr > th {
+  white-space: nowrap;
+}
 </style>

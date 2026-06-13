@@ -291,4 +291,5 @@ onMounted(() => {
 .w-full { width: 100%; }
 .sn-text { font-family: monospace; font-size: 13px; letter-spacing: 1px; }
 .sn-empty { color: #999; }
+.wrap-cell { white-space: normal; }
 </style>

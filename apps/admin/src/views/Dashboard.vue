@@ -35,17 +35,17 @@
       <h2 class="page-title">最新订单</h2>
     </div>
     <DataTable :value="recentOrders" striped-rows>
-      <Column field="pickupCode" header="取餐号" style="width:80px">
+      <Column field="pickupCode" header="取餐号">
         <template #body="{ data }">
           <Tag :value="data.pickupCode" severity="warn" />
         </template>
       </Column>
-      <Column field="status" header="状态" style="width:80px">
+      <Column field="status" header="状态">
         <template #body="{ data }">
           <Tag :value="statusLabel(data.status)" :severity="statusSeverity(data.status)" />
         </template>
       </Column>
-      <Column field="totals.payableAmount" header="金额">
+      <Column field="totals.payableAmount" header="金额" style="text-align:right">
         <template #body="{ data }">
           ¥{{ data.totals.payableAmount?.toFixed(2) }}
         </template>
