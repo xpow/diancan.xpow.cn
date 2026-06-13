@@ -125,6 +125,20 @@
         </div>
       </template>
 
+      <!-- 限时折扣配置 -->
+      <template v-if="form.type === 'time_discount'">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>选择菜品</label>
+            <Select v-model="form.items[0].dishId" :options="dishes" optionLabel="name" optionValue="id" placeholder="搜索并选择菜品" filter showClear class="w-full" />
+          </div>
+          <div class="form-group flex-1">
+            <label>折扣价 (¥)</label>
+            <InputNumber v-model="form.items[0].promoPrice" :min="0" class="w-full" placeholder="0.1" />
+          </div>
+        </div>
+      </template>
+
       <div class="form-group">
         <label>状态</label>
         <Select v-model="form.status" :options="statusOptions" optionLabel="label" optionValue="value" class="w-full" />
@@ -189,6 +203,7 @@ const editingId = ref('')
 const typeOptions = [
   { label: '满减', value: 'full_reduction' },
   { label: '福利品', value: 'welfare_item' },
+  { label: '限时折扣', value: 'time_discount' },
   { label: '新人福利', value: 'new_user' },
   { label: '节假日赠送单品', value: 'holiday_gift' },
 ]
@@ -301,13 +316,27 @@ function autoGenerateName(): string {
     const dish = dishes.value.find((d) => d.id === form.value.rules.giftDishId)
     if (dish && form.value.rules.holiday) return `${form.value.rules.holiday}赠${dish.name}x${form.value.rules.giftQty || 1}`
   }
+  if (form.value.type === 'time_discount') {
+    const item = form.value.items[0]
+    if (item?.dishId) {
+      const dish = dishes.value.find((d) => d.id === item.dishId)
+      if (dish) return `${dish.name}限时¥${item.promoPrice}`
+    }
+  }
   return form.value.name
 }
 
 watch(
   () => form.value.type,
   () => {
-    if (!editing.value) form.value.name = ''
+    if (!editing.value) {
+      form.value.name = ''
+      if (form.value.type === 'welfare_item' || form.value.type === 'time_discount') {
+        if (form.value.items.length === 0) {
+          form.value.items.push({ dishId: '', promoPrice: 0, limitType: 'per_order', maxQty: 1 })
+        }
+      }
+    }
   },
 )
 
@@ -392,6 +421,12 @@ function ruleText(p: Promotion): string {
   if (p.type === 'holiday_gift') {
     const dish = dishes.value.find((d) => d.id === p.rules.giftDishId)
     return `[${p.rules.holiday || '?'}] 赠${dish?.name || '?'} x${p.rules.giftQty || 1}`
+  }
+  if (p.type === 'time_discount') {
+    const item = p.items?.[0]
+    if (!item) return '-'
+    const dish = dishes.value.find((d) => d.id === item.dishId)
+    return `${dish?.name || item.dishId} 限时 ¥${item.promoPrice}`
   }
   return JSON.stringify(p.rules)
 }
