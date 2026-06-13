@@ -417,7 +417,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.promo-page { max-width: 900px; }
+.promo-page { max-width: none; }
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .page-title { margin: 0; font-size: 22px; font-weight: 700; }
 .form-group { margin-bottom: 12px; }
