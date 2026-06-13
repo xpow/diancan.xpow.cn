@@ -236,7 +236,22 @@ router.put('/dishes/:id', async (req, res) => {
   if (tags !== undefined) data.tags = JSON.stringify(tags)
   if (specsPreset !== undefined) data.specsPreset = specsPreset
   if (status !== undefined) data.status = status
-  if (sort !== undefined) data.sort = Number(sort)
+  if (sort !== undefined) {
+    const newSort = Number(sort)
+    if (newSort !== dish.sort) {
+      // 将冲突位置及之后的菜品排序后移
+      const toShift = await prisma.dish.findMany({
+        where: { merchantId: dish.merchantId, id: { not: id }, sort: { gte: newSort } },
+        orderBy: { sort: 'asc' },
+      })
+      await Promise.all(
+        toShift.map((d, i) =>
+          prisma.dish.update({ where: { id: d.id }, data: { sort: newSort + i + 1 } }),
+        ),
+      )
+    }
+    data.sort = newSort
+  }
 
   await prisma.dish.update({ where: { id }, data })
   res.json({ id, success: true })
