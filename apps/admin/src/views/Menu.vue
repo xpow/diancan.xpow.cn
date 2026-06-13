@@ -33,7 +33,7 @@
         </Column>
         <Column field="status" header="状态" style="width:100px">
           <template #body="{ data }">
-            <Button :label="data.status === 'active' ? '下架' : '上架'" :severity="data.status === 'active' ? 'danger' : 'success'" size="small" @click="toggleStatus(data)" />
+            <Button :label="data.status === 'active' ? '下架' : '上架'" :severity="data.status === 'active' ? 'success' : 'danger'" size="small" @click="toggleStatus(data)" />
           </template>
         </Column>
         <Column header="操作" style="width:160px">
