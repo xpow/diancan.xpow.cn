@@ -278,7 +278,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.merchant-page { max-width: 900px; }
+.merchant-page { max-width: none; }
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .page-title { margin: 0; font-size: 22px; font-weight: 700; }
 .card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
