@@ -514,7 +514,7 @@ onMounted(() => {
 .theme-btn:hover { background: var(--surface-container-high); }
 .badge-dot { position: absolute; top: 2px; right: 2px; background: var(--error); color: #fff; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; padding: 0 3px; border: 1.5px solid var(--surface); }
 .page-content { padding: 70px var(--container-margin) var(--spacing-lg); max-width: 600px; margin: 0 auto; }
-.featured-banner { position: relative; width: 100%; aspect-ratio: 2 / 1; border-radius: var(--radius-xl); overflow: hidden; margin-bottom: var(--spacing-lg); }
+.featured-banner { position: relative; width: 100%; aspect-ratio: 4 / 1; border-radius: var(--radius-xl); overflow: hidden; margin-bottom: var(--spacing-lg); }
 .featured-img { width: 100%; height: 100%; object-fit: cover; }
 .featured-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: var(--spacing-md); background: linear-gradient(to top, rgba(0,0,0,0.6), transparent); }
 .featured-tag { width: fit-content; padding: 4px 8px; margin-bottom: var(--spacing-xs); border-radius: var(--radius-full); background: var(--primary-container); color: var(--on-primary); font-family: var(--font-display); font-size: 10px; font-weight: 700; }
