@@ -280,26 +280,53 @@ function removeItem(idx: number) {
   form.value.items.splice(idx, 1)
 }
 
-// 福利品自动生成标题
+// 自动生成标题
+function autoGenerateName(): string {
+  if (editing.value) return form.value.name
+  if (form.value.type === 'full_reduction') {
+    const t = form.value.rules.threshold
+    const d = form.value.rules.discount
+    if (t && d) return `满¥${t}减¥${d}`
+  }
+  if (form.value.type === 'welfare_item') {
+    const item = form.value.items[0]
+    if (item?.dishId) {
+      const dish = dishes.value.find((d) => d.id === item.dishId)
+      if (dish) {
+        const limitMap: Record<string, string> = { per_order: '每单限购', global_promo: '全场限量', daily: '单日限购' }
+        return `${dish.name}福利价¥${item.promoPrice}（${limitMap[item.limitType] || item.limitType} ${item.maxQty}）`
+      }
+    }
+  }
+  if (form.value.type === 'new_user') {
+    if (form.value.rules.mode === 'first_order') {
+      const d = form.value.rules.discount
+      if (d) return `首单直减¥${d}`
+    }
+    if (form.value.rules.mode === 'free_gift') {
+      const dish = dishes.value.find((d) => d.id === form.value.rules.giftDishId)
+      if (dish) return `赠${dish.name}x${form.value.rules.giftQty || 1}`
+    }
+  }
+  if (form.value.type === 'holiday_gift') {
+    const dish = dishes.value.find((d) => d.id === form.value.rules.giftDishId)
+    if (dish && form.value.rules.holiday) return `${form.value.rules.holiday}赠${dish.name}x${form.value.rules.giftQty || 1}`
+  }
+  return form.value.name
+}
+
 watch(
   () => form.value.type,
   () => {
-    if (form.value.type === 'welfare_item' && !editing.value) {
-      form.value.name = ''
-    }
+    if (!editing.value) form.value.name = ''
   },
 )
 
 watch(
-  () => form.value.items.map((i) => ({ dishId: i.dishId, promoPrice: i.promoPrice, limitType: i.limitType, maxQty: i.maxQty })),
+  () => [form.value.type, form.value.rules, form.value.items.map((i: any) => ({ dishId: i.dishId, promoPrice: i.promoPrice, limitType: i.limitType, maxQty: i.maxQty }))],
   () => {
-    if (form.value.type !== 'welfare_item' || editing.value) return
-    const item = form.value.items[0]
-    if (!item || !item.dishId) return
-    const dish = dishes.value.find((d) => d.id === item.dishId)
-    if (!dish) return
-    const limitMap: Record<string, string> = { per_order: '每单限购', global_promo: '全场限量', daily: '单日限购' }
-    form.value.name = `${dish.name}福利价¥${item.promoPrice}（${limitMap[item.limitType] || item.limitType} ${item.maxQty}）`
+    const generated = autoGenerateName()
+    if (generated) form.value.name = generated
   },
   { deep: true },
 )
