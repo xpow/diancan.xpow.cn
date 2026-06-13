@@ -85,38 +85,26 @@
 
       <!-- 新人福利配置 -->
       <template v-if="form.type === 'new_user'">
-        <div class="form-group">
-          <label>福利方式</label>
-          <SelectButton v-model="form.rules.mode" :options="newUserModes" optionLabel="label" optionValue="value" class="w-full" />
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>直减金额 (¥)</label>
+            <InputNumber v-model="form.rules.discount" :min="0" class="w-full" placeholder="5" />
+          </div>
+          <div class="form-group flex-1">
+            <label>最低消费 (¥)</label>
+            <InputNumber v-model="form.rules.minAmount" :min="0" class="w-full" placeholder="0" />
+          </div>
         </div>
-
-        <!-- 首单直减 -->
-        <template v-if="form.rules.mode === 'first_order'">
-          <div class="form-row">
-            <div class="form-group flex-1">
-              <label>直减金额 (¥)</label>
-              <InputNumber v-model="form.rules.discount" :min="0" class="w-full" placeholder="5" />
-            </div>
-            <div class="form-group flex-1">
-              <label>最低消费 (¥)</label>
-              <InputNumber v-model="form.rules.minAmount" :min="0" class="w-full" placeholder="0" />
-            </div>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>赠送菜品</label>
+            <Select v-model="form.rules.giftDishId" :options="dishes" optionLabel="name" optionValue="id" placeholder="选择赠送的菜品" filter class="w-full" />
           </div>
-        </template>
-
-        <!-- 赠送单品 -->
-        <template v-if="form.rules.mode === 'free_gift'">
-          <div class="form-row">
-            <div class="form-group flex-1">
-              <label>赠送菜品</label>
-              <Select v-model="form.rules.giftDishId" :options="dishes" optionLabel="name" optionValue="id" placeholder="选择赠送的菜品" filter class="w-full" />
-            </div>
-            <div class="form-group flex-1">
-              <label>赠送数量</label>
-              <InputNumber v-model="form.rules.giftQty" :min="1" class="w-full" placeholder="1" />
-            </div>
+          <div class="form-group flex-1">
+            <label>赠送数量</label>
+            <InputNumber v-model="form.rules.giftQty" :min="1" class="w-full" placeholder="1" />
           </div>
-        </template>
+        </div>
       </template>
 
       <!-- 节假日赠送单品 -->
@@ -204,10 +192,6 @@ const typeOptions = [
   { label: '新人福利', value: 'new_user' },
   { label: '节假日赠送单品', value: 'holiday_gift' },
 ]
-const newUserModes = [
-  { label: '首单直减', value: 'first_order' },
-  { label: '赠送单品', value: 'free_gift' },
-]
 const limitOptions = [
   { label: '每单限购', value: 'per_order' },
   { label: '全场限量', value: 'global_promo' },
@@ -240,7 +224,7 @@ function resetForm() {
   form.value = {
     name: '',
     type: 'full_reduction',
-    rules: { mode: 'first_order' },
+    rules: {},
     items: [],
     stackable: true,
     status: 'draft',
@@ -299,14 +283,19 @@ function autoGenerateName(): string {
     }
   }
   if (form.value.type === 'new_user') {
-    if (form.value.rules.mode === 'first_order') {
-      const d = form.value.rules.discount
-      if (d) return `新人-首单直减¥${d}`
+    let name = '新人-'
+    const hasDiscount = form.value.rules.discount
+    const hasGift = form.value.rules.giftDishId
+    if (hasDiscount) {
+      name += `首单直减¥${form.value.rules.discount}`
+      if (form.value.rules.minAmount) name += `(满¥${form.value.rules.minAmount})`
     }
-    if (form.value.rules.mode === 'free_gift') {
+    if (hasDiscount && hasGift) name += '或'
+    if (hasGift) {
       const dish = dishes.value.find((d) => d.id === form.value.rules.giftDishId)
-      if (dish) return `新人-赠${dish.name}x${form.value.rules.giftQty || 1}`
+      name += `赠${dish?.name || '?'}x${form.value.rules.giftQty || 1}`
     }
+    if (hasDiscount || hasGift) return name
   }
   if (form.value.type === 'holiday_gift') {
     const dish = dishes.value.find((d) => d.id === form.value.rules.giftDishId)
@@ -388,11 +377,17 @@ function ruleText(p: Promotion): string {
     return `${dish?.name || item.dishId} ¥${item.promoPrice} (${limit} ${item.maxQty})`
   }
   if (p.type === 'new_user') {
-    if (p.rules.mode === 'free_gift') {
-      const dish = dishes.value.find((d) => d.id === p.rules.giftDishId)
-      return `赠${dish?.name || '?'} x${p.rules.giftQty || 1}`
+    const parts: string[] = []
+    if (p.rules.discount) {
+      let t = `首单直减¥${p.rules.discount}`
+      if (p.rules.minAmount) t += `(满¥${p.rules.minAmount})`
+      parts.push(t)
     }
-    return `首单直减 ¥${p.rules.discount || '?'}`
+    if (p.rules.giftDishId) {
+      const dish = dishes.value.find((d) => d.id === p.rules.giftDishId)
+      parts.push(`赠${dish?.name || '?'} x${p.rules.giftQty || 1}`)
+    }
+    return parts.join(' 或 ') || '-'
   }
   if (p.type === 'holiday_gift') {
     const dish = dishes.value.find((d) => d.id === p.rules.giftDishId)
