@@ -301,11 +301,11 @@ function autoGenerateName(): string {
   if (form.value.type === 'new_user') {
     if (form.value.rules.mode === 'first_order') {
       const d = form.value.rules.discount
-      if (d) return `首单直减¥${d}`
+      if (d) return `新人-首单直减¥${d}`
     }
     if (form.value.rules.mode === 'free_gift') {
       const dish = dishes.value.find((d) => d.id === form.value.rules.giftDishId)
-      if (dish) return `赠${dish.name}x${form.value.rules.giftQty || 1}`
+      if (dish) return `新人-赠${dish.name}x${form.value.rules.giftQty || 1}`
     }
   }
   if (form.value.type === 'holiday_gift') {
