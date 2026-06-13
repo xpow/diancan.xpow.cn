@@ -531,6 +531,9 @@ onMounted(() => {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .dish-list { display: flex; flex-direction: column; gap: var(--spacing-md); }
+@media (min-width: 500px) {
+  .dish-list { display: grid; grid-template-columns: 1fr 1fr; }
+}
 .dish-card { position: relative; padding: var(--spacing-md); background: var(--surface-container-lowest); border-radius: var(--radius-xl); border: 1px solid var(--card-border-light); box-shadow: var(--shadow-md); }
 .dish-row { display: flex; flex-direction: column; gap: var(--spacing-md); }
 .dish-image { width: 100%; height: 200px; border-radius: var(--radius-lg); object-fit: cover; }
