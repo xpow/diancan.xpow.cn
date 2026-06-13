@@ -364,7 +364,7 @@ router.post('/promotions', async (req, res) => {
       merchantId: merchant.id,
       name,
       type,
-      stackable: stackable ?? false,
+      stackable: stackable ?? true,
       rules: JSON.stringify(rules ?? {}),
       status: status ?? 'draft',
       startDate: startDate ? new Date(startDate) : null,

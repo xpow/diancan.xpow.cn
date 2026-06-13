@@ -232,7 +232,7 @@ const form = ref<{
   type: 'full_reduction',
   rules: {},
   items: [],
-  stackable: false,
+  stackable: true,
   status: 'draft',
 })
 
@@ -242,7 +242,7 @@ function resetForm() {
     type: 'full_reduction',
     rules: { mode: 'first_order' },
     items: [],
-    stackable: false,
+    stackable: true,
     status: 'draft',
   }
 }

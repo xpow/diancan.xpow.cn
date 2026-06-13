@@ -138,7 +138,7 @@ model Promotion {
   name       String
   type       String   // welfare_item | full_reduction | buy_get | time_discount | new_user | holiday_gift
   rules      String   @default("{}") // JSON string
-  stackable  Boolean  @default(false)
+  stackable  Boolean  @default(true)
   startDate  DateTime?
   endDate    DateTime?
   status     String   @default("draft") // draft | active | paused | ended
