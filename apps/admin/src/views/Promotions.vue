@@ -490,7 +490,8 @@ onMounted(() => {
 .page-title { margin: 0; font-size: 22px; font-weight: 700; }
 .form-group { margin-bottom: 12px; }
 .form-group label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 4px; }
-.form-row { display: flex; gap: 12px; }
+.form-row { display: flex; gap: 12px; min-width: 0; }
+.form-row > .form-group { min-width: 0; }
 .flex-1 { flex: 1; }
 .w-full { width: 100%; }
 .rule-text { font-size: 13px; white-space: normal; }
