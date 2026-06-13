@@ -31,9 +31,9 @@
             <Tag :value="specsLabel(data.specsPreset)" style="font-size:12px" />
           </template>
         </Column>
-        <Column field="status" header="状态" style="width:80px">
+        <Column field="status" header="状态" style="width:100px">
           <template #body="{ data }">
-            <Tag :value="data.status === 'active' ? '上架' : '下架'" :severity="data.status === 'active' ? 'success' : 'danger'" />
+            <Button :label="data.status === 'active' ? '上架' : '下架'" :severity="data.status === 'active' ? 'success' : 'danger'" size="small" @click="toggleStatus(data)" />
           </template>
         </Column>
         <Column header="操作" style="width:160px">
@@ -248,6 +248,16 @@ async function deleteCategory(id: string) {
     return
   }
   fetchCategories()
+}
+
+async function toggleStatus(dish: any) {
+  const newStatus = dish.status === 'active' ? 'inactive' : 'active'
+  const res = await fetch(`/api/admin/dishes/${dish.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: newStatus }),
+  })
+  if (res.ok) fetchDishes()
 }
 
 async function fetchDishes() {
