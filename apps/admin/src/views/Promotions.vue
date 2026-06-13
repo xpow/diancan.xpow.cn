@@ -151,7 +151,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -267,6 +267,30 @@ function addItem() {
 function removeItem(idx: number) {
   form.value.items.splice(idx, 1)
 }
+
+// 福利品自动生成标题
+watch(
+  () => form.value.type,
+  () => {
+    if (form.value.type === 'welfare_item' && !editing.value) {
+      form.value.name = ''
+    }
+  },
+)
+
+watch(
+  () => form.value.items.map((i) => ({ dishId: i.dishId, promoPrice: i.promoPrice, limitType: i.limitType, maxQty: i.maxQty })),
+  () => {
+    if (form.value.type !== 'welfare_item' || editing.value) return
+    const item = form.value.items[0]
+    if (!item || !item.dishId) return
+    const dish = dishes.value.find((d) => d.id === item.dishId)
+    if (!dish) return
+    const limitMap: Record<string, string> = { per_order: '每单限购', global_promo: '全场限量', daily: '单日限购' }
+    form.value.name = `${dish.name}福利价¥${item.promoPrice}（${limitMap[item.limitType] || item.limitType} ${item.maxQty}）`
+  },
+  { deep: true },
+)
 
 async function save() {
   const body = {
