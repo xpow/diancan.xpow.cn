@@ -10,16 +10,24 @@
         <div class="stat-label">今日有效订单</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value">¥{{ stats.todayRevenue.toFixed(2) }}</div>
-        <div class="stat-label">今日收入</div>
+        <div class="stat-value">¥{{ stats.todayCompletedRevenue.toFixed(2) }}</div>
+        <div class="stat-label">今日完成</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">¥{{ stats.todayEstimatedRevenue.toFixed(2) }}</div>
+        <div class="stat-label">今日预估</div>
       </div>
       <div class="stat-card">
         <div class="stat-value">{{ stats.totalOrders }}</div>
         <div class="stat-label">总有效订单</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value">¥{{ stats.totalRevenue.toFixed(2) }}</div>
-        <div class="stat-label">总收入</div>
+        <div class="stat-value">¥{{ stats.completedRevenue.toFixed(2) }}</div>
+        <div class="stat-label">已完成收入</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">¥{{ stats.estimatedRevenue.toFixed(2) }}</div>
+        <div class="stat-label">预估收入</div>
       </div>
       <div class="stat-card">
         <div class="stat-value">{{ stats.pendingOrders }}</div>
@@ -68,7 +76,9 @@ import Tag from 'primevue/tag'
 
 const VALID_STATUSES = ['pending', 'paid', 'preparing', 'ready', 'completed']
 
-const stats = ref({ todayOrders: 0, todayRevenue: 0, totalOrders: 0, totalRevenue: 0, pendingOrders: 0, readyOrders: 0 })
+const ESTIMATE_STATUSES = ['pending', 'paid', 'preparing', 'ready']
+
+const stats = ref({ todayOrders: 0, todayCompletedRevenue: 0, todayEstimatedRevenue: 0, totalOrders: 0, completedRevenue: 0, estimatedRevenue: 0, pendingOrders: 0, readyOrders: 0 })
 const recentOrders = ref<any[]>([])
 
 function statusLabel(s: string) {
@@ -93,13 +103,19 @@ async function fetchData() {
   const allRes = await fetch('/api/admin/orders?limit=200')
   const allOrders = (allRes.ok ? (await allRes.json()).items ?? [] : [])
   const valid = allOrders.filter((o: any) => VALID_STATUSES.includes(o.status))
+  const completed = valid.filter((o: any) => o.status === 'completed')
+  const estimated = valid.filter((o: any) => ESTIMATE_STATUSES.includes(o.status))
   const todayValid = valid.filter((o: any) => new Date(o.createdAt) >= today)
+  const todayCompleted = todayValid.filter((o: any) => o.status === 'completed')
+  const todayEstimated = todayValid.filter((o: any) => ESTIMATE_STATUSES.includes(o.status))
 
   stats.value = {
     totalOrders: valid.length,
-    totalRevenue: valid.reduce((s: number, o: any) => s + (o.totals?.payableAmount ?? 0), 0),
+    completedRevenue: completed.reduce((s: number, o: any) => s + (o.totals?.payableAmount ?? 0), 0),
+    estimatedRevenue: estimated.reduce((s: number, o: any) => s + (o.totals?.payableAmount ?? 0), 0),
     todayOrders: todayValid.length,
-    todayRevenue: todayValid.reduce((s: number, o: any) => s + (o.totals?.payableAmount ?? 0), 0),
+    todayCompletedRevenue: todayCompleted.reduce((s: number, o: any) => s + (o.totals?.payableAmount ?? 0), 0),
+    todayEstimatedRevenue: todayEstimated.reduce((s: number, o: any) => s + (o.totals?.payableAmount ?? 0), 0),
     pendingOrders: allOrders.filter((o: any) => o.status === 'pending' || o.status === 'paid').length,
     readyOrders: allOrders.filter((o: any) => o.status === 'ready').length,
   }
@@ -109,7 +125,7 @@ onMounted(fetchData)
 </script>
 
 <style scoped>
-.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
 .stat-card { background: #fff; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
 .stat-value { font-size: 28px; font-weight: 800; color: var(--p-primary-color, #FF6B00); }
 .stat-label { font-size: 13px; color: #666; margin-top: 4px; }
