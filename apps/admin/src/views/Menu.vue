@@ -17,7 +17,7 @@
       <DataTable :value="dishes" striped-rows>
         <Column header="排序" style="width:100px">
           <template #body="{ data }">
-            <InputNumber v-model="data.sort" :min="0" :max="999" style="width:80px" @blur="updateSort(data)" />
+            <InputText v-model.number="data.sort" type="number" min="0" max="999" style="width:80px" @change="updateSort(data)" />
           </template>
         </Column>
         <Column field="id" header="ID" style="width:180px" />
@@ -255,12 +255,13 @@ async function fetchDishes() {
   dishes.value = await res.json()
 }
 
-function updateSort(dish: any) {
-  fetch(`/api/admin/dishes/${dish.id}`, {
+async function updateSort(dish: any) {
+  const res = await fetch(`/api/admin/dishes/${dish.id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ sort: dish.sort }),
   })
+  if (!res.ok) console.error('sort update failed', await res.text())
 }
 
 async function fetchCategories() {
