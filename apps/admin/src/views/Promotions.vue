@@ -98,7 +98,7 @@
         <div class="form-row">
           <div class="form-group flex-1">
             <label>赠送菜品</label>
-            <Select v-model="form.rules.giftDishId" :options="dishes" optionLabel="name" optionValue="id" placeholder="选择赠送的菜品" filter class="w-full" />
+            <Select v-model="form.rules.giftDishId" :options="dishes" optionLabel="name" optionValue="id" placeholder="选择赠送的菜品" filter showClear class="w-full" />
           </div>
           <div class="form-group flex-1">
             <label>赠送数量</label>
@@ -112,7 +112,7 @@
         <div class="form-row">
           <div class="form-group flex-1">
             <label>赠送菜品</label>
-            <Select v-model="form.rules.giftDishId" :options="dishes" optionLabel="name" optionValue="id" placeholder="选择赠送的菜品" filter class="w-full" />
+            <Select v-model="form.rules.giftDishId" :options="dishes" optionLabel="name" optionValue="id" placeholder="选择赠送的菜品" filter showClear class="w-full" />
           </div>
           <div class="form-group flex-1">
             <label>赠送数量</label>
