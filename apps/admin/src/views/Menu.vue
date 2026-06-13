@@ -252,6 +252,28 @@ async function deleteCategory(id: string) {
 
 async function toggleStatus(dish: any) {
   const newStatus = dish.status === 'active' ? 'inactive' : 'active'
+
+  // 下架时检查关联的福利活动
+  if (newStatus === 'inactive') {
+    const promoRes = await fetch('/api/admin/promotions')
+    const promos = promoRes.ok ? await promoRes.json() : []
+    const related = promos.filter((p: any) =>
+      p.type === 'welfare_item' && p.status === 'active' && p.items.some((i: any) => i.dishId === dish.id),
+    )
+    if (related.length > 0) {
+      const names = related.map((p: any) => p.name).join('、')
+      if (!confirm(`该商品存在福利活动「${names}」，下架后该活动将自动停用，是否继续？`)) return
+      // 停用关联的福利活动
+      await Promise.all(related.map((p: any) =>
+        fetch(`/api/admin/promotions/${p.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'inactive' }),
+        }),
+      ))
+    }
+  }
+
   const res = await fetch(`/api/admin/dishes/${dish.id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
