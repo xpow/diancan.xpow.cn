@@ -74,7 +74,7 @@
               <label>限购类型</label>
               <Select v-model="item.limitType" :options="limitOptions" optionLabel="label" optionValue="value" class="w-full" />
             </div>
-            <div class="form-group" style="width:120px">
+            <div class="form-group" style="width:80px">
               <label>限购数量</label>
               <InputNumber v-model="item.maxQty" :min="1" class="w-full" placeholder="1" />
             </div>
