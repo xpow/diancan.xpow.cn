@@ -133,8 +133,8 @@
             <Select v-model="form.items[0].dishId" :options="dishes" optionLabel="name" optionValue="id" placeholder="搜索并选择菜品" filter showClear class="w-full" />
           </div>
           <div class="form-group flex-1">
-            <label>折扣价 (¥)</label>
-            <InputNumber v-model="form.items[0].promoPrice" :min="0" class="w-full" placeholder="0.1" />
+            <label>折扣</label>
+            <SelectButton v-model="form.rules.discountRate" :options="discountOptions" optionLabel="label" optionValue="value" class="w-full" />
           </div>
         </div>
       </template>
@@ -217,6 +217,19 @@ const statusOptions = [
   { label: '已启用', value: 'active' },
   { label: '已暂停', value: 'paused' },
   { label: '已结束', value: 'ended' },
+]
+
+const discountOptions = [
+  { label: '1折', value: 0.1 },
+  { label: '2折', value: 0.2 },
+  { label: '3折', value: 0.3 },
+  { label: '4折', value: 0.4 },
+  { label: '5折', value: 0.5 },
+  { label: '6折', value: 0.6 },
+  { label: '7折', value: 0.7 },
+  { label: '8折', value: 0.8 },
+  { label: '85折', value: 0.85 },
+  { label: '9折', value: 0.9 },
 ]
 
 const form = ref<{
@@ -318,9 +331,10 @@ function autoGenerateName(): string {
   }
   if (form.value.type === 'time_discount') {
     const item = form.value.items[0]
-    if (item?.dishId) {
+    if (item?.dishId && form.value.rules.discountRate) {
       const dish = dishes.value.find((d) => d.id === item.dishId)
-      if (dish) return `${dish.name}限时¥${item.promoPrice}`
+      const label = discountOptions.find((o) => o.value === form.value.rules.discountRate)?.label || `${form.value.rules.discountRate * 100}折`
+      if (dish) return `${dish.name}${label}`
     }
   }
   return form.value.name
@@ -426,7 +440,8 @@ function ruleText(p: Promotion): string {
     const item = p.items?.[0]
     if (!item) return '-'
     const dish = dishes.value.find((d) => d.id === item.dishId)
-    return `${dish?.name || item.dishId} 限时 ¥${item.promoPrice}`
+    const label = discountOptions.find((o) => o.value === p.rules.discountRate)?.label || `${(p.rules.discountRate || 1) * 100}折`
+    return `${dish?.name || item.dishId} ${label}`
   }
   return JSON.stringify(p.rules)
 }

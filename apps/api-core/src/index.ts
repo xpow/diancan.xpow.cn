@@ -87,6 +87,7 @@ app.get('/api/catalog/menu', async (_req, res) => {
     where: { merchantId: merchant.id, status: 'active' },
     orderBy: [{ sort: 'asc' }, { createdAt: 'desc' }],
   })
+  const dishPriceMap = new Map(dishes.map((d) => [d.id, d.price]))
 
   const activePromotions = await prisma.promotion.findMany({
     where: { status: 'active' },
@@ -95,7 +96,13 @@ app.get('/api/catalog/menu', async (_req, res) => {
   const promoDishMap = new Map<string, { promoPrice: number; type: string; name: string }>()
   for (const promo of activePromotions) {
     for (const pi of promo.items) {
-      if ((promo.type === 'time_discount' || promo.type === 'welfare_item') && pi.promoPrice) {
+      if (promo.type === 'time_discount' && pi.promoPrice === null) {
+        // 折扣率模式：从 rules.discountRate 计算折后价
+        const rules = JSON.parse(promo.rules)
+        const rate = rules.discountRate ?? 1
+        const origPrice = dishPriceMap.get(pi.dishId) ?? 0
+        promoDishMap.set(pi.dishId, { promoPrice: Math.round(origPrice * rate * 100) / 100, type: promo.type, name: promo.name })
+      } else if (promo.type === 'welfare_item' && pi.promoPrice) {
         promoDishMap.set(pi.dishId, { promoPrice: pi.promoPrice, type: promo.type, name: promo.name })
       }
     }
@@ -211,17 +218,21 @@ app.post('/api/cart/quote', async (req, res) => {
       )
       if (timeDiscountPromo) {
         const promoItem = timeDiscountPromo.items.find((pi) => pi.dishId === item.dishId)
-        if (promoItem?.promoPrice) {
-          finalUnitPrice = promoItem.promoPrice
-          finalSubtotal = promoItem.promoPrice * item.quantity
-          const discount = Number(((dish.price - promoItem.promoPrice) * item.quantity).toFixed(2))
+        const rules = JSON.parse(timeDiscountPromo.rules)
+        const discountRate = rules.discountRate ?? 1
+        const discountedPrice = Math.round(dish.price * discountRate * 100) / 100
+        if (discountRate < 1) {
+          finalUnitPrice = discountedPrice
+          finalSubtotal = discountedPrice * item.quantity
+          const perItem = dish.price - discountedPrice
+          const discount = Number((perItem * item.quantity).toFixed(2))
           if (discount > 0) {
             appliedPromotions.push({
               id: timeDiscountPromo.id,
               name: timeDiscountPromo.name,
               type: 'time_discount',
               discount,
-              description: `${timeDiscountPromo.name}，¥${dish.price.toFixed(2)} → ¥${promoItem.promoPrice.toFixed(2)}`,
+              description: `${timeDiscountPromo.name}，${dish.price.toFixed(2)} → ${discountedPrice.toFixed(2)}`,
             })
             promotionLabel = timeDiscountPromo.name
           }
