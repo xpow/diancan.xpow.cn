@@ -15,12 +15,9 @@
         <Button label="新增菜品" icon="pi pi-plus" @click="openDishDialog()" />
       </div>
       <DataTable :value="dishes" striped-rows>
-        <Column header="排序" style="width:80px">
-          <template #body="{ data, index }">
-            <div class="sort-btns">
-              <Button icon="pi pi-angle-up" severity="info" text size="small" :disabled="index === 0" @click="moveDish(index, -1)" />
-              <Button icon="pi pi-angle-down" severity="info" text size="small" :disabled="index === dishes.length - 1" @click="moveDish(index, 1)" />
-            </div>
+        <Column header="排序" style="width:100px">
+          <template #body="{ data }">
+            <InputNumber v-model="data.sort" :min="0" :max="999" style="width:80px" @blur="updateSort(data)" />
           </template>
         </Column>
         <Column field="id" header="ID" style="width:180px" />
@@ -258,16 +255,11 @@ async function fetchDishes() {
   dishes.value = await res.json()
 }
 
-function moveDish(index: number, dir: -1 | 1) {
-  const arr = dishes.value
-  const target = index + dir
-  if (target < 0 || target >= arr.length) return
-  ;[arr[index], arr[target]] = [arr[target], arr[index]]
-  const ids = arr.map((d: any) => d.id)
-  fetch('/api/admin/dishes/reorder', {
+function updateSort(dish: any) {
+  fetch(`/api/admin/dishes/${dish.id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ids }),
+    body: JSON.stringify({ sort: dish.sort }),
   })
 }
 
@@ -294,5 +286,4 @@ onMounted(() => {
 .form-row { display: flex; gap: 12px; }
 .flex-1 { flex: 1; }
 .w-full { width: 100%; }
-.sort-btns { display: flex; gap: 2px; }
 </style>

@@ -222,7 +222,7 @@ router.put('/dishes/reorder', async (req, res) => {
 
 router.put('/dishes/:id', async (req, res) => {
   const { id } = req.params
-  const { name, price, categoryId, desc, image, tags, specsPreset, status } = req.body ?? {}
+  const { name, price, categoryId, desc, image, tags, specsPreset, status, sort } = req.body ?? {}
 
   const dish = await prisma.dish.findUnique({ where: { id } })
   if (!dish) return res.status(404).json({ message: '菜品不存在' })
@@ -236,6 +236,7 @@ router.put('/dishes/:id', async (req, res) => {
   if (tags !== undefined) data.tags = JSON.stringify(tags)
   if (specsPreset !== undefined) data.specsPreset = specsPreset
   if (status !== undefined) data.status = status
+  if (sort !== undefined) data.sort = Number(sort)
 
   await prisma.dish.update({ where: { id }, data })
   res.json({ id, success: true })
