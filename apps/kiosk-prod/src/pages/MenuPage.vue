@@ -73,7 +73,7 @@
                 :model-value="dish.selectedLabels?.[gi] ?? ''"
                 @update:model-value="dish.selectedLabels![gi] = $event"
               />
-              <input v-if="gi === qtyGroupIndex" class="qty-input" type="number" placeholder="其他数量"
+              <input v-if="gi === qtyGroupIndex(dish.specGroups!)" class="qty-input" type="number" placeholder="其他数量"
                 @input="onCustomQty(dish, gi, ($event.target as HTMLInputElement).value)" />
             </div>
           </div>
@@ -252,7 +252,9 @@ const cartItems = ref<StoredCartItem[]>([])
 const cartQuote = ref<QuoteResponse | null>(null)
 let quoteTimer: ReturnType<typeof setTimeout> | undefined
 
-const qtyGroupIndex = 2
+function qtyGroupIndex(groups: SpecGroup[]) {
+  return groups.findIndex((g) => g.name === '串数' || g.name === '份数')
+}
 
 watch(showCart, (val) => {
   if (val) debouncedFetchQuote()
@@ -405,7 +407,7 @@ function addToCart(dish: Dish) {
       if (!val) continue
       if (Array.isArray(val)) {
         specsParts.push(val.join('+'))
-      } else if (gi === qtyGroupIndex) {
+      } else if (dish.specGroups && gi === qtyGroupIndex(dish.specGroups)) {
         qty = parseInt(val.replace(/^x/i, '')) || 1
       } else {
         specsParts.push(val)
