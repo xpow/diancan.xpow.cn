@@ -93,7 +93,6 @@ export const SPECS_PRESETS: Record<SpecPreset, SpecGroup[] | null> = {
       ],
     },
   ],
-  ],
   hotpot: [
     {
       name: '锅底',
