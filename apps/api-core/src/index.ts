@@ -78,6 +78,7 @@ app.get('/api/system/bootstrap', async (_req, res) => {
           id: p.id,
           title: p.name,
           subtitle,
+          type: p.type,
           tag: p.type === 'time_discount' ? '限时' : p.type === 'new_user' ? '新人' : p.type === 'holiday_gift' ? '节日' : '活动',
           tone: p.type === 'full_reduction' || p.type === 'time_discount' ? 'primary' as const : 'neutral' as const,
         }

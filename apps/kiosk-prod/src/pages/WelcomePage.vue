@@ -52,7 +52,7 @@
             :class="['promo-card', promotion.tone === 'primary' ? 'promo-primary' : 'promo-default']"
           >
             <div class="promo-icon-wrap">
-              <span class="material-icons promo-icon">redeem</span>
+              <span class="material-icons promo-icon">{{ promoIcon(promotion.type) }}</span>
             </div>
             <div class="promo-content">
               <p class="promo-tag" v-if="promotion.tag">{{ promotion.tag }}</p>
@@ -166,10 +166,22 @@ import { computed, onMounted, ref } from 'vue'
 import { getTheme, setTheme } from '@/utils/theme'
 import logoImage from '@/assets/images/pages/logo.png'
 
+function promoIcon(type: string): string {
+  const map: Record<string, string> = {
+    full_reduction: 'local_offer',
+    welfare_item: 'redeem',
+    time_discount: 'timer',
+    new_user: 'person_add',
+    holiday_gift: 'card_giftcard',
+  }
+  return map[type] || 'redeem'
+}
+
 interface BootstrapPromotion {
   id: string
   title: string
   subtitle: string
+  type: string
   tag?: string
   tone: 'primary' | 'neutral'
 }
