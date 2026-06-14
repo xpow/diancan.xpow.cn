@@ -50,7 +50,9 @@
             v-for="promotion in bootstrap.promotions"
             :key="promotion.id"
             :class="['promo-card', promotion.tone === 'primary' ? 'promo-primary' : 'promo-default']"
+            :style="promotion.image ? { backgroundImage: `url(${promotion.image})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}"
           >
+            <div class="promo-card-overlay" v-if="promotion.image"></div>
             <div class="promo-icon-wrap">
               <span class="material-icons promo-icon">{{ promoIcon(promotion.type) }}</span>
             </div>
@@ -184,6 +186,7 @@ interface BootstrapPromotion {
   type: string
   tag?: string
   tone: 'primary' | 'neutral'
+  image?: string | null
 }
 
 interface FeaturedItem {
@@ -526,12 +529,32 @@ onMounted(() => {
 }
 
 .promo-card {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--spacing-lg);
   padding: var(--spacing-lg);
   border-radius: var(--radius-xl);
+  overflow: hidden;
 }
+
+.promo-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 100%);
+  z-index: 1;
+}
+
+.promo-card > *:not(.promo-card-overlay) {
+  position: relative;
+  z-index: 2;
+}
+
+.promo-card[style*="backgroundImage"] .promo-title,
+.promo-card[style*="backgroundImage"] .promo-subtitle { color: #fff; }
+.promo-card[style*="backgroundImage"] .promo-tag { color: rgba(255,255,255,0.8); }
+.promo-card[style*="backgroundImage"] .promo-icon-wrap { background: rgba(255,255,255,0.2); }
+.promo-card[style*="backgroundImage"] .promo-icon { color: #fff; }
 
 .promo-primary {
   background: rgba(255, 107, 0, 0.1);
