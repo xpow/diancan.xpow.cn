@@ -19,6 +19,19 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
   res.status(401).json({ message: '请先登录' })
 }
 
+async function checkDishConflict(dishIds: string[], excludePromotionId?: string): Promise<string[]> {
+  if (!dishIds.length) return []
+  const conflicts = await prisma.promotionItem.findMany({
+    where: {
+      dishId: { in: dishIds },
+      promotion: { status: 'active' },
+      ...(excludePromotionId ? { promotionId: { not: excludePromotionId } } : {}),
+    },
+    include: { promotion: { select: { name: true } }, dish: { select: { name: true } } },
+  })
+  return conflicts.map((c) => `${c.dish.name} 已在活动「${c.promotion.name}」中`)
+}
+
 /* ===== Auth ===== */
 router.post('/auth/login', (req, res) => {
   const { password } = req.body ?? {}
@@ -360,6 +373,15 @@ router.post('/promotions', async (req, res) => {
     const { name, type, rules, items, status, stackable, startDate, endDate } = req.body ?? {}
     if (!name || !type) return res.status(400).json({ message: 'name, type 必填' })
 
+    // 检查商品是否已在其他进行中的活动
+    const dishIds = (items ?? []).map((i: any) => i.dishId).filter(Boolean)
+    if (dishIds.length) {
+      const conflicts = await checkDishConflict(dishIds)
+      if (conflicts.length) {
+        return res.status(409).json({ message: `以下商品已参与其他活动：${conflicts.join('；')}` })
+      }
+    }
+
     const promo = await prisma.promotion.create({
       data: {
         merchantId: merchant.id,
@@ -399,6 +421,18 @@ router.put('/promotions/:id', async (req, res) => {
     const promo = await prisma.promotion.findUnique({ where: { id } })
     if (!promo) return res.status(404).json({ message: '活动不存在' })
 
+    // 检查商品是否已在其他进行中的活动
+    if (items !== undefined) {
+      const dishIds = items.map((i: any) => i.dishId).filter(Boolean)
+      const newStatus = status ?? promo.status
+      if (newStatus === 'active') {
+        const conflicts = await checkDishConflict(dishIds, id)
+        if (conflicts.length) {
+          return res.status(409).json({ message: `以下商品已参与其他活动：${conflicts.join('；')}` })
+        }
+      }
+    }
+
     const data: any = {}
     if (name !== undefined) data.name = name
     if (type !== undefined) data.type = type
@@ -435,9 +469,7 @@ router.put('/promotions/:id', async (req, res) => {
 
 router.delete('/promotions/:id', async (req, res) => {
   const { id } = req.params
-  await prisma.promotionItem.deleteMany({ where: { promotionId: id } })
-  await prisma.orderPromotion.deleteMany({ where: { promotionId: id } })
-  await prisma.promotion.delete({ where: { id } }).catch(() => {})
+  await prisma.promotion.update({ where: { id }, data: { status: 'ended' } })
   res.json({ success: true })
 })
 
@@ -671,6 +703,17 @@ router.delete('/devices/:id', async (req, res) => {
   const { id } = req.params
   await prisma.device.delete({ where: { id } }).catch(() => {})
   res.json({ success: true })
+})
+
+// 下发设备指令
+router.post('/devices/:id/commands', async (req, res) => {
+  const { id } = req.params
+  const { command, params } = req.body ?? {}
+  if (!command) return res.status(400).json({ message: 'command 必填' })
+  const cmd = await prisma.deviceCommand.create({
+    data: { deviceId: id, command, params: JSON.stringify(params ?? {}) },
+  })
+  res.status(201).json({ id: cmd.id })
 })
 
 export default router

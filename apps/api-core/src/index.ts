@@ -78,6 +78,8 @@ app.get('/api/system/bootstrap', async (_req, res) => {
           tag: p.type === 'time_discount' ? '限时' : p.type === 'new_user' ? '新人' : p.type === 'holiday_gift' ? '节日' : '活动',
           tone: p.type === 'full_reduction' || p.type === 'time_discount' ? 'primary' as const : 'neutral' as const,
           image: p.items?.[0]?.dish?.image || null,
+          dishId: p.items?.[0]?.dishId || null,
+          itemIds: p.items?.map((i) => i.dishId).filter(Boolean) || [],
         }
       }),
     featuredItems: featuredItems.map((f) => ({
@@ -88,7 +90,17 @@ app.get('/api/system/bootstrap', async (_req, res) => {
       badge: f.badge,
       badgeTone: f.badgeTone,
     })),
+    commands: device ? await prisma.deviceCommand.findMany({
+      where: { deviceId: device.id, status: 'pending' },
+      select: { id: true, command: true, params: true },
+    }) : [],
   })
+})
+
+app.post('/api/commands/:id/ack', async (req, res) => {
+  const { id } = req.params
+  await prisma.deviceCommand.update({ where: { id }, data: { status: 'executed', executedAt: new Date() } })
+  res.json({ success: true })
 })
 
 app.get('/api/catalog/menu', async (_req, res) => {
@@ -117,11 +129,14 @@ app.get('/api/catalog/menu', async (_req, res) => {
     if (promo.startDate && new Date(promo.startDate) > new Date()) continue
 
     for (const pi of promo.items) {
-      if (promo.type === 'time_discount' && pi.promoPrice === null) {
-        const rules = JSON.parse(promo.rules)
-        const rate = rules.discountRate ?? 1
-        const origPrice = dishPriceMap.get(pi.dishId) ?? 0
-        promoDishMap.set(pi.dishId, { promoPrice: Math.round(origPrice * rate * 100) / 100, type: promo.type, name: promo.name })
+      if (promo.type === 'time_discount') {
+        const price = pi.promoPrice ?? (() => {
+          const rules = JSON.parse(promo.rules)
+          const rate = rules.discountRate ?? 1
+          const origPrice = dishPriceMap.get(pi.dishId) ?? 0
+          return Math.round(origPrice * rate * 100) / 100
+        })()
+        promoDishMap.set(pi.dishId, { promoPrice: price, type: promo.type, name: promo.name })
       } else if (promo.type === 'welfare_item' && pi.promoPrice) {
         promoDishMap.set(pi.dishId, { promoPrice: pi.promoPrice, type: promo.type, name: promo.name })
       }
@@ -211,24 +226,26 @@ app.post('/api/cart/quote', async (req, res) => {
       const promoItem = welfarePromo.items.find((pi) => pi.dishId === item.dishId)
       if (promoItem) {
         const isRedeemed = welfareAppliedDishIds.has(item.dishId)
-        const welfareQty = isRedeemed ? 0 : Math.min(item.quantity, promoItem.maxQty)
+        const unlimited = promoItem.limitType === 'unlimited'
+        const welfareQty = isRedeemed ? 0 : (unlimited ? item.quantity : Math.min(item.quantity, promoItem.maxQty))
         const normalQty = item.quantity - welfareQty
         finalSubtotal = welfareQty * (promoItem.promoPrice ?? dish.price) + normalQty * dish.price
         finalUnitPrice = welfareQty === item.quantity ? (promoItem.promoPrice ?? dish.price) : dish.price
         welfareAppliedDishIds.add(item.dishId)
 
         if (welfareQty > 0) {
+          const qtyText = unlimited ? '不限量' : `仅 ${promoItem.maxQty} 份`
           appliedPromotions.push({
             id: welfarePromo.id,
             name: welfarePromo.name,
             type: 'welfare_item',
             discount: Number((dish.price * welfareQty - (promoItem.promoPrice ?? 0) * welfareQty).toFixed(2)),
-            description: `福利价 ¥${promoItem.promoPrice?.toFixed(2)}，单笔订单仅 ${promoItem.maxQty} 份享受福利价`,
+            description: `福利价 ¥${promoItem.promoPrice?.toFixed(2)}，${qtyText}享受福利价`,
           })
           promotionLabel = '福利价'
         }
 
-        if (item.quantity > promoItem.maxQty) {
+        if (!unlimited && item.quantity > promoItem.maxQty) {
           hints.push(`${welfarePromo.name}本单仅首份按 ${promoItem.promoPrice?.toFixed(2)} 元计算，其余按原价计算。`)
         }
       }

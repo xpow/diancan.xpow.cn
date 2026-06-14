@@ -107,15 +107,36 @@
       <Column field="branchName" header="所属分店" />
       <Column field="status" header="状态">
         <template #body="{ data }">
-          <Tag :value="data.status === 'active' ? '在线' : '离线'" :severity="data.status === 'active' ? 'success' : 'danger'" />
+          <div class="device-status-cell">
+            <Tag :value="data.status === 'active' ? '在线' : '离线'" :severity="data.status === 'active' ? 'success' : 'danger'" />
+            <Button
+              v-if="data.status === 'active'"
+              icon="pi pi-power-off"
+              label="下线"
+              severity="warn"
+              text
+              size="small"
+              @click="offlineDevice(data)"
+            />
+            <Button
+              v-else
+              icon="pi pi-sync"
+              label="上线"
+              severity="success"
+              text
+              size="small"
+              @click="setDeviceStatus(data.id, 'active')"
+            />
+          </div>
         </template>
       </Column>
-      <Column header="操作" style="width:280px">
+      <Column header="操作" style="width:360px">
         <template #body="{ data }">
           <Button v-if="data.sn" icon="pi pi-copy" label="复制" severity="info" text size="small" @click="copySN(data.sn)" />
           <Button icon="pi pi-refresh" label="重置" severity="info" text size="small" @click="regenerateSN(data.id)" />
           <Button icon="pi pi-pencil" label="编辑" severity="info" text size="small" @click="openDeviceDialog(data)" />
           <Button icon="pi pi-trash" label="删除" severity="danger" size="small" @click="deleteDevice(data.id)" />
+          <Button icon="pi pi-wrench" label="指令" severity="help" text size="small" @click="openCommandDialog(data)" />
         </template>
       </Column>
     </DataTable>
@@ -147,6 +168,18 @@
         <Button label="保存" @click="saveDevice" />
       </template>
     </Dialog>
+
+    <!-- Command Dialog -->
+    <Dialog v-model:visible="showCommand" :header="`设备指令 - ${commandTarget?.name || ''}`" style="width:400px">
+      <div class="form-group">
+        <label>指令类型</label>
+        <Select v-model="commandForm.command" :options="commandOptions" optionLabel="label" optionValue="value" class="w-full" />
+      </div>
+      <template #footer>
+        <Button label="取消" severity="secondary" @click="showCommand = false" />
+        <Button label="发送" @click="sendCommand" />
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -171,6 +204,13 @@ const devices = ref<any[]>([])
 const showDevice = ref(false)
 const editingDevice = ref(false)
 const deviceForm = ref({ code: '', name: '', contact: '', mode: 'kiosk', branchId: '' })
+
+const showCommand = ref(false)
+const commandTarget = ref<any>(null)
+const commandForm = ref({ command: 'clear_storage' })
+const commandOptions = [
+  { label: '清除缓存和 Cookies', value: 'clear_storage' },
+]
 
 async function fetchMerchant() {
   const res = await fetch('/api/admin/merchant')
@@ -271,6 +311,38 @@ async function regenerateSN(id: string) {
   fetchDevices()
 }
 
+async function offlineDevice(device: any) {
+  if (!confirm(`确认下线设备「${device.name}」？\n\n正在结算中的订单不受影响。`)) return
+  await setDeviceStatus(device.id, 'offline')
+}
+
+async function setDeviceStatus(id: string, status: string) {
+  await fetch(`/api/admin/devices/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status }),
+  })
+  fetchDevices()
+}
+
+function openCommandDialog(device: any) {
+  commandTarget.value = device
+  commandForm.value = { command: 'clear_storage' }
+  showCommand.value = true
+}
+
+async function sendCommand() {
+  if (!commandTarget.value) return
+  const res = await fetch(`/api/admin/devices/${commandTarget.value.id}/commands`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(commandForm.value),
+  })
+  if (!res.ok) return alert('发送失败')
+  showCommand.value = false
+  alert('指令已发送，设备将在下次加载页面时执行')
+}
+
 onMounted(() => {
   fetchMerchant()
   fetchDevices()
@@ -292,4 +364,5 @@ onMounted(() => {
 .sn-text { font-family: monospace; font-size: 13px; letter-spacing: 1px; }
 .sn-empty { color: #999; }
 .wrap-cell { white-space: normal; }
+.device-status-cell { display: flex; align-items: center; gap: 4px; }
 </style>

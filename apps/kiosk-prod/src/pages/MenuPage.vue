@@ -46,7 +46,7 @@
       </section>
 
       <section v-else class="dish-list">
-        <article v-for="dish in filteredDishes" :key="dish.id" class="dish-card">
+        <article v-for="dish in filteredDishes" :key="dish.id" :id="`dish-${dish.id}`" :class="['dish-card', dish.id === highlightDishId ? 'dish-highlight' : '']">
           <div class="dish-row">
             <img :src="dish.image" :alt="dish.name" class="dish-image" />
             <div class="dish-body">
@@ -188,8 +188,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref, watch, nextTick } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { showToast } from 'vant'
 import 'vant/es/toast/style'
 import { SPECS_PRESETS, type SpecGroup, type SpecPreset } from '@diancan/shared'
@@ -232,8 +232,10 @@ interface Dish {
 }
 
 const router = useRouter()
+const route = useRoute()
 const loading = ref(true)
 const errorMessage = ref('')
+const highlightDishId = ref('')
 const merchantName = ref('')
 const branchName = ref('')
 const displayTitle = computed(() => {
@@ -486,6 +488,21 @@ async function loadData() {
     })
 
     selectedCategoryId.value = categories.value[0]?.id ?? ''
+
+    // 锚定菜品
+    const targetDishId = route.query.dishId as string
+    if (targetDishId) {
+      const dish = dishes.value.find((d) => d.id === targetDishId)
+      if (dish) {
+        selectedCategoryId.value = dish.categoryId
+        await nextTick()
+        await nextTick()
+        highlightDishId.value = targetDishId
+        const el = document.getElementById(`dish-${targetDishId}`)
+        el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        setTimeout(() => { highlightDishId.value = '' }, 2000)
+      }
+    }
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '菜单加载失败'
   } finally {
@@ -535,7 +552,13 @@ onMounted(() => {
   .dish-list { display: grid; grid-template-columns: 1fr 1fr; }
   .page-content { max-width: none; }
 }
-.dish-card { position: relative; padding: var(--spacing-md); background: var(--surface-container-lowest); border-radius: var(--radius-xl); border: 1px solid var(--card-border-light); box-shadow: var(--shadow-md); }
+.dish-card { position: relative; padding: var(--spacing-md); background: var(--surface-container-lowest); border-radius: var(--radius-xl); border: 1px solid var(--card-border-light); box-shadow: var(--shadow-md); transition: border-color 0.3s; }
+
+@keyframes dish-blink {
+  0%, 100% { border-color: var(--primary-container); }
+  50% { border-color: transparent; }
+}
+.dish-highlight { animation: dish-blink 0.3s ease 6; }
 .dish-row { display: flex; flex-direction: column; gap: var(--spacing-md); }
 .dish-image { width: 100%; height: 200px; border-radius: var(--radius-lg); object-fit: cover; }
 .dish-body { display: flex; flex-direction: column; }

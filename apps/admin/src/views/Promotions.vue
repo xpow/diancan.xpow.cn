@@ -14,7 +14,25 @@
       </Column>
       <Column field="status" header="状态">
         <template #body="{ data }">
-          <Tag :value="statusLabel(data.status)" :severity="statusSeverity(data.status)" />
+          <div class="status-cell">
+            <Tag :value="statusLabel(data.status)" :severity="statusSeverity(data.status)" />
+            <Button
+              v-if="data.status === 'active'"
+              icon="pi pi-pause-circle"
+              severity="warn"
+              text
+              size="small"
+              @click="pausePromotion(data)"
+            />
+            <Button
+              v-else-if="data.status === 'paused' || data.status === 'draft'"
+              icon="pi pi-play-circle"
+              severity="success"
+              text
+              size="small"
+              @click="setStatus(data.id, 'active')"
+            />
+          </div>
         </template>
       </Column>
       <Column field="rules" header="规则" style="max-width:300px">
@@ -24,7 +42,7 @@
       </Column>
       <Column header="操作" style="width:160px">
         <template #body="{ data }">
-          <Button icon="pi pi-pencil" label="编辑" severity="info" text size="small" @click="openEdit(data)" />
+          <Button icon="pi pi-pencil" label="编辑" severity="info" text size="small" :disabled="data.status === 'active'" @click="openEdit(data)" />
           <Button icon="pi pi-trash" label="删除" severity="danger" size="small" @click="remove(data)" />
         </template>
       </Column>
@@ -63,11 +81,11 @@
           </div>
           <div class="form-group">
             <label>选择菜品</label>
-            <Select v-model="item.dishId" :options="dishes" optionLabel="name" optionValue="id" placeholder="搜索并选择菜品" filter />
+            <Select v-model="item.dishId" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="搜索并选择菜品" filter />
           </div>
           <div class="form-group">
             <label>福利价 (¥)</label>
-            <InputNumber v-model="item.promoPrice" :min="0" placeholder="0.1" />
+            <InputNumber v-model="item.promoPrice" :min="0" :step="0.01" :minFractionDigits="1" placeholder="0.1" />
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -76,7 +94,7 @@
             </div>
             <div class="form-group">
               <label>限购数量</label>
-              <InputNumber v-model="item.maxQty" :min="1" placeholder="1" />
+              <InputNumber v-model="item.maxQty" :min="1" placeholder="1" :disabled="item.limitType === 'unlimited'" />
             </div>
           </div>
         </div>
@@ -98,7 +116,7 @@
         <div class="form-row">
           <div class="form-group flex-1">
             <label>赠送菜品</label>
-            <Select v-model="form.rules.giftDishId" :options="dishes" optionLabel="name" optionValue="id" placeholder="选择赠送的菜品" filter showClear class="w-full" />
+            <Select v-model="form.rules.giftDishId" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="选择赠送的菜品" filter showClear class="w-full" />
           </div>
           <div class="form-group flex-1">
             <label>赠送数量</label>
@@ -112,7 +130,7 @@
         <div class="form-row">
           <div class="form-group flex-1">
             <label>赠送菜品</label>
-            <Select v-model="form.rules.giftDishId" :options="dishes" optionLabel="name" optionValue="id" placeholder="选择赠送的菜品" filter showClear class="w-full" />
+            <Select v-model="form.rules.giftDishId" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="选择赠送的菜品" filter showClear class="w-full" />
           </div>
           <div class="form-group flex-1">
             <label>赠送数量</label>
@@ -130,7 +148,7 @@
         <div class="form-row">
           <div class="form-group flex-1">
             <label>选择菜品</label>
-            <Select v-model="form.items[0].dishId" :options="dishes" optionLabel="name" optionValue="id" placeholder="搜索并选择菜品" filter showClear class="w-full" />
+            <Select v-model="form.items[0].dishId" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="搜索并选择菜品" filter showClear class="w-full" />
           </div>
           <div class="form-group flex-1">
             <label>折扣</label>
@@ -166,7 +184,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -180,7 +198,7 @@ import Tag from 'primevue/tag'
 
 interface PromoItem {
   dishId: string
-  promoPrice: number
+  promoPrice: number | null
   limitType: string
   maxQty: number
 }
@@ -198,10 +216,12 @@ interface Dish {
   id: string
   name: string
   price: number
+  status: string
 }
 
 const promotions = ref<Promotion[]>([])
 const dishes = ref<Dish[]>([])
+const activeDishes = computed(() => dishes.value.filter((d) => d.status === 'active'))
 const showDialog = ref(false)
 const editing = ref(false)
 const editingId = ref('')
@@ -217,6 +237,7 @@ const limitOptions = [
   { label: '每单限购', value: 'per_order' },
   { label: '全场限量', value: 'global_promo' },
   { label: '单日限购', value: 'daily' },
+  { label: '不限', value: 'unlimited' },
 ]
 const statusOptions = [
   { label: '草稿', value: 'draft' },
@@ -299,9 +320,7 @@ function removeItem(idx: number) {
 }
 
 // 自动生成标题
-function autoGenerateName(): string {
-  if (editing.value) return form.value.name
-  if (form.value.type === 'full_reduction') {
+function autoGenerateName(): string | undefined {  if (form.value.type === 'full_reduction') {
     const t = form.value.rules.threshold
     const d = form.value.rules.discount
     if (t && d) return `满¥${t}减¥${d}`
@@ -311,8 +330,8 @@ function autoGenerateName(): string {
     if (item?.dishId) {
       const dish = dishes.value.find((d) => d.id === item.dishId)
       if (dish) {
-        const limitMap: Record<string, string> = { per_order: '每单限购', global_promo: '全场限量', daily: '单日限购' }
-        return `${dish.name}福利价¥${item.promoPrice}（${limitMap[item.limitType] || item.limitType} ${item.maxQty}）`
+        const limitMap: Record<string, string> = { per_order: '每单限购', global_promo: '全场限量', daily: '单日限购', unlimited: '不限' }
+        return `${dish.name}福利价¥${item.promoPrice}（${limitMap[item.limitType] || item.limitType}${item.limitType === 'unlimited' ? '' : ' ' + item.maxQty}）`
       }
     }
   }
@@ -376,12 +395,16 @@ async function save() {
   const body: any = {
     ...form.value,
   }
-  if (body.type === 'time_discount' && body.rules.durationDays) {
-    body.startDate = new Date().toISOString()
-    body.endDate = new Date(Date.now() + body.rules.durationDays * 24 * 60 * 60 * 1000).toISOString()
-  } else if (body.type === 'time_discount') {
-    body.startDate = null
-    body.endDate = null
+  if (body.type === 'time_discount') {
+    // 限时折扣的价格由折扣率计算，不存固定的 promoPrice
+    body.items = body.items?.map((i: any) => ({ ...i, promoPrice: null }))
+    if (body.rules.durationDays) {
+      body.startDate = new Date().toISOString()
+      body.endDate = new Date(Date.now() + body.rules.durationDays * 24 * 60 * 60 * 1000).toISOString()
+    } else {
+      body.startDate = null
+      body.endDate = null
+    }
   }
   const url = editing.value ? `/api/admin/promotions/${editingId.value}` : '/api/admin/promotions'
   const method = editing.value ? 'PUT' : 'POST'
@@ -394,7 +417,9 @@ async function save() {
     })
     if (!res.ok) {
       const text = await res.text()
-      alert(`保存失败 (${res.status}): ${text}`)
+      let msg = text
+      try { const j = JSON.parse(text); if (j.message) msg = j.message } catch {}
+      alert(msg)
       return
     }
     showDialog.value = false
@@ -404,8 +429,33 @@ async function save() {
   }
 }
 
+async function pausePromotion(p: Promotion) {
+  if (!confirm(`确认暂停活动「${p.name}」？\n\n正在结算中的订单不受影响。`)) return
+  await setStatus(p.id, 'paused')
+}
+
+async function setStatus(id: string, status: string) {
+  try {
+    const res = await fetch(`/api/admin/promotions/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    })
+    if (!res.ok) {
+      const text = await res.text()
+      let msg = text
+      try { const j = JSON.parse(text); if (j.message) msg = j.message } catch {}
+      alert(msg)
+      return
+    }
+    fetchPromotions()
+  } catch (e: any) {
+    alert(`请求失败: ${e.message}`)
+  }
+}
+
 async function remove(p: Promotion) {
-  if (!confirm(`确认删除活动「${p.name}」？`)) return
+  if (!confirm(`确认结束活动「${p.name}」？\n\n正在结算中的订单不受影响。`)) return
   await fetch(`/api/admin/promotions/${p.id}`, { method: 'DELETE' })
   fetchPromotions()
 }
@@ -430,10 +480,10 @@ function ruleText(p: Promotion): string {
   if (p.type === 'welfare_item') {
     const item = p.items?.[0]
     if (!item) return '-'
-    const limitMap: Record<string, string> = { per_order: '每单限购', global_promo: '全场限量', daily: '单日限购' }
+    const limitMap: Record<string, string> = { per_order: '每单限购', global_promo: '全场限量', daily: '单日限购', unlimited: '不限' }
     const limit = limitMap[item.limitType] || item.limitType
     const dish = dishes.value.find((d) => d.id === item.dishId)
-    return `${dish?.name || item.dishId} ¥${item.promoPrice} (${limit} ${item.maxQty})`
+    return `${dish?.name || item.dishId} ¥${item.promoPrice} (${limit}${item.limitType === 'unlimited' ? '' : ' ' + item.maxQty})`
   }
   if (p.type === 'new_user') {
     const parts: string[] = []
@@ -500,4 +550,5 @@ onMounted(() => {
 .promo-item-label { font-size: 13px; font-weight: 600; color: #666; }
 .stackable-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; }
 .stackable-row label { margin: 0; font-size: 14px; font-weight: 600; color: #333; }
+.status-cell { display: flex; align-items: center; gap: 4px; }
 </style>

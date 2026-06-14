@@ -49,17 +49,18 @@
           <article
             v-for="promotion in bootstrap.promotions"
             :key="promotion.id"
-            :class="['promo-card', promotion.tone === 'primary' ? 'promo-primary' : 'promo-default']"
-            :style="promotion.image ? { backgroundImage: `url(${promotion.image})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}"
+            :class="['promo-card', promotion.tone === 'primary' ? 'promo-primary' : 'promo-default', promotion.itemIds.length ? 'promo-clickable' : '']"
+            @click="promotion.itemIds.length && router.push(`/menu?dishId=${promotion.itemIds[0]}`)"
           >
-            <div class="promo-card-overlay" v-if="promotion.image"></div>
-            <div class="promo-icon-wrap">
-              <span class="material-icons promo-icon">{{ promoIcon(promotion.type) }}</span>
-            </div>
-            <div class="promo-content">
-              <p class="promo-tag" v-if="promotion.tag">{{ promotion.tag }}</p>
-              <h4 class="promo-title">{{ promotion.title }}</h4>
-              <p class="promo-subtitle">{{ promotion.subtitle }}</p>
+            <img v-if="promoImage(promotion)" :src="promoImage(promotion)!" class="promo-thumb" />
+            <div class="promo-body">
+              <div class="promo-body-top">
+                <p class="promo-tag" v-if="promotion.tag">{{ promotion.tag }}</p>
+                <div class="promo-icon-wrap">
+                  <span class="material-icons promo-icon">{{ promoIcon(promotion.type) }}</span>
+                </div>
+              </div>
+              <h4 class="promo-title">{{ promotion.title }}</h4>              
             </div>
           </article>
         </div>
@@ -165,8 +166,12 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { getTheme, setTheme } from '@/utils/theme'
+import { getDishImage } from '@/utils/dishImages'
 import logoImage from '@/assets/images/pages/logo.png'
+
+const router = useRouter()
 
 function promoIcon(type: string): string {
   const map: Record<string, string> = {
@@ -179,6 +184,10 @@ function promoIcon(type: string): string {
   return map[type] || 'redeem'
 }
 
+function promoImage(p: BootstrapPromotion): string | null {
+  return p.image || (p.dishId ? getDishImage(p.dishId) : null)
+}
+
 interface BootstrapPromotion {
   id: string
   title: string
@@ -187,6 +196,8 @@ interface BootstrapPromotion {
   tag?: string
   tone: 'primary' | 'neutral'
   image?: string | null
+  dishId?: string | null
+  itemIds: string[]
 }
 
 interface FeaturedItem {
@@ -216,6 +227,7 @@ interface BootstrapResponse {
   promotions: BootstrapPromotion[]
   featuredItems: FeaturedItem[]
   devices?: DeviceInfo[]
+  commands?: { id: string; command: string; params: string }[]
 }
 
 const bootstrap = ref<BootstrapResponse | null>(null)
@@ -293,6 +305,24 @@ async function loadBootstrap() {
   if (!response.ok) return
   const data = await response.json() as BootstrapResponse
   bootstrap.value = data
+
+  // 执行设备指令
+  if (data.commands?.length) {
+    for (const cmd of data.commands) {
+      if (cmd.command === 'clear_storage') {
+        localStorage.clear()
+        document.cookie.split(';').forEach((c) => {
+          document.cookie = c.replace(/^ +/, '').replace(/=.*/, `=;expires=${new Date(0).toUTCString()};path=/`)
+        })
+      }
+      // 标记已执行
+      fetch(`/api/commands/${cmd.id}/ack`, { method: 'POST' }).catch(() => {})
+    }
+    // 清除后刷新页面
+    if (data.commands.some((c) => c.command === 'clear_storage')) {
+      location.reload()
+    }
+  }
 
   // 无缓存设备码 → 显示认证弹窗
   if (!savedDeviceSN) {
@@ -531,30 +561,35 @@ onMounted(() => {
 .promo-card {
   position: relative;
   display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-lg);
-  padding: var(--spacing-lg);
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
   border-radius: var(--radius-xl);
   overflow: hidden;
 }
 
-.promo-card-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 100%);
-  z-index: 1;
+.promo-clickable { cursor: pointer; }
+.promo-clickable:active { transform: scale(0.97); transition: transform 0.1s; }
+
+.promo-thumb {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-lg);
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
-.promo-card > *:not(.promo-card-overlay) {
-  position: relative;
-  z-index: 2;
+.promo-body {
+  flex: 1;
+  min-width: 0;
 }
 
-.promo-card[style*="backgroundImage"] .promo-title,
-.promo-card[style*="backgroundImage"] .promo-subtitle { color: #fff; }
-.promo-card[style*="backgroundImage"] .promo-tag { color: rgba(255,255,255,0.8); }
-.promo-card[style*="backgroundImage"] .promo-icon-wrap { background: rgba(255,255,255,0.2); }
-.promo-card[style*="backgroundImage"] .promo-icon { color: #fff; }
+.promo-body-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-xs);
+}
 
 .promo-primary {
   background: rgba(255, 107, 0, 0.1);
@@ -570,21 +605,14 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-full);
   background: rgba(255, 107, 0, 0.15);
   flex-shrink: 0;
 }
 
-.promo-icon {
-  color: var(--primary-container);
-  font-size: 28px !important;
-}
-
-.promo-content {
-  flex: 1;
-}
+.promo-icon { font-size: 18px !important; color: var(--primary); }
 
 .promo-tag {
   margin: 0 0 var(--spacing-xs);
