@@ -147,7 +147,8 @@ const dishForm = ref({ name: '', price: 0, categoryId: '', desc: '', image: '', 
 
 const specsOptions = [
   { label: '无规格', value: 'none' },
-  { label: '烧烤（辣度+份量）', value: 'bbq' },
+  { label: '烧烤（辣度+口味+份量）', value: 'bbq' },
+  { label: '素菜（辣度+份量）', value: 'veg' },
   { label: '茶饮（甜度+温度+加料）', value: 'tea' },
   { label: '火锅（锅底+蘸料）', value: 'hotpot' },
   { label: '甜品（大小份+加料）', value: 'dessert' },

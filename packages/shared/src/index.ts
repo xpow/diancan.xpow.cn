@@ -19,7 +19,7 @@ export interface SpecGroup {
   options: SpecOption[]
 }
 
-export type SpecPreset = 'none' | 'tea' | 'bbq' | 'hotpot' | 'dessert'
+export type SpecPreset = 'none' | 'tea' | 'bbq' | 'veg' | 'hotpot' | 'dessert'
 
 export const SPECS_PRESETS: Record<SpecPreset, SpecGroup[] | null> = {
   none: null,
@@ -71,6 +71,32 @@ export const SPECS_PRESETS: Record<SpecPreset, SpecGroup[] | null> = {
         { label: '原味' },
         { label: '蒜香' },
         { label: '黑胡椒' },
+      ],
+    },
+    {
+      name: '串数',
+      type: 'single',
+      options: [
+        { label: 'x1' },
+        { label: 'x2' },
+        { label: 'x3' },
+        { label: 'x4' },
+        { label: 'x5' },
+        { label: 'x6' },
+        { label: 'x8' },
+        { label: 'x10' },
+      ],
+    },
+  ],
+  veg: [
+    {
+      name: '辣度',
+      type: 'single',
+      options: [
+        { label: '不辣' },
+        { label: '微辣' },
+        { label: '中辣' },
+        { label: '特辣' },
       ],
     },
     {
