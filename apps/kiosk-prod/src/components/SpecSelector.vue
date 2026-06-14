@@ -5,8 +5,8 @@
       <button
         v-for="opt in group.options"
         :key="opt.label"
-        :class="['selector-chip', modelValue === opt.label && 'selector-chip-active']"
-        @click="$emit('update:modelValue', opt.label)"
+        :class="['selector-chip', isSelected(opt.label) && 'selector-chip-active']"
+        @click="toggle(opt.label)"
       >
         <span v-if="group.name === '辣度'" class="chili-icons">{{ '🌶️'.repeat(getChiliCount(opt.label)) }}</span>
         {{ opt.label }}
@@ -19,15 +19,32 @@
 <script setup lang="ts">
 import type { SpecGroup } from '@diancan/shared'
 
-defineProps<{
+const props = defineProps<{
   group: SpecGroup
-  modelValue: string
+  modelValue: string | string[]
   size?: 'sm' | 'md'
 }>()
 
-defineEmits<{
-  'update:modelValue': [value: string]
+const emit = defineEmits<{
+  'update:modelValue': [value: string | string[]]
 }>()
+
+function isSelected(label: string): boolean {
+  if (Array.isArray(props.modelValue)) return props.modelValue.includes(label)
+  return props.modelValue === label
+}
+
+function toggle(label: string) {
+  if (props.group.type === 'multi') {
+    const arr = Array.isArray(props.modelValue) ? [...props.modelValue] : []
+    const idx = arr.indexOf(label)
+    if (idx > -1) arr.splice(idx, 1)
+    else arr.push(label)
+    emit('update:modelValue', arr)
+  } else {
+    emit('update:modelValue', label)
+  }
+}
 
 function getChiliCount(label: string): number {
   if (label.includes('不辣')) return 0

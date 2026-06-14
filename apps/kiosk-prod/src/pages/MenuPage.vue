@@ -227,7 +227,7 @@ interface Dish {
   price: number; desc: string; image: string; tags?: string[]
   specsPreset?: SpecPreset
   specGroups?: SpecGroup[]
-  selectedLabels?: string[]
+  selectedLabels?: (string | string[])[]
   promotionId?: string; promoPrice?: number; promotionName?: string
 }
 
@@ -334,10 +334,11 @@ const cartTotal = computed(() => {
 const cartDishIds = computed(() => new Set(cartItems.value.map((i) => i.dishId)))
 const filteredDishes = computed(() => dishes.value.filter(d => d.categoryId === selectedCategoryId.value))
 
-function initSpecs(preset: SpecPreset): { groups: SpecGroup[]; defaults: string[] } | null {
+function initSpecs(preset: SpecPreset): { groups: SpecGroup[]; defaults: (string | string[])[] } | null {
   const specDefs = SPECS_PRESETS[preset]
   if (!specDefs || specDefs.length === 0) return null
   const defaults = specDefs.map((g) => {
+    if (g.type === 'multi') return [g.options[0]?.label ?? ''].filter(Boolean)
     if (g.name === '辣度') return g.options[1]?.label ?? g.options[0]?.label ?? ''
     return g.options[0]?.label ?? ''
   })
@@ -400,12 +401,14 @@ function addToCart(dish: Dish) {
   let qty = 1
   if (dish.selectedLabels) {
     for (let gi = 0; gi < dish.selectedLabels.length; gi++) {
-      const label = dish.selectedLabels[gi]
-      if (!label) continue
-      if (gi === qtyGroupIndex) {
-        qty = parseInt(label.replace(/^x/i, '')) || 1
+      const val = dish.selectedLabels[gi]
+      if (!val) continue
+      if (Array.isArray(val)) {
+        specsParts.push(val.join('+'))
+      } else if (gi === qtyGroupIndex) {
+        qty = parseInt(val.replace(/^x/i, '')) || 1
       } else {
-        specsParts.push(label)
+        specsParts.push(val)
       }
     }
   }
