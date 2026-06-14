@@ -530,7 +530,7 @@ onMounted(() => {
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 .material-icons { font-family: 'Material Symbols Outlined'; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 24px; line-height: 1; }
 .page { min-height: 100vh; background: var(--surface); padding-bottom: 180px; }
-.top-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-sm) var(--container-margin); background: var(--frosted-bg); backdrop-filter: blur(12px); }
+.top-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-sm) var(--container-margin); background: var(--surface); }
 .brand { display: flex; align-items: center; gap: var(--spacing-sm); }
 .brand-logo { height: 32px; width: auto; border-radius: var(--radius-sm); }
 .brand h1 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-lg-mobile); font-weight: 700; color: var(--primary-container); text-transform: uppercase; }

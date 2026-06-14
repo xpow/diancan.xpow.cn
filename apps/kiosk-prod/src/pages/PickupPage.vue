@@ -348,9 +348,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-sm) var(--container-margin);
-  background: var(--frosted-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--surface);
 }
 
 .brand { display: flex; align-items: center; gap: var(--spacing-sm); }
