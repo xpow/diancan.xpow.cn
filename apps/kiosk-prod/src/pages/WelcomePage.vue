@@ -699,6 +699,12 @@ onMounted(() => {
   opacity: 0.6;
 }
 
+@media (min-width: 500px) {
+  .page-content { max-width: none; }
+  .promo-list { display: grid; grid-template-columns: 1fr 1fr; }
+  .featured-scroll { display: grid; grid-template-columns: 1fr 1fr; }
+}
+
 /* Bottom Navigation */
 .bottom-nav {
   position: fixed;
