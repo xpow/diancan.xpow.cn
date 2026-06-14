@@ -49,8 +49,8 @@
           <article
             v-for="promotion in bootstrap.promotions"
             :key="promotion.id"
-            :class="['promo-card', promotion.tone === 'primary' ? 'promo-primary' : 'promo-default', promotion.itemIds.length ? 'promo-clickable' : '']"
-            @click="promotion.itemIds.length && router.push(`/menu?dishId=${promotion.itemIds[0]}`)"
+            :class="['promo-card', promotion.tone === 'primary' ? 'promo-primary' : 'promo-default', 'promo-clickable']"
+            @click="router.push(promotion.itemIds.length ? `/menu?dishId=${promotion.itemIds[0]}` : '/menu')"
           >
             <img v-if="promoImage(promotion)" :src="promoImage(promotion)!" class="promo-thumb" />
             <div class="promo-body">
