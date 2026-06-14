@@ -74,11 +74,12 @@
         </div>
         <div class="featured-scroll">
           <article
-            v-for="item in bootstrap.featuredItems"
+            v-for="(item, index) in bootstrap.featuredItems"
             :key="item.id"
             class="featured-card"
           >
             <div class="featured-image" :class="item.badgeTone === 'hot' ? 'badge-hot' : 'badge-new'">
+              <img :src="index === 0 ? featuredImg1 : featuredImg2" alt="" class="featured-img-el" />
               <span class="featured-badge">{{ item.badge }}</span>
             </div>
             <div class="featured-body">
@@ -170,6 +171,8 @@ import { useRouter } from 'vue-router'
 import { getTheme, setTheme } from '@/utils/theme'
 import { getDishImage } from '@/utils/dishImages'
 import logoImage from '@/assets/images/pages/logo.png'
+import featuredImg1 from '@/assets/images/pages/zp-1.png'
+import featuredImg2 from '@/assets/images/pages/zp-2.png'
 
 const router = useRouter()
 
@@ -660,7 +663,12 @@ onMounted(() => {
 .featured-image {
   position: relative;
   height: 160px;
-  background: linear-gradient(135deg, #2a1200 0%, #8f3700 100%);
+  overflow: hidden;
+}
+.featured-img-el {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .badge-hot {
