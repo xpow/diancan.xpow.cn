@@ -531,7 +531,7 @@ onMounted(() => {
 .promo-card {
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--spacing-lg);
   padding: var(--spacing-lg);
   border-radius: var(--radius-xl);
@@ -602,6 +602,7 @@ onMounted(() => {
   font-size: var(--text-headline-lg);
   font-weight: 700;
   color: var(--primary);
+  line-height: 1.4;
 }
 
 .promo-subtitle {
