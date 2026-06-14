@@ -68,6 +68,15 @@ export const SPECS_PRESETS: Record<SpecPreset, SpecGroup[] | null> = {
       ],
     },
     {
+      name: '口味',
+      type: 'multi',
+      options: [
+        { label: '原味' },
+        { label: '蒜香' },
+        { label: '黑胡椒' },
+      ],
+    },
+    {
       name: '串数',
       type: 'single',
       options: [
@@ -79,15 +88,6 @@ export const SPECS_PRESETS: Record<SpecPreset, SpecGroup[] | null> = {
         { label: 'x6' },
         { label: 'x8' },
         { label: 'x10' },
-      ],
-    },
-    {
-      name: '口味',
-      type: 'multi',
-      options: [
-        { label: '原味' },
-        { label: '蒜香' },
-        { label: '黑胡椒' },
       ],
     },
   ],

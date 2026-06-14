@@ -252,7 +252,7 @@ const cartItems = ref<StoredCartItem[]>([])
 const cartQuote = ref<QuoteResponse | null>(null)
 let quoteTimer: ReturnType<typeof setTimeout> | undefined
 
-const qtyGroupIndex = 1
+const qtyGroupIndex = 2
 
 watch(showCart, (val) => {
   if (val) debouncedFetchQuote()
