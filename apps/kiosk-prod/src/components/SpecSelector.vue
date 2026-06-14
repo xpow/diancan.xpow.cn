@@ -36,10 +36,18 @@ function isSelected(label: string): boolean {
 
 function toggle(label: string) {
   if (props.group.type === 'multi') {
-    const arr = Array.isArray(props.modelValue) ? [...props.modelValue] : []
+    let arr = Array.isArray(props.modelValue) ? [...props.modelValue] : []
     const idx = arr.indexOf(label)
-    if (idx > -1) arr.splice(idx, 1)
-    else arr.push(label)
+    if (idx > -1) {
+      arr.splice(idx, 1)
+    } else {
+      if (props.group.name === '口味') {
+        if (label === '原味') { arr = ['原味'] }
+        else { arr = arr.filter((v) => v !== '原味'); arr.push(label) }
+      } else {
+        arr.push(label)
+      }
+    }
     emit('update:modelValue', arr)
   } else {
     emit('update:modelValue', label)
