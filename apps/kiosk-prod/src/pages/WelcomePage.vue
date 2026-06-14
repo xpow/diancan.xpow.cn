@@ -1,8 +1,5 @@
 ﻿<template>
-  <main class="page">
-    <template v-if="deviceAuthed">
-    <!-- Top Bar -->
-    <header class="top-bar">
+  <header class="top-bar" v-if="deviceAuthed">
       <div class="brand">
         <img :src="logoImage" alt="Logo" class="brand-logo" />
         <h1>{{ displayTitle }}</h1>
@@ -14,8 +11,9 @@
       <button class="theme-btn" @click="themeIcon = doToggleTheme()" :title="themeTooltip">
         <span class="material-icons">{{ themeIcon }}</span>
       </button>
-    </header>
-
+  </header>
+  <main class="page">
+    <template v-if="deviceAuthed">
     <!-- Hero Carousel -->
     <section class="hero-section">
       <van-swipe class="hero-swipe" :autoplay="4000" indicator-color="#fff" :height="280">
@@ -793,7 +791,7 @@ onMounted(() => {
 }
 
 @media (min-width: 500px) {
-  .hero-section { max-width: none; margin: 0; padding: 0; height: 360px; overflow: hidden; }
+  .hero-section { max-width: none; height: 360px; overflow: hidden; }
   .hero-swipe { border-radius: 0; height: 360px !important; }
   :deep(.hero-swipe .van-swipe__track),
   :deep(.van-swipe-item) { height: 360px !important; }
