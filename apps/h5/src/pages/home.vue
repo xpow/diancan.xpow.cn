@@ -269,6 +269,11 @@ function doLocate() {
 .section-more { font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--primary-container); }
 
 .promo-list { display: flex; flex-direction: column; gap: 16px; }
+@media (min-width: 500px) {
+  .promo-list { display: grid; grid-template-columns: 1fr 1fr; }
+  .specials-list { display: grid; grid-template-columns: 1fr 1fr; }
+  .site-footer { padding-bottom: 24px; }
+}
 .promo-card { border-radius: 12px; overflow: hidden; }
 .promo-card.discount { display: flex; align-items: center; gap: 16px; background: rgba(255, 107, 0, 0.06); border: 1px solid rgba(255, 107, 0, 0.2); padding: 24px; }
 .promo-icon-wrap { padding: 12px; background: rgba(255, 107, 0, 0.12); border-radius: 50%; }
