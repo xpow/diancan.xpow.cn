@@ -352,7 +352,6 @@ onMounted(() => {
 
 .page {
   min-height: 100vh;
-  padding-top: 56px;
   padding-bottom: 100px;
   background: var(--surface);
 }
@@ -441,6 +440,7 @@ onMounted(() => {
 
 /* Hero Section */
 .hero-section {
+  margin-top: 56px;
   padding: var(--spacing-md);
   max-width: 600px;
   margin-left: auto;
@@ -791,7 +791,7 @@ onMounted(() => {
 }
 
 @media (min-width: 500px) {
-  .hero-section { max-width: none; margin: 0; padding: 0; height: 360px; overflow: hidden; }
+  .hero-section { max-width: none; margin: 56px 0 0; padding: 0; height: 360px; overflow: hidden; }
   .hero-swipe { border-radius: 0; height: 360px !important; }
   :deep(.hero-swipe .van-swipe__track),
   :deep(.van-swipe-item) { height: 360px !important; }
