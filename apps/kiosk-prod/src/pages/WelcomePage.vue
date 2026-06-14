@@ -173,6 +173,10 @@ import { getDishImage } from '@/utils/dishImages'
 import logoImage from '@/assets/images/pages/logo.png'
 import featuredImg1 from '@/assets/images/pages/zp-1.png'
 import featuredImg2 from '@/assets/images/pages/zp-2.png'
+import lb1 from '@/assets/images/pages/lb-1.png'
+import lb2 from '@/assets/images/pages/lb-2.png'
+import lb3 from '@/assets/images/pages/lb-3.png'
+import lb4 from '@/assets/images/pages/lb-4.png'
 
 const router = useRouter()
 
@@ -241,9 +245,7 @@ const displayTitle = computed(() => {
   return m && b ? `${m}（${b}）` : m || b || 'Sizzling Skewers'
 })
 const heroImages = [
-  'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=80',
-  'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=800&q=80',
-  'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=80',
+  lb1, lb2, lb3, lb4,
 ]
 
 /* Device SN auth */
