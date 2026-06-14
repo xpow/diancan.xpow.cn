@@ -369,7 +369,9 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-sm) var(--container-margin);
-  background: var(--surface);
+  background: var(--frosted-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .brand {
@@ -440,7 +442,7 @@ onMounted(() => {
 
 /* Hero Section */
 .hero-section {
-  margin-top: 80px;
+  margin-top: 120px;
   padding: var(--spacing-md);
   max-width: 600px;
   margin-left: auto;
