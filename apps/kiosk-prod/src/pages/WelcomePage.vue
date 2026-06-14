@@ -700,8 +700,10 @@ onMounted(() => {
 }
 
 @media (min-width: 500px) {
-  .hero-section { max-width: none; margin: 0; padding: 0; }
+  .hero-section { max-width: none; margin: 0; padding: 0; height: 360px; overflow: hidden; }
   .hero-swipe { border-radius: 0; height: 360px !important; }
+  :deep(.hero-swipe .van-swipe__track),
+  :deep(.van-swipe-item) { height: 360px !important; }
   .page-content { max-width: none; }
   .promo-list { display: grid; grid-template-columns: 1fr 1fr; }
   .featured-scroll { display: grid; grid-template-columns: 1fr 1fr; }
