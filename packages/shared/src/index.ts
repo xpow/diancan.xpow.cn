@@ -34,17 +34,14 @@ export const SPECS_PRESETS: Record<SpecPreset, SpecGroup[] | null> = {
         { label: '无糖' },
       ],
     },
-    {
-      name: '温度',
-      type: 'single',
-      options: [
-        { label: '热饮' },
-        { label: '温' },
-        { label: '常温' },
-        { label: '少冰' },
-        { label: '多冰' },
-      ],
-    },
+      {
+        name: '温度',
+        type: 'single',
+        options: [
+          { label: '冰镇' },
+          { label: '常温' },
+        ],
+      },
     {
       name: '加料',
       type: 'multi',
