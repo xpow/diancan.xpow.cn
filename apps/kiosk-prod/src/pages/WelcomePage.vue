@@ -26,10 +26,16 @@
       <div class="hero-overlay">
         <h2 class="hero-title">{{ displayTitle }}</h2>
         <p class="hero-summary">{{ bootstrap?.slogan || '地道炭火 · 鲜嫩多汁 · 现烤现卖' }}</p>
-        <router-link to="/menu" class="hero-cta">
-          <span>开始点餐</span>
-          <span class="material-icons">arrow_forward</span>
-        </router-link>
+        <div class="hero-actions">
+          <router-link to="/menu" class="hero-cta">
+            <span>开始点餐</span>
+            <span class="material-icons">arrow_forward</span>
+          </router-link>
+          <router-link to="/orders" class="hero-cta secondary">
+            <span>查看订单</span>
+            <span class="material-icons">receipt_long</span>
+          </router-link>
+        </div>
       </div>
     </section>
 
@@ -445,12 +451,25 @@ onMounted(() => {
   transition: transform var(--transition-fast);
 }
 
+.hero-cta.secondary {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(8px);
+  box-shadow: none;
+}
+
 .hero-cta:active {
   transform: scale(0.98);
 }
 
 .hero-cta .material-icons {
   font-size: 20px !important;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 12px;
 }
 
 /* Page Content */
