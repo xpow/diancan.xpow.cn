@@ -791,7 +791,7 @@ onMounted(() => {
 }
 
 @media (min-width: 500px) {
-  .hero-section { max-width: none; height: 360px; overflow: hidden; }
+  .hero-section { max-width: none; margin: 0; padding: 0; height: 360px; overflow: hidden; }
   .hero-swipe { border-radius: 0; height: 360px !important; }
   :deep(.hero-swipe .van-swipe__track),
   :deep(.van-swipe-item) { height: 360px !important; }
