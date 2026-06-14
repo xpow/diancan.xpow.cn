@@ -152,6 +152,7 @@ const specsOptions = [
   { label: '茶饮（甜度+温度+加料）', value: 'tea' },
   { label: '火锅（锅底+蘸料）', value: 'hotpot' },
   { label: '甜品（大小份+加料）', value: 'dessert' },
+  { label: '冷饮（温度）', value: 'drink' },
 ]
 
 function specsLabel(v: string) {

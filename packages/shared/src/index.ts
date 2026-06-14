@@ -19,7 +19,7 @@ export interface SpecGroup {
   options: SpecOption[]
 }
 
-export type SpecPreset = 'none' | 'tea' | 'bbq' | 'veg' | 'hotpot' | 'dessert'
+export type SpecPreset = 'none' | 'tea' | 'bbq' | 'veg' | 'hotpot' | 'dessert' | 'drink'
 
 export const SPECS_PRESETS: Record<SpecPreset, SpecGroup[] | null> = {
   none: null,
@@ -50,6 +50,16 @@ export const SPECS_PRESETS: Record<SpecPreset, SpecGroup[] | null> = {
         { label: '椰果', priceDelta: 2 },
         { label: '布丁', priceDelta: 3 },
         { label: '奶盖', priceDelta: 4 },
+      ],
+    },
+  ],
+  drink: [
+    {
+      name: '温度',
+      type: 'single',
+      options: [
+        { label: '冰镇' },
+        { label: '常温' },
       ],
     },
   ],
