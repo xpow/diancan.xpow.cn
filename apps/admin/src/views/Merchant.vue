@@ -203,6 +203,7 @@ const branchForm = ref({ code: '', name: '', address: '', todayLocation: '', loc
 const devices = ref<any[]>([])
 const showDevice = ref(false)
 const editingDevice = ref(false)
+const editingDeviceId = ref('')
 const deviceForm = ref({ code: '', name: '', contact: '', mode: 'kiosk', branchId: '' })
 
 const showCommand = ref(false)
@@ -269,6 +270,7 @@ async function fetchDevices() {
 
 function openDeviceDialog(device?: any) {
   editingDevice.value = !!device
+  editingDeviceId.value = device?.id ?? ''
   deviceForm.value = device
     ? { code: device.code || '', name: device.name, contact: device.contact || '', mode: device.mode, branchId: device.branchId }
     : { code: '', name: '', contact: '', mode: 'kiosk', branchId: branches.value[0]?.id || '' }
@@ -277,7 +279,7 @@ function openDeviceDialog(device?: any) {
 
 async function saveDevice() {
   const url = editingDevice.value
-    ? `/api/admin/devices/${(devices.value.find((d) => d.name === deviceForm.value.name)?.id)}`
+    ? `/api/admin/devices/${editingDeviceId.value}`
     : '/api/admin/devices'
   await fetch(url, {
     method: editingDevice.value ? 'PUT' : 'POST',
