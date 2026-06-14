@@ -354,6 +354,7 @@ onMounted(() => {
 
 .page {
   min-height: 100vh;
+  padding-top: 56px;
   padding-bottom: 100px;
   background: var(--surface);
 }
@@ -442,7 +443,6 @@ onMounted(() => {
 
 /* Hero Section */
 .hero-section {
-  margin-top: 120px;
   padding: var(--spacing-md);
   max-width: 600px;
   margin-left: auto;

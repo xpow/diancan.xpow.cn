@@ -529,7 +529,7 @@ onMounted(() => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 .material-icons { font-family: 'Material Symbols Outlined'; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 24px; line-height: 1; }
-.page { min-height: 100vh; background: var(--surface); padding-bottom: 180px; }
+.page { min-height: 100vh; background: var(--surface); padding-top: 56px; padding-bottom: 180px; }
 .top-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-sm) var(--container-margin); background: var(--frosted-bg); backdrop-filter: blur(12px); }
 .brand { display: flex; align-items: center; gap: var(--spacing-sm); }
 .brand-logo { height: 32px; width: auto; border-radius: var(--radius-sm); }
@@ -540,7 +540,7 @@ onMounted(() => {
 .theme-btn .material-icons { font-size: 22px !important; }
 .theme-btn:hover { background: var(--surface-container-high); }
 .badge-dot { position: absolute; top: 2px; right: 2px; background: var(--error); color: #fff; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; padding: 0 3px; border: 1.5px solid var(--surface); }
-.page-content { padding: 70px var(--container-margin) var(--spacing-lg); max-width: 600px; margin: 0 auto; }
+.page-content { padding: var(--spacing-md) var(--container-margin) var(--spacing-lg); max-width: 600px; margin: 0 auto; }
 .featured-banner { position: relative; width: 100%; aspect-ratio: 4 / 1; border-radius: var(--radius-xl); overflow: hidden; margin-bottom: var(--spacing-lg); }
 .featured-img { width: 100%; height: 100%; object-fit: cover; }
 .featured-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: var(--spacing-md); background: linear-gradient(to top, rgba(0,0,0,0.6), transparent); }
