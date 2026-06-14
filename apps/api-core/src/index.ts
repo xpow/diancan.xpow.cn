@@ -30,14 +30,15 @@ app.get('/api/system/bootstrap', async (_req, res) => {
   const branch = await prisma.branch.findFirst({ where: { merchantId: merchant.id } })
   const device = await prisma.device.findFirst({ where: { branchId: branch?.id } })
   const allDevices = branch ? await prisma.device.findMany({ where: { branchId: branch.id, status: 'active' } }) : []
-  const banners = await prisma.promotionBanner.findMany({
-    where: { merchantId: merchant.id, active: true },
-    orderBy: { sort: 'asc' },
-  })
   const features = JSON.parse(merchant.features)
   const featuredItems = await prisma.featuredItem.findMany({
     where: { merchantId: merchant.id, active: true },
     orderBy: { sort: 'asc' },
+  })
+
+  const activePromotions = await prisma.promotion.findMany({
+    where: { merchantId: merchant.id, status: 'active' },
+    include: { items: true },
   })
 
   res.json({
@@ -56,13 +57,31 @@ app.get('/api/system/bootstrap', async (_req, res) => {
     locationHint: branch?.locationHint ?? '',
     statusText: merchant.statusText,
     features,
-    promotions: banners.map((b) => ({
-      id: b.id,
-      title: b.title,
-      subtitle: b.subtitle,
-      tag: b.tag,
-      tone: b.tone,
-    })),
+    promotions: activePromotions
+      .filter((p) => ['full_reduction', 'welfare_item', 'time_discount', 'new_user', 'holiday_gift'].includes(p.type))
+      .map((p) => {
+        const rules = JSON.parse(p.rules)
+        let subtitle = ''
+        if (p.type === 'full_reduction') subtitle = `满¥${rules.threshold}减¥${rules.discount}`
+        else if (p.type === 'welfare_item') subtitle = `指定商品福利价`
+        else if (p.type === 'time_discount') {
+          const rate = rules.discountRate ?? 1
+        else if (p.type === 'time_discount') {
+          const rate = rules.discountRate
+          const discountLabels: Record<number, string> = { 0.1: '1折', 0.2: '2折', 0.3: '3折', 0.4: '4折', 0.5: '5折', 0.6: '6折', 0.7: '7折', 0.8: '8折', 0.85: '85折', 0.9: '9折' }
+          const label = rate ? discountLabels[rate] || '' : ''
+          subtitle = label ? `指定商品${label}` : ''
+        }
+          subtitle = `指定商品${label}`
+        }
+        return {
+          id: p.id,
+          title: p.name,
+          subtitle,
+          tag: p.type === 'time_discount' ? '限时' : p.type === 'new_user' ? '新人' : p.type === 'holiday_gift' ? '节日' : '活动',
+          tone: p.type === 'full_reduction' || p.type === 'time_discount' ? 'primary' as const : 'neutral' as const,
+        }
+      }),
     featuredItems: featuredItems.map((f) => ({
       id: f.id,
       title: f.title,
