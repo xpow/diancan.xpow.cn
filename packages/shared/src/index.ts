@@ -67,17 +67,20 @@ export const SPECS_PRESETS: Record<SpecPreset, SpecGroup[] | null> = {
         { label: '特辣' },
       ],
     },
-    {
-      name: '串数',
-      type: 'single',
-      options: [
-        { label: 'x2' },
-        { label: 'x3' },
-        { label: 'x5' },
-        { label: 'x6' },
-        { label: 'x10' },
-      ],
-    },
+      {
+        name: '串数',
+        type: 'single',
+        options: [
+          { label: 'x1' },
+          { label: 'x2' },
+          { label: 'x3' },
+          { label: 'x4' },
+          { label: 'x5' },
+          { label: 'x6' },
+          { label: 'x8' },
+          { label: 'x10' },
+        ],
+      },
   ],
   hotpot: [
     {
