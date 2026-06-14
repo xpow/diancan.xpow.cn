@@ -81,6 +81,19 @@ export const SPECS_PRESETS: Record<SpecPreset, SpecGroup[] | null> = {
           { label: 'x10' },
         ],
       },
+      {
+        name: '口味',
+        type: 'single',
+        options: [
+          { label: '原味' },
+          { label: '蒜香' },
+          { label: '黑胡椒' },
+          { label: '香辣' },
+          { label: '蜜汁' },
+        ],
+      },
+    ],
+  },
   ],
   hotpot: [
     {
