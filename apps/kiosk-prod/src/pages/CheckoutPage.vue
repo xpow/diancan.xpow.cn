@@ -497,6 +497,7 @@ onMounted(() => {
   font-family: var(--font-display);
   font-size: var(--text-headline-lg-mobile);
   font-weight: 700;
+  line-height: 1.3;
   color: var(--primary-container);
   text-transform: uppercase;
 }
@@ -579,6 +580,7 @@ onMounted(() => {
   font-family: var(--font-display);
   font-size: var(--text-headline-md);
   font-weight: 700;
+  line-height: 1.3;
   color: #fff;
 }
 
@@ -685,7 +687,7 @@ onMounted(() => {
 }
 
 .success-icon {
-  font-size: 32px !important;
+  font-size: 40px !important;
   color: var(--tertiary);
 }
 
@@ -694,6 +696,7 @@ onMounted(() => {
   font-family: var(--font-display);
   font-size: var(--text-headline-lg);
   font-weight: 700;
+  line-height: 1.3;
   color: var(--tertiary);
 }
 
@@ -715,6 +718,7 @@ onMounted(() => {
   font-family: var(--font-display);
   font-size: var(--text-label-lg);
   font-weight: 600;
+  line-height: 1.4;
   color: var(--secondary);
 }
 
@@ -723,6 +727,7 @@ onMounted(() => {
   font-family: var(--font-display);
   font-size: var(--text-headline-lg);
   font-weight: 700;
+  line-height: 1.3;
   color: var(--on-surface);
 }
 
@@ -761,6 +766,7 @@ onMounted(() => {
   font-family: var(--font-display);
   font-size: var(--text-headline-md);
   font-weight: 700;
+  line-height: 1.3;
   color: var(--on-surface);
 }
 
@@ -800,6 +806,7 @@ onMounted(() => {
   font-family: var(--font-display);
   font-size: var(--text-label-lg);
   font-weight: 600;
+  line-height: 1.4;
   color: var(--on-surface);
 }
 
@@ -823,6 +830,7 @@ onMounted(() => {
   font-family: var(--font-display);
   font-size: var(--text-price-display);
   font-weight: 800;
+  line-height: 1.2;
   color: var(--primary-container);
 }
 
@@ -863,6 +871,7 @@ onMounted(() => {
   margin-bottom: var(--spacing-sm);
   font-family: var(--font-body);
   font-size: var(--text-body-md);
+  line-height: 1.5;
   color: var(--secondary);
 }
 
@@ -887,6 +896,7 @@ onMounted(() => {
   font-family: var(--font-display);
   font-size: var(--text-headline-md);
   font-weight: 700;
+  line-height: 1.3;
   color: var(--on-surface);
 }
 
@@ -987,13 +997,13 @@ onMounted(() => {
   gap: var(--spacing-sm);
   flex: 1;
   max-width: 200px;
-  padding: var(--spacing-md) var(--spacing-xl);
+  padding: var(--spacing-lg) var(--spacing-xl);
   border: none;
   border-radius: var(--radius-full);
   background: var(--primary-container);
   color: var(--on-primary);
   font-family: var(--font-display);
-  font-size: var(--text-headline-md);
+  font-size: 22px;
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 8px 20px rgba(255, 107, 0, 0.15);
@@ -1096,8 +1106,8 @@ onMounted(() => {
 }
 .popup-header { margin-bottom: var(--spacing-lg); }
 .popup-icon .material-icons { font-size: 48px; color: var(--primary-container); }
-.popup-header h3 { margin: var(--spacing-sm) 0 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; }
-.popup-amount { font-family: var(--font-display); font-size: var(--text-display-lg); font-weight: 800; color: var(--primary-container); margin: var(--spacing-sm) 0 0; }
+.popup-header h3 { margin: var(--spacing-sm) 0 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; line-height: 1.3; }
+.popup-amount { font-family: var(--font-display); font-size: var(--text-display-lg); font-weight: 800; color: var(--primary-container); margin: var(--spacing-sm) 0 0; line-height: 1.2; }
 .popup-qr {
   width: 260px; height: 260px; margin: 0 auto var(--spacing-lg);
   background: var(--surface-container-low); border-radius: var(--radius-lg);
@@ -1105,11 +1115,11 @@ onMounted(() => {
   overflow: hidden;
 }
 .qr-img { width: 100%; height: 100%; object-fit: contain; }
-.popup-hint { font-size: var(--text-body-sm); color: var(--secondary); margin-bottom: var(--spacing-lg); }
-.popup-error { color: var(--error); font-size: var(--text-body-sm); margin-bottom: var(--spacing-md); padding: 8px; background: var(--error-container); border-radius: var(--radius-md); }
+.popup-hint { font-size: var(--text-body-sm); line-height: 1.5; color: var(--secondary); margin-bottom: var(--spacing-lg); }
+.popup-error { color: var(--error); font-size: var(--text-body-sm); line-height: 1.5; margin-bottom: var(--spacing-md); padding: 8px; background: var(--error-container); border-radius: var(--radius-md); }
 .popup-paid-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm);
-  width: 100%; padding: var(--spacing-md);
+  width: 100%; padding: var(--spacing-lg);
   border: none; border-radius: var(--radius-full);
   background: var(--primary-container); color: var(--on-primary);
   font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700;

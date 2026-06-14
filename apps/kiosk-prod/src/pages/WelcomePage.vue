@@ -385,6 +385,7 @@ onMounted(() => {
   font-family: var(--font-display);
   font-size: var(--text-headline-lg-mobile);
   font-weight: 700;
+  line-height: 1.3;
   color: var(--primary-container);
   text-transform: uppercase;
   letter-spacing: -0.01em;
@@ -470,15 +471,15 @@ onMounted(() => {
   font-size: var(--text-display-lg);
   font-weight: 800;
   color: #fff;
-  line-height: 40px;
+  line-height: 1.3;
 }
 
 .hero-summary {
   margin: 0 0 var(--spacing-lg);
   font-family: var(--font-body);
   font-size: var(--text-body-lg);
+  line-height: 1.5;
   color: rgba(255, 255, 255, 0.86);
-  line-height: 24px;
 }
 
 .hero-cta {
@@ -487,7 +488,7 @@ onMounted(() => {
   justify-content: center;
   gap: var(--spacing-sm);
   width: 100%;
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: var(--spacing-lg) var(--spacing-xl);
   border-radius: var(--radius-full);
   background: var(--primary-container);
   color: var(--on-primary);
@@ -512,7 +513,7 @@ onMounted(() => {
 }
 
 .hero-cta .material-icons {
-  font-size: 20px !important;
+  font-size: 24px !important;
 }
 
 .hero-actions {
@@ -544,6 +545,7 @@ onMounted(() => {
   font-family: var(--font-display);
   font-size: var(--text-headline-lg);
   font-weight: 700;
+  line-height: 1.3;
   color: var(--on-surface);
 }
 
@@ -709,6 +711,7 @@ onMounted(() => {
   font-family: var(--font-display);
   font-size: var(--text-headline-md);
   font-weight: 700;
+  line-height: 1.3;
   color: var(--on-surface);
 }
 
@@ -724,8 +727,8 @@ onMounted(() => {
   margin: 0;
   font-family: var(--font-body);
   font-size: var(--text-body-md);
+  line-height: 1.5;
   color: var(--secondary);
-  line-height: 20px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -755,6 +758,7 @@ onMounted(() => {
   font-family: var(--font-display);
   font-size: var(--text-label-lg);
   font-weight: 600;
+  line-height: 1.4;
   color: var(--secondary);
 }
 
@@ -763,6 +767,7 @@ onMounted(() => {
   font-family: var(--font-display);
   font-size: var(--text-headline-md);
   font-weight: 700;
+  line-height: 1.3;
   color: var(--on-surface);
 }
 
@@ -770,6 +775,7 @@ onMounted(() => {
   margin: var(--spacing-sm) 0 0;
   font-family: var(--font-body);
   font-size: var(--text-body-md);
+  line-height: 1.5;
   color: var(--on-surface-variant);
 }
 
@@ -902,7 +908,7 @@ onMounted(() => {
 .sn-error { color: var(--danger, #e53935); font-size: var(--text-body-sm); margin: 0 0 var(--spacing-md); text-align: center; }
 .device-confirm-btn {
   width: 100%;
-  padding: var(--spacing-md);
+  padding: var(--spacing-lg);
   border: none;
   border-radius: var(--radius-full);
   background: var(--primary-container);
@@ -925,7 +931,7 @@ onMounted(() => {
 
   .hero-title {
     font-size: var(--text-headline-lg);
-    line-height: 32px;
+    line-height: 1.3;
   }
 
   .info-grid {

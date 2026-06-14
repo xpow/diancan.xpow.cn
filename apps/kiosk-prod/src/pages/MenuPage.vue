@@ -549,8 +549,8 @@ onMounted(() => {
 .featured-tag { width: fit-content; padding: 4px 8px; margin-bottom: var(--spacing-xs); border-radius: var(--radius-full); background: var(--primary-container); color: var(--on-primary); font-family: var(--font-display); font-size: 10px; font-weight: 700; }
 .featured-overlay h2 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: #fff; }
 .category-nav { display: flex; justify-content: center; gap: var(--spacing-sm); padding: var(--spacing-md) 0; position: sticky; top: 56px; z-index: 40; }
-.category-pill { display: flex; align-items: center; gap: var(--spacing-xs); padding: var(--spacing-sm) var(--spacing-lg); border: none; border-radius: var(--radius-full); background: var(--surface-container-high); color: var(--on-surface-variant); font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; cursor: pointer; transition: all var(--transition-fast); }
-.category-pill .material-icons { font-size: 18px !important; }
+.category-pill { display: flex; align-items: center; gap: var(--spacing-xs); padding: var(--spacing-md) var(--spacing-xl); border: none; border-radius: var(--radius-full); background: var(--surface-container-high); color: var(--on-surface-variant); font-family: var(--font-display); font-size: 19px; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); }
+.category-pill .material-icons { font-size: 22px !important; }
 .category-pill-active { background: var(--primary-container); color: var(--on-primary); }
 .status-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-md); padding: var(--spacing-xl); margin-top: var(--spacing-lg); border-radius: var(--radius-xl); background: var(--surface-container-low); }
 .status-card .material-icons { font-size: 48px !important; }
@@ -575,12 +575,12 @@ onMounted(() => {
 .dish-image { width: 100%; height: 200px; border-radius: var(--radius-lg); object-fit: cover; }
 .dish-body { display: flex; flex-direction: column; }
 .dish-header { display: flex; align-items: center; gap: var(--spacing-sm); flex-wrap: wrap; margin-bottom: var(--spacing-xs); }
-.dish-name { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: var(--on-surface); }
+.dish-name { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; line-height: 1.3; color: var(--on-surface); }
 .dish-tag { padding: 2px 8px; border-radius: var(--radius-full); background: rgba(255, 107, 0, 0.1); color: var(--primary-container); font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; }
-.dish-desc { margin: 0 0 var(--spacing-sm); font-family: var(--font-body); font-size: var(--text-body-md); color: var(--secondary); line-height: 20px; flex: 1; }
-.dish-price-row { display: flex; align-items: center; gap: var(--spacing-sm); }
+.dish-desc { margin: 0 0 var(--spacing-sm); font-family: var(--font-body); font-size: var(--text-body-md); line-height: 1.5; color: var(--secondary); flex: 1; }
+.dish-price-row { display: flex; align-items: center; gap: var(--spacing-sm); margin-top: var(--spacing-xs); }
 .dish-price { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: var(--primary-container); }
-.dish-price-original { font-size: 13px; font-weight: 600; color: var(--secondary); text-decoration: line-through; }
+.dish-price-original { font-size: 20px; font-weight: 600; color: var(--secondary); text-decoration: line-through; }
 .dish-promo-price { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: var(--primary-container); }
 .dish-promo-tag { display: inline-block; padding: 1px 8px; border-radius: 4px; background: var(--primary-container); color: var(--on-primary); font-family: var(--font-display); font-size: 11px; font-weight: 700; }
 .dish-specs { margin-top: var(--spacing-md); padding-top: var(--spacing-md); padding-bottom: var(--spacing-sm); border-top: 1px solid var(--card-border-subtle); display: flex; flex-direction: column; gap: var(--spacing-md); }
