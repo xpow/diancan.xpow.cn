@@ -489,19 +489,11 @@ async function loadData() {
 
     selectedCategoryId.value = categories.value[0]?.id ?? ''
 
-    // 锚定菜品
+    // 锚定菜品（在 loading=false 后执行，确保 DOM 已渲染）
     const targetDishId = route.query.dishId as string
     if (targetDishId) {
       const dish = dishes.value.find((d) => d.id === targetDishId)
-      if (dish) {
-        selectedCategoryId.value = dish.categoryId
-        await nextTick()
-        await nextTick()
-        highlightDishId.value = targetDishId
-        const el = document.getElementById(`dish-${targetDishId}`)
-        el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        setTimeout(() => { highlightDishId.value = '' }, 2000)
-      }
+      if (dish) selectedCategoryId.value = dish.categoryId
     }
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '菜单加载失败'
@@ -509,6 +501,21 @@ async function loadData() {
     loading.value = false
   }
 }
+
+// 加载完成后执行锚定滚动
+watch(loading, async (val) => {
+  if (val) return
+  const targetDishId = route.query.dishId as string
+  if (!targetDishId) return
+  const dish = dishes.value.find((d) => d.id === targetDishId)
+  if (!dish) return
+  await nextTick()
+  await nextTick()
+  highlightDishId.value = targetDishId
+  const el = document.getElementById(`dish-${targetDishId}`)
+  el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  setTimeout(() => { highlightDishId.value = '' }, 2000)
+})
 
 onMounted(() => {
   void loadData()
