@@ -21,7 +21,7 @@
       <!-- Hero Context -->
       <section class="hero-context">
         <img
-          src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=80"
+          src="/src/assets/images/pages/banner.png"
           alt="订单确认"
           class="hero-img"
         />
@@ -544,7 +544,7 @@ onMounted(() => {
 
 /* Page Content */
 .page-content {
-  padding: 70px var(--container-margin) var(--spacing-lg);
+  padding: 0 var(--container-margin) var(--spacing-lg);
   max-width: 600px;
   margin: 0 auto;
 }
@@ -552,18 +552,20 @@ onMounted(() => {
 /* Hero Context */
 .hero-context {
   position: relative;
-  width: 100%;
-  height: 128px;
-  border-radius: var(--radius-xl);
+  width: auto;
+  height: 218px;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
   overflow: hidden;
   margin-bottom: var(--spacing-lg);
 }
 
 .hero-img {
   width: 100%;
-  height: 100%;
+  height: auto;
   object-fit: cover;
-  filter: brightness(0.5);
+  display: block;
+  filter: brightness(0.75);
 }
 
 .hero-overlay {
@@ -572,7 +574,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: var(--spacing-md);
+  padding: var(--spacing-md) max(var(--container-margin), calc(50vw - 300px + var(--container-margin)));
 }
 
 .hero-overlay h2 {
@@ -687,7 +689,7 @@ onMounted(() => {
 }
 
 .success-icon {
-  font-size: 40px !important;
+  font-size: 32px !important;
   color: var(--tertiary);
 }
 
@@ -997,7 +999,7 @@ onMounted(() => {
   gap: var(--spacing-sm);
   flex: 1;
   max-width: 200px;
-  padding: var(--spacing-lg) var(--spacing-xl);
+  padding: var(--spacing-md) var(--spacing-xl);
   border: none;
   border-radius: var(--radius-full);
   background: var(--primary-container);
@@ -1119,7 +1121,7 @@ onMounted(() => {
 .popup-error { color: var(--error); font-size: var(--text-body-sm); line-height: 1.5; margin-bottom: var(--spacing-md); padding: 8px; background: var(--error-container); border-radius: var(--radius-md); }
 .popup-paid-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm);
-  width: 100%; padding: var(--spacing-lg);
+  width: 100%; padding: var(--spacing-md);
   border: none; border-radius: var(--radius-full);
   background: var(--primary-container); color: var(--on-primary);
   font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700;
@@ -1135,4 +1137,150 @@ onMounted(() => {
 }
 
 .c-sign { font-size: 0.65em; }
+
+@media (max-width: 499px) {
+  .top-bar {
+    padding: var(--spacing-xs) var(--container-margin);
+  }
+
+  .brand-logo {
+    height: 28px;
+  }
+
+  .theme-btn,
+  .close-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .theme-btn .material-icons,
+  .close-btn .material-icons {
+    font-size: 20px !important;
+  }
+
+  .page-content {
+    padding-top: 62px;
+  }
+
+  .hero-context {
+    height: 168px;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .hero-overlay h2,
+  .card-header h3,
+  .total-label,
+  .popup-header h3 {
+    font-size: var(--text-headline-lg);
+  }
+
+  .back-link {
+    padding: 8px 14px;
+    font-size: var(--text-body-md);
+  }
+
+  .toggle-btn {
+    padding: 12px 10px;
+    font-size: var(--text-body-md);
+  }
+
+  .success-card,
+  .order-card,
+  .payment-card,
+  .payment-popup {
+    border-radius: var(--radius-lg);
+  }
+
+  .success-value,
+  .amount,
+  .popup-amount,
+  .total-amount {
+    font-size: var(--text-headline-lg);
+  }
+
+  .success-code {
+    font-size: 24px;
+  }
+
+  .order-item {
+    gap: 10px;
+  }
+
+  .item-image {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-md);
+  }
+
+  .item-price {
+    font-size: var(--text-headline-lg);
+  }
+
+  .payment-row {
+    flex-wrap: wrap;
+    flex-direction: row;
+  }
+
+  .payment-row .payment-card {
+    flex: 1 1 calc(50% - (var(--spacing-sm) / 2));
+  }
+
+  .continue-ordering {
+    flex: 0 0 100% !important;
+    width: 100%;
+  }
+
+  .payment-item {
+    padding: 12px;
+  }
+
+  .payment-name {
+    font-size: var(--text-body-lg);
+  }
+
+  .action-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    border-top-left-radius: var(--radius-lg);
+    border-top-right-radius: var(--radius-lg);
+  }
+
+  .action-left {
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .action-btn {
+    flex: 0 0 auto;
+    padding: 12px 16px;
+    font-size: 18px;
+    max-width: none;
+  }
+
+  .payment-popup {
+    width: min(340px, calc(100vw - 24px));
+    padding: var(--spacing-lg);
+  }
+
+  .popup-qr {
+    width: min(220px, 62vw);
+    height: min(220px, 62vw);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .popup-paid-btn {
+    padding: 12px;
+    font-size: var(--text-headline-lg);
+  }
+
+  .popup-cancel-btn {
+    font-size: var(--text-body-md);
+  }
+}
 </style>

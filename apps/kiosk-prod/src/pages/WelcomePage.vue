@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <header class="top-bar" v-if="deviceAuthed">
       <div class="brand">
         <img :src="logoImage" alt="Logo" class="brand-logo" />
@@ -488,7 +488,7 @@ onMounted(() => {
   justify-content: center;
   gap: var(--spacing-sm);
   width: 100%;
-  padding: var(--spacing-lg) var(--spacing-xl);
+  padding: var(--spacing-md) var(--spacing-lg);
   border-radius: var(--radius-full);
   background: var(--primary-container);
   color: var(--on-primary);
@@ -513,7 +513,7 @@ onMounted(() => {
 }
 
 .hero-cta .material-icons {
-  font-size: 24px !important;
+  font-size: 20px !important;
 }
 
 .hero-actions {
@@ -801,6 +801,15 @@ onMounted(() => {
   .hero-swipe { border-radius: 0; height: 360px !important; }
   :deep(.hero-swipe .van-swipe__track),
   :deep(.van-swipe-item) { height: 360px !important; }
+  .hero-actions { gap: 16px; width: 100%; }
+  .hero-cta {
+    min-width: 0;
+    flex: 1;
+    padding: 16px 24px;
+    font-size: var(--text-headline-lg);
+    line-height: 1;
+  }
+  .hero-cta .material-icons { font-size: 20px !important; }
   .page-content { max-width: none; }
   .promo-list { display: grid; grid-template-columns: 1fr 1fr; }
   .featured-scroll { display: grid; grid-template-columns: 1fr 1fr; }
@@ -908,7 +917,7 @@ onMounted(() => {
 .sn-error { color: var(--danger, #e53935); font-size: var(--text-body-sm); margin: 0 0 var(--spacing-md); text-align: center; }
 .device-confirm-btn {
   width: 100%;
-  padding: var(--spacing-lg);
+  padding: var(--spacing-md);
   border: none;
   border-radius: var(--radius-full);
   background: var(--primary-container);
@@ -936,6 +945,94 @@ onMounted(() => {
 
   .info-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 499px) {
+  .hero-section {
+    max-width: none;
+    margin-top: 52px;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 0;
+  }
+
+  .hero-swipe {
+    border-radius: 0;
+  }
+
+  .top-bar {
+    padding: var(--spacing-xs) var(--container-margin);
+  }
+
+  .brand-logo {
+    height: 28px;
+  }
+
+  .status-badge,
+  .theme-btn {
+    min-height: 36px;
+  }
+
+  .theme-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .theme-btn .material-icons {
+    font-size: 20px !important;
+  }
+
+  .hero-overlay {
+    padding: var(--spacing-md);
+  }
+
+  .hero-actions {
+    flex-direction: row;
+    gap: var(--spacing-sm);
+  }
+
+  .hero-cta {
+    min-width: 0;
+    flex: 1;
+    padding: 12px 10px;
+    font-size: var(--text-label-lg);
+  }
+
+  .hero-cta .material-icons {
+    font-size: 16px !important;
+  }
+
+  .promo-card,
+  .featured-body,
+  .info-card,
+  .device-dialog {
+    border-radius: var(--radius-lg);
+  }
+
+  .promo-thumb {
+    width: 64px;
+    height: 64px;
+  }
+
+  .featured-image {
+    height: 144px;
+  }
+
+  .device-dialog {
+    width: calc(100% - 24px);
+    padding: var(--spacing-md);
+  }
+
+  .sn-input {
+    padding: 12px;
+    font-size: 24px;
+    letter-spacing: 4px;
+  }
+
+  .device-confirm-btn {
+    padding: 12px;
+    font-size: var(--text-headline-lg);
   }
 }
 </style>

@@ -17,24 +17,24 @@
     </header>
 
     <div class="page-content">
-      <section class="featured-banner">
-        <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=80" alt="今日推荐" class="featured-img" />
-        <div class="featured-overlay">
-          <span class="featured-tag">今日推荐</span>
-          <h2>招牌秘制羊肉串</h2>
+      <section class="hero-context">
+        <img :src="heroImage" alt="菜单横幅" class="hero-img" />
+        <div class="hero-overlay">
+          <h2>精选食材，炭火现烤</h2>
+          <p>{{ displayTitle }}</p>
         </div>
       </section>
 
-<nav class="category-nav">
-  <button
-    v-for="category in categories" :key="category.id"
-    :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
-    @click="selectedCategoryId = category.id"
-  >
-    <span class="material-icons">{{ categoryIcons[category.name] || 'restaurant' }}</span>
-    {{ category.name }}
-  </button>
-</nav>
+      <nav class="category-nav">
+        <button
+          v-for="category in categories" :key="category.id"
+          :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
+          @click="selectedCategoryId = category.id"
+        >
+          <span class="material-icons">{{ categoryIcons[category.name] || 'restaurant' }}</span>
+          {{ category.name }}
+        </button>
+      </nav>
 
       <section v-if="errorMessage" class="status-card error-card">
         <span class="material-icons">error_outline</span>
@@ -198,6 +198,7 @@ import { readCart, clearCart as clearCartStorage, addToCart as addToCartStorage,
 import { getDishImage } from '@/utils/dishImages'
 import { getTheme, setTheme } from '@/utils/theme'
 import logoImage from '@/assets/images/pages/logo.png'
+import heroImage from '@/assets/images/pages/hero.png'
 
 interface QuoteLineItem {
   dishId: string; name: string; quantity: number
@@ -532,7 +533,7 @@ onMounted(() => {
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 .material-icons { font-family: 'Material Symbols Outlined'; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 24px; line-height: 1; }
 .page { min-height: 100vh; background: var(--surface); padding-top: 56px; padding-bottom: 180px; }
-.top-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-sm) var(--container-margin); background: var(--frosted-bg); backdrop-filter: blur(12px); }
+.top-bar { height: 52px; position: fixed; top: 0; left: 0; right: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-sm) var(--container-margin); background: var(--frosted-bg); backdrop-filter: blur(12px); }
 .brand { display: flex; align-items: center; gap: var(--spacing-sm); }
 .brand-logo { height: 32px; width: auto; border-radius: var(--radius-sm); }
 .brand h1 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-lg-mobile); font-weight: 700; color: var(--primary-container); text-transform: uppercase; }
@@ -542,16 +543,16 @@ onMounted(() => {
 .theme-btn .material-icons { font-size: 22px !important; }
 .theme-btn:hover { background: var(--surface-container-high); }
 .badge-dot { position: absolute; top: 2px; right: 2px; background: var(--error); color: #fff; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; padding: 0 3px; border: 1.5px solid var(--surface); }
-.page-content { padding: var(--spacing-md) var(--container-margin) var(--spacing-lg); max-width: 600px; margin: 0 auto; }
-.featured-banner { position: relative; width: 100%; aspect-ratio: 4 / 1; border-radius: var(--radius-xl); overflow: hidden; margin-bottom: var(--spacing-lg); }
-.featured-img { width: 100%; height: 100%; object-fit: cover; }
-.featured-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: var(--spacing-md); background: linear-gradient(to top, rgba(0,0,0,0.6), transparent); }
-.featured-tag { width: fit-content; padding: 4px 8px; margin-bottom: var(--spacing-xs); border-radius: var(--radius-full); background: var(--primary-container); color: var(--on-primary); font-family: var(--font-display); font-size: 10px; font-weight: 700; }
-.featured-overlay h2 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: #fff; }
-.category-nav { display: flex; justify-content: center; gap: var(--spacing-sm); padding: var(--spacing-md) 0; position: sticky; top: 56px; z-index: 40; }
-.category-pill { display: flex; align-items: center; gap: var(--spacing-xs); padding: var(--spacing-md) var(--spacing-xl); border: none; border-radius: var(--radius-full); background: var(--surface-container-high); color: var(--on-surface-variant); font-family: var(--font-display); font-size: 19px; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); }
-.category-pill .material-icons { font-size: 22px !important; }
-.category-pill-active { background: var(--primary-container); color: var(--on-primary); }
+.page-content { padding: 0 var(--container-margin) var(--spacing-lg); max-width: 600px; margin: 0 auto; }
+.hero-context { position: relative; width: auto; height: 228px; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); overflow: hidden; margin-bottom: var(--spacing-lg); }
+.hero-img { width: 100%; height: auto; display: block; object-fit: cover; filter: brightness(0.72); }
+.hero-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: var(--spacing-md) max(var(--container-margin), calc(50vw - 300px + var(--container-margin))); background: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.48) 100%); }
+.hero-overlay h2 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 800; line-height: 1.2; color: #fff; }
+.hero-overlay p { margin: var(--spacing-xs) 0 0; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; color: rgba(255, 255, 255, 0.92); }
+.category-nav { display: flex; justify-content: center; gap: var(--spacing-sm); width: auto; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: var(--spacing-md) var(--container-margin) 14px; position: sticky; top: 52px; z-index: 40; overflow-x: auto; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 6px 18px rgba(87, 32, 0, 0.05); }
+.category-pill { display: flex; align-items: center; gap: 10px; padding: 12px 22px; border: none; border-radius: var(--radius-full); background: var(--surface-container-high); color: var(--on-surface-variant); font-family: var(--font-display); font-size: var(--text-body-lg); font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
+.category-pill .material-icons { font-size: 20px !important; }
+.category-pill-active { background: var(--primary-container); color: var(--on-primary); box-shadow: 0 8px 20px rgba(255, 107, 0, 0.18); }
 .status-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-md); padding: var(--spacing-xl); margin-top: var(--spacing-lg); border-radius: var(--radius-xl); background: var(--surface-container-low); }
 .status-card .material-icons { font-size: 48px !important; }
 .error-card { color: var(--error); }
@@ -563,6 +564,13 @@ onMounted(() => {
 @media (min-width: 500px) {
   .dish-list { display: grid; grid-template-columns: 1fr 1fr; }
   .page-content { max-width: none; }
+  .hero-overlay { padding-bottom: var(--spacing-lg); }
+  .category-nav { gap: 14px; padding-bottom: 18px; }
+  .category-pill {
+    padding: 14px 26px;
+    font-size: var(--text-label-lg);
+  }
+  .category-pill .material-icons { font-size: 22px !important; }
 }
 .dish-card { position: relative; padding: var(--spacing-md); background: var(--surface-container-lowest); border-radius: var(--radius-xl); border: 1px solid var(--card-border-light); box-shadow: var(--shadow-md); transition: border-color 0.3s; }
 
@@ -603,7 +611,7 @@ onMounted(() => {
 .cart-info { display: flex; flex-direction: column; }
 .cart-label { font-family: var(--font-display); font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--secondary); }
 .cart-total { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: var(--primary-container); }
-.cart-btn { padding: var(--spacing-md) var(--spacing-xl); border: none; border-radius: var(--radius-xl); background: var(--primary-container); color: var(--on-primary); font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; cursor: pointer; box-shadow: var(--shadow-primary); }
+.cart-btn { display: inline-flex; align-items: center; justify-content: center; padding: 14px 22px; border: none; border-radius: var(--radius-full); background: var(--primary-container); color: var(--on-primary); font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; line-height: 1; white-space: nowrap; cursor: pointer; box-shadow: var(--shadow-primary); }
 .cart-sheet { padding: 0 var(--container-margin) var(--container-margin); min-height: 200px; max-width: 600px; margin: 0 auto; }
 .cart-sheet-header { display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-md) 0; border-bottom: 1px solid var(--surface-variant); position: sticky; top: 0; background: var(--surface-container-lowest); z-index: 1; }
 .cart-sheet-title { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; }
@@ -655,5 +663,143 @@ onMounted(() => {
 .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--radius-full); color: var(--secondary); text-decoration: none; transition: all var(--transition-fast); }
 .nav-item-active { background: rgba(255, 107, 0, 0.1); color: var(--primary-container); }
 .nav-label { font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; }
+
+@media (max-width: 499px) {
+  .page {
+    padding-top: 52px;
+    padding-bottom: 156px;
+  }
+
+  .top-bar {
+    padding: var(--spacing-xs) var(--container-margin);
+  }
+
+  .brand-logo {
+    height: 28px;
+  }
+
+  .ticket-btn,
+  .theme-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .theme-btn .material-icons,
+  .ticket-btn .material-icons {
+    font-size: 20px !important;
+  }
+
+  .category-nav {
+    top: 52px;
+    overflow-x: auto;
+    padding: 10px var(--container-margin) 12px;
+  }
+
+  .hero-context {
+    margin-bottom: var(--spacing-md);
+  }
+
+  .hero-overlay h2,
+  .dish-name,
+  .cart-sheet-title {
+    font-size: var(--text-headline-lg);
+  }
+
+  .category-pill {
+    flex-shrink: 0;
+    padding: 10px 18px;
+    font-size: var(--text-label-lg);
+  }
+
+  .category-pill .material-icons {
+    font-size: 18px !important;
+  }
+
+  .dish-card {
+    padding: var(--spacing-sm);
+  }
+
+  .dish-image {
+    height: 176px;
+  }
+
+  .dish-price,
+  .dish-promo-price,
+  .cart-total {
+    font-size: var(--text-headline-lg);
+  }
+
+  .dish-price-original {
+    font-size: 16px;
+  }
+
+  .add-card-btn {
+    width: 32px;
+    height: 32px;
+    bottom: var(--spacing-sm);
+    right: var(--spacing-sm);
+  }
+
+  .add-card-btn .material-icons {
+    font-size: 18px !important;
+  }
+
+  .cart-bar {
+    bottom: 70px;
+    left: 8px;
+    right: 8px;
+    padding: 10px 12px;
+    border-radius: var(--radius-lg);
+  }
+
+  .cart-left {
+    gap: 10px;
+  }
+
+  .cart-icon-wrap {
+    width: 46px;
+    height: 46px;
+    border-radius: var(--radius-md);
+  }
+
+  .cart-icon-wrap .material-icons {
+    font-size: 24px !important;
+  }
+
+  .cart-btn,
+  .checkout-btn {
+    min-height: 44px;
+    padding: 10px 16px;
+    font-size: var(--text-body-lg);
+    border-radius: var(--radius-lg);
+  }
+
+  .qty-btn {
+    width: 26px;
+    height: 26px;
+  }
+
+  .qty-btn .material-icons {
+    font-size: 14px !important;
+  }
+
+  .cart-sheet {
+    padding: 0 12px 12px;
+  }
+
+  .cart-sheet-footer {
+    gap: 12px;
+  }
+
+  .bottom-nav {
+    padding: 4px 8px;
+    border-top-left-radius: var(--radius-lg);
+    border-top-right-radius: var(--radius-lg);
+  }
+
+  .nav-item {
+    padding: 6px 10px;
+  }
+}
 
 </style>

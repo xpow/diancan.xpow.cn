@@ -178,7 +178,7 @@ router.get('/', async (req, res) => {
   const orders = await prisma.order.findMany({
     where,
     orderBy: { createdAt: 'desc' },
-    take: limit ? parseInt(limit as string) : 50,
+    take: limit ? parseInt(limit as string) : undefined,
     include: { items: true, promotions: true },
   })
   // Parse promotion metadata

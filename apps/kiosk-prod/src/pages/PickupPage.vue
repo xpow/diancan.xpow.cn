@@ -367,7 +367,7 @@ onUnmounted(() => {
 
 /* Status Tabs */
 .status-tabs { display: flex; gap: var(--spacing-sm); padding: var(--spacing-md) 0; overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
-.tab { flex-shrink: 0; display: flex; align-items: center; gap: 4px; padding: var(--spacing-sm) var(--spacing-lg); border-radius: var(--radius-full); border: none; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; background: var(--surface-container-high); color: var(--secondary); cursor: pointer; transition: all var(--transition-fast); }
+.tab { flex-shrink: 0; display: flex; align-items: center; gap: 4px; padding: 10px var(--spacing-md); border-radius: var(--radius-full); border: none; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; background: var(--surface-container-high); color: var(--secondary); cursor: pointer; transition: all var(--transition-fast); }
 .tab-active { background: var(--primary-container); color: var(--on-primary); }
 .tab-icon { font-size: 18px !important; }
 .tab-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 4px; border-radius: var(--radius-full); background: var(--error); color: #fff; font-size: 11px; font-weight: 700; line-height: 1; }
@@ -396,7 +396,7 @@ onUnmounted(() => {
 
 .ticket-body { padding: var(--spacing-lg); }
 .ticket-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md); }
-.ticket-detail-title { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; margin: 0; color: var(--on-surface); }
+.ticket-detail-title { font-family: var(--font-display); font-weight: 700; margin: 0; color: var(--on-surface); }
 .ticket-time { font-size: var(--text-label-sm); font-weight: 600; color: var(--secondary); background: var(--surface-container); padding: 4px 8px; border-radius: var(--radius-default); letter-spacing: 0.02em; }
 
 .ticket-item { display: flex; justify-content: space-between; align-items: flex-start; padding: var(--spacing-sm) 0; }
@@ -439,4 +439,79 @@ onUnmounted(() => {
 .toast-enter-from { opacity: 0; transform: translateX(-50%) translateY(12px); }
 .toast-leave-to { opacity: 0; transform: translateX(-50%) translateY(-8px); }
 .c-sign { font-size: 0.65em; }
+
+@media (max-width: 499px) {
+  .top-bar {
+    padding: var(--spacing-xs) var(--container-margin);
+  }
+
+  .brand-logo {
+    height: 28px;
+  }
+
+  .close-btn,
+  .theme-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .theme-btn .material-icons,
+  .close-btn .material-icons {
+    font-size: 20px !important;
+  }
+
+  .page-content {
+    padding-top: 62px;
+  }
+
+  .status-tabs {
+    gap: 6px;
+    padding: 10px 0;
+  }
+
+  .tab {
+    padding: 8px 14px;
+    font-size: var(--text-body-md);
+  }
+
+  .ticket-card,
+  .ticket-footer {
+    border-radius: var(--radius-lg);
+  }
+
+  .ticket-header,
+  .ticket-body {
+    padding: var(--spacing-md);
+  }
+
+  .ticket-number {
+    font-size: 52px;
+  }
+
+  .ticket-item-img {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+  }
+
+  .ticket-item-price,
+  .ticket-total-price {
+    font-size: var(--text-headline-lg);
+  }
+
+  .empty-cta {
+    padding: 12px 22px;
+    font-size: var(--text-headline-lg);
+  }
+
+  .bottom-nav {
+    padding: 4px 8px;
+    border-top-left-radius: var(--radius-lg);
+    border-top-right-radius: var(--radius-lg);
+  }
+
+  .nav-item {
+    padding: 6px 10px;
+  }
+}
 </style>
