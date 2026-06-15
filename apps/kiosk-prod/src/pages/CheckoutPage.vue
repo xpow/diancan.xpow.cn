@@ -1158,10 +1158,6 @@ onMounted(() => {
     font-size: 20px !important;
   }
 
-  .page-content {
-    padding-top: 62px;
-  }
-
   .hero-context {
     height: 168px;
     margin-bottom: var(--spacing-md);
