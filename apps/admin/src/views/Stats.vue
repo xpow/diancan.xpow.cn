@@ -19,6 +19,7 @@
       <table class="stats-table" v-if="items.length">
         <thead>
           <tr>
+            <th class="col-check"><input type="checkbox" :checked="selected.size === items.length && items.length > 0" @change="toggleAll" /></th>
             <th class="col-rank">#</th>
             <th class="col-name">菜品</th>
             <th class="col-qty">销量</th>
@@ -26,13 +27,23 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(item, i) in items" :key="item.dishId">
+          <tr v-for="(item, i) in items" :key="item.dishId" :class="{ selected: selected.has(item.dishId) }" @click="toggleOne(item.dishId)">
+            <td class="col-check" @click.stop><input type="checkbox" :checked="selected.has(item.dishId)" @change="toggleOne(item.dishId)" /></td>
             <td class="col-rank">{{ i + 1 }}</td>
             <td class="col-name">{{ item.name }}</td>
             <td class="col-qty">{{ item.totalQuantity }}</td>
             <td class="col-revenue">¥{{ item.totalRevenue.toFixed(2) }}</td>
           </tr>
         </tbody>
+        <tfoot v-if="selected.size > 0">
+          <tr>
+            <td class="col-check"></td>
+            <td class="col-rank"></td>
+            <td class="col-name">小计（{{ selected.size }}项）</td>
+            <td class="col-qty">{{ subtotal.qty }}</td>
+            <td class="col-revenue">¥{{ subtotal.rev.toFixed(2) }}</td>
+          </tr>
+        </tfoot>
       </table>
       <p v-else class="empty">{{ loaded ? '该时段暂无订单数据' : '加载中...' }}</p>
     </div>
@@ -40,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 interface DishSales {
   dishId: string
@@ -53,6 +64,33 @@ const items = ref<DishSales[]>([])
 const loaded = ref(false)
 const quickRange = ref('all')
 const dateRange = ref()
+const selected = ref<Set<string>>(new Set())
+
+const subtotal = computed(() => {
+  let qty = 0
+  let rev = 0
+  for (const item of items.value) {
+    if (selected.value.has(item.dishId)) {
+      qty += item.totalQuantity
+      rev += item.totalRevenue
+    }
+  }
+  return { qty, rev }
+})
+
+function toggleAll() {
+  if (selected.value.size === items.value.length) {
+    selected.value = new Set()
+  } else {
+    selected.value = new Set(items.value.map(i => i.dishId))
+  }
+}
+
+function toggleOne(dishId: string) {
+  const s = new Set(selected.value)
+  if (s.has(dishId)) { s.delete(dishId) } else { s.add(dishId) }
+  selected.value = s
+}
 
 function fmt(d: Date) {
   return d.toISOString()
@@ -97,6 +135,7 @@ async function fetchStats() {
     const res = await fetch(`/api/admin/stats/dish-sales${qs ? '?' + qs : ''}`)
     const data = await res.json()
     items.value = data ?? []
+    selected.value = new Set(items.value.map(i => i.dishId))
   } catch {}
   loaded.value = true
 }
@@ -118,7 +157,12 @@ setQuick('all')
 .stats-table th { text-align: left; padding: 12px 16px; font-size: 13px; font-weight: 600; color: #666; background: #f9f9f9; border-bottom: 1px solid #eee; }
 .stats-table td { padding: 12px 16px; font-size: 15px; border-bottom: 1px solid #f5f5f5; }
 .stats-table tr:last-child td { border-bottom: none; }
-.stats-table tr:hover td { background: #fafafa; }
+.stats-table tbody tr { cursor: pointer; }
+.stats-table tbody tr:hover td { background: #fafafa; }
+.stats-table tbody tr.selected td { background: #fff7f0; }
+.stats-table tfoot td { font-weight: 700; background: #fff3e8; border-top: 2px solid var(--p-primary-color, #FF6B00); color: var(--p-primary-color, #FF6B00); }
+.col-check { width: 36px; text-align: center; }
+.col-check input { cursor: pointer; }
 .col-rank { width: 48px; color: #999; }
 .col-qty { width: 80px; font-weight: 700; color: var(--p-primary-color, #FF6B00); }
 .col-revenue { width: 120px; font-weight: 600; }
