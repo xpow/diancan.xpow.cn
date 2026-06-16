@@ -716,4 +716,20 @@ router.post('/devices/:id/commands', async (req, res) => {
   res.status(201).json({ id: cmd.id })
 })
 
+// 菜品销量统计
+router.get('/stats/dish-sales', async (_req, res) => {
+  const rows: { dishId: string; name: string; totalQuantity: number; totalRevenue: number }[]
+    = await prisma.$queryRawUnsafe(`
+      SELECT oi."dishId" AS "dishId", oi."name" AS "name",
+             SUM(oi."quantity") AS "totalQuantity",
+             SUM(oi."finalSubtotal") AS "totalRevenue"
+      FROM "OrderItem" oi
+      INNER JOIN "Order" o ON oi."orderId" = o."id"
+      WHERE o."status" IN ('completed', 'ready')
+      GROUP BY oi."dishId", oi."name"
+      ORDER BY "totalQuantity" DESC
+    `)
+  res.json(rows)
+})
+
 export default router

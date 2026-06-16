@@ -13,6 +13,7 @@
         <router-link to="/merchant" class="nav-link"><span class="nav-icon">⚙️</span> 商家设置</router-link>
         <router-link to="/users" class="nav-link"><span class="nav-icon">👥</span> 用户管理</router-link>
         <router-link to="/kitchen" class="nav-link"><span class="nav-icon">📱</span> 出餐管理</router-link>
+        <router-link to="/stats" class="nav-link"><span class="nav-icon">📈</span> 销量统计</router-link>
       </nav>
     </aside>
     <main class="content">
