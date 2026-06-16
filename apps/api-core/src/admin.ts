@@ -717,19 +717,30 @@ router.post('/devices/:id/commands', async (req, res) => {
 })
 
 // 菜品销量统计
-router.get('/stats/dish-sales', async (_req, res) => {
-  const rows: { dishId: string; name: string; totalQuantity: number; totalRevenue: number }[]
-    = await prisma.$queryRawUnsafe(`
-      SELECT oi."dishId" AS "dishId", oi."name" AS "name",
-             SUM(oi."quantity") AS "totalQuantity",
-             SUM(oi."finalSubtotal") AS "totalRevenue"
-      FROM "OrderItem" oi
-      INNER JOIN "Order" o ON oi."orderId" = o."id"
-      WHERE o."status" IN ('completed', 'ready')
-      GROUP BY oi."dishId", oi."name"
-      ORDER BY "totalQuantity" DESC
-    `)
-  res.json(rows)
+router.get('/stats/dish-sales', async (req, res) => {
+  const { startDate, endDate } = req.query
+  const conditions: string[] = [`o."status" != 'cancelled'`]
+  if (startDate) conditions.push(`o."createdAt" >= '${startDate}'`)
+  if (endDate) conditions.push(`o."createdAt" < '${endDate}'`)
+  const where = conditions.join(' AND ')
+
+  const rows = await prisma.$queryRawUnsafe(`
+    SELECT oi."dishId" AS "dishId", oi."name" AS "name",
+           SUM(oi."quantity") AS "totalQuantity",
+           SUM(oi."finalSubtotal") AS "totalRevenue"
+    FROM "OrderItem" oi
+    INNER JOIN "Order" o ON oi."orderId" = o."id"
+    WHERE ${where}
+    GROUP BY oi."dishId", oi."name"
+    ORDER BY "totalQuantity" DESC
+  `)
+  const result = (rows as any[]).map((r) => ({
+    dishId: r.dishId,
+    name: r.name,
+    totalQuantity: Number(r.totalQuantity),
+    totalRevenue: Number(r.totalRevenue),
+  }))
+  res.json(result)
 })
 
 export default router
