@@ -720,8 +720,15 @@ router.post('/devices/:id/commands', async (req, res) => {
 router.get('/stats/dish-sales', async (req, res) => {
   const { startDate, endDate } = req.query
   const conditions: string[] = [`o."status" != 'cancelled'`]
-  if (startDate) conditions.push(`o."createdAt" >= '${startDate}'`)
-  if (endDate) conditions.push(`o."createdAt" < '${endDate}'`)
+  const params: any[] = []
+  if (startDate) {
+    conditions.push(`o."createdAt" >= ?`)
+    params.push(new Date(startDate as string).getTime())
+  }
+  if (endDate) {
+    conditions.push(`o."createdAt" < ?`)
+    params.push(new Date(endDate as string).getTime())
+  }
   const where = conditions.join(' AND ')
 
   const rows = await prisma.$queryRawUnsafe(`
@@ -733,7 +740,7 @@ router.get('/stats/dish-sales', async (req, res) => {
     WHERE ${where}
     GROUP BY oi."dishId", oi."name"
     ORDER BY "totalQuantity" DESC
-  `)
+  `, ...params)
   const result = (rows as any[]).map((r) => ({
     dishId: r.dishId,
     name: r.name,

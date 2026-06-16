@@ -52,10 +52,10 @@ interface DishSales {
 const items = ref<DishSales[]>([])
 const loaded = ref(false)
 const quickRange = ref('all')
-const dateRange = ref<(Date | null)[]>([null, null])
+const dateRange = ref()
 
 function fmt(d: Date) {
-  return d.toISOString().slice(0, 19).replace('T', ' ')
+  return d.toISOString()
 }
 
 function setQuick(key: string) {
@@ -77,7 +77,7 @@ function setQuick(key: string) {
     end = new Date(now.getFullYear(), now.getMonth() + 1, 1)
   }
 
-  dateRange.value = start ? [start, end] : [null, null]
+  dateRange.value = start ? [start, end] : undefined
   fetchStats()
 }
 
@@ -89,7 +89,7 @@ function onDateChange(value: (Date | null)[]) {
 async function fetchStats() {
   loaded.value = false
   try {
-    const [s, e] = dateRange.value
+    const [s, e] = dateRange.value ?? []
     const params = new URLSearchParams()
     if (s) params.set('startDate', fmt(s))
     if (e) params.set('endDate', fmt(e))
