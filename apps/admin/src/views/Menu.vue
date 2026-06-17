@@ -11,10 +11,13 @@
     <!-- Dishes -->
     <div v-if="tab === 'dishes'">
       <div class="section-header">
-        <span class="section-count">共 {{ dishes.length }} 个菜品</span>
-        <Button label="新增菜品" icon="pi pi-plus" @click="openDishDialog()" />
+        <span class="section-count">共 {{ filteredDishes.length }} 个菜品</span>
+        <div class="section-actions">
+          <Select v-model="selectedCategoryId" :options="categoryOptions" optionLabel="label" optionValue="value" class="category-filter" placeholder="全部分类" />
+          <Button label="新增菜品" icon="pi pi-plus" @click="openDishDialog()" />
+        </div>
       </div>
-      <DataTable :value="dishes" striped-rows>
+      <DataTable :value="filteredDishes" striped-rows>
         <Column header="排序" style="width:100px">
           <template #body="{ data }">
             <InputText v-model.number="data.sort" type="number" min="0" max="999" style="width:80px" @change="updateSort(data)" />
@@ -126,7 +129,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -139,6 +142,18 @@ import Tag from 'primevue/tag'
 const tab = ref('dishes')
 const dishes = ref<any[]>([])
 const categories = ref<any[]>([])
+const selectedCategoryId = ref('')
+
+const categoryOptions = computed(() => [
+  { label: '全部分类', value: '' },
+  ...categories.value.map(c => ({ label: c.name, value: c.id })),
+])
+
+const filteredDishes = computed(() =>
+  selectedCategoryId.value
+    ? dishes.value.filter(d => d.categoryId === selectedCategoryId.value)
+    : dishes.value,
+)
 
 /* Dish */
 const showDish = ref(false)
@@ -316,6 +331,8 @@ onMounted(() => {
 .page-title { margin: 0; font-size: 22px; font-weight: 700; }
 .header-tabs { display: flex; gap: 4px; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.section-actions { display: flex; align-items: center; gap: 8px; }
+.category-filter { min-width: 150px; }
 .section-count { font-size: 13px; color: #666; }
 .form-group { margin-bottom: 12px; }
 .form-group label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 4px; }
