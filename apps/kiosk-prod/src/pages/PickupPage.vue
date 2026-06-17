@@ -438,7 +438,7 @@ onUnmounted(() => {
 .toast-leave-active { transition: all 0.2s ease-in; }
 .toast-enter-from { opacity: 0; transform: translateX(-50%) translateY(12px); }
 .toast-leave-to { opacity: 0; transform: translateX(-50%) translateY(-8px); }
-.c-sign { font-size: 0.65em; }
+.c-sign { font-size: 0.75em; }
 
 @media (max-width: 499px) {
   .top-bar {
