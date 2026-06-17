@@ -782,13 +782,13 @@ onMounted(() => {
 .order-items {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
 }
 
 .order-item {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
 }
 
 .item-image {
@@ -830,7 +830,7 @@ onMounted(() => {
 .item-price {
   margin: 0;
   font-family: var(--font-display);
-  font-size: var(--text-price-display);
+  font-size: 22px;
   font-weight: 800;
   line-height: 1.2;
   color: var(--primary-container);
@@ -847,9 +847,10 @@ onMounted(() => {
 }
 
 .item-qty {
-  margin: var(--spacing-xs) 0 0;
+  margin: 0;
   font-family: var(--font-display);
-  font-size: var(--text-label-sm);
+  font-size: var(--text-body-md);
+  font-weight: 600;
   color: var(--secondary);
 }
 

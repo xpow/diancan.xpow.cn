@@ -72,8 +72,8 @@
                 </div>
               </div>
               <div class="ticket-item-right">
-                <span class="ticket-item-qty">x{{ item.quantity }}</span>
                 <span class="ticket-item-price"><small class="c-sign">¥</small>{{ (item.finalUnitPrice * item.quantity).toFixed(2) }}</span>
+                <span class="ticket-item-qty">x{{ item.quantity }}</span>
               </div>
             </div>
 
@@ -399,15 +399,15 @@ onUnmounted(() => {
 .ticket-detail-title { font-family: var(--font-display); font-weight: 700; margin: 0; color: var(--on-surface); }
 .ticket-time { font-size: var(--text-label-sm); font-weight: 600; color: var(--secondary); background: var(--surface-container); padding: 4px 8px; border-radius: var(--radius-default); letter-spacing: 0.02em; }
 
-.ticket-item { display: flex; justify-content: space-between; align-items: flex-start; padding: var(--spacing-sm) 0; }
-.ticket-item-left { display: flex; gap: var(--spacing-md); }
+.ticket-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 0; }
+.ticket-item-left { display: flex; gap: var(--spacing-sm); }
 .ticket-item-img { width: 48px; height: 48px; border-radius: var(--radius-lg); overflow: hidden; flex-shrink: 0; background: var(--surface-container); }
 .ticket-item-img-el { width: 100%; height: 100%; object-fit: cover; }
 .ticket-item-name { font-family: var(--font-display); font-size: var(--text-body-lg); font-weight: 600; line-height: 24px; margin: 0; color: var(--on-surface); }
 .ticket-item-spec { font-size: var(--text-label-sm); font-weight: 600; color: var(--secondary); margin: 2px 0 0; }
 .ticket-item-right { text-align: right; }
-.ticket-item-qty { display: block; font-size: var(--text-label-sm); color: var(--secondary); margin-bottom: 2px; }
-.ticket-item-price { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: var(--primary-container); }
+.ticket-item-qty { display: block; font-size: var(--text-body-md); font-weight: 600; color: var(--secondary); margin-bottom: 2px; }
+.ticket-item-price { font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--primary-container); }
 
 .ticket-total { display: flex; justify-content: space-between; align-items: flex-end; margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--surface-variant); }
 .ticket-total-label { font-size: var(--text-body-md); line-height: 20px; color: var(--secondary); }
@@ -492,11 +492,6 @@ onUnmounted(() => {
     width: 44px;
     height: 44px;
     border-radius: var(--radius-md);
-  }
-
-  .ticket-item-price,
-  .ticket-total-price {
-    font-size: var(--text-headline-lg);
   }
 
   .empty-cta {

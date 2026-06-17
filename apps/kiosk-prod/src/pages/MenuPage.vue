@@ -25,7 +25,8 @@
         </div>
       </section>
 
-      <nav class="category-nav">
+      <div ref="navSentinel" class="nav-sentinel"></div>
+      <nav :class="['category-nav', navFloating && 'floating']">
         <button
           v-for="category in categories" :key="category.id"
           :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
@@ -188,7 +189,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch, nextTick } from 'vue'
+import { computed, onMounted, ref, watch, nextTick, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { showToast } from 'vant'
 import 'vant/es/toast/style'
@@ -237,6 +238,9 @@ const route = useRoute()
 const loading = ref(true)
 const errorMessage = ref('')
 const highlightDishId = ref('')
+const navFloating = ref(false)
+const navSentinel = ref<HTMLElement | null>(null)
+let navObserver: IntersectionObserver | null = null
 const merchantName = ref('')
 const branchName = ref('')
 const displayTitle = computed(() => {
@@ -526,6 +530,15 @@ watch(loading, async (val) => {
 onMounted(() => {
   void loadData()
   hydrateCart()
+  navObserver = new IntersectionObserver(
+    ([entry]) => { navFloating.value = !entry.isIntersecting },
+    { rootMargin: '-52px 0px 0px 0px' } // top bar height
+  )
+  if (navSentinel.value) navObserver.observe(navSentinel.value)
+})
+
+onBeforeUnmount(() => {
+  navObserver?.disconnect()
 })
 </script>
 
@@ -549,8 +562,10 @@ onMounted(() => {
 .hero-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: var(--spacing-md) max(var(--container-margin), calc(50vw - 300px + var(--container-margin))); background: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.48) 100%); }
 .hero-overlay h2 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 800; line-height: 1.2; color: #fff; }
 .hero-overlay p { margin: var(--spacing-xs) 0 0; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; color: rgba(255, 255, 255, 0.92); }
-.category-nav { display: flex; justify-content: center; gap: var(--spacing-sm); width: auto; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: var(--spacing-md) var(--container-margin) 14px; position: sticky; top: 52px; z-index: 40; overflow-x: auto; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 6px 18px rgba(87, 32, 0, 0.05); }
-.category-pill { display: flex; align-items: center; gap: 10px; padding: 12px 22px; border: none; border-radius: var(--radius-full); background: var(--surface-container-high); color: var(--on-surface-variant); font-family: var(--font-display); font-size: var(--text-body-lg); font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
+.category-nav { display: flex; justify-content: center; gap: var(--spacing-sm); width: auto; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: var(--spacing-md) var(--container-margin) 14px; position: sticky; top: 52px; z-index: 40; overflow-x: auto; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: box-shadow var(--transition-fast); }
+.category-nav.floating { box-shadow: 0 6px 18px rgba(87, 32, 0, 0.05); }
+.nav-sentinel { width: 1px; height: 1px; pointer-events: none; }
+.category-pill { display: flex; align-items: center; gap: 10px; padding: 12px 22px; border: 1px solid rgba(0,0,0,0.06); border-radius: var(--radius-full); background: var(--surface-container-high); color: var(--on-surface-variant); font-family: var(--font-display); font-size: var(--text-body-lg); font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
 .category-pill .material-icons { font-size: 20px !important; }
 .category-pill-active { background: var(--primary-container); color: var(--on-primary); box-shadow: 0 8px 20px rgba(255, 107, 0, 0.18); }
 .status-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-md); padding: var(--spacing-xl); margin-top: var(--spacing-lg); border-radius: var(--radius-xl); background: var(--surface-container-low); }
