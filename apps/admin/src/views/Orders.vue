@@ -43,6 +43,7 @@
         <template #body="{ data }">
           <Tag :value="statusLabel(data.status)" :severity="statusSeverity(data.status)" />
           <div v-if="data.cancelReason" class="cancel-reason">{{ data.cancelReason }}</div>
+          <div v-if="data.cancelledAt" class="cancel-reason">{{ new Date(data.cancelledAt).toLocaleString('zh-CN') }}</div>
         </template>
       </Column>
       <Column header="操作" style="width:180px">
@@ -107,6 +108,7 @@ interface Order {
   items: OrderItem[]
   createdAt: string
   cancelReason?: string
+  cancelledAt?: string
 }
 
 const orders = ref<Order[]>([])

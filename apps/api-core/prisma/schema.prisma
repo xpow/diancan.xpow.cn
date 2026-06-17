@@ -200,6 +200,7 @@ model Order {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   cancelReason String?
+  cancelledAt DateTime?
 }
 
 model OrderItem {

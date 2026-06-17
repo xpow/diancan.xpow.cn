@@ -103,6 +103,7 @@ router.get('/orders', async (_req, res) => {
       })),
       createdAt: o.createdAt.toISOString(),
       cancelReason: o.cancelReason || undefined,
+      cancelledAt: o.cancelledAt?.toISOString() || undefined,
     })),
     total,
     page: Number(page),
@@ -122,8 +123,9 @@ router.put('/orders/:id/status', async (req, res) => {
   if (!order) return res.status(404).json({ message: '订单不存在' })
 
   const data: any = { status }
-  if (status === 'cancelled' && cancelReason) {
-    data.cancelReason = cancelReason
+  if (status === 'cancelled') {
+    data.cancelledAt = new Date()
+    if (cancelReason) data.cancelReason = cancelReason
   }
 
   const updated = await prisma.order.update({
