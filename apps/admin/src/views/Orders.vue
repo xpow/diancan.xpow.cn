@@ -39,9 +39,10 @@
           </div>
         </template>
       </Column>
-      <Column field="status" header="状态" style="width:100px">
+      <Column field="status" header="状态" style="width:140px">
         <template #body="{ data }">
           <Tag :value="statusLabel(data.status)" :severity="statusSeverity(data.status)" />
+          <div v-if="data.cancelReason" class="cancel-reason">{{ data.cancelReason }}</div>
         </template>
       </Column>
       <Column header="操作" style="width:180px">
@@ -49,10 +50,27 @@
           <Button v-if="data.status === 'pending' || data.status === 'paid'" label="开始制作" icon="pi pi-play" size="small" @click="updateStatus(data.id, 'preparing')" />
           <Button v-if="data.status === 'preparing'" label="完成" icon="pi pi-check" size="small" severity="success" @click="updateStatus(data.id, 'ready')" />
           <Button v-if="data.status === 'ready'" label="已取餐" icon="pi pi-check-circle" size="small" severity="info" @click="updateStatus(data.id, 'completed')" />
-          <Button v-if="data.status === 'pending' || data.status === 'paid' || data.status === 'preparing'" label="取消" icon="pi pi-times" size="small" severity="danger" text @click="updateStatus(data.id, 'cancelled')" />
+          <Button v-if="data.status === 'pending' || data.status === 'paid' || data.status === 'preparing'" label="取消" icon="pi pi-times" size="small" severity="danger" text @click="openCancelDialog(data.id)" />
         </template>
       </Column>
     </DataTable>
+
+    <Dialog v-model:visible="showCancel" header="取消订单" style="width:400px">
+      <p class="cancel-hint">请选择取消原因：</p>
+      <div class="cancel-options">
+        <div
+          v-for="reason in cancelReasons" :key="reason"
+          :class="['cancel-option', selectedReason === reason && 'selected']"
+          @click="selectedReason = reason"
+        >
+          {{ reason }}
+        </div>
+      </div>
+      <template #footer>
+        <Button label="取消" severity="secondary" @click="showCancel = false" />
+        <Button label="确认取消" severity="danger" :disabled="!selectedReason" @click="confirmCancel" />
+      </template>
+    </Dialog>
 
     <div v-if="!orders.length" class="empty">
       暂无订单
@@ -67,6 +85,7 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Tag from 'primevue/tag'
 import SelectButton from 'primevue/selectbutton'
+import Dialog from 'primevue/dialog'
 
 interface OrderItem {
   id: string
@@ -87,6 +106,7 @@ interface Order {
   totals: { originalAmount: number; discountAmount: number; payableAmount: number }
   items: OrderItem[]
   createdAt: string
+  cancelReason?: string
 }
 
 const orders = ref<Order[]>([])
@@ -128,16 +148,33 @@ async function fetchOrders() {
   }
 }
 
-async function updateStatus(id: string, status: string) {
+async function updateStatus(id: string, status: string, cancelReason?: string) {
   await fetch(`/api/admin/orders/${id}/status`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({ status, cancelReason }),
   })
   await fetchOrders()
 }
 
 onMounted(fetchOrders)
+
+const showCancel = ref(false)
+const cancelOrderId = ref('')
+const selectedReason = ref('')
+const cancelReasons = ['客户不要了', '测试订单', '菜单下错了，重新下单']
+
+function openCancelDialog(id: string) {
+  cancelOrderId.value = id
+  selectedReason.value = ''
+  showCancel.value = true
+}
+
+async function confirmCancel() {
+  if (!selectedReason.value) return
+  await updateStatus(cancelOrderId.value, 'cancelled', selectedReason.value)
+  showCancel.value = false
+}
 </script>
 
 <style scoped>
@@ -151,4 +188,13 @@ onMounted(fetchOrders)
 .item-spec { color: var(--text-color-secondary); font-size: 12px; margin-left: 4px; }
 .item-promo { background: #fff3e0; color: #e65100; font-size: 11px; padding: 1px 6px; border-radius: 4px; }
 .empty { text-align: center; padding: 40px; color: var(--text-color-secondary); }
+.cancel-reason { font-size: 11px; color: var(--text-color-secondary); margin-top: 2px; }
+</style>
+
+<style>
+.cancel-hint { margin: 0 0 12px; font-size: 14px; color: var(--text-color-secondary); }
+.cancel-options { display: flex; flex-direction: column; gap: 8px; }
+.cancel-option { padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.15s; }
+.cancel-option:hover { border-color: var(--p-primary-color, #FF6B00); }
+.cancel-option.selected { border-color: var(--p-primary-color, #FF6B00); background: #fff3e8; font-weight: 600; }
 </style>

@@ -102,6 +102,7 @@ router.get('/orders', async (_req, res) => {
         status: i.status,
       })),
       createdAt: o.createdAt.toISOString(),
+      cancelReason: o.cancelReason || undefined,
     })),
     total,
     page: Number(page),
@@ -111,7 +112,7 @@ router.get('/orders', async (_req, res) => {
 
 router.put('/orders/:id/status', async (req, res) => {
   const { id } = req.params
-  const { status } = req.body ?? {}
+  const { status, cancelReason } = req.body ?? {}
   const validStatuses = ['pending', 'paid', 'preparing', 'ready', 'completed', 'cancelled']
   if (!status || !validStatuses.includes(status)) {
     return res.status(400).json({ message: '无效状态' })
@@ -120,9 +121,14 @@ router.put('/orders/:id/status', async (req, res) => {
   const order = await prisma.order.findUnique({ where: { id } })
   if (!order) return res.status(404).json({ message: '订单不存在' })
 
+  const data: any = { status }
+  if (status === 'cancelled' && cancelReason) {
+    data.cancelReason = cancelReason
+  }
+
   const updated = await prisma.order.update({
     where: { id },
-    data: { status },
+    data,
     include: { items: true },
   })
 
