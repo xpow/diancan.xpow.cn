@@ -69,7 +69,7 @@ router.get('/orders', async (_req, res) => {
   const [items, total] = await Promise.all([
     prisma.order.findMany({
       where,
-    orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
+    orderBy: { createdAt: 'desc' },
       skip,
       take,
       include: { items: true, promotions: true },
