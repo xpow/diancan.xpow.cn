@@ -187,7 +187,7 @@
         </div>
         <div class="form-group">
           <label>排除商品</label>
-          <Select v-model="form.rules.excludedDishIds" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="选择不参与折扣的商品" filter multiple class="w-full" />
+          <MultiSelect v-model="form.rules.excludedDishIds" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="选择不参与折扣的商品" filter class="w-full" />
         </div>
       </template>
 
@@ -220,6 +220,7 @@ import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import Select from 'primevue/select'
+import MultiSelect from 'primevue/multiselect'
 import SelectButton from 'primevue/selectbutton'
 import ToggleSwitch from 'primevue/toggleswitch'
 import Tag from 'primevue/tag'
