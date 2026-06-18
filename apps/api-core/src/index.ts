@@ -298,29 +298,9 @@ app.post('/api/cart/quote', async (req, res) => {
     })
   }
 
-  // 满减
-  for (const promo of fullReductionPromos) {
-    const rules = JSON.parse(promo.rules)
-    const threshold = rules.threshold ?? 0
-    const discount = rules.discount ?? 0
-
-    if (payableAmount >= threshold && discount > 0) {
-      payableAmount -= discount
-      appliedPromotions.push({
-        id: promo.id,
-        name: promo.name,
-        type: 'full_reduction',
-        discount,
-        description: `订单满 ¥${threshold} 自动减 ¥${discount}`,
-      })
-    } else if (payableAmount > 0 && threshold > 0) {
-      const diff = Number((threshold - payableAmount).toFixed(2))
-      hints.push(`再点 ¥${diff.toFixed(2)} 可享${promo.name}。`)
-    }
-  }
-
-  // 总价折扣
+  // 总价折扣（优先级最高，命中后不再执行满减）
   const totalDiscountPromos = activePromotions.filter((p) => p.type === 'total_discount')
+  let totalDiscountApplied = false
   for (const promo of totalDiscountPromos) {
     const rules = JSON.parse(promo.rules)
     const { discountType, discountValue, maxDiscount, minAmount, excludedDishIds } = rules
@@ -353,6 +333,7 @@ app.post('/api/cart/quote', async (req, res) => {
 
     if (discount > 0) {
       payableAmount -= discount
+      totalDiscountApplied = true
       const typeText = discountType === 'percentage' ? `${discountValue}%` : `¥${discountValue}`
       const maxText = maxDiscount ? `(最高减¥${maxDiscount})` : ''
       appliedPromotions.push({
@@ -362,6 +343,29 @@ app.post('/api/cart/quote', async (req, res) => {
         discount: Number(discount.toFixed(2)),
         description: `订单总价${typeText}减免${maxText}`,
       })
+    }
+  }
+
+  // 满减（仅当总价折扣未命中时执行）
+  if (!totalDiscountApplied) {
+    for (const promo of fullReductionPromos) {
+      const rules = JSON.parse(promo.rules)
+      const threshold = rules.threshold ?? 0
+      const discount = rules.discount ?? 0
+
+      if (payableAmount >= threshold && discount > 0) {
+        payableAmount -= discount
+        appliedPromotions.push({
+          id: promo.id,
+          name: promo.name,
+          type: 'full_reduction',
+          discount,
+          description: `订单满 ¥${threshold} 自动减 ¥${discount}`,
+        })
+      } else if (payableAmount > 0 && threshold > 0) {
+        const diff = Number((threshold - payableAmount).toFixed(2))
+        hints.push(`再点 ¥${diff.toFixed(2)} 可享${promo.name}。`)
+      }
     }
   }
 
