@@ -248,7 +248,7 @@ app.post('/api/cart/quote', async (req, res) => {
           promotionLabel = '福利价'
         }
 
-        if (!unlimited && item.quantity > promoItem.maxQty) {
+        if (!isRedeemed && !unlimited && item.quantity > promoItem.maxQty) {
           hints.push(`${welfarePromo.name}本单仅首份按 ${promoItem.promoPrice?.toFixed(2)} 元计算，其余按原价计算。`)
         }
       }
