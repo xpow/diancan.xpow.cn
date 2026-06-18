@@ -98,7 +98,7 @@
             </div>
           </div>
         </div>
-        <Button label="+ 添加福利品" severity="secondary" text @click="addItem" class="p-mt-2" v-if="form.type !== 'welfare_item'" />
+        <Button label="+ 添加福利品" severity="secondary" text @click="addItem" class="p-mt-2" v-if="form.type !== 'welfare_item' && form.type !== 'total_discount'" />
       </template>
 
       <!-- 新人福利配置 -->
@@ -160,6 +160,34 @@
             <label>有效天数 <span class="text-muted">(留空不限)</span></label>
             <InputNumber v-model="form.rules.durationDays" :min="1" :max="365" class="w-full" placeholder="不限" />
           </div>
+        </div>
+      </template>
+
+      <!-- 总价折扣配置 -->
+      <template v-if="form.type === 'total_discount'">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>折扣类型</label>
+            <Select v-model="form.rules.discountType" :options="discountTypeOptions" optionLabel="label" optionValue="value" class="w-full" />
+          </div>
+          <div class="form-group flex-1">
+            <label>折扣值</label>
+            <InputNumber v-model="form.rules.discountValue" :min="0" :step="0.01" class="w-full" :placeholder="form.rules.discountType === 'percentage' ? '例：10（10%）' : '例：5'" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>最高减免 (¥) <span class="text-muted">(可选)</span></label>
+            <InputNumber v-model="form.rules.maxDiscount" :min="0" class="w-full" placeholder="不限" />
+          </div>
+          <div class="form-group flex-1">
+            <label>最低消费 (¥) <span class="text-muted">(可选)</span></label>
+            <InputNumber v-model="form.rules.minAmount" :min="0" class="w-full" placeholder="不限" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>排除商品</label>
+          <Select v-model="form.rules.excludedDishIds" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="选择不参与折扣的商品" filter multiple class="w-full" />
         </div>
       </template>
 
@@ -232,6 +260,11 @@ const typeOptions = [
   { label: '限时折扣', value: 'time_discount' },
   { label: '新人福利', value: 'new_user' },
   { label: '节假日赠送单品', value: 'holiday_gift' },
+  { label: '总价折扣', value: 'total_discount' },
+]
+const discountTypeOptions = [
+  { label: '百分比折扣', value: 'percentage' },
+  { label: '固定减免', value: 'fixed' },
 ]
 const limitOptions = [
   { label: '每单限购', value: 'per_order' },
@@ -365,6 +398,16 @@ function autoGenerateName(): string | undefined {  if (form.value.type === 'full
       return text || undefined
     }
   }
+  if (form.value.type === 'total_discount') {
+    const { discountType, discountValue, minAmount, maxDiscount } = form.value.rules
+    if (discountType && discountValue != null) {
+      const val = discountType === 'percentage' ? `${discountValue}%` : `¥${discountValue}`
+      let name = `总价${val}减免`
+      if (minAmount) name += `(满¥${minAmount})`
+      if (maxDiscount) name += `(最高减¥${maxDiscount})`
+      return name
+    }
+  }
   return form.value.name
 }
 
@@ -373,10 +416,12 @@ watch(
   () => {
     if (!editing.value) {
       form.value.name = ''
+      form.value.items = []
       if (form.value.type === 'welfare_item' || form.value.type === 'time_discount') {
-        if (form.value.items.length === 0) {
-          form.value.items.push({ dishId: '', promoPrice: null, limitType: 'per_order', maxQty: 1 })
-        }
+        form.value.items.push({ dishId: '', promoPrice: null, limitType: 'per_order', maxQty: 1 })
+      }
+      if (form.value.type === 'total_discount') {
+        form.value.rules = { discountType: 'percentage', discountValue: null, maxDiscount: null, minAmount: null, excludedDishIds: [] }
       }
     }
   },
@@ -461,7 +506,7 @@ async function remove(p: Promotion) {
 }
 
 function typeLabel(type: string): string {
-  const map: Record<string, string> = { full_reduction: '满减', welfare_item: '福利品', buy_get: '买赠', time_discount: '限时折扣', new_user: '新人福利', holiday_gift: '节假日赠送单品' }
+  const map: Record<string, string> = { full_reduction: '满减', welfare_item: '福利品', buy_get: '买赠', time_discount: '限时折扣', new_user: '新人福利', holiday_gift: '节假日赠送单品', total_discount: '总价折扣' }
   return map[type] || type
 }
 
@@ -509,6 +554,14 @@ function ruleText(p: Promotion): string {
     const label = discountOptions.find((o) => o.value === p.rules.discountRate)?.label || `${(p.rules.discountRate || 1) * 100}折`
     let text = `${dish?.name || item.dishId} ${label}`
     if (p.rules.durationDays) text += ` (${p.rules.durationDays}天)`
+    return text
+  }
+  if (p.type === 'total_discount') {
+    const { discountType, discountValue, minAmount, maxDiscount } = p.rules
+    const val = discountType === 'percentage' ? `${discountValue}%` : `¥${discountValue}`
+    let text = `总价${val}减免`
+    if (minAmount) text += ` (满¥${minAmount})`
+    if (maxDiscount) text += ` (最高减¥${maxDiscount})`
     return text
   }
   return JSON.stringify(p.rules)

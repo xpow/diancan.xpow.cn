@@ -185,6 +185,7 @@ function promoIcon(type: string): string {
     time_discount: 'timer',
     new_user: 'person_add',
     holiday_gift: 'card_giftcard',
+    total_discount: 'money_off',
   }
   return map[type] || 'redeem'
 }

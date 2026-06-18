@@ -58,7 +58,7 @@ app.get('/api/system/bootstrap', async (_req, res) => {
     statusText: merchant.statusText,
     features,
     promotions: activePromotions
-      .filter((p) => ['full_reduction', 'welfare_item', 'time_discount', 'new_user', 'holiday_gift'].includes(p.type))
+      .filter((p) => ['full_reduction', 'welfare_item', 'time_discount', 'new_user', 'holiday_gift', 'total_discount'].includes(p.type))
       .map((p) => {
         const rules = JSON.parse(p.rules)
         let subtitle = ''
@@ -69,13 +69,16 @@ app.get('/api/system/bootstrap', async (_req, res) => {
           const discountLabels: Record<number, string> = { 0.1: '1折', 0.2: '2折', 0.3: '3折', 0.4: '4折', 0.5: '5折', 0.6: '6折', 0.7: '7折', 0.8: '8折', 0.85: '85折', 0.9: '9折' }
           const label = rate ? discountLabels[rate] || '' : ''
           subtitle = label ? `指定商品${label}` : ''
+        } else if (p.type === 'total_discount') {
+          const val = rules.discountType === 'percentage' ? `${rules.discountValue}%` : `¥${rules.discountValue}`
+          subtitle = `订单总价减${val}`
         }
         return {
           id: p.id,
           title: p.name,
           subtitle,
           type: p.type,
-          tag: p.type === 'time_discount' ? '限时' : p.type === 'new_user' ? '新人' : p.type === 'holiday_gift' ? '节日' : '活动',
+          tag: p.type === 'time_discount' ? '限时' : p.type === 'new_user' ? '新人' : p.type === 'holiday_gift' ? '节日' : p.type === 'total_discount' ? '折扣' : '活动',
           tone: p.type === 'full_reduction' || p.type === 'time_discount' ? 'primary' as const : 'neutral' as const,
           image: p.items?.[0]?.dish?.image || null,
           dishId: p.items?.[0]?.dishId || null,
@@ -313,6 +316,52 @@ app.post('/api/cart/quote', async (req, res) => {
     } else if (payableAmount > 0 && threshold > 0) {
       const diff = Number((threshold - payableAmount).toFixed(2))
       hints.push(`再点 ¥${diff.toFixed(2)} 可享${promo.name}。`)
+    }
+  }
+
+  // 总价折扣
+  const totalDiscountPromos = activePromotions.filter((p) => p.type === 'total_discount')
+  for (const promo of totalDiscountPromos) {
+    const rules = JSON.parse(promo.rules)
+    const { discountType, discountValue, maxDiscount, minAmount, excludedDishIds } = rules
+    if (!discountType || !discountValue) continue
+
+    if (minAmount && payableAmount < minAmount) {
+      if (payableAmount > 0) {
+        const diff = Number((minAmount - payableAmount).toFixed(2))
+        hints.push(`再点 ¥${diff.toFixed(2)} 可享${promo.name}。`)
+      }
+      continue
+    }
+
+    let eligibleAmount = 0
+    for (const item of itemDetails) {
+      if (!(excludedDishIds ?? []).includes(item.dishId)) {
+        eligibleAmount += item.finalSubtotal
+      }
+    }
+
+    let discount = 0
+    if (discountType === 'percentage') {
+      const rawDiscount = eligibleAmount * (discountValue / 100)
+      discount = maxDiscount ? Math.min(rawDiscount, maxDiscount) : rawDiscount
+    } else {
+      discount = discountValue
+      if (maxDiscount) discount = Math.min(discount, maxDiscount)
+    }
+    discount = Math.round(discount * 100) / 100
+
+    if (discount > 0) {
+      payableAmount -= discount
+      const typeText = discountType === 'percentage' ? `${discountValue}%` : `¥${discountValue}`
+      const maxText = maxDiscount ? `(最高减¥${maxDiscount})` : ''
+      appliedPromotions.push({
+        id: promo.id,
+        name: promo.name,
+        type: 'total_discount',
+        discount: Number(discount.toFixed(2)),
+        description: `订单总价${typeText}减免${maxText}`,
+      })
     }
   }
 
