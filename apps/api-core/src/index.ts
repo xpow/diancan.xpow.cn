@@ -315,10 +315,17 @@ app.post('/api/cart/quote', async (req, res) => {
     }
 
     let eligibleAmount = 0
+    const excludedItems: string[] = []
     for (const item of itemDetails) {
       if (!(excludedDishIds ?? []).includes(item.dishId)) {
         eligibleAmount += item.finalSubtotal
+      } else {
+        excludedItems.push(item.name)
       }
+    }
+
+    if (excludedItems.length > 0) {
+      hints.push(`${[...new Set(excludedItems)].join('、')} 不参与${promo.name}。`)
     }
 
     let discount = 0

@@ -123,9 +123,16 @@
               <span class="material-icons promo-icon">sell</span>
               <div class="promo-info">
                 <span class="promo-name">{{ p.name }}</span>
-                <!-- <span class="promo-desc">{{ p.description }}</span> -->
+                <span class="promo-desc">{{ p.description }}</span>
               </div>
               <span class="promo-saving">-<small class="c-sign">¥</small>{{ p.discount.toFixed(2) }}</span>
+            </div>
+          </div>
+
+          <div v-if="quote?.hints?.length" class="hints-card">
+            <div v-for="(hint, i) in quote.hints" :key="i" class="hint-row">
+              <span class="material-icons hint-icon">info</span>
+              <span class="hint-text">{{ hint }}</span>
             </div>
           </div>
 
@@ -867,6 +874,11 @@ onMounted(() => {
 .promo-card .promo-name { font-weight: 600; color: var(--on-surface); }
 .promo-card .promo-desc { font-size: 11px; color: var(--secondary); }
 .promo-card .promo-saving { font-weight: 700; color: var(--error); flex-shrink: 0; }
+.hints-card { padding: var(--spacing-md); margin-bottom: var(--spacing-lg); border-radius: var(--radius-xl); background: rgba(255, 152, 0, 0.08); border: 1px solid rgba(255, 152, 0, 0.2); }
+.hint-row { display: flex; align-items: flex-start; gap: var(--spacing-sm); margin-bottom: var(--spacing-xs); font-size: var(--text-body-sm); line-height: 1.5; }
+.hint-row:last-child { margin-bottom: 0; }
+.hint-icon { font-size: 16px !important; color: #f57c00; flex-shrink: 0; margin-top: 1px; }
+.hint-text { color: var(--on-surface-variant); }
 
 .summary-row {
   display: flex;
