@@ -605,4 +605,5 @@ onMounted(() => {
 .stackable-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; }
 .stackable-row label { margin: 0; font-size: 14px; font-weight: 600; color: #333; }
 .status-cell { display: flex; align-items: center; gap: 4px; }
+:deep(.p-button.p-button-text:disabled) { color: #999 !important; }
 </style>
