@@ -48,7 +48,7 @@
       </Column>
     </DataTable>
 
-    <Dialog v-model:visible="showDialog" :header="editing ? '编辑活动' : '新增活动'" style="width:540px">
+    <Dialog v-model:visible="showDialog" :header="editing ? '编辑活动' : '新增活动'" style="width:680px">
       <div class="form-group">
         <label>活动名称</label>
         <InputText v-model="form.name" class="w-full" placeholder="例：满50减5" />
