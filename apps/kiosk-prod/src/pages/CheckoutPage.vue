@@ -1149,7 +1149,7 @@ onMounted(() => {
   cursor: pointer; text-decoration: underline;
 }
 
-.c-sign { font-size: 0.75em; }
+.c-sign { font-size: 0.85em; padding: 0 1px; }
 
 @media (max-width: 499px) {
   .top-bar {

@@ -672,7 +672,7 @@ onBeforeUnmount(() => {
 .promo-summary { display: flex; justify-content: space-between; align-items: center; padding-top: var(--spacing-sm); border-top: 1px dashed var(--outline-variant); font-size: var(--text-label-sm); font-weight: 600; }
 .promo-summary-amount { color: var(--error); font-weight: 700; }
 .strikethrough-price { text-decoration: line-through; color: var(--secondary); font-weight: 400; font-size: var(--text-label-sm); }
-.c-sign { font-size: 0.85em; }
+.c-sign { font-size: 0.85em; padding: 0 1px; }
 
 .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; display: flex; justify-content: space-around; align-items: center; padding: var(--spacing-xs) var(--gutter); background: var(--frosted-bg-heavy); backdrop-filter: blur(12px); border-top-left-radius: var(--radius-xl); border-top-right-radius: var(--radius-xl); box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.04); }
 .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--radius-full); color: var(--secondary); text-decoration: none; transition: all var(--transition-fast); }
