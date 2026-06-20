@@ -27,7 +27,10 @@
         <Column field="name" header="名称" />
         <Column field="categoryName" header="分类" />
         <Column field="price" header="价格">
-          <template #body="{ data }">¥{{ data.price.toFixed(2) }}</template>
+          <template #body="{ data }">
+            <template v-if="data.portionSize">¥{{ data.price.toFixed(2) }}/{{ data.portionSize }}串</template>
+            <template v-else>¥{{ data.price.toFixed(2) }}</template>
+          </template>
         </Column>
         <Column field="specsPreset" header="规格">
           <template #body="{ data }">
@@ -80,6 +83,16 @@
         <div class="form-group flex-1">
           <label>分类</label>
           <Select v-model="dishForm.categoryId" :options="categories" optionLabel="name" optionValue="id" class="w-full" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="width: 120px">
+          <label>按份卖</label>
+          <ToggleSwitch v-model="dishForm.sellByPortion" />
+        </div>
+        <div class="form-group flex-1" v-if="dishForm.sellByPortion">
+          <label>每份数量（串）</label>
+          <InputNumber v-model="dishForm.portionSize" :min="2" class="w-full" placeholder="例：3" />
         </div>
       </div>
       <div class="form-group">
@@ -138,6 +151,7 @@ import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import Select from 'primevue/select'
 import Tag from 'primevue/tag'
+import ToggleSwitch from 'primevue/toggleswitch'
 
 const tab = ref('dishes')
 const dishes = ref<any[]>([])
@@ -158,7 +172,7 @@ const filteredDishes = computed(() =>
 /* Dish */
 const showDish = ref(false)
 const editingDish = ref(false)
-const dishForm = ref({ name: '', price: 0, categoryId: '', desc: '', image: '', specsPreset: 'none', tagsText: '', status: 'active' })
+const dishForm = ref({ name: '', price: 0, categoryId: '', desc: '', image: '', specsPreset: 'none', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0 })
 
 const specsOptions = [
   { label: '无规格', value: 'none' },
@@ -189,11 +203,13 @@ function openDishDialog(dish?: any) {
       specsPreset: dish.specsPreset || 'none',
       tagsText: (dish.tags || []).join(', '),
       status: dish.status || 'active',
+      sellByPortion: (dish.portionSize ?? 0) > 0,
+      portionSize: dish.portionSize ?? 0,
     }
   } else {
     editingDish.value = false
     originalName.value = ''
-    dishForm.value = { name: '', price: 0, categoryId: categories.value[0]?.id || '', desc: '', image: '', specsPreset: 'none', tagsText: '', status: 'active' }
+    dishForm.value = { name: '', price: 0, categoryId: categories.value[0]?.id || '', desc: '', image: '', specsPreset: 'none', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0 }
   }
   showDish.value = true
 }
@@ -208,6 +224,7 @@ async function saveDish() {
     specsPreset: dishForm.value.specsPreset,
     tags: dishForm.value.tagsText ? dishForm.value.tagsText.split(/[，,]\s*/).filter(Boolean) : [],
     status: dishForm.value.status,
+    portionSize: dishForm.value.sellByPortion ? dishForm.value.portionSize : 0,
   }
 
   const dishId = editingDish.value ? (dishes.value.find((d) => d.name === originalName.value)?.id) : null

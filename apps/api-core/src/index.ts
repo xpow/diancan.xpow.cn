@@ -161,6 +161,7 @@ app.get('/api/catalog/menu', async (_req, res) => {
         image: d.image,
         tags: JSON.parse(d.tags) as string[],
         specsPreset: d.specsPreset,
+        portionSize: d.portionSize,
         promoPrice: promo?.promoPrice ?? null,
         promotionName: promo?.name ?? null,
       }

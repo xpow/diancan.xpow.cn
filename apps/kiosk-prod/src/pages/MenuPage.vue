@@ -58,11 +58,11 @@
               <p class="dish-desc">{{ dish.desc }}</p>
               <div class="dish-price-row">
                 <template v-if="dish.promoPrice">
-                  <span class="dish-price dish-price-original"><small class="c-sign">¥</small>{{ dish.price.toFixed(2) }}</span>
-                  <span class="dish-promo-price"><small class="c-sign">¥</small>{{ dish.promoPrice.toFixed(2) }}</span>
+                  <span class="dish-price dish-price-original"><small class="c-sign">¥</small>{{ dish.price.toFixed(2) }}<template v-if="dish.portionSize">/{{ dish.portionSize }}串</template></span>
+                  <span class="dish-promo-price"><small class="c-sign">¥</small>{{ dish.promoPrice.toFixed(2) }}<template v-if="dish.portionSize">/{{ dish.portionSize }}串</template></span>
                   <span class="dish-promo-tag">{{ dish.promotionName }}</span>
                 </template>
-                <span v-else class="dish-price"><small class="c-sign">¥</small>{{ dish.price.toFixed(2) }}</span>
+                <span v-else class="dish-price"><small class="c-sign">¥</small>{{ dish.price.toFixed(2) }}<template v-if="dish.portionSize">/{{ dish.portionSize }}串</template></span>
               </div>
             </div>
           </div>
@@ -127,7 +127,7 @@
             <div class="cart-item-right">
               <div class="cart-item-qty">
                 <button class="qty-btn" @click="updateCartQuantity(item.dishId, -1)"><span class="material-icons">remove</span></button>
-                <span class="qty-num">{{ item.quantity }}</span>
+                <span class="qty-num">{{ item.quantity }}<template v-if="isPortionDish(item.baseDishId)">串</template></span>
                 <button class="qty-btn qty-btn-plus" @click="updateCartQuantity(item.dishId, 1)"><span class="material-icons">add</span></button>
               </div>
               <span v-if="cartItemPromotionLabel(item)" class="cart-promo-tag">{{ cartItemPromotionLabel(item) }}</span>
@@ -231,6 +231,7 @@ interface Dish {
   specGroups?: SpecGroup[]
   selectedLabels?: (string | string[])[]
   promotionId?: string; promoPrice?: number; promotionName?: string
+  portionSize?: number
 }
 
 const router = useRouter()
@@ -405,7 +406,7 @@ function confirmSpiceChange(newSpiciness: string) {
 
 function addToCart(dish: Dish) {
   const specsParts: string[] = []
-  let qty = 1
+  let qty = Math.max(1, dish.portionSize ?? 1)
   if (dish.selectedLabels) {
     for (let gi = 0; gi < dish.selectedLabels.length; gi++) {
       const val = dish.selectedLabels[gi]
@@ -440,8 +441,19 @@ function addToCart(dish: Dish) {
   debouncedFetchQuote()
 }
 
+function getPortionSize(dishId: string): number {
+  const dish = dishes.value.find((d) => d.id === dishId)
+  return dish?.portionSize ?? 0
+}
+
+function isPortionDish(dishId: string): boolean {
+  return getPortionSize(dishId) > 0
+}
+
 function updateCartQuantity(dishId: string, delta: number) {
-  updateCartQuantityStorage(dishId, delta)
+  const ps = getPortionSize(dishId)
+  const step = ps > 0 ? ps : 1
+  updateCartQuantityStorage(dishId, delta * step)
   hydrateCart()
   if (cartItems.value.length === 0) { showCart.value = false; return }
   debouncedFetchQuote()
@@ -472,7 +484,7 @@ async function loadData() {
     const bootstrap = await bootstrapResponse.json() as { merchantName?: string; branchName: string }
     const menu = await menuResponse.json() as {
       categories: Category[]
-      dishes: { id: string; categoryId: string; name: string; price: number; desc: string; image?: string; tags?: string[]; specsPreset?: SpecPreset; promoPrice?: number | null; promotionName?: string | null }[]
+      dishes: { id: string; categoryId: string; name: string; price: number; desc: string; image?: string; tags?: string[]; specsPreset?: SpecPreset; promoPrice?: number | null; promotionName?: string | null; portionSize?: number }[]
     }
 
     merchantName.value = bootstrap.merchantName ?? ''
@@ -494,6 +506,7 @@ async function loadData() {
         selectedLabels: specResult?.defaults ? [...specResult.defaults] : undefined,
         promoPrice: d.promoPrice ?? undefined,
         promotionName: d.promotionName ?? undefined,
+        portionSize: d.portionSize ?? 0,
       }
     })
 
