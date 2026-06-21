@@ -127,7 +127,7 @@
             <div class="cart-item-right">
               <div class="cart-item-qty">
                 <button class="qty-btn" @click="updateCartQuantity(item.dishId, -1)"><span class="material-icons">remove</span></button>
-                <span class="qty-num">{{ item.quantity }}<template v-if="isPortionDish(item.baseDishId)">份</template></span>
+                <span class="qty-num">{{ item.quantity }}<template v-if="isPortionDish(item.baseDishId)">串</template></span>
                 <button class="qty-btn qty-btn-plus" @click="updateCartQuantity(item.dishId, 1)"><span class="material-icons">add</span></button>
               </div>
               <span v-if="cartItemPromotionLabel(item)" class="cart-promo-tag">{{ cartItemPromotionLabel(item) }}</span>
@@ -406,7 +406,7 @@ function confirmSpiceChange(newSpiciness: string) {
 
 function addToCart(dish: Dish) {
   const specsParts: string[] = []
-  let qty = 1
+  let qty = dish.portionSize || 1
   if (dish.selectedLabels) {
     for (let gi = 0; gi < dish.selectedLabels.length; gi++) {
       const val = dish.selectedLabels[gi]
@@ -451,7 +451,9 @@ function isPortionDish(dishId: string): boolean {
 }
 
 function updateCartQuantity(dishId: string, delta: number) {
-  updateCartQuantityStorage(dishId, delta)
+  const ps = getPortionSize(dishId)
+  const step = ps > 0 ? ps : 1
+  updateCartQuantityStorage(dishId, delta * step)
   hydrateCart()
   if (cartItems.value.length === 0) { showCart.value = false; return }
   debouncedFetchQuote()
