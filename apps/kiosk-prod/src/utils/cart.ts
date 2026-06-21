@@ -10,6 +10,7 @@ export interface StoredCartItem {
   promoPrice?: number
   originalPrice?: number
   promotionName?: string
+  portionSize?: number
 }
 
 const CART_STORAGE_KEY = 'diancan-kiosk-cart'

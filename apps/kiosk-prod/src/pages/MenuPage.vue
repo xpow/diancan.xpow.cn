@@ -337,7 +337,7 @@ function doToggleTheme(): string {
 const cartCount = computed(() => cartItems.value.reduce((s, i) => s + i.quantity, 0))
 const cartTotal = computed(() => {
   if (cartQuote.value) return cartQuote.value.totals.payableAmount
-  return cartItems.value.reduce((t, i) => t + i.price * i.quantity, 0)
+  return cartItems.value.reduce((t, i) => t + i.price * i.quantity / (i.portionSize || 1), 0)
 })
 const cartDishIds = computed(() => new Set(cartItems.value.map((i) => i.dishId)))
 const filteredDishes = computed(() => dishes.value.filter(d => d.categoryId === selectedCategoryId.value))
@@ -437,6 +437,7 @@ function addToCart(dish: Dish) {
     promoPrice: dish.promoPrice,
     originalPrice: dish.promoPrice ? dish.price : undefined,
     promotionName: dish.promotionName,
+    portionSize: dish.portionSize || undefined,
   })
 
   hydrateCart()

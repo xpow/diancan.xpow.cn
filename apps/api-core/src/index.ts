@@ -215,7 +215,8 @@ app.post('/api/cart/quote', async (req, res) => {
     const dish = dishMap.get(item.dishId)
     if (!dish) continue
 
-    const subtotal = dish.price * item.quantity
+    const portionFactor = dish.portionSize || 1
+    const subtotal = dish.price * item.quantity / portionFactor
     originalAmount += subtotal
 
     let finalUnitPrice = dish.price
@@ -234,6 +235,7 @@ app.post('/api/cart/quote', async (req, res) => {
         const welfareQty = isRedeemed ? 0 : (unlimited ? item.quantity : Math.min(item.quantity, promoItem.maxQty))
         const normalQty = item.quantity - welfareQty
         finalSubtotal = welfareQty * (promoItem.promoPrice ?? dish.price) + normalQty * dish.price
+        finalSubtotal /= portionFactor
         finalUnitPrice = welfareQty === item.quantity ? (promoItem.promoPrice ?? dish.price) : dish.price
         welfareAppliedDishIds.add(item.dishId)
 
@@ -243,7 +245,7 @@ app.post('/api/cart/quote', async (req, res) => {
             id: welfarePromo.id,
             name: welfarePromo.name,
             type: 'welfare_item',
-            discount: Number((dish.price * welfareQty - (promoItem.promoPrice ?? 0) * welfareQty).toFixed(2)),
+            discount: Number(((dish.price - (promoItem.promoPrice ?? 0)) * welfareQty / portionFactor).toFixed(2)),
             description: `福利价 ¥${promoItem.promoPrice?.toFixed(2)}，${qtyText}享受福利价`,
           })
           promotionLabel = '福利价'
@@ -267,9 +269,9 @@ app.post('/api/cart/quote', async (req, res) => {
         const discountedPrice = Math.round(dish.price * discountRate * 100) / 100
         if (discountRate < 1) {
           finalUnitPrice = discountedPrice
-          finalSubtotal = discountedPrice * item.quantity
+          finalSubtotal = discountedPrice * item.quantity / portionFactor
           const perItem = dish.price - discountedPrice
-          const discount = Number((perItem * item.quantity).toFixed(2))
+          const discount = Number((perItem * item.quantity / portionFactor).toFixed(2))
           if (discount > 0) {
             appliedPromotions.push({
               id: timeDiscountPromo.id,

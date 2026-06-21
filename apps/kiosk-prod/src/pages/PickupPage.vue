@@ -72,7 +72,7 @@
                 </div>
               </div>
               <div class="ticket-item-right">
-                <span class="ticket-item-price"><small class="c-sign">¥</small>{{ (item.finalUnitPrice * item.quantity).toFixed(2) }}</span>
+                <span class="ticket-item-price"><small class="c-sign">¥</small>{{ (item.finalSubtotal ?? item.finalUnitPrice * item.quantity).toFixed(2) }}</span>
                 <span class="ticket-item-qty">x{{ item.quantity }}</span>
               </div>
             </div>
