@@ -127,7 +127,7 @@
             <div class="cart-item-right">
               <div class="cart-item-qty">
                 <button class="qty-btn" @click="updateCartQuantity(item.dishId, -1)"><span class="material-icons">remove</span></button>
-                <span class="qty-num">{{ item.quantity }}<template v-if="isPortionDish(item.baseDishId)">串</template></span>
+                <span class="qty-num">{{ item.quantity }}</span>
                 <button class="qty-btn qty-btn-plus" @click="updateCartQuantity(item.dishId, 1)"><span class="material-icons">add</span></button>
               </div>
               <span v-if="cartItemPromotionLabel(item)" class="cart-promo-tag">{{ cartItemPromotionLabel(item) }}</span>
