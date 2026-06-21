@@ -416,7 +416,6 @@ function addToCart(dish: Dish) {
       } else if (dish.specGroups && gi === qtyGroupIndex(dish.specGroups)) {
         if (!dish.portionSize) {
           qty = parseInt(val.replace(/^x/i, '')) || 1
-          specsParts.push(val)
         }
       } else {
         specsParts.push(val)
