@@ -414,8 +414,10 @@ function addToCart(dish: Dish) {
       if (Array.isArray(val)) {
         specsParts.push(val.join('+'))
       } else if (dish.specGroups && gi === qtyGroupIndex(dish.specGroups)) {
-        if (!dish.portionSize) qty = parseInt(val.replace(/^x/i, '')) || 1
-        specsParts.push(val)
+        if (!dish.portionSize) {
+          qty = parseInt(val.replace(/^x/i, '')) || 1
+          specsParts.push(val)
+        }
       } else {
         specsParts.push(val)
       }
@@ -443,7 +445,8 @@ function addToCart(dish: Dish) {
 }
 
 function getPortionSize(dishId: string): number {
-  const dish = dishes.value.find((d) => d.id === dishId)
+  const baseId = dishId.split('|')[0]
+  const dish = dishes.value.find((d) => String(d.id) === String(baseId))
   return dish?.portionSize ?? 0
 }
 
