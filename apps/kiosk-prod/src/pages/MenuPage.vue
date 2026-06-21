@@ -414,7 +414,8 @@ function addToCart(dish: Dish) {
       if (Array.isArray(val)) {
         specsParts.push(val.join('+'))
       } else if (dish.specGroups && gi === qtyGroupIndex(dish.specGroups)) {
-        qty = parseInt(val.replace(/^x/i, '')) || 1
+        if (!dish.portionSize) qty = parseInt(val.replace(/^x/i, '')) || 1
+        specsParts.push(val)
       } else {
         specsParts.push(val)
       }
