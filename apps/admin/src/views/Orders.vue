@@ -119,6 +119,7 @@ const statusOptions = [
   { label: '制作中', value: 'preparing' },
   { label: '可取餐', value: 'ready' },
   { label: '已完成', value: 'completed' },
+  { label: '已取消', value: 'cancelled' },
 ]
 
 function statusLabel(s: string): string {
