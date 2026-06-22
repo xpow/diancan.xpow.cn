@@ -318,7 +318,6 @@ app.post('/api/cart/quote', async (req, res) => {
   // 总价折扣（优先级最高，命中后不再执行满减）
   const totalDiscountPromos = activePromotions.filter((p) => p.type === 'total_discount')
   let totalDiscountApplied = false
-  let anyThresholdPromoApplied = false
   let activePromoWithExclusion: { name: string; excludedItems: string[] } | null = null
   for (const promo of totalDiscountPromos) {
     const rules = JSON.parse(promo.rules)
@@ -350,7 +349,6 @@ app.post('/api/cart/quote', async (req, res) => {
     if (discount > 0) {
       payableAmount -= discount
       totalDiscountApplied = true
-      anyThresholdPromoApplied = true
       if (excludedItems.length > 0) {
         activePromoWithExclusion = { name: promo.name, excludedItems }
       }
@@ -388,7 +386,6 @@ app.post('/api/cart/quote', async (req, res) => {
 
       if (eligibleAmount >= threshold && discount > 0) {
         payableAmount -= discount
-        anyThresholdPromoApplied = true
         if (excludedItems.length > 0) {
           activePromoWithExclusion = { name: promo.name, excludedItems }
         }
@@ -404,12 +401,10 @@ app.post('/api/cart/quote', async (req, res) => {
     }
   }
 
-  // 生成提示文案
+  // 生成提示文案：命中的活动有排除 → 显示排除提示；否则找第一个未满足的活动
   if (activePromoWithExclusion) {
-    // 命中的活动有排除商品
     hints.push(`${[...new Set(activePromoWithExclusion.excludedItems)].join('、')} 不参与${activePromoWithExclusion.name}。`)
-  } else if (!anyThresholdPromoApplied) {
-    // 没有活动命中 → 按门槛从小到大找到第一个未满足的活动
+  } else {
     const allThresholdPromos = [
       ...fullReductionPromos.map((p) => ({ promo: p, threshold: JSON.parse(p.rules).threshold ?? 0 })),
       ...totalDiscountPromos.map((p) => ({ promo: p, threshold: JSON.parse(p.rules).minAmount ?? 0 })),
@@ -427,13 +422,13 @@ app.post('/api/cart/quote', async (req, res) => {
           excludedItems.push(item.name)
         }
       }
-      if (excludedItems.length > 0 && eligibleAmount < threshold) {
-        hints.push(`${[...new Set(excludedItems)].join('、')} 不参与${promo.name}。`)
-        break
-      }
-      if (eligibleAmount > 0 && eligibleAmount < threshold) {
-        const diff = Number((threshold - eligibleAmount).toFixed(2))
-        hints.push(`再点 ¥${diff.toFixed(2)} 可享${promo.name}。`)
+      if (eligibleAmount < threshold) {
+        if (excludedItems.length > 0) {
+          hints.push(`${[...new Set(excludedItems)].join('、')} 不参与${promo.name}。`)
+        } else if (eligibleAmount > 0) {
+          const diff = Number((threshold - eligibleAmount).toFixed(2))
+          hints.push(`再点 ¥${diff.toFixed(2)} 可享${promo.name}。`)
+        }
         break
       }
     }
