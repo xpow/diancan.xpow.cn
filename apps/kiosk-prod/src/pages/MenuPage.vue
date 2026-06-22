@@ -358,7 +358,9 @@ function initSpecs(preset: SpecPreset): { groups: SpecGroup[]; defaults: (string
 
 function onCustomQty(dish: Dish, gi: number, value: string) {
   if (!dish.selectedLabels) return
-  dish.selectedLabels[gi] = value ? `x${value}` : dish.specGroups?.[gi]?.options?.[0]?.label || 'x2'
+  dish.selectedLabels[gi] = value
+    ? dish.portionSize ? `${value}份` : `x${value}`
+    : dish.specGroups?.[gi]?.options?.[0]?.label || 'x2'
 }
 
 function hydrateCart() {
@@ -390,7 +392,7 @@ function confirmSpiceChange(newSpiciness: string) {
   if (!item) return
   const parts = (item.specs || '').split(' · ')
   parts[0] = newSpiciness
-  const newSpecs = parts.filter((p, i) => i === 0 || !p.startsWith('x')).join(' · ')
+  const newSpecs = parts.filter((p, i) => i === 0 || (!p.startsWith('x') && !p.endsWith('份'))).join(' · ')
   const newDishId = `${item.baseDishId}|${newSpecs}`
   const existing = cartItems.value.find((i) => i.dishId === newDishId)
   if (existing) {
@@ -417,7 +419,7 @@ function addToCart(dish: Dish) {
       if (Array.isArray(val)) {
         specsParts.push(val.join('+'))
       } else if (dish.specGroups && gi === qtyGroupIndex(dish.specGroups)) {
-        const multiplier = parseInt(val.replace(/^x/i, '')) || 1
+        const multiplier = parseInt(val.replace(/^x/i, '').replace(/份$/, '')) || 1
         if (!dish.portionSize) {
           qty = multiplier
         } else {
@@ -503,6 +505,22 @@ async function loadData() {
 
     dishes.value = menu.dishes.map((d) => {
       const specResult = d.specsPreset ? initSpecs(d.specsPreset) : null
+      const groups = specResult?.groups ? structuredClone(specResult.groups) : undefined
+      // 按份卖时，串数 → 份数，x1 → 1份
+      if (d.portionSize && groups) {
+        const qtyGroup = groups.find((g) => g.name === '串数')
+        if (qtyGroup) {
+          qtyGroup.name = '份数'
+          qtyGroup.options = qtyGroup.options.map((o) => ({ ...o, label: o.label.replace('x', '') + '份' }))
+        }
+      }
+      const defaults = specResult?.defaults ? [...specResult.defaults] : undefined
+      if (d.portionSize && defaults && groups) {
+        const qtyIdx = groups.findIndex((g) => g.name === '份数')
+        if (qtyIdx > -1) {
+          defaults[qtyIdx] = groups[qtyIdx].options[0]?.label ?? defaults[qtyIdx]
+        }
+      }
       return {
         id: d.id,
         categoryId: d.categoryId,
@@ -512,8 +530,8 @@ async function loadData() {
         image: d.image || getDishImage(d.id),
         tags: d.tags,
         specsPreset: d.specsPreset,
-        specGroups: specResult?.groups,
-        selectedLabels: specResult?.defaults ? [...specResult.defaults] : undefined,
+        specGroups: groups,
+        selectedLabels: defaults,
         promoPrice: d.promoPrice ?? undefined,
         promotionName: d.promotionName ?? undefined,
         portionSize: d.portionSize ?? 0,
