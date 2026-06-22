@@ -36,10 +36,9 @@
           :class="`card-${item.status}`"
         >
           <div class="item-info">
-            <div class="item-name">{{ item.name }}</div>
+            <div class="item-name">{{ item.name }}<template v-if="item.portionSize"> <span class="tag-portion">（¥{{ item.finalUnitPrice.toFixed(2) }}/{{ item.portionSize }}串）</span></template></div>
             <div class="item-tags">
               <span class="tag-qty">x{{ item.quantity }}</span>
-              <span v-if="item.portionSize" class="tag-portion">（¥{{ item.finalUnitPrice.toFixed(2) }}/{{ item.portionSize }}串）</span>
               <span v-if="item.specs" class="tag-specs">{{ item.specs }}</span>
             </div>
           </div>
