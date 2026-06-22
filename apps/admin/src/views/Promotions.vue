@@ -25,7 +25,7 @@
               @click="pausePromotion(data)"
             />
             <Button
-              v-else-if="data.status === 'paused' || data.status === 'draft'"
+              v-else-if="data.status === 'paused' || data.status === 'draft' || data.status === 'inactive'"
               icon="pi pi-play-circle"
               severity="success"
               text
@@ -278,6 +278,7 @@ const statusOptions = [
   { label: '已启用', value: 'active' },
   { label: '已暂停', value: 'paused' },
   { label: '已结束', value: 'ended' },
+  { label: '已下线', value: 'inactive' },
 ]
 
 const discountOptions = [
@@ -512,12 +513,12 @@ function typeLabel(type: string): string {
 }
 
 function statusLabel(status: string): string {
-  const map: Record<string, string> = { draft: '草稿', active: '已启用', paused: '已暂停', ended: '已结束' }
+  const map: Record<string, string> = { draft: '草稿', active: '已启用', paused: '已暂停', ended: '已结束', inactive: '已下线' }
   return map[status] || status
 }
 
 function statusSeverity(status: string): string {
-  const map: Record<string, string> = { active: 'success', paused: 'warn', ended: 'secondary', draft: 'info' }
+  const map: Record<string, string> = { active: 'success', paused: 'warn', ended: 'secondary', draft: 'info', inactive: 'contrast' }
   return map[status] || 'secondary'
 }
 
