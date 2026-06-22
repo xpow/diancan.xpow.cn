@@ -533,14 +533,17 @@ router.get('/merchant', async (_req, res) => {
     statusText: merchant.statusText,
     logoUrl: merchant.logoUrl,
     features: JSON.parse(merchant.features),
-    branches: branches.map((b) => ({
+    branches: await Promise.all(branches.map(async (b) => ({
       id: b.id,
+      code: b.code,
       name: b.name,
       address: b.address,
       todayLocation: b.todayLocation,
       locationHint: b.locationHint,
       status: b.status,
-    })),
+      deviceCount: await prisma.device.count({ where: { branchId: b.id } }),
+      orderCount: await prisma.order.count({ where: { branchId: b.id } }),
+    }))),
   })
 })
 
