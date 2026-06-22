@@ -837,7 +837,7 @@ onMounted(() => {
 .item-price {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: 16px;
   font-weight: 800;
   line-height: 1.2;
   color: var(--primary-container);
