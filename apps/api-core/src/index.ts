@@ -386,9 +386,11 @@ app.post('/api/cart/quote', async (req, res) => {
     }
   }
 
-  // 满减（仅当总价折扣未命中时执行）
+  // 满减（仅当总价折扣未命中时执行，多档满减只取最高一档）
   if (!totalDiscountApplied) {
-    for (const promo of fullReductionPromos) {
+    const sortedFullReduction = (fullReductionPromos as any[])
+      .sort((a, b) => (JSON.parse(b.rules).threshold ?? 0) - (JSON.parse(a.rules).threshold ?? 0))
+    for (const promo of sortedFullReduction) {
       const rules = JSON.parse(promo.rules)
       const threshold = rules.threshold ?? 0
       const discount = rules.discount ?? 0
@@ -410,6 +412,7 @@ app.post('/api/cart/quote', async (req, res) => {
           discount,
           description: `订单满 ¥${threshold} 自动减 ¥${discount}`,
         })
+        break
       }
     }
   }
