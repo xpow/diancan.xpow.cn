@@ -301,6 +301,19 @@ app.post('/api/cart/quote', async (req, res) => {
     })
   }
 
+  // 合并重复的营销活动（同ID折扣相加）
+  const promoMap = new Map<string, any>()
+  for (const p of appliedPromotions) {
+    const existing = promoMap.get(p.id)
+    if (existing) {
+      existing.discount = Number(((existing.discount || 0) + (p.discount || 0)).toFixed(2))
+    } else {
+      promoMap.set(p.id, { ...p })
+    }
+  }
+  appliedPromotions.length = 0
+  appliedPromotions.push(...promoMap.values())
+
   // 总价折扣（优先级最高，命中后不再执行满减）
   const totalDiscountPromos = activePromotions.filter((p) => p.type === 'total_discount')
   let totalDiscountApplied = false
