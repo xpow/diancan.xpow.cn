@@ -315,39 +315,51 @@ app.post('/api/cart/quote', async (req, res) => {
   appliedPromotions.length = 0
   appliedPromotions.push(...promoMap.values())
 
-  // 总价折扣（优先级最高，命中后不再执行满减）
-  const totalDiscountPromos = (activePromotions.filter((p) => p.type === 'total_discount') as any[])
-    .sort((a, b) => (JSON.parse(a.rules).minAmount ?? Infinity) - (JSON.parse(b.rules).minAmount ?? Infinity))
-  let totalDiscountApplied = false
+  // 收集所有有门槛的活动，按门槛从小到大排序，先生成提示（同一时间只显示一个"再点...可享"）
+  const totalDiscountPromos = activePromotions.filter((p) => p.type === 'total_discount')
+  const thresholdPromos = [
+    ...fullReductionPromos.map((p) => ({ promo: p, threshold: JSON.parse(p.rules).threshold ?? 0 })),
+    ...totalDiscountPromos.map((p) => ({ promo: p, threshold: JSON.parse(p.rules).minAmount ?? 0 })),
+  ].sort((a, b) => a.threshold - b.threshold)
   let thresholdHintShown = false
-  for (const promo of totalDiscountPromos) {
+  for (const { promo } of thresholdPromos) {
     const rules = JSON.parse(promo.rules)
-    const { discountType, discountValue, maxDiscount, minAmount, excludedDishIds } = rules
-    if (!discountType || !discountValue) continue
-
-    // 先计算排除商品后的可参与金额（门槛和折扣都基于此）
+    const threshold = promo.type === 'full_reduction' ? (rules.threshold ?? 0) : (rules.minAmount ?? 0)
+    const excludedDishIds = rules.excludedDishIds ?? []
     let eligibleAmount = 0
     const excludedItems: string[] = []
     for (const item of itemDetails) {
-      if (!(excludedDishIds ?? []).includes(item.dishId)) {
+      if (!excludedDishIds.includes(item.dishId)) {
         eligibleAmount += item.finalSubtotal
       } else {
         excludedItems.push(item.name)
       }
     }
-
     if (excludedItems.length > 0) {
       hints.push(`${[...new Set(excludedItems)].join('、')} 不参与${promo.name}。`)
     }
-
-    if (minAmount && eligibleAmount < minAmount) {
-      if (eligibleAmount > 0 && !thresholdHintShown) {
-        const diff = Number((minAmount - eligibleAmount).toFixed(2))
-        hints.push(`再点 ¥${diff.toFixed(2)} 可享${promo.name}。`)
-        thresholdHintShown = true
-      }
-      continue
+    if (eligibleAmount > 0 && eligibleAmount < threshold && !thresholdHintShown) {
+      const diff = Number((threshold - eligibleAmount).toFixed(2))
+      hints.push(`再点 ¥${diff.toFixed(2)} 可享${promo.name}。`)
+      thresholdHintShown = true
     }
+  }
+
+  // 总价折扣（优先级最高，命中后不再执行满减）
+  let totalDiscountApplied = false
+  for (const promo of totalDiscountPromos) {
+    const rules = JSON.parse(promo.rules)
+    const { discountType, discountValue, maxDiscount, minAmount, excludedDishIds } = rules
+    if (!discountType || !discountValue) continue
+
+    let eligibleAmount = 0
+    for (const item of itemDetails) {
+      if (!(excludedDishIds ?? []).includes(item.dishId)) {
+        eligibleAmount += item.finalSubtotal
+      }
+    }
+
+    if (minAmount && eligibleAmount < minAmount) continue
 
     let discount = 0
     if (discountType === 'percentage') {
@@ -376,27 +388,17 @@ app.post('/api/cart/quote', async (req, res) => {
 
   // 满减（仅当总价折扣未命中时执行）
   if (!totalDiscountApplied) {
-    const sortedFullReduction = (fullReductionPromos as any[])
-      .sort((a, b) => (JSON.parse(a.rules).threshold ?? Infinity) - (JSON.parse(b.rules).threshold ?? Infinity))
-    for (const promo of sortedFullReduction) {
+    for (const promo of fullReductionPromos) {
       const rules = JSON.parse(promo.rules)
       const threshold = rules.threshold ?? 0
       const discount = rules.discount ?? 0
       const excludedDishIds = rules.excludedDishIds ?? []
 
-      // 计算排除商品后的可参与金额
       let eligibleAmount = 0
-      const excludedItems: string[] = []
       for (const item of itemDetails) {
         if (!excludedDishIds.includes(item.dishId)) {
           eligibleAmount += item.finalSubtotal
-        } else {
-          excludedItems.push(item.name)
         }
-      }
-
-      if (excludedItems.length > 0) {
-        hints.push(`${[...new Set(excludedItems)].join('、')} 不参与${promo.name}。`)
       }
 
       if (eligibleAmount >= threshold && discount > 0) {
@@ -408,10 +410,6 @@ app.post('/api/cart/quote', async (req, res) => {
           discount,
           description: `订单满 ¥${threshold} 自动减 ¥${discount}`,
         })
-      } else if (eligibleAmount > 0 && threshold > 0 && !thresholdHintShown) {
-        const diff = Number((threshold - eligibleAmount).toFixed(2))
-        hints.push(`再点 ¥${diff.toFixed(2)} 可享${promo.name}。`)
-        thresholdHintShown = true
       }
     }
   }
