@@ -49,7 +49,10 @@
       <section v-else class="dish-list">
         <article v-for="dish in filteredDishes" :key="dish.id" :id="`dish-${dish.id}`" :class="['dish-card', dish.id === highlightDishId ? 'dish-highlight' : '']">
           <div class="dish-row">
-            <img :src="dish.image" :alt="dish.name" class="dish-image" />
+            <div class="dish-image-wrap">
+              <img :src="dish.image" :alt="dish.name" class="dish-image" />
+              <span class="dish-image-disclaimer">*手工制作，实物与图片可能存在差异</span>
+            </div>
             <div class="dish-body">
               <div class="dish-header">
                 <h3 class="dish-name">{{ dish.name }}</h3>
@@ -616,6 +619,8 @@ onBeforeUnmount(() => {
 .dish-highlight { animation: dish-blink 0.3s ease 6; }
 .dish-row { display: flex; flex-direction: column; gap: var(--spacing-md); }
 .dish-image { width: 100%; height: 200px; border-radius: var(--radius-lg); object-fit: cover; }
+.dish-image-wrap { position: relative; }
+.dish-image-disclaimer { position: absolute; bottom: 4px; right: 4px; font-size: 10px; color: rgba(255,255,255,0.85); background: rgba(0,0,0,0.55); padding: 1px 6px; border-radius: 4px; line-height: 1.4; pointer-events: none; }
 .dish-body { display: flex; flex-direction: column; }
 .dish-header { display: flex; align-items: center; gap: var(--spacing-sm); flex-wrap: wrap; margin-bottom: var(--spacing-xs); }
 .dish-name { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; line-height: 1.3; color: var(--on-surface); }
