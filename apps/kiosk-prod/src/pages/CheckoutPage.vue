@@ -1222,7 +1222,7 @@ onMounted(() => {
   }
 
   .item-price {
-    font-size: var(--text-headline-lg);
+    font-size: 16px;
   }
 
   .payment-row {
