@@ -323,14 +323,7 @@ app.post('/api/cart/quote', async (req, res) => {
     const { discountType, discountValue, maxDiscount, minAmount, excludedDishIds } = rules
     if (!discountType || !discountValue) continue
 
-    if (minAmount && payableAmount < minAmount) {
-      if (payableAmount > 0) {
-        const diff = Number((minAmount - payableAmount).toFixed(2))
-        hints.push(`再点 ¥${diff.toFixed(2)} 可享${promo.name}。`)
-      }
-      continue
-    }
-
+    // 先计算排除商品后的可参与金额（门槛和折扣都基于此）
     let eligibleAmount = 0
     const excludedItems: string[] = []
     for (const item of itemDetails) {
@@ -343,6 +336,14 @@ app.post('/api/cart/quote', async (req, res) => {
 
     if (excludedItems.length > 0) {
       hints.push(`${[...new Set(excludedItems)].join('、')} 不参与${promo.name}。`)
+    }
+
+    if (minAmount && eligibleAmount < minAmount) {
+      if (eligibleAmount > 0) {
+        const diff = Number((minAmount - eligibleAmount).toFixed(2))
+        hints.push(`再点 ¥${diff.toFixed(2)} 可享${promo.name}。`)
+      }
+      continue
     }
 
     let discount = 0
