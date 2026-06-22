@@ -316,8 +316,10 @@ app.post('/api/cart/quote', async (req, res) => {
   appliedPromotions.push(...promoMap.values())
 
   // 总价折扣（优先级最高，命中后不再执行满减）
-  const totalDiscountPromos = activePromotions.filter((p) => p.type === 'total_discount')
+  const totalDiscountPromos = (activePromotions.filter((p) => p.type === 'total_discount') as any[])
+    .sort((a, b) => (JSON.parse(a.rules).minAmount ?? Infinity) - (JSON.parse(b.rules).minAmount ?? Infinity))
   let totalDiscountApplied = false
+  let thresholdHintShown = false
   for (const promo of totalDiscountPromos) {
     const rules = JSON.parse(promo.rules)
     const { discountType, discountValue, maxDiscount, minAmount, excludedDishIds } = rules
@@ -336,12 +338,20 @@ app.post('/api/cart/quote', async (req, res) => {
 
     if (excludedItems.length > 0) {
       hints.push(`${[...new Set(excludedItems)].join('、')} 不参与${promo.name}。`)
+      appliedPromotions.push({
+        id: promo.id,
+        name: promo.name,
+        type: 'total_discount',
+        discount: 0,
+        description: `满¥${minAmount}享${discountType === 'percentage' ? `${discountValue}%` : `¥${discountValue}`}减免`,
+      })
     }
 
     if (minAmount && eligibleAmount < minAmount) {
-      if (eligibleAmount > 0) {
+      if (eligibleAmount > 0 && !thresholdHintShown) {
         const diff = Number((minAmount - eligibleAmount).toFixed(2))
         hints.push(`再点 ¥${diff.toFixed(2)} 可享${promo.name}。`)
+        thresholdHintShown = true
       }
       continue
     }
@@ -373,7 +383,9 @@ app.post('/api/cart/quote', async (req, res) => {
 
   // 满减（仅当总价折扣未命中时执行）
   if (!totalDiscountApplied) {
-    for (const promo of fullReductionPromos) {
+    const sortedFullReduction = (fullReductionPromos as any[])
+      .sort((a, b) => (JSON.parse(a.rules).threshold ?? Infinity) - (JSON.parse(b.rules).threshold ?? Infinity))
+    for (const promo of sortedFullReduction) {
       const rules = JSON.parse(promo.rules)
       const threshold = rules.threshold ?? 0
       const discount = rules.discount ?? 0
@@ -392,6 +404,13 @@ app.post('/api/cart/quote', async (req, res) => {
 
       if (excludedItems.length > 0) {
         hints.push(`${[...new Set(excludedItems)].join('、')} 不参与${promo.name}。`)
+        appliedPromotions.push({
+          id: promo.id,
+          name: promo.name,
+          type: 'full_reduction',
+          discount: 0,
+          description: `满 ¥${threshold} 减 ¥${discount}`,
+        })
       }
 
       if (eligibleAmount >= threshold && discount > 0) {
@@ -403,9 +422,10 @@ app.post('/api/cart/quote', async (req, res) => {
           discount,
           description: `订单满 ¥${threshold} 自动减 ¥${discount}`,
         })
-      } else if (eligibleAmount > 0 && threshold > 0) {
+      } else if (eligibleAmount > 0 && threshold > 0 && !thresholdHintShown) {
         const diff = Number((threshold - eligibleAmount).toFixed(2))
         hints.push(`再点 ¥${diff.toFixed(2)} 可享${promo.name}。`)
+        thresholdHintShown = true
       }
     }
   }
