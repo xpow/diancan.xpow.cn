@@ -315,13 +315,12 @@ app.post('/api/cart/quote', async (req, res) => {
   appliedPromotions.length = 0
   appliedPromotions.push(...promoMap.values())
 
-  // 收集所有有门槛的活动，按门槛从小到大排序，先生成提示（同一时间只显示一个"再点...可享"）
+  // 收集所有有门槛的活动，按门槛从小到大排序，只对第一个有问题的活动生成提示
   const totalDiscountPromos = activePromotions.filter((p) => p.type === 'total_discount')
   const thresholdPromos = [
     ...fullReductionPromos.map((p) => ({ promo: p, threshold: JSON.parse(p.rules).threshold ?? 0 })),
     ...totalDiscountPromos.map((p) => ({ promo: p, threshold: JSON.parse(p.rules).minAmount ?? 0 })),
   ].sort((a, b) => a.threshold - b.threshold)
-  let thresholdHintShown = false
   for (const { promo } of thresholdPromos) {
     const rules = JSON.parse(promo.rules)
     const threshold = promo.type === 'full_reduction' ? (rules.threshold ?? 0) : (rules.minAmount ?? 0)
@@ -335,13 +334,16 @@ app.post('/api/cart/quote', async (req, res) => {
         excludedItems.push(item.name)
       }
     }
+    // 有排除商品 → 显示排除提示并停止
     if (excludedItems.length > 0) {
       hints.push(`${[...new Set(excludedItems)].join('、')} 不参与${promo.name}。`)
+      break
     }
-    if (eligibleAmount > 0 && eligibleAmount < threshold && !thresholdHintShown) {
+    // 未达门槛 → 显示"再点...可享"提示并停止
+    if (eligibleAmount > 0 && eligibleAmount < threshold) {
       const diff = Number((threshold - eligibleAmount).toFixed(2))
       hints.push(`再点 ¥${diff.toFixed(2)} 可享${promo.name}。`)
-      thresholdHintShown = true
+      break
     }
   }
 
