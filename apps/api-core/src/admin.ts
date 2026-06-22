@@ -278,6 +278,24 @@ router.put('/dishes/:id', async (req, res) => {
   }
 
   await prisma.dish.update({ where: { id }, data })
+
+  // 菜品下线时，关联的营销活动自动下线
+  if (status !== undefined && status !== 'active') {
+    const promoItems = await prisma.promotionItem.findMany({
+      where: { dishId: id },
+      include: { promotion: true },
+    })
+    const activePromoIds = [...new Set(promoItems
+      .filter((pi) => pi.promotion.status === 'active')
+      .map((pi) => pi.promotionId))]
+    if (activePromoIds.length) {
+      await prisma.promotion.updateMany({
+        where: { id: { in: activePromoIds } },
+        data: { status: 'inactive' },
+      })
+    }
+  }
+
   res.json({ id, success: true })
 })
 
