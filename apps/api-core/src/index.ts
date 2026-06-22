@@ -401,37 +401,41 @@ app.post('/api/cart/quote', async (req, res) => {
     }
   }
 
-  // 生成提示文案：命中的活动有排除 → 显示排除提示；否则找第一个未满足的活动
-  if (activePromoWithExclusion) {
-    hints.push(`${[...new Set(activePromoWithExclusion.excludedItems)].join('、')} 不参与${activePromoWithExclusion.name}。`)
-  } else {
-    const allThresholdPromos = [
-      ...fullReductionPromos.map((p) => ({ promo: p, threshold: JSON.parse(p.rules).threshold ?? 0 })),
-      ...totalDiscountPromos.map((p) => ({ promo: p, threshold: JSON.parse(p.rules).minAmount ?? 0 })),
-    ].sort((a, b) => a.threshold - b.threshold)
-    for (const { promo } of allThresholdPromos) {
-      const rules = JSON.parse(promo.rules)
-      const threshold = promo.type === 'full_reduction' ? (rules.threshold ?? 0) : (rules.minAmount ?? 0)
-      const excludedDishIds = rules.excludedDishIds ?? []
-      let eligibleAmount = 0
-      const excludedItems: string[] = []
-      for (const item of itemDetails) {
-        if (!excludedDishIds.includes(item.dishId)) {
-          eligibleAmount += item.finalSubtotal
-        } else {
-          excludedItems.push(item.name)
-        }
-      }
-      if (eligibleAmount < threshold) {
-        if (excludedItems.length > 0) {
-          hints.push(`${[...new Set(excludedItems)].join('、')} 不参与${promo.name}。`)
-        } else if (eligibleAmount > 0) {
-          const diff = Number((threshold - eligibleAmount).toFixed(2))
-          hints.push(`再点 ¥${diff.toFixed(2)} 可享${promo.name}。`)
-        }
-        break
+  // 生成提示文案：先找第一个未满足的活动，找到则显示对应提示；全部满足时最高档有排除才显示排除提示
+  const allThresholdPromos = [
+    ...fullReductionPromos.map((p) => ({ promo: p, threshold: JSON.parse(p.rules).threshold ?? 0 })),
+    ...totalDiscountPromos.map((p) => ({ promo: p, threshold: JSON.parse(p.rules).minAmount ?? 0 })),
+  ].sort((a, b) => a.threshold - b.threshold)
+  let hintShown = false
+  for (const { promo } of allThresholdPromos) {
+    const rules = JSON.parse(promo.rules)
+    const threshold = promo.type === 'full_reduction' ? (rules.threshold ?? 0) : (rules.minAmount ?? 0)
+    const excludedDishIds = rules.excludedDishIds ?? []
+    let eligibleAmount = 0
+    const excludedItems: string[] = []
+    for (const item of itemDetails) {
+      if (!excludedDishIds.includes(item.dishId)) {
+        eligibleAmount += item.finalSubtotal
+      } else {
+        excludedItems.push(item.name)
       }
     }
+    if (eligibleAmount < threshold) {
+      if (eligibleAmount > 0) {
+        // 有可参与商品 → 显示"再点..."提示
+        const diff = Number((threshold - eligibleAmount).toFixed(2))
+        hints.push(`再点 ¥${diff.toFixed(2)} 可享${promo.name}。`)
+      } else if (excludedItems.length > 0) {
+        // 全部被排除 → 显示排除提示
+        hints.push(`${[...new Set(excludedItems)].join('、')} 不参与${promo.name}。`)
+      }
+      hintShown = true
+      break
+    }
+  }
+  // 全部满足，最高档有排除则显示排除提示
+  if (!hintShown && activePromoWithExclusion) {
+    hints.push(`${[...new Set(activePromoWithExclusion.excludedItems)].join('、')} 不参与${activePromoWithExclusion.name}。`)
   }
 
   const discountAmount = Number((originalAmount - payableAmount).toFixed(2))
