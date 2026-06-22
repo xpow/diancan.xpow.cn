@@ -70,6 +70,10 @@
             <InputNumber v-model="form.rules.discount" :min="0" class="w-full" placeholder="5" />
           </div>
         </div>
+        <div class="form-group">
+          <label>不参与满减的商品</label>
+          <MultiSelect v-model="form.rules.excludedDishIds" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="选择不参与满减的商品" filter class="w-full" />
+        </div>
       </template>
 
       <!-- 福利品配置 -->
@@ -424,6 +428,9 @@ watch(
       }
       if (form.value.type === 'total_discount') {
         form.value.rules = { discountType: 'percentage', discountValue: null, maxDiscount: null, minAmount: null, excludedDishIds: [] }
+      }
+      if (form.value.type === 'full_reduction') {
+        form.value.rules = { threshold: null, discount: null, excludedDishIds: [] }
       }
     }
   },

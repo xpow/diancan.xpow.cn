@@ -376,8 +376,24 @@ app.post('/api/cart/quote', async (req, res) => {
       const rules = JSON.parse(promo.rules)
       const threshold = rules.threshold ?? 0
       const discount = rules.discount ?? 0
+      const excludedDishIds = rules.excludedDishIds ?? []
 
-      if (payableAmount >= threshold && discount > 0) {
+      // 计算排除商品后的可参与金额
+      let eligibleAmount = 0
+      const excludedItems: string[] = []
+      for (const item of itemDetails) {
+        if (!excludedDishIds.includes(item.dishId)) {
+          eligibleAmount += item.finalSubtotal
+        } else {
+          excludedItems.push(item.name)
+        }
+      }
+
+      if (excludedItems.length > 0) {
+        hints.push(`${[...new Set(excludedItems)].join('、')} 不参与${promo.name}。`)
+      }
+
+      if (eligibleAmount >= threshold && discount > 0) {
         payableAmount -= discount
         appliedPromotions.push({
           id: promo.id,
@@ -386,8 +402,8 @@ app.post('/api/cart/quote', async (req, res) => {
           discount,
           description: `订单满 ¥${threshold} 自动减 ¥${discount}`,
         })
-      } else if (payableAmount > 0 && threshold > 0) {
-        const diff = Number((threshold - payableAmount).toFixed(2))
+      } else if (eligibleAmount > 0 && threshold > 0) {
+        const diff = Number((threshold - eligibleAmount).toFixed(2))
         hints.push(`再点 ¥${diff.toFixed(2)} 可享${promo.name}。`)
       }
     }
