@@ -334,8 +334,8 @@ app.post('/api/cart/quote', async (req, res) => {
         excludedItems.push(item.name)
       }
     }
-    // 有排除商品 → 显示排除提示并停止
-    if (excludedItems.length > 0) {
+    // 有排除商品且未达门槛 → 显示排除提示并停止
+    if (excludedItems.length > 0 && eligibleAmount < threshold) {
       hints.push(`${[...new Set(excludedItems)].join('、')} 不参与${promo.name}。`)
       break
     }
