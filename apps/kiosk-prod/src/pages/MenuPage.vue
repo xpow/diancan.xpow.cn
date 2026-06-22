@@ -506,12 +506,14 @@ async function loadData() {
     dishes.value = menu.dishes.map((d) => {
       const specResult = d.specsPreset ? initSpecs(d.specsPreset) : null
       const groups = specResult?.groups ? structuredClone(specResult.groups) : undefined
-      // 按份卖时，串数 → 份数，x1 → 1份
+      // 按份卖时，串数 → 份数，x1 → 1份，最多5份
       if (d.portionSize && groups) {
         const qtyGroup = groups.find((g) => g.name === '串数')
         if (qtyGroup) {
           qtyGroup.name = '份数'
-          qtyGroup.options = qtyGroup.options.map((o) => ({ ...o, label: o.label.replace('x', '') + '份' }))
+          qtyGroup.options = qtyGroup.options
+            .map((o) => ({ ...o, label: o.label.replace('x', '') + '份' }))
+            .filter((o) => parseInt(o.label) <= 5)
         }
       }
       const defaults = specResult?.defaults ? [...specResult.defaults] : undefined
