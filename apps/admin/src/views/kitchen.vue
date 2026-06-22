@@ -39,6 +39,7 @@
             <div class="item-name">{{ item.name }}</div>
             <div class="item-tags">
               <span class="tag-qty">x{{ item.quantity }}</span>
+              <span v-if="item.portionSize" class="tag-portion">（¥{{ item.finalUnitPrice.toFixed(2) }}/{{ item.portionSize }}串）</span>
               <span v-if="item.specs" class="tag-specs">{{ item.specs }}</span>
             </div>
           </div>
