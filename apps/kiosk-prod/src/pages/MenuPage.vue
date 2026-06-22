@@ -47,7 +47,8 @@
       </section>
 
       <section v-else class="dish-list">
-        <article v-for="dish in filteredDishes" :key="dish.id" :id="`dish-${dish.id}`" :class="['dish-card', dish.id === highlightDishId ? 'dish-highlight' : '']">
+        <template v-if="filteredDishes.length">
+          <article v-for="dish in filteredDishes" :key="dish.id" :id="`dish-${dish.id}`" :class="['dish-card', dish.id === highlightDishId ? 'dish-highlight' : '']">
           <div class="dish-row">
             <div class="dish-image-wrap">
               <img :src="dish.image" :alt="dish.name" class="dish-image" />
@@ -86,6 +87,8 @@
             <span class="material-icons">{{ cartDishIds.has(dish.id) ? 'check_circle' : 'add' }}</span>
           </button>
         </article>
+        </template>
+        <p v-else class="empty-category">该分类暂无商品</p>
       </section>
     </div>
 
@@ -619,6 +622,7 @@ onBeforeUnmount(() => {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .dish-list { display: flex; flex-direction: column; gap: var(--spacing-md); }
+.empty-category { text-align: center; padding: var(--spacing-xl); color: var(--secondary); font-family: var(--font-display); font-size: var(--text-body-md); }
 @media (min-width: 500px) {
   .dish-list { display: grid; grid-template-columns: 1fr 1fr; }
   .page-content { max-width: none; }
