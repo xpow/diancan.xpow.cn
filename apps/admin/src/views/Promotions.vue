@@ -578,7 +578,7 @@ function ruleText(p: Promotion): string {
 
 async function fetchPromotions() {
   const res = await fetch('/api/admin/promotions')
-  promotions.value = await res.json()
+  promotions.value = (await res.json()).sort((a, b) => (a.status === 'active' ? -1 : 1) - (b.status === 'active' ? -1 : 1))
 }
 
 async function fetchDishes() {

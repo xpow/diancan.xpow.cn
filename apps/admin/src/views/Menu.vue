@@ -163,11 +163,12 @@ const categoryOptions = computed(() => [
   ...categories.value.map(c => ({ label: c.name, value: c.id })),
 ])
 
-const filteredDishes = computed(() =>
-  selectedCategoryId.value
+const filteredDishes = computed(() => {
+  let list = selectedCategoryId.value
     ? dishes.value.filter(d => d.categoryId === selectedCategoryId.value)
-    : dishes.value,
-)
+    : dishes.value
+  return [...list].sort((a, b) => (a.status === 'active' ? -1 : 1) - (b.status === 'active' ? -1 : 1))
+})
 
 /* Dish */
 const showDish = ref(false)
