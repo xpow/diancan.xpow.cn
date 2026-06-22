@@ -338,13 +338,6 @@ app.post('/api/cart/quote', async (req, res) => {
 
     if (excludedItems.length > 0) {
       hints.push(`${[...new Set(excludedItems)].join('、')} 不参与${promo.name}。`)
-      appliedPromotions.push({
-        id: promo.id,
-        name: promo.name,
-        type: 'total_discount',
-        discount: 0,
-        description: `满¥${minAmount}享${discountType === 'percentage' ? `${discountValue}%` : `¥${discountValue}`}减免`,
-      })
     }
 
     if (minAmount && eligibleAmount < minAmount) {
@@ -404,13 +397,6 @@ app.post('/api/cart/quote', async (req, res) => {
 
       if (excludedItems.length > 0) {
         hints.push(`${[...new Set(excludedItems)].join('、')} 不参与${promo.name}。`)
-        appliedPromotions.push({
-          id: promo.id,
-          name: promo.name,
-          type: 'full_reduction',
-          discount: 0,
-          description: `满 ¥${threshold} 减 ¥${discount}`,
-        })
       }
 
       if (eligibleAmount >= threshold && discount > 0) {
