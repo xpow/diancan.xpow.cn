@@ -114,10 +114,10 @@
               <div class="cart-item-name-row">
                 <span class="cart-item-name">{{ item.name }}</span>
                 <template v-if="isItemDiscounted(item)">
-                  <span class="cart-original-price"><small class="c-sign">¥</small>{{ getItemOriginalPrice(item).toFixed(2) }}</span>
-                  <span class="cart-final-price"><small class="c-sign">¥</small>{{ getItemFinalPrice(item).toFixed(2) }}</span>
+                  <span class="cart-original-price"><small class="c-sign">¥</small>{{ getItemOriginalPrice(item).toFixed(2) }}<template v-if="item.portionSize">/{{ item.portionSize }}串</template></span>
+                  <span class="cart-final-price"><small class="c-sign">¥</small>{{ getItemFinalPrice(item).toFixed(2) }}<template v-if="item.portionSize">/{{ item.portionSize }}串</template></span>
                 </template>
-                <span v-else class="cart-final-price"><small class="c-sign">¥</small>{{ item.price.toFixed(2) }}</span>
+                <span v-else class="cart-final-price"><small class="c-sign">¥</small>{{ item.price.toFixed(2) }}<template v-if="item.portionSize">/{{ item.portionSize }}串</template></span>
               </div>
               <p class="cart-item-spec" @click="startEditSpice(item)">
                 {{ item.specs }}

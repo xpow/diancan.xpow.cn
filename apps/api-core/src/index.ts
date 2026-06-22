@@ -298,6 +298,7 @@ app.post('/api/cart/quote', async (req, res) => {
       finalSubtotal: Number(finalSubtotal.toFixed(2)),
       specs: item.specs,
       promotionLabel,
+      portionSize: dish.portionSize || undefined,
     })
   }
 
@@ -480,6 +481,7 @@ app.post('/api/orders', async (req, res) => {
           finalSubtotal: item.finalSubtotal,
           specs: item.specs || null,
           promotionLabel: item.promotionLabel,
+          portionSize: item.portionSize || 0,
         })),
       },
       promotions: {
@@ -551,6 +553,7 @@ app.get('/api/orders', async (_req, res) => {
         specs: i.specs || undefined,
         promotionLabel: i.promotionLabel || undefined,
         status: i.status,
+        portionSize: i.portionSize || undefined,
       })),
       createdAt: o.createdAt.toISOString(),
     })),
@@ -584,6 +587,7 @@ app.get('/api/orders/:orderNo', async (req, res) => {
       finalSubtotal: i.finalSubtotal,
       specs: i.specs || undefined,
       promotionLabel: i.promotionLabel || undefined,
+      portionSize: i.portionSize || undefined,
     })),
     createdAt: order.createdAt.toISOString(),
   })

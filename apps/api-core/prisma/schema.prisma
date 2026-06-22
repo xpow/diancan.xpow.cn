@@ -217,6 +217,7 @@ model OrderItem {
   specs          String?
   promotionLabel String?
   status         String  @default("pending") // pending | preparing | ready
+  portionSize    Int     @default(0)
 
   order Order @relation(fields: [orderId], references: [id])
 

@@ -67,7 +67,7 @@
                   <img :src="dishImage(item)" :alt="item.name" class="ticket-item-img-el" />
                 </div>
                 <div>
-                  <p class="ticket-item-name">{{ item.name }}</p>
+                  <p class="ticket-item-name">{{ item.name }}<template v-if="item.portionSize"> <span class="ticket-item-unit">¥{{ (item.finalUnitPrice ?? item.unitPrice).toFixed(2) }}/{{ item.portionSize }}串</span></template></p>
                   <p v-if="item.specs" class="ticket-item-spec">{{ item.specs }}</p>
                 </div>
               </div>
