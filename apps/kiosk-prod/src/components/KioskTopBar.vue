@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <header class="top-bar">
     <div class="top-bar-left">
       <router-link v-if="showHomeLink" to="/" class="home-link">
@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import logoImage from '@/assets/images/pages/logo.png'
+import logoImage from '@/assets/images/pages/logo.jpg'
 
 withDefaults(defineProps<{
   title: string

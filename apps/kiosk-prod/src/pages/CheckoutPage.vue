@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <main class="page">
     <!-- Top Bar -->
     <header class="top-bar">
@@ -21,7 +21,7 @@
       <!-- Hero Context -->
       <section class="hero-context">
         <img
-          src="/src/assets/images/pages/banner.png"
+          src="/src/assets/images/pages/banner.jpg"
           alt="订单确认"
           class="hero-img"
         />
@@ -229,7 +229,7 @@ import { useRouter } from 'vue-router'
 import { clearCart, readCart } from '@/utils/cart'
 import { getDishImage } from '@/utils/dishImages'
 import { getTheme, setTheme } from '@/utils/theme'
-import logoImage from '@/assets/images/pages/logo.png'
+import logoImage from '@/assets/images/pages/logo.jpg'
 
 interface QuoteLineItem {
   dishId: string

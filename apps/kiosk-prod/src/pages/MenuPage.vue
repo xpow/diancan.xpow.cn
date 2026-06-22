@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <main class="page">
     <header class="top-bar">
       <div class="brand">
@@ -201,8 +201,8 @@ import SpecSelector from '@/components/SpecSelector.vue'
 import { readCart, clearCart as clearCartStorage, addToCart as addToCartStorage, saveCart, updateCartQuantity as updateCartQuantityStorage, StoredCartItem } from '@/utils/cart'
 import { getDishImage } from '@/utils/dishImages'
 import { getTheme, setTheme } from '@/utils/theme'
-import logoImage from '@/assets/images/pages/logo.png'
-import heroImage from '@/assets/images/pages/hero.png'
+import logoImage from '@/assets/images/pages/logo.jpg'
+import heroImage from '@/assets/images/pages/hero.jpg'
 
 interface QuoteLineItem {
   dishId: string; name: string; quantity: number

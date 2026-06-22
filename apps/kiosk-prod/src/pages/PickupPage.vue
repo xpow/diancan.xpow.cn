@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <main class="page">
     <header class="top-bar">
       <div class="brand">
@@ -129,7 +129,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getDishImage } from '@/utils/dishImages'
 import { getTheme, setTheme } from '@/utils/theme'
-import logoImage from '@/assets/images/pages/logo.png'
+import logoImage from '@/assets/images/pages/logo.jpg'
 
 const router = useRouter()
 

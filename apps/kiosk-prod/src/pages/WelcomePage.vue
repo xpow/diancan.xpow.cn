@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <header class="top-bar" v-if="deviceAuthed">
       <div class="brand">
         <img :src="logoImage" alt="Logo" class="brand-logo" />
@@ -168,13 +168,13 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getTheme, setTheme } from '@/utils/theme'
 import { getDishImage } from '@/utils/dishImages'
-import logoImage from '@/assets/images/pages/logo.png'
-import featuredImg1 from '@/assets/images/pages/zp-1.png'
-import featuredImg2 from '@/assets/images/pages/zp-2.png'
-import lb1 from '@/assets/images/pages/lb-1.png'
-import lb2 from '@/assets/images/pages/lb-2.png'
-import lb3 from '@/assets/images/pages/lb-3.png'
-import lb4 from '@/assets/images/pages/lb-4.png'
+import logoImage from '@/assets/images/pages/logo.jpg'
+import featuredImg1 from '@/assets/images/pages/zp-1.jpg'
+import featuredImg2 from '@/assets/images/pages/zp-2.jpg'
+import lb1 from '@/assets/images/pages/lb-1.jpg'
+import lb2 from '@/assets/images/pages/lb-2.jpg'
+import lb3 from '@/assets/images/pages/lb-3.jpg'
+import lb4 from '@/assets/images/pages/lb-4.jpg'
 
 const router = useRouter()
 
