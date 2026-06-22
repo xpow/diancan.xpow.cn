@@ -1062,19 +1062,19 @@ onMounted(() => {
 
 /* Continue Ordering - dark frosted glass */
 .continue-ordering {
-  background: rgba(30, 30, 30, 0.65) !important;
+  background: var(--surface-container-high) !important;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--outline-variant);
 }
 
 .continue-ordering .payment-icon,
 .continue-ordering .payment-name {
-  color: #fff !important;
+  color: var(--primary) !important;
 }
 
 .continue-ordering .payment-arrow {
-  color: rgba(255, 255, 255, 0.6) !important;
+  color: var(--primary) !important;
 }
 
 .back-menu-link {
