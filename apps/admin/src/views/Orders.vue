@@ -165,7 +165,7 @@ onMounted(fetchOrders)
 const showCancel = ref(false)
 const cancelOrderId = ref('')
 const selectedReason = ref('')
-const cancelReasons = ['客户不要了', '测试订单', '菜单下错了，重新下单']
+const cancelReasons = ['等待时间过长，客户不要了', '客户有事不要了', '测试订单', '菜品不足，无法出餐', '菜单下错了，重新下单']
 
 function openCancelDialog(id: string) {
   cancelOrderId.value = id
