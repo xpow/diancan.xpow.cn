@@ -151,7 +151,7 @@
           <div v-for="hint in cartQuote.hints" :key="hint" class="promo-hint">
             <span class="material-icons">lightbulb</span>
             <span v-html="highlightAmount(hint)"></span>
-            <button class="continue-order-btn" @click="showCart = false">继续点餐</button>
+            <button v-if="hint.includes('可享')" class="continue-order-btn" @click="showCart = false">继续点餐</button>
           </div>
           <div v-if="cartQuote.totals.discountAmount > 0" class="promo-summary">
             <span>已优惠</span>
