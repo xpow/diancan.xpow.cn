@@ -462,6 +462,21 @@ router.put('/promotions/:id', async (req, res) => {
       }
     }
 
+    // 从非 active 恢复为 active 时，检查关联商品是否已上架
+    const targetStatus = status ?? promo.status
+    if (targetStatus === 'active' && promo.status !== 'active') {
+      const promoItems = await prisma.promotionItem.findMany({
+        where: { promotionId: id },
+        include: { dish: true },
+      })
+      const offlineDishes = promoItems
+        .filter((pi) => pi.dish.status !== 'active')
+        .map((pi) => pi.dish.name)
+      if (offlineDishes.length) {
+        return res.status(409).json({ message: `以下商品已下线，请重新上架后再启用活动：${offlineDishes.join('；')}` })
+      }
+    }
+
     const data: any = {}
     if (name !== undefined) data.name = name
     if (type !== undefined) data.type = type
