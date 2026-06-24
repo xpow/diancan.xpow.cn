@@ -62,7 +62,7 @@ function toggleTheme() {
 .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #00c853; box-shadow: 0 0 6px #00c853; animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
 @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); box-shadow: 0 0 6px #00c853; } 50% { opacity: 0.85; transform: scale(0.95); box-shadow: 0 0 2px #00c853; } }
 .ticket-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; border-radius: 50%; cursor: pointer; color: var(--secondary); text-decoration: none; position: relative; }
-.top-bar-right { display: flex; align-items: center; gap: var(--spacing-xs); flex-shrink: 0; }
+.top-bar-right { display: flex; align-items: center; gap: var(--spacing-sm); flex-shrink: 0; }
 .theme-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: none; border-radius: var(--radius-full); background: transparent; color: var(--on-surface-variant); cursor: pointer; }
 .theme-btn .material-icons { font-size: 22px !important; }
 .close-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: none; border-radius: 50%; background: transparent; color: var(--secondary); cursor: pointer; text-decoration: none; }
@@ -79,7 +79,5 @@ function toggleTheme() {
   .brand { min-width: 0; }
   .brand h1 { font-size: 15px; max-width: 110px; }
   .brand-logo { height: 24px; }
-  .status-badge { font-size: 12px; padding: 2px 8px; }
-  .device-tag { font-size: 12px; padding: 2px 8px; }
 }
 </style>
