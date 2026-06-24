@@ -14,7 +14,7 @@
         <button class="theme-btn" @click="themeIcon = doToggleTheme()">
           <span class="material-icons">{{ themeIcon }}</span>
         </button>
-        <router-link to="/pickup" class="ticket-btn">
+        <router-link to="/pickup" class="ticket-btn hide-mobile">
           <span class="material-icons">receipt_long</span>
           <span v-if="hasActiveOrder" class="badge-dot">1</span>
         </router-link>
@@ -772,6 +772,8 @@ onBeforeUnmount(() => {
     width: 36px;
     height: 36px;
   }
+
+  .hide-mobile { display: none; }
 
   .theme-btn .material-icons,
   .ticket-btn .material-icons {
