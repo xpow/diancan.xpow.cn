@@ -3,13 +3,13 @@
     <div class="brand">
       <img :src="logoImage" alt="Logo" class="brand-logo" />
       <h1>{{ title }}</h1>
-      <span v-if="deviceCode" class="device-tag">{{ deviceCode }}</span>
-      <span v-if="statusText" class="status-badge">
+    </div>
+    <div class="top-bar-right">
+      <span class="status-badge">
         <span class="status-dot"></span>
         <span>{{ statusText }}</span>
       </span>
-    </div>
-    <div class="top-bar-right">
+      <span class="device-tag">{{ deviceCode }}</span>
       <button class="theme-btn" @click="toggleTheme">
         <span class="material-icons">{{ themeIcon }}</span>
       </button>
