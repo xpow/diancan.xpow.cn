@@ -352,20 +352,6 @@ async function reloadQuote() {
       branchName.value = bootstrap.branchName
     }
 
-    // 使用 SN 认证获取当前有效设备 ID
-    const savedSN = localStorage.getItem('kiosk-device-sn')
-    if (savedSN) {
-      const authRes = await fetch('/api/system/device-auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sn: savedSN }),
-      })
-      if (authRes.ok) {
-        const auth = await authRes.json()
-        bootstrap.deviceId = auth.deviceId
-      }
-    }
-
     const quoteResponse = await fetch('/api/cart/quote', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
