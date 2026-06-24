@@ -1,5 +1,5 @@
 ﻿<template>
-  <KioskTopBar v-if="deviceAuthed" :title="displayTitle" :status-text="bootstrap?.statusText || '营业中'" />
+  <KioskTopBar v-if="deviceAuthed" :title="displayTitle" :status-text="bootstrap?.statusText || '营业中'" :device-code="bootstrap?.deviceCode ?? ''" />
   <main class="page">
     <template v-if="deviceAuthed">
     <!-- Hero Carousel -->
@@ -212,6 +212,7 @@ interface DeviceInfo {
 interface BootstrapResponse {
   merchantName: string
   branchName: string
+  deviceCode?: string
   slogan: string
   businessHours: string
   todayLocation: string

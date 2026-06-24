@@ -1,6 +1,6 @@
 ﻿<template>
   <main class="page">
-    <KioskTopBar :title="displayTitle" show-home-link />
+    <KioskTopBar :title="displayTitle" :device-code="deviceCode" :status-text="statusText" show-home-link />
 
     <div class="page-content">
       <div class="status-tabs">
@@ -146,6 +146,8 @@ const orders = ref<OrderSummary[]>([])
 const tab = ref('active')
 const merchantName = ref('Sizzling Skewers')
 const branchName = ref('')
+const deviceCode = ref('')
+const statusText = ref('')
 const displayTitle = computed(() => {
   const m = merchantName.value
   const b = branchName.value
@@ -255,9 +257,11 @@ async function fetchMerchantName() {
   try {
     const res = await fetch('/api/system/bootstrap')
     if (!res.ok) return
-    const data = await res.json() as { merchantName?: string; branchName?: string }
+    const data = await res.json() as { merchantName?: string; branchName?: string; deviceCode?: string; statusText?: string }
     if (data.merchantName) merchantName.value = data.merchantName
     if (data.branchName) branchName.value = data.branchName
+    if (data.deviceCode) deviceCode.value = data.deviceCode
+    if (data.statusText) statusText.value = data.statusText
   } catch {}
 }
 

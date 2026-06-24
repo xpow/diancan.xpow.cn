@@ -1,7 +1,7 @@
 ﻿<template>
   <main class="page">
     <!-- Top Bar -->
-    <KioskTopBar :title="displayTitle" show-home-link />
+    <KioskTopBar :title="displayTitle" :device-code="deviceCode" :status-text="statusText" show-home-link />
 
     <!-- Content -->
     <div class="page-content">
@@ -264,6 +264,8 @@ const quote = ref<QuoteResponse | null>(null)
 const createdOrder = ref<CreatedOrder | null>(null)
 const merchantName = ref('Sizzling Skewers')
 const branchName = ref('')
+const deviceCode = ref('')
+const statusText = ref('')
 const displayTitle = computed(() => {
   const m = merchantName.value
   const b = branchName.value
@@ -309,6 +311,8 @@ async function reloadQuote() {
       deviceId: string
       merchantName?: string
       branchName?: string
+      deviceCode?: string
+      statusText?: string
       deviceActive?: boolean
     }
 
@@ -323,6 +327,12 @@ async function reloadQuote() {
     }
     if (bootstrap.branchName) {
       branchName.value = bootstrap.branchName
+    }
+    if (bootstrap.deviceCode) {
+      deviceCode.value = bootstrap.deviceCode
+    }
+    if (bootstrap.statusText) {
+      statusText.value = bootstrap.statusText
     }
 
     const quoteResponse = await fetch('/api/cart/quote', {
