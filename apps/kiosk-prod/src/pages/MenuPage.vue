@@ -1,25 +1,12 @@
 ﻿<template>
   <main class="page">
-    <header class="top-bar">
-      <div class="brand">
-        <img :src="logoImage" alt="Logo" class="brand-logo" />
-        <h1>{{ displayTitle }}</h1>
-      </div>
-      <div class="top-bar-right">
-        <span v-if="deviceCode" class="device-tag">{{ deviceCode }}</span>
-        <span v-if="statusText" class="status-badge">
-          <span class="status-dot"></span>
-          <span>{{ statusText }}</span>
-        </span>
-        <button class="theme-btn" @click="themeIcon = doToggleTheme()">
-          <span class="material-icons">{{ themeIcon }}</span>
-        </button>
-        <router-link to="/pickup" class="ticket-btn hide-mobile">
-          <span class="material-icons">receipt_long</span>
-          <span v-if="hasActiveOrder" class="badge-dot">1</span>
-        </router-link>
-      </div>
-    </header>
+    <KioskTopBar
+      :title="displayTitle"
+      :device-code="deviceCode"
+      :status-text="statusText"
+      :show-ticket="true"
+      :has-active-order="hasActiveOrder"
+    />
 
     <div class="page-content">
       <section class="hero-context">
@@ -208,9 +195,8 @@ import { SPECS_PRESETS, type SpecGroup, type SpecPreset } from '@diancan/shared'
 import SpecSelector from '@/components/SpecSelector.vue'
 import { readCart, clearCart as clearCartStorage, addToCart as addToCartStorage, saveCart, updateCartQuantity as updateCartQuantityStorage, StoredCartItem } from '@/utils/cart'
 import { getDishImage } from '@/utils/dishImages'
-import { getTheme, setTheme } from '@/utils/theme'
-import logoImage from '@/assets/images/pages/logo.jpg'
 import heroImage from '@/assets/images/pages/hero.jpg'
+import KioskTopBar from '@/components/KioskTopBar.vue'
 
 interface QuoteLineItem {
   dishId: string; name: string; quantity: number
@@ -339,15 +325,6 @@ async function fetchQuote() {
   }
 }
 
-function getThemeIcon(): string {
-  const t = getTheme()
-  return t === 'auto' ? 'brightness_auto' : t === 'dark' ? 'dark_mode' : 'light_mode'
-}
-const themeIcon = ref(getThemeIcon())
-function doToggleTheme(): string {
-  setTheme(getTheme() === 'dark' ? 'light' : 'dark')
-  return getThemeIcon()
-}
 
 const cartCount = computed(() => cartItems.value.reduce((s, i) => s + i.quantity, 0))
 const cartTotal = computed(() => {
@@ -765,35 +742,7 @@ onBeforeUnmount(() => {
     padding-bottom: 156px;
   }
 
-  .top-bar {
-    padding: var(--spacing-xs) var(--container-margin);
-  }
-
-  .brand-logo {
-    height: 28px;
-  }
-
-  .ticket-btn,
-  .theme-btn {
-    width: 36px;
-    height: 36px;
-  }
-
   .hide-mobile { display: none; }
-
-  .theme-btn .material-icons,
-  .ticket-btn .material-icons {
-    font-size: 20px !important;
-  }
-}
-
-@media (max-width: 399px) {
-  .brand { min-width: 0; }
-  .brand h1 { font-size: 15px; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .brand-logo { height: 24px; }
-  .status-badge { font-size: 12px; padding: 2px 8px; }
-  .device-tag { font-size: 12px; padding: 2px 8px; }
-}
 
   .category-nav {
     top: 52px;

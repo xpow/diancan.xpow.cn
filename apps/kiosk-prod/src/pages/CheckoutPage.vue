@@ -1,20 +1,7 @@
 ﻿<template>
   <main class="page">
     <!-- Top Bar -->
-    <header class="top-bar">
-      <div class="brand">
-        <img :src="logoImage" alt="Logo" class="brand-logo" />
-        <h1>{{ displayTitle }}</h1>
-      </div>
-      <div class="top-bar-right">
-        <button class="theme-btn" @click="themeIcon = doToggleTheme()">
-          <span class="material-icons">{{ themeIcon }}</span>
-        </button>
-        <button class="close-btn" @click="goHome">
-          <span class="material-icons">close</span>
-        </button>
-      </div>
-    </header>
+    <KioskTopBar :title="displayTitle" show-home-link />
 
     <!-- Content -->
     <div class="page-content">
@@ -228,8 +215,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { clearCart, readCart } from '@/utils/cart'
 import { getDishImage } from '@/utils/dishImages'
-import { getTheme, setTheme } from '@/utils/theme'
-import logoImage from '@/assets/images/pages/logo.jpg'
+import KioskTopBar from '@/components/KioskTopBar.vue'
 
 interface QuoteLineItem {
   dishId: string
@@ -270,15 +256,6 @@ interface CreatedOrder {
 const router = useRouter()
 const cartItems = ref(readCart())
 
-const themeIcon = ref(getIcon())
-function getIcon(): string {
-  const t = getTheme()
-  return t === 'auto' ? 'brightness_auto' : t === 'dark' ? 'dark_mode' : 'light_mode'
-}
-function doToggleTheme(): string {
-  setTheme(getTheme() === 'dark' ? 'light' : 'dark')
-  return getIcon()
-}
 const loading = ref(false)
 const submitting = ref(false)
 const orderError = ref('')
@@ -307,10 +284,6 @@ const paymentQrImage = computed(() => qrMap[paymentMethod.value] || '')
 function getItemImage(dishId: string): string {
   const cartItem = cartItems.value.find((i) => i.baseDishId === dishId)
   return cartItem?.image || getDishImage(dishId)
-}
-
-function goHome() {
-  router.push('/')
 }
 
 async function reloadQuote() {
@@ -466,83 +439,11 @@ onMounted(() => {
 .page {
   min-height: 100vh;
   background: var(--surface);
+  padding-top: 56px;
   padding-bottom: 160px;
 }
 
 /* Top Bar */
-.top-bar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-sm) var(--container-margin);
-  background: var(--frosted-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.brand-logo { height: 32px; width: auto; border-radius: var(--radius-sm); }
-
-.brand h1 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--text-headline-lg-mobile);
-  font-weight: 700;
-  line-height: 1.3;
-  color: var(--primary-container);
-  text-transform: uppercase;
-}
-
-.close-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: none;
-  border-radius: var(--radius-full);
-  background: transparent;
-  color: var(--secondary);
-  cursor: pointer;
-}
-
-.top-bar-right {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-}
-
-.theme-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: none;
-  border-radius: var(--radius-full);
-  background: transparent;
-  color: var(--on-surface-variant);
-  cursor: pointer;
-}
-
-.theme-btn .material-icons {
-  font-size: 22px !important;
-}
-
-.theme-btn:hover {
-  background: var(--surface-container-high);
-}
-
 /* Page Content */
 .page-content {
   padding: 0 var(--container-margin) var(--spacing-lg);
@@ -1146,23 +1047,8 @@ onMounted(() => {
 .c-sign { font-size: 0.85em; padding: 0 1px; }
 
 @media (max-width: 499px) {
-  .top-bar {
-    padding: var(--spacing-xs) var(--container-margin);
-  }
-
-  .brand-logo {
-    height: 28px;
-  }
-
-  .theme-btn,
-  .close-btn {
-    width: 36px;
-    height: 36px;
-  }
-
-  .theme-btn .material-icons,
-  .close-btn .material-icons {
-    font-size: 20px !important;
+  .page {
+    padding-top: 52px;
   }
 
   .hero-context {

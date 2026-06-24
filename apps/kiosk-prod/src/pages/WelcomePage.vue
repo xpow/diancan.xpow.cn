@@ -1,17 +1,5 @@
 ﻿<template>
-  <header class="top-bar" v-if="deviceAuthed">
-      <div class="brand">
-        <img :src="logoImage" alt="Logo" class="brand-logo" />
-        <h1>{{ displayTitle }}</h1>
-      </div>
-      <div class="status-badge">
-        <span class="status-dot"></span>
-        <span>{{ bootstrap?.statusText || '营业中' }}</span>
-      </div>
-      <button class="theme-btn" @click="themeIcon = doToggleTheme()" :title="themeTooltip">
-        <span class="material-icons">{{ themeIcon }}</span>
-      </button>
-  </header>
+  <KioskTopBar v-if="deviceAuthed" :title="displayTitle" :status-text="bootstrap?.statusText || '营业中'" />
   <main class="page">
     <template v-if="deviceAuthed">
     <!-- Hero Carousel -->
@@ -166,9 +154,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { getTheme, setTheme } from '@/utils/theme'
 import { getDishImage } from '@/utils/dishImages'
-import logoImage from '@/assets/images/pages/logo.jpg'
+import KioskTopBar from '@/components/KioskTopBar.vue'
 import featuredImg1 from '@/assets/images/pages/zp-1.jpg'
 import featuredImg2 from '@/assets/images/pages/zp-2.jpg'
 import lb1 from '@/assets/images/pages/lb-1.jpg'
@@ -283,21 +270,6 @@ async function submitSN() {
   }
 }
 
-function getThemeIcon(): string {
-  const t = getTheme()
-  if (t === 'auto') return 'brightness_auto'
-  return t === 'dark' ? 'dark_mode' : 'light_mode'
-}
-const themeIcon = ref(getThemeIcon())
-function doToggleTheme(): string {
-  setTheme(getTheme() === 'dark' ? 'light' : 'dark')
-  return getThemeIcon()
-}
-function themeTooltip(): string {
-  const t = getTheme()
-  return t === 'dark' ? '切换到亮色' : '切换到深色'
-}
-
 async function loadBootstrap() {
   // 先检查本地缓存的设备码，跳过认证弹窗
   const savedDeviceSN = localStorage.getItem('kiosk-device-sn')
@@ -358,88 +330,6 @@ onMounted(() => {
 }
 
 /* Top Bar */
-.top-bar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-sm) var(--container-margin);
-  background: var(--frosted-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.brand-logo { height: 32px; width: auto; border-radius: var(--radius-sm); }
-
-.brand h1 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--text-headline-lg-mobile);
-  font-weight: 700;
-  line-height: 1.3;
-  color: var(--primary-container);
-  text-transform: uppercase;
-  letter-spacing: -0.01em;
-}
-
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-full);
-  background: rgba(0, 110, 28, 0.1);
-  color: var(--tertiary);
-  font-family: var(--font-display);
-  font-size: var(--text-label-lg);
-  font-weight: 600;
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--tertiary-container);
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
-
-.theme-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: none;
-  border-radius: var(--radius-full);
-  background: transparent;
-  color: var(--on-surface-variant);
-  cursor: pointer;
-  margin-left: var(--spacing-sm);
-}
-
-.theme-btn .material-icons {
-  font-size: 22px !important;
-}
-
-.theme-btn:hover {
-  background: var(--surface-container-high);
-}
-
 /* Hero Section */
 .hero-section {
   margin-top: 56px;
@@ -960,28 +850,6 @@ onMounted(() => {
 
   .hero-swipe {
     border-radius: 0;
-  }
-
-  .top-bar {
-    padding: var(--spacing-xs) var(--container-margin);
-  }
-
-  .brand-logo {
-    height: 28px;
-  }
-
-  .status-badge,
-  .theme-btn {
-    min-height: 36px;
-  }
-
-  .theme-btn {
-    width: 36px;
-    height: 36px;
-  }
-
-  .theme-btn .material-icons {
-    font-size: 20px !important;
   }
 
   .hero-overlay {
