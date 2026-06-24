@@ -7,6 +7,10 @@
         <span v-if="deviceCode" class="device-tag">{{ deviceCode }}</span>
       </div>
       <div class="top-bar-right">
+        <span v-if="statusText" class="status-badge">
+          <span class="status-dot"></span>
+          <span>{{ statusText }}</span>
+        </span>
         <button class="theme-btn" @click="themeIcon = doToggleTheme()">
           <span class="material-icons">{{ themeIcon }}</span>
         </button>
@@ -253,6 +257,7 @@ const merchantName = ref('')
 const branchName = ref('')
 const deviceId = ref('')
 const deviceCode = ref('')
+const statusText = ref('')
 const displayTitle = computed(() => {
   const m = merchantName.value
   const b = branchName.value
@@ -503,7 +508,7 @@ async function loadData() {
   try {
     const bootstrapResponse = await fetch('/api/system/bootstrap')
     if (!bootstrapResponse.ok) throw new Error('接口返回异常，请检查 api-core 是否已启动')
-    const bootstrap = await bootstrapResponse.json() as { merchantName?: string; branchName: string; deviceId?: string; deviceCode?: string }
+    const bootstrap = await bootstrapResponse.json() as { merchantName?: string; branchName: string; deviceId?: string; deviceCode?: string; statusText?: string }
 
     const menuResponse = await loadMenu(bootstrap)
 
@@ -516,6 +521,7 @@ async function loadData() {
     branchName.value = bootstrap.branchName
     deviceId.value = bootstrap.deviceId ?? ''
     deviceCode.value = bootstrap.deviceCode ?? ''
+    statusText.value = bootstrap.statusText ?? ''
     categories.value = [...menu.categories].sort((a, b) => a.sort - b.sort)
 
     dishes.value = menu.dishes.map((d) => {
@@ -609,6 +615,9 @@ onBeforeUnmount(() => {
 .brand-logo { height: 32px; width: auto; border-radius: var(--radius-sm); }
 .brand h1 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-lg-mobile); font-weight: 700; color: var(--primary-container); text-transform: uppercase; }
 .device-tag { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 9999px; background: var(--primary-container); color: var(--on-primary); font-family: var(--font-display); font-size: 11px; font-weight: 700; line-height: 1.4; }
+.status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 9999px; background: rgba(0,110,28,0.1); color: var(--tertiary); font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tertiary-container); animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.9); } }
 .ticket-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; border-radius: 50%; cursor: pointer; color: var(--secondary); text-decoration: none; position: relative; }
 .top-bar-right { display: flex; align-items: center; gap: var(--spacing-xs); }
 .theme-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: none; border-radius: var(--radius-full); background: transparent; color: var(--on-surface-variant); cursor: pointer; }
