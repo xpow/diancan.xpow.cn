@@ -324,7 +324,8 @@ async function reloadQuote() {
   errorMessage.value = ''
 
   try {
-    const bootstrapResponse = await fetch('/api/system/bootstrap')
+    const savedSN = localStorage.getItem('kiosk-device-sn')
+    const bootstrapResponse = await fetch(`/api/system/bootstrap${savedSN ? `?sn=${savedSN}` : ''}`)
     if (!bootstrapResponse.ok) {
       throw new Error('点菜机启动配置获取失败')
     }
@@ -335,6 +336,13 @@ async function reloadQuote() {
       deviceId: string
       merchantName?: string
       branchName?: string
+      deviceActive?: boolean
+    }
+
+    if (bootstrap.deviceActive === false) {
+      localStorage.clear()
+      router.push('/home')
+      return
     }
 
     if (bootstrap.merchantName) {

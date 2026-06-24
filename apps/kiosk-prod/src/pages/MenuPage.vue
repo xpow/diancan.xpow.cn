@@ -512,7 +512,7 @@ async function loadData() {
     const bootstrap = await bootstrapResponse.json() as { merchantName?: string; branchName: string; deviceId?: string; deviceCode?: string; statusText?: string; deviceActive?: boolean }
 
     if (bootstrap.deviceActive === false) {
-      localStorage.removeItem('kiosk-device-sn')
+      localStorage.clear()
       throw new Error('该设备已下线，请联系管理员')
     }
 
