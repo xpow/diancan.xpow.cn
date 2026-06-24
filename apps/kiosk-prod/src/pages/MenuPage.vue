@@ -509,7 +509,12 @@ async function loadData() {
     const savedDeviceSN = localStorage.getItem('kiosk-device-sn') || ''
     const bootstrapResponse = await fetch(`/api/system/bootstrap${savedDeviceSN ? `?sn=${savedDeviceSN}` : ''}`)
     if (!bootstrapResponse.ok) throw new Error('接口返回异常，请检查 api-core 是否已启动')
-    const bootstrap = await bootstrapResponse.json() as { merchantName?: string; branchName: string; deviceId?: string; deviceCode?: string; statusText?: string }
+    const bootstrap = await bootstrapResponse.json() as { merchantName?: string; branchName: string; deviceId?: string; deviceCode?: string; statusText?: string; deviceActive?: boolean }
+
+    if (bootstrap.deviceActive === false) {
+      localStorage.removeItem('kiosk-device-sn')
+      throw new Error('该设备已下线，请联系管理员')
+    }
 
     const menuResponse = await loadMenu(bootstrap)
 

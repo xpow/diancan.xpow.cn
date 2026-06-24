@@ -42,6 +42,7 @@ app.get('/api/system/bootstrap', async (req, res) => {
   const deviceSn = req.query.sn as string | undefined
   if (deviceSn) {
     device = await prisma.device.findUnique({ where: { sn: deviceSn } })
+    if (device?.status !== 'active') device = null // 已下线的设备视为未认证
   }
   if (!device) {
     device = await prisma.device.findFirst({ where: { branchId: branch?.id } })
@@ -67,6 +68,7 @@ app.get('/api/system/bootstrap', async (req, res) => {
     deviceId: device?.id ?? '',
     deviceCode: device?.code ?? '',
     deviceMode: device?.mode ?? 'kiosk',
+    deviceActive: device?.status === 'active',
     devices: allDevices.map((d) => ({ id: d.id, code: d.code, name: d.name, mode: d.mode })),
     slogan: merchant.slogan,
     businessHours: merchant.businessHours,
@@ -510,6 +512,9 @@ app.post('/api/orders', async (req, res) => {
   // 取餐号: branchCode(字母) + deviceCode(2位数字) + 当日流水(3位)
   const branch = await prisma.branch.findUnique({ where: { id: branchId } })
   const device = await prisma.device.findUnique({ where: { id: deviceId } })
+  if (!device || device.status !== 'active') {
+    return res.status(403).json({ message: '该设备已下线，无法下单' })
+  }
   const branchCode = branch?.code?.toUpperCase() || 'X'
   const devCode = (device?.code || '00').padStart(2, '0')
   const todayStart = new Date()
@@ -670,6 +675,9 @@ app.post('/api/system/device-auth', async (req, res) => {
   const device = await prisma.device.findUnique({ where: { sn } })
   if (!device) {
     return res.status(404).json({ message: '设备码无效，请确认后重新输入' })
+  }
+  if (device.status !== 'active') {
+    return res.status(403).json({ message: '该设备已下线，无法使用' })
   }
   res.json({
     deviceId: device.id,
