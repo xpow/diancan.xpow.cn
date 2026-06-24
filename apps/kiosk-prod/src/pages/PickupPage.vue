@@ -268,7 +268,8 @@ async function fetchMerchantName() {
 
 async function fetchOrders() {
   try {
-    const res = await fetch('/api/orders')
+    const savedSN = localStorage.getItem('kiosk-device-sn')
+    const res = await fetch(`/api/orders${savedSN ? `?sn=${savedSN}` : ''}`)
     if (!res.ok) return
     const data = await res.json() as { items: OrderSummary[] }
     orders.value = data.items ?? []

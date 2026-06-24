@@ -597,8 +597,25 @@ app.post('/api/orders', async (req, res) => {
   })
 })
 
-app.get('/api/orders', async (_req, res) => {
+app.get('/api/orders', async (req, res) => {
+  const { sn, deviceId: queryDeviceId } = req.query as Record<string, string>
+
+  // 如果有 SN 或 deviceId，检查设备权限
+  let where: any = {}
+  if (sn) {
+    const device = await prisma.device.findUnique({ where: { sn } })
+    if (device && device.code !== '01' && device.code !== '02') {
+      where.deviceId = device.id
+    }
+  } else if (queryDeviceId) {
+    const device = await prisma.device.findUnique({ where: { id: queryDeviceId } })
+    if (device && device.code !== '01' && device.code !== '02') {
+      where.deviceId = device.id
+    }
+  }
+
   const orders = await prisma.order.findMany({
+    where,
     orderBy: { createdAt: 'desc' },
     include: { items: true, promotions: true },
     take: 50,
@@ -611,6 +628,7 @@ app.get('/api/orders', async (_req, res) => {
       pickupCode: o.pickupCode,
       status: o.status,
       orderType: o.orderType,
+      deviceId: o.deviceId,
       totals: {
         originalAmount: o.originalAmount,
         discountAmount: o.discountAmount,
