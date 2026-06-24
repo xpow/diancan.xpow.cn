@@ -634,6 +634,12 @@ onBeforeUnmount(() => {
   }
   .category-pill .material-icons { font-size: 22px !important; }
 }
+@media (min-width: 1200px) {
+  .page-content { max-width: 1200px; }
+  .dish-list { grid-template-columns: repeat(4, 1fr); }
+  .cart-bar { max-width: 1200px; }
+  .cart-sheet { max-width: 1200px; }
+}
 .dish-card { position: relative; padding: var(--spacing-md); background: var(--surface-container-lowest); border-radius: var(--radius-xl); border: 1px solid var(--card-border-light); box-shadow: var(--shadow-md); transition: border-color 0.3s; }
 
 @keyframes dish-blink {
