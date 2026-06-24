@@ -614,7 +614,7 @@ onBeforeUnmount(() => {
 .brand { display: flex; align-items: center; gap: var(--spacing-sm); }
 .brand-logo { height: 32px; width: auto; border-radius: var(--radius-sm); }
 .brand h1 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-lg-mobile); font-weight: 700; color: var(--primary-container); text-transform: uppercase; }
-.device-tag { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 9999px; background: var(--primary-container); color: var(--on-primary); font-family: var(--font-display); font-size: 11px; font-weight: 700; line-height: 1.4; }
+.device-tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 9999px; background: rgba(255,107,0,0.1); color: var(--primary-container); font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; }
 .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 9999px; background: rgba(0,110,28,0.1); color: var(--tertiary); font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; }
 .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tertiary-container); animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
 @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.9); } }
