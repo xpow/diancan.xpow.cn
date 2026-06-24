@@ -278,7 +278,7 @@ async function loadBootstrap() {
     deviceAuthed.value = true
   }
 
-  const response = await fetch('/api/system/bootstrap')
+  const response = await fetch(`/api/system/bootstrap${savedDeviceSN ? `?sn=${savedDeviceSN}` : ''}`)
   if (!response.ok) return
   const data = await response.json() as BootstrapResponse
   bootstrap.value = data

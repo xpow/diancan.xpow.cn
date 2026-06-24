@@ -255,7 +255,8 @@ let firstLoad = true
 
 async function fetchMerchantName() {
   try {
-    const res = await fetch('/api/system/bootstrap')
+    const savedSN = localStorage.getItem('kiosk-device-sn')
+    const res = await fetch(`/api/system/bootstrap${savedSN ? `?sn=${savedSN}` : ''}`)
     if (!res.ok) return
     const data = await res.json() as { merchantName?: string; branchName?: string; deviceCode?: string; statusText?: string }
     if (data.merchantName) merchantName.value = data.merchantName
