@@ -4,9 +4,9 @@
       <div class="brand">
         <img :src="logoImage" alt="Logo" class="brand-logo" />
         <h1>{{ displayTitle }}</h1>
-        <span v-if="deviceCode" class="device-tag">{{ deviceCode }}</span>
       </div>
       <div class="top-bar-right">
+        <span v-if="deviceCode" class="device-tag">{{ deviceCode }}</span>
         <span v-if="statusText" class="status-badge">
           <span class="status-dot"></span>
           <span>{{ statusText }}</span>
