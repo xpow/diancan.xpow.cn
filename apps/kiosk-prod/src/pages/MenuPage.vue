@@ -250,6 +250,7 @@ const navSentinel = ref<HTMLElement | null>(null)
 let navObserver: IntersectionObserver | null = null
 const merchantName = ref('')
 const branchName = ref('')
+const deviceId = ref('')
 const displayTitle = computed(() => {
   const m = merchantName.value
   const b = branchName.value
@@ -312,7 +313,8 @@ async function fetchQuote() {
   if (!items.length) { cartQuote.value = null; return }
 
   try {
-    const res = await fetch('/api/cart/quote', {
+    const params = deviceId.value ? `?deviceId=${deviceId.value}` : ''
+    const res = await fetch(`/api/cart/quote${params}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -487,23 +489,30 @@ function goCheckout() {
 }
 
 
+async function loadMenu(bootstrap: { deviceId?: string }) {
+  const params = bootstrap.deviceId ? `?deviceId=${bootstrap.deviceId}` : ''
+  const res = await fetch(`/api/catalog/menu${params}`)
+  if (!res.ok) throw new Error('接口返回异常，请检查 api-core 是否已启动')
+  return res.json()
+}
+
 async function loadData() {
   loading.value = true; errorMessage.value = ''
   try {
-    const [bootstrapResponse, menuResponse] = await Promise.all([
-      fetch('/api/system/bootstrap'),
-      fetch('/api/catalog/menu'),
-    ])
-    if (!bootstrapResponse.ok || !menuResponse.ok) throw new Error('接口返回异常，请检查 api-core 是否已启动')
+    const bootstrapResponse = await fetch('/api/system/bootstrap')
+    if (!bootstrapResponse.ok) throw new Error('接口返回异常，请检查 api-core 是否已启动')
+    const bootstrap = await bootstrapResponse.json() as { merchantName?: string; branchName: string; deviceId?: string }
 
-    const bootstrap = await bootstrapResponse.json() as { merchantName?: string; branchName: string }
-    const menu = await menuResponse.json() as {
+    const menuResponse = await loadMenu(bootstrap)
+
+    const menu = menuResponse as {
       categories: Category[]
       dishes: { id: string; categoryId: string; name: string; price: number; desc: string; image?: string; tags?: string[]; specsPreset?: SpecPreset; promoPrice?: number | null; promotionName?: string | null; portionSize?: number }[]
     }
 
     merchantName.value = bootstrap.merchantName ?? ''
     branchName.value = bootstrap.branchName
+    deviceId.value = bootstrap.deviceId ?? ''
     categories.value = [...menu.categories].sort((a, b) => a.sort - b.sort)
 
     dishes.value = menu.dishes.map((d) => {

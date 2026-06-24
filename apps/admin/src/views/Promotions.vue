@@ -196,6 +196,11 @@
       </template>
 
       <div class="form-group">
+        <label>适用设备（选填，不选则全设备可用）</label>
+        <MultiSelect v-model="form.rules.deviceIds" :options="devices" optionLabel="label" optionValue="value" placeholder="选择适用设备" filter class="w-full" />
+      </div>
+
+      <div class="form-group">
         <label>状态</label>
         <Select v-model="form.status" :options="statusOptions" optionLabel="label" optionValue="value" class="w-full" />
       </div>
@@ -254,6 +259,7 @@ interface Dish {
 
 const promotions = ref<Promotion[]>([])
 const dishes = ref<Dish[]>([])
+const devices = ref<{ label: string; value: string }[]>([])
 const activeDishes = computed(() => dishes.value.filter((d) => d.status === 'active'))
 const showDialog = ref(false)
 const editing = ref(false)
@@ -590,9 +596,20 @@ async function fetchDishes() {
   }
 }
 
+async function fetchDevices() {
+  try {
+    const res = await fetch('/api/admin/devices')
+    const list: any[] = await res.json()
+    devices.value = list.map((d) => ({ label: `${d.name} (${d.code || '无编号'})`, value: d.id }))
+  } catch {
+    // ignore
+  }
+}
+
 onMounted(() => {
   fetchPromotions()
   fetchDishes()
+  fetchDevices()
 })
 </script>
 

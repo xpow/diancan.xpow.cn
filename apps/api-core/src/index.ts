@@ -8,6 +8,16 @@ const app = express()
 const port = Number(process.env.PORT || 3011)
 const prisma = new PrismaClient()
 
+// 按设备筛选促销：rules.deviceIds 为空则不限制，否则只返回包含指定设备的促销
+function filterPromotionsByDevice(promotions: any[], deviceId?: string): any[] {
+  if (!deviceId) return promotions
+  return promotions.filter((p) => {
+    const rules = typeof p.rules === 'string' ? JSON.parse(p.rules) : p.rules
+    const deviceIds: string[] = rules.deviceIds ?? []
+    return deviceIds.length === 0 || deviceIds.includes(deviceId)
+  })
+}
+
 app.use(cors({ origin: true, credentials: true }))
 app.use(express.json())
 app.use(session({
@@ -57,7 +67,7 @@ app.get('/api/system/bootstrap', async (_req, res) => {
     locationHint: branch?.locationHint ?? '',
     statusText: merchant.statusText,
     features,
-    promotions: activePromotions
+    promotions: filterPromotionsByDevice(activePromotions, device?.id)
       .filter((p) => ['full_reduction', 'welfare_item', 'time_discount', 'new_user', 'holiday_gift', 'total_discount'].includes(p.type))
       .map((p) => {
         const rules = JSON.parse(p.rules)
@@ -121,10 +131,13 @@ app.get('/api/catalog/menu', async (_req, res) => {
   })
   const dishPriceMap = new Map(dishes.map((d) => [d.id, d.price]))
 
-  const activePromotions = await prisma.promotion.findMany({
-    where: { status: 'active' },
-    include: { items: true },
-  })
+  const activePromotions = filterPromotionsByDevice(
+    await prisma.promotion.findMany({
+      where: { status: 'active' },
+      include: { items: true },
+    }),
+    req.query.deviceId as string || (await prisma.device.findFirst({ where: { branch: { merchantId: merchant.id }, status: 'active' } }))?.id,
+  )
   const promoDishMap = new Map<string, { promoPrice: number; type: string; name: string }>()
   for (const promo of activePromotions) {
     // 已过期的限时折扣跳过
@@ -192,10 +205,13 @@ app.post('/api/cart/quote', async (req, res) => {
   const dishes = await prisma.dish.findMany({ where: { id: { in: dishIds } } })
   const dishMap = new Map(dishes.map((d) => [d.id, d]))
 
-  const activePromotions = await prisma.promotion.findMany({
-    where: { status: 'active' },
-    include: { items: true },
-  })
+  const activePromotions = filterPromotionsByDevice(
+    await prisma.promotion.findMany({
+      where: { status: 'active' },
+      include: { items: true },
+    }),
+    req.query.deviceId as string || (await prisma.device.findFirst({ where: { branch: { merchantId: (await prisma.merchant.findFirst())?.id }, status: 'active' } }))?.id,
+  )
   const now = new Date()
   const welfarePromos = activePromotions.filter((p) => p.type === 'welfare_item')
   const fullReductionPromos = activePromotions.filter((p) => p.type === 'full_reduction')
