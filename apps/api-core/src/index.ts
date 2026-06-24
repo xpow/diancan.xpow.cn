@@ -33,12 +33,19 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true, service: 'api-core' })
 })
 
-app.get('/api/system/bootstrap', async (_req, res) => {
+app.get('/api/system/bootstrap', async (req, res) => {
   const merchant = await prisma.merchant.findFirst()
   if (!merchant) return res.status(404).json({ message: 'merchant not found' })
 
   const branch = await prisma.branch.findFirst({ where: { merchantId: merchant.id } })
-  const device = await prisma.device.findFirst({ where: { branchId: branch?.id } })
+  let device: any = null
+  const deviceSn = req.query.sn as string | undefined
+  if (deviceSn) {
+    device = await prisma.device.findUnique({ where: { sn: deviceSn } })
+  }
+  if (!device) {
+    device = await prisma.device.findFirst({ where: { branchId: branch?.id } })
+  }
   const allDevices = branch ? await prisma.device.findMany({ where: { branchId: branch.id, status: 'active' } }) : []
   const features = JSON.parse(merchant.features)
   const featuredItems = await prisma.featuredItem.findMany({
