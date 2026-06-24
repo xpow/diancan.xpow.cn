@@ -116,7 +116,7 @@ app.post('/api/commands/:id/ack', async (req, res) => {
   res.json({ success: true })
 })
 
-app.get('/api/catalog/menu', async (_req, res) => {
+app.get('/api/catalog/menu', async (req, res) => {
   const merchant = await prisma.merchant.findFirst()
   if (!merchant) return res.status(404).json({ message: 'merchant not found' })
 
