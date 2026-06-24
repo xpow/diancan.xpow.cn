@@ -4,6 +4,7 @@
       <div class="brand">
         <img :src="logoImage" alt="Logo" class="brand-logo" />
         <h1>{{ displayTitle }}</h1>
+        <span v-if="deviceCode" class="device-tag">{{ deviceCode }}</span>
       </div>
       <div class="top-bar-right">
         <button class="theme-btn" @click="themeIcon = doToggleTheme()">
@@ -251,6 +252,7 @@ let navObserver: IntersectionObserver | null = null
 const merchantName = ref('')
 const branchName = ref('')
 const deviceId = ref('')
+const deviceCode = ref('')
 const displayTitle = computed(() => {
   const m = merchantName.value
   const b = branchName.value
@@ -501,7 +503,7 @@ async function loadData() {
   try {
     const bootstrapResponse = await fetch('/api/system/bootstrap')
     if (!bootstrapResponse.ok) throw new Error('接口返回异常，请检查 api-core 是否已启动')
-    const bootstrap = await bootstrapResponse.json() as { merchantName?: string; branchName: string; deviceId?: string }
+    const bootstrap = await bootstrapResponse.json() as { merchantName?: string; branchName: string; deviceId?: string; deviceCode?: string }
 
     const menuResponse = await loadMenu(bootstrap)
 
@@ -513,6 +515,7 @@ async function loadData() {
     merchantName.value = bootstrap.merchantName ?? ''
     branchName.value = bootstrap.branchName
     deviceId.value = bootstrap.deviceId ?? ''
+    deviceCode.value = bootstrap.deviceCode ?? ''
     categories.value = [...menu.categories].sort((a, b) => a.sort - b.sort)
 
     dishes.value = menu.dishes.map((d) => {
@@ -605,6 +608,7 @@ onBeforeUnmount(() => {
 .brand { display: flex; align-items: center; gap: var(--spacing-sm); }
 .brand-logo { height: 32px; width: auto; border-radius: var(--radius-sm); }
 .brand h1 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-lg-mobile); font-weight: 700; color: var(--primary-container); text-transform: uppercase; }
+.device-tag { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 9999px; background: var(--primary-container); color: var(--on-primary); font-family: var(--font-display); font-size: 11px; font-weight: 700; line-height: 1.4; }
 .ticket-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; border-radius: 50%; cursor: pointer; color: var(--secondary); text-decoration: none; position: relative; }
 .top-bar-right { display: flex; align-items: center; gap: var(--spacing-xs); }
 .theme-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: none; border-radius: var(--radius-full); background: transparent; color: var(--on-surface-variant); cursor: pointer; }
