@@ -785,6 +785,15 @@ onBeforeUnmount(() => {
   .ticket-btn .material-icons {
     font-size: 20px !important;
   }
+}
+
+@media (max-width: 399px) {
+  .brand { min-width: 0; }
+  .brand h1 { font-size: 15px; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .brand-logo { height: 24px; }
+  .status-badge { font-size: 12px; padding: 2px 8px; }
+  .device-tag { font-size: 12px; padding: 2px 8px; }
+}
 
   .category-nav {
     top: 52px;
