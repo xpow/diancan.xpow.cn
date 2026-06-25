@@ -7,6 +7,7 @@
     <div class="filter-bar">
       <div class="quick-btns">
         <button :class="['quick-btn', quickRange === 'today' && 'active']" @click="setQuick('today')">今日</button>
+        <button :class="['quick-btn', quickRange === 'yesterday' && 'active']" @click="setQuick('yesterday')">昨日</button>
         <button :class="['quick-btn', quickRange === 'week' && 'active']" @click="setQuick('week')">本周</button>
         <button :class="['quick-btn', quickRange === 'month' && 'active']" @click="setQuick('month')">本月</button>
         <button :class="['quick-btn', quickRange === 'all' && 'active']" @click="setQuick('all')">全部</button>
@@ -62,7 +63,7 @@ interface DishSales {
 
 const items = ref<DishSales[]>([])
 const loaded = ref(false)
-const quickRange = ref('all')
+const quickRange = ref('yesterday')
 const dateRange = ref<[Date | null, Date | null] | undefined>()
 const selected = ref<Set<string>>(new Set())
 
@@ -105,6 +106,9 @@ function setQuick(key: string) {
   if (key === 'today') {
     start = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     end = new Date(start.getTime() + 86400000)
+  } else if (key === 'yesterday') {
+    end = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    start = new Date(end.getTime() - 86400000)
   } else if (key === 'week') {
     const day = now.getDay()
     const diff = day === 0 ? 6 : day - 1
@@ -155,7 +159,7 @@ async function fetchStats() {
   loaded.value = true
 }
 
-setQuick('all')
+setQuick('yesterday')
 </script>
 
 <style scoped>
