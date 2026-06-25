@@ -130,7 +130,7 @@ async function fetchStats() {
     const [s, e] = dateRange.value ?? []
     const params = new URLSearchParams()
     if (s) params.set('startDate', fmt(s))
-    if (e) params.set('endDate', fmt(e))
+    if (e) params.set('endDate', fmt(new Date(e.getTime() + 86400000)))
     const qs = params.toString()
     const res = await fetch(`/api/admin/stats/dish-sales${qs ? '?' + qs : ''}`)
     const data = await res.json()

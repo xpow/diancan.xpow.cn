@@ -870,11 +870,11 @@ router.get('/stats/dish-sales', async (req, res) => {
   const params: any[] = []
   if (startDate) {
     conditions.push(`o."createdAt" >= ?`)
-    params.push(new Date(startDate as string).getTime())
+    params.push(new Date(startDate as string).toISOString())
   }
   if (endDate) {
     conditions.push(`o."createdAt" < ?`)
-    params.push(new Date(endDate as string).getTime())
+    params.push(new Date(endDate as string).toISOString())
   }
   const where = conditions.join(' AND ')
 
