@@ -98,6 +98,7 @@
       <footer class="footer">
         <p>© 2024 {{ displayTitle }}</p>
         <p class="footer-tagline">用心做好每一串，传递市井烟火气</p>
+        <p class="switch-device" @click="switchDevice">切换设备</p>
       </footer>
     </div>
 
@@ -155,6 +156,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getDishImage } from '@/utils/dishImages'
+import { apiPost, setDeviceToken, getDeviceUUID } from '@/utils/api'
 import KioskTopBar from '@/components/KioskTopBar.vue'
 import featuredImg1 from '@/assets/images/pages/zp-1.jpg'
 import featuredImg2 from '@/assets/images/pages/zp-2.jpg'
@@ -246,26 +248,28 @@ function onSNInput() {
   snError.value = ''
 }
 
+function switchDevice() {
+  localStorage.clear()
+  location.reload()
+}
+
 async function submitSN() {
   if (snInput.value.length !== 8) return
   snLoading.value = true
   snError.value = ''
   try {
-    const res = await fetch('/api/system/device-auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sn: snInput.value }),
-    })
-    if (!res.ok) {
-      const err = await res.json()
-      snError.value = err.message || '设备码无效'
-      return
-    }
-    const data = await res.json()
+    const data = await apiPost<{ token: string; deviceId: string }>('/api/system/device-auth', { sn: snInput.value, uuid: getDeviceUUID(), userAgent: navigator.userAgent })
+    setDeviceToken(data.token)
     localStorage.setItem('kiosk-device-sn', snInput.value)
+    localStorage.setItem('kiosk-device-auth-id', data.deviceId)
+    // 重新加载 bootstrap 获取正确设备信息
+    const bootstrapRes = await fetch(`/api/system/bootstrap?sn=${snInput.value}`)
+    if (bootstrapRes.ok) {
+      bootstrap.value = await bootstrapRes.json()
+    }
     deviceAuthed.value = true
-  } catch {
-    snError.value = '网络错误，请重试'
+  } catch (err: any) {
+    snError.value = err.message || '设备码无效'
   } finally {
     snLoading.value = false
   }
@@ -273,7 +277,7 @@ async function submitSN() {
 
 async function loadBootstrap() {
   // 先检查本地缓存的设备码，跳过认证弹窗
-  const savedDeviceSN = localStorage.getItem('kiosk-device-sn')
+  let savedDeviceSN = localStorage.getItem('kiosk-device-sn')
   if (savedDeviceSN) {
     deviceAuthed.value = true
   }
@@ -282,6 +286,15 @@ async function loadBootstrap() {
   if (!response.ok) return
   const data = await response.json() as BootstrapResponse
   bootstrap.value = data
+
+  // 验证 token 对应的设备与 SN 匹配
+  const authId = localStorage.getItem('kiosk-device-auth-id')
+  if (authId && data.deviceId && data.deviceId !== authId) {
+    localStorage.removeItem('kiosk-device-token')
+    localStorage.removeItem('kiosk-device-auth-id')
+    deviceAuthed.value = false
+    savedDeviceSN = null
+  }
 
   // 执行设备指令
   if (data.commands?.length) {
@@ -687,6 +700,15 @@ onMounted(() => {
 .footer-tagline {
   opacity: 0.6;
 }
+
+.switch-device {
+  margin-top: 8px;
+  font-size: 12px;
+  opacity: 0.4;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.switch-device:hover { opacity: 0.7; }
 
 @media (min-width: 500px) {
   .hero-section { max-width: none; margin: 56px 0 0; padding: 0; height: 360px; overflow: hidden; }

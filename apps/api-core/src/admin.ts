@@ -1,9 +1,13 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import { PrismaClient } from '@prisma/client'
 import crypto from 'node:crypto'
+import { invalidateGlobalCache } from './cache.js'
 
 const router: ReturnType<typeof Router> = Router()
 const prisma = new PrismaClient()
+
+// 设备指纹有效期（测试用 30s，上线改回 7 * 24 * 60 * 60 * 1000）
+const FINGERPRINT_EXPIRY_MS = 30 * 1000
 
 const ADMIN_PASSWORD_HASH = crypto.createHash('md5').update('xpow!1234').digest('hex')
 console.log('[admin] password hash:', ADMIN_PASSWORD_HASH)
@@ -230,9 +234,9 @@ router.post('/dishes', async (req, res) => {
   })
 
   res.status(201).json({ id: dish.id, name: dish.name })
+  invalidateGlobalCache()
 })
 
-// 批量排序（必须在 /dishes/:id 之前）
 router.put('/dishes/reorder', async (req, res) => {
   const { ids } = req.body ?? {}
   if (!Array.isArray(ids)) return res.status(400).json({ message: 'ids 必填' })
@@ -240,6 +244,7 @@ router.put('/dishes/reorder', async (req, res) => {
   for (let i = 0; i < ids.length; i++) {
     await prisma.dish.update({ where: { id: ids[i] }, data: { sort: i } })
   }
+  invalidateGlobalCache()
   res.json({ success: true })
 })
 
@@ -296,12 +301,14 @@ router.put('/dishes/:id', async (req, res) => {
     }
   }
 
+  invalidateGlobalCache()
   res.json({ id, success: true })
 })
 
 router.delete('/dishes/:id', async (req, res) => {
   const { id } = req.params
   await prisma.dish.delete({ where: { id } }).catch(() => {})
+  invalidateGlobalCache()
   res.json({ success: true })
 })
 
@@ -337,6 +344,7 @@ router.post('/categories', async (req, res) => {
   })
 
   res.status(201).json({ id: cat.id, name: cat.name })
+  invalidateGlobalCache()
 })
 
 router.put('/categories/:id', async (req, res) => {
@@ -347,6 +355,7 @@ router.put('/categories/:id', async (req, res) => {
   if (sort !== undefined) data.sort = Number(sort)
 
   await prisma.category.update({ where: { id }, data })
+  invalidateGlobalCache()
   res.json({ success: true })
 })
 
@@ -357,6 +366,7 @@ router.delete('/categories/:id', async (req, res) => {
     return res.status(400).json({ message: `该分类下有 ${dishCount} 个菜品，请先移除或调整` })
   }
   await prisma.category.delete({ where: { id } }).catch(() => {})
+  invalidateGlobalCache()
   res.json({ success: true })
 })
 
@@ -436,6 +446,7 @@ router.post('/promotions', async (req, res) => {
     })
 
     res.status(201).json({ id: promo.id, name: promo.name })
+    invalidateGlobalCache()
   } catch (e: any) {
     console.error('[promotions] create error:', e)
     res.status(500).json({ message: e.message, stack: e.stack })
@@ -505,6 +516,7 @@ router.put('/promotions/:id', async (req, res) => {
     }
 
     res.json({ success: true })
+    invalidateGlobalCache()
   } catch (e: any) {
     console.error('[promotions] update error:', e)
     res.status(500).json({ message: e.message, stack: e.stack })
@@ -514,6 +526,7 @@ router.put('/promotions/:id', async (req, res) => {
 router.delete('/promotions/:id', async (req, res) => {
   const { id } = req.params
   await prisma.promotion.update({ where: { id }, data: { status: 'ended' } })
+  invalidateGlobalCache()
   res.json({ success: true })
 })
 
@@ -561,6 +574,7 @@ router.put('/merchant', async (req, res) => {
   if (features !== undefined) data.features = JSON.stringify(features)
 
   await prisma.merchant.update({ where: { id: merchant.id }, data })
+  invalidateGlobalCache()
   res.json({ success: true })
 })
 
@@ -616,6 +630,7 @@ router.post('/branches', async (req, res) => {
   })
 
   res.status(201).json({ id: branch.id, name: branch.name })
+  invalidateGlobalCache()
 })
 
 router.put('/branches/:id', async (req, res) => {
@@ -637,6 +652,7 @@ router.put('/branches/:id', async (req, res) => {
   if (status !== undefined) data.status = status
 
   await prisma.branch.update({ where: { id }, data })
+  invalidateGlobalCache()
   res.json({ success: true })
 })
 
@@ -649,6 +665,7 @@ router.delete('/branches/:id', async (req, res) => {
   await prisma.device.deleteMany({ where: { branchId: id } })
   await prisma.category.deleteMany({ where: { branchId: id } })
   await prisma.branch.delete({ where: { id } }).catch(() => {})
+  invalidateGlobalCache()
   res.json({ success: true })
 })
 
@@ -665,6 +682,25 @@ router.get('/devices', async (_req, res) => {
   const branchIds = branches.map((b) => b.id)
   const branchMap = new Map(branches.map((b) => [b.id, b.name]))
 
+  // 统计有效期内活跃的唯一 UUID 数量
+  const expiryThreshold = new Date(Date.now() - FINGERPRINT_EXPIRY_MS)
+  const fingerprints = await prisma.deviceFingerprint.findMany({
+    where: { updatedAt: { gte: expiryThreshold } },
+    orderBy: { updatedAt: 'desc' },
+    select: { deviceId: true, uuid: true, updatedAt: true },
+  })
+  const deviceAuthCount = new Map<string, number>()
+  // 每个 UUID 只计入最新（updatedAt 最晚）的那个设备
+  const uuidToDevice = new Map<string, string>()
+  for (const fp of fingerprints) {
+    if (!uuidToDevice.has(fp.uuid)) {
+      uuidToDevice.set(fp.uuid, fp.deviceId)
+    }
+  }
+  for (const deviceId of uuidToDevice.values()) {
+    deviceAuthCount.set(deviceId, (deviceAuthCount.get(deviceId) ?? 0) + 1)
+  }
+
   const devices = await prisma.device.findMany({
     where: { branchId: { in: branchIds } },
     orderBy: { createdAt: 'desc' },
@@ -678,9 +714,11 @@ router.get('/devices', async (_req, res) => {
       name: d.name,
       contact: d.contact,
       mode: d.mode,
+      role: d.role,
       status: d.status,
       branchId: d.branchId,
       branchName: branchMap.get(d.branchId) ?? '',
+      authCount: deviceAuthCount.get(d.id) ?? 0,
     })),
   )
 })
@@ -723,6 +761,7 @@ router.post('/devices', async (req, res) => {
   })
 
   res.status(201).json({ id: device.id })
+  invalidateGlobalCache()
 })
 
 router.put('/devices/:id', async (req, res) => {
@@ -736,6 +775,7 @@ router.put('/devices/:id', async (req, res) => {
   if (contact !== undefined) data.contact = contact
 
   await prisma.device.update({ where: { id }, data })
+  invalidateGlobalCache()
   res.json({ success: true })
 })
 
@@ -743,24 +783,84 @@ router.post('/devices/:id/regenerate-sn', async (req, res) => {
   const { id } = req.params
   const sn = String(Math.floor(10000000 + Math.random() * 90000000))
   await prisma.device.update({ where: { id }, data: { sn } })
+  invalidateGlobalCache()
   res.json({ sn })
 })
 
 router.delete('/devices/:id', async (req, res) => {
   const { id } = req.params
   await prisma.device.delete({ where: { id } }).catch(() => {})
+  invalidateGlobalCache()
   res.json({ success: true })
 })
+
+// 获取设备当前关联的 UUID 列表（有效期内且最后一次认证在此设备）
+router.get('/devices/:id/auth-logs', async (req, res) => {
+  const { id } = req.params
+  const expiryThreshold = new Date(Date.now() - FINGERPRINT_EXPIRY_MS)
+  const fps = await prisma.deviceFingerprint.findMany({
+    where: { deviceId: id, updatedAt: { gte: expiryThreshold } },
+    orderBy: { updatedAt: 'desc' },
+    take: 200,
+  })
+  const uuids = fps.map((fp) => fp.uuid).filter(Boolean)
+  if (!uuids.length) return res.json({ count: 0, list: [] })
+
+  // 对每个 UUID 跨设备检查最新认证记录
+  const allLogs = await prisma.deviceAuthLog.findMany({
+    where: { uuid: { in: uuids } },
+    orderBy: { createdAt: 'desc' },
+    select: { uuid: true, deviceId: true, createdAt: true, ip: true, userAgent: true },
+  })
+  const latestByUUID = new Map<string, typeof allLogs[0]>()
+  for (const l of allLogs) {
+    if (!latestByUUID.has(l.uuid)) {
+      latestByUUID.set(l.uuid, l)
+    }
+  }
+  const results = Array.from(latestByUUID.values())
+    .filter((l) => l.deviceId === id)
+    .map((l) => ({
+      uuid: l.uuid,
+      ip: l.ip,
+      userAgent: l.userAgent,
+      deviceType: parseDeviceType(l.userAgent),
+      lastAuthAt: l.createdAt.toISOString(),
+    }))
+  res.json({ count: results.length, list: results })
+})
+
+function parseDeviceType(ua: string): string {
+  if (!ua) return '未知'
+  // iOS
+  const iphone = ua.match(/iPhone\s*\d+[\d,]*/)
+  if (iphone) return `iPhone ${iphone[0].replace(/\s+/g, ' ')}`
+  const ipad = ua.match(/iPad[\d,]*/)
+  if (ipad) return 'iPad'
+  // Android 机型
+  const androidModel = ua.match(/; ([\w\s]+?(?:Pro|Ultra|Max|Plus|Mini|Lite|SE|Note))[\s;]|; (SM-\w+)|; ([\w]+-\w+)/)
+  if (androidModel) return androidModel[1] || androidModel[2] || androidModel[3]
+  // PC 浏览器
+  if (ua.includes('Windows')) return 'Windows PC'
+  if (ua.includes('Mac OS')) return 'macOS'
+  if (ua.includes('Linux')) return 'Linux'
+  return '其他设备'
+}
 
 // 下发设备指令
 router.post('/devices/:id/commands', async (req, res) => {
   const { id } = req.params
   const { command, params } = req.body ?? {}
   if (!command) return res.status(400).json({ message: 'command 必填' })
-  const cmd = await prisma.deviceCommand.create({
-    data: { deviceId: id, command, params: JSON.stringify(params ?? {}) },
-  })
-  res.status(201).json({ id: cmd.id })
+  try {
+    const cmd = await prisma.deviceCommand.create({
+      data: { deviceId: id, command, params: JSON.stringify(params ?? {}) },
+    })
+    res.status(201).json({ id: cmd.id })
+  } catch (err) {
+    console.error('[admin] sendCommand error:', err)
+    res.status(500).json({ message: '指令发送失败', error: String(err) })
+  }
 })
 
 // 菜品销量统计

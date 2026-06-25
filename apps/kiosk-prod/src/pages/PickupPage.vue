@@ -114,6 +114,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { getDishImage } from '@/utils/dishImages'
+import { apiGet } from '@/utils/api'
 import KioskTopBar from '@/components/KioskTopBar.vue'
 
 interface OrderItem {
@@ -153,7 +154,9 @@ const displayTitle = computed(() => {
   const b = branchName.value
   return m && b ? `${m}（${b}）` : m || b || '典韦烤串'
 })
-const POLL_MS = 5000
+const POLL_MS = 15000
+const POLL_MAX_MS = 60000
+const POLL_FAST_MS = 8000
 const longPressTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 const toastMessage = ref('')
 const toastVisible = ref(false)
@@ -258,7 +261,40 @@ async function fetchMerchantName() {
     const savedSN = localStorage.getItem('kiosk-device-sn')
     const res = await fetch(`/api/system/bootstrap${savedSN ? `?sn=${savedSN}` : ''}`)
     if (!res.ok) return
-    const data = await res.json() as { merchantName?: string; branchName?: string; deviceCode?: string; statusText?: string }
+    const data = await res.json() as { merchantName?: string; branchName?: string; deviceCode?: string; statusText?: string; deviceActive?: boolean; deviceId?: string; commands?: { id: string; command: string }[] }
+
+    // 验证 token 对应的设备与 SN 匹配
+    const authId = localStorage.getItem('kiosk-device-auth-id')
+    if (authId && data.deviceId && data.deviceId !== authId) {
+      localStorage.removeItem('kiosk-device-token')
+      localStorage.removeItem('kiosk-device-auth-id')
+      localStorage.removeItem('kiosk-device-sn')
+      window.location.href = '/home'
+      return
+    }
+
+    // 执行设备指令
+    if (data.commands?.length) {
+      for (const cmd of data.commands) {
+        if (cmd.command === 'clear_storage') {
+          localStorage.clear()
+          document.cookie.split(';').forEach((c) => {
+            document.cookie = c.replace(/^ +/, '').replace(/=.*/, `=;expires=${new Date(0).toUTCString()};path=/`)
+          })
+        }
+        fetch(`/api/commands/${cmd.id}/ack`, { method: 'POST' }).catch(() => {})
+      }
+      if (data.commands.some((c) => c.command === 'clear_storage')) {
+        location.reload()
+      }
+    }
+
+    if (data.deviceActive === false) {
+      localStorage.clear()
+      window.location.href = '/home'
+      return
+    }
+
     if (data.merchantName) merchantName.value = data.merchantName
     if (data.branchName) branchName.value = data.branchName
     if (data.deviceCode) deviceCode.value = data.deviceCode
@@ -268,10 +304,7 @@ async function fetchMerchantName() {
 
 async function fetchOrders() {
   try {
-    const savedSN = localStorage.getItem('kiosk-device-sn')
-    const res = await fetch(`/api/orders${savedSN ? `?sn=${savedSN}` : ''}`)
-    if (!res.ok) return
-    const data = await res.json() as { items: OrderSummary[] }
+    const data = await apiGet<{ items: OrderSummary[] }>('/api/orders')
     orders.value = data.items ?? []
 
     if (!firstLoad) {
@@ -283,16 +316,45 @@ async function fetchOrders() {
   } catch {}
 }
 
-let timer: ReturnType<typeof setInterval> | null = null
+let timer: ReturnType<typeof setTimeout> | null = null
+let pollInterval = POLL_MS
+
+function scheduleNextPoll() {
+  timer = setTimeout(async () => {
+    const prevOrders = orders.value.map((o) => o.status).join(',')
+    await fetchOrders()
+    const hasChanged = orders.value.map((o) => o.status).join(',') !== prevOrders
+    const hasActive = orders.value.some((o) => o.status === 'paid' || o.status === 'preparing' || o.status === 'ready')
+
+    if (hasChanged) {
+      pollInterval = POLL_MS
+    } else if (hasActive) {
+      pollInterval = Math.min(pollInterval + 5000, POLL_MAX_MS)
+    }
+
+    if (hasActive) {
+      scheduleNextPoll()
+    }
+  }, pollInterval)
+}
+
+function stopPolling() {
+  if (timer) {
+    clearTimeout(timer)
+    timer = null
+  }
+}
 
 onMounted(() => {
   void fetchMerchantName()
-  void fetchOrders()
-  timer = setInterval(fetchOrders, POLL_MS)
+  void fetchOrders().then(() => {
+    const hasActive = orders.value.some((o) => o.status === 'paid' || o.status === 'preparing' || o.status === 'ready')
+    if (hasActive) scheduleNextPoll()
+  })
 })
 
 onUnmounted(() => {
-  if (timer) clearInterval(timer)
+  stopPolling()
 })
 </script>
 

@@ -11,6 +11,7 @@
         <router-link to="/menu" class="nav-link"><span class="nav-icon">🍽️</span> 菜单管理</router-link>
         <router-link to="/promotions" class="nav-link"><span class="nav-icon">🏷️</span> 营销活动</router-link>
         <router-link to="/merchant" class="nav-link"><span class="nav-icon">⚙️</span> 商家设置</router-link>
+        <router-link to="/devices" class="nav-link"><span class="nav-icon">📟</span> 设备管理</router-link>
         <router-link to="/users" class="nav-link"><span class="nav-icon">👥</span> 用户管理</router-link>
         <router-link to="/kitchen" class="nav-link"><span class="nav-icon">📱</span> 出餐管理</router-link>
         <router-link to="/stats" class="nav-link"><span class="nav-icon">📈</span> 销量统计</router-link>
@@ -42,7 +43,7 @@ onMounted(async () => {
 
 <style>
 .layout { display: flex; min-height: 100vh; }
-.sidebar { width: 220px; background: #1a1a1a; color: #fff; padding: 20px; }
+.sidebar { width: 160px; flex-shrink: 0; background: #1a1a1a; color: #fff; padding: 20px; }
 .sidebar-title { font-size: 18px; font-weight: 700; margin: 0 0 24px; }
 .nav-link { display: block; padding: 10px 12px; color: rgba(255,255,255,0.7); text-decoration: none; border-radius: 8px; font-size: 14px; }
 .nav-link:hover, .nav-link.router-link-active { background: rgba(255,255,255,0.1); color: #fff; }

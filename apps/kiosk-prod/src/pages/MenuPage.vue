@@ -195,6 +195,7 @@ import { SPECS_PRESETS, type SpecGroup, type SpecPreset } from '@diancan/shared'
 import SpecSelector from '@/components/SpecSelector.vue'
 import { readCart, clearCart as clearCartStorage, addToCart as addToCartStorage, saveCart, updateCartQuantity as updateCartQuantityStorage, StoredCartItem } from '@/utils/cart'
 import { getDishImage } from '@/utils/dishImages'
+import { apiPost } from '@/utils/api'
 import heroImage from '@/assets/images/pages/hero.jpg'
 import KioskTopBar from '@/components/KioskTopBar.vue'
 
@@ -306,20 +307,13 @@ async function fetchQuote() {
   if (!items.length) { cartQuote.value = null; return }
 
   try {
-    const params = deviceId.value ? `?deviceId=${deviceId.value}` : ''
-    const res = await fetch(`/api/cart/quote${params}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        items: items.map((i) => ({
-          dishId: i.baseDishId,
-          quantity: i.quantity,
-          specs: i.specs ?? '',
-        })),
-      }),
+    cartQuote.value = await apiPost<QuoteResponse>('/api/cart/quote', {
+      items: items.map((i) => ({
+        dishId: i.baseDishId,
+        quantity: i.quantity,
+        specs: i.specs ?? '',
+      })),
     })
-    if (!res.ok) throw new Error('试算失败')
-    cartQuote.value = (await res.json()) as QuoteResponse
   } catch {
     cartQuote.value = null
   }
@@ -491,6 +485,16 @@ async function loadData() {
     if (bootstrap.deviceActive === false) {
       localStorage.clear()
       throw new Error('该设备已下线，请联系管理员')
+    }
+
+    // 验证 token 对应的设备与 SN 匹配
+    const authId = localStorage.getItem('kiosk-device-auth-id')
+    if (authId && bootstrap.deviceId && bootstrap.deviceId !== authId) {
+      localStorage.removeItem('kiosk-device-token')
+      localStorage.removeItem('kiosk-device-auth-id')
+      localStorage.removeItem('kiosk-device-sn')
+      window.location.href = '/home'
+      return
     }
 
     const menuResponse = await loadMenu(bootstrap)

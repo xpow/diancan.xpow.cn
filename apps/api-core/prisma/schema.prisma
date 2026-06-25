@@ -57,14 +57,47 @@ model Device {
   name      String   @default("")
   contact   String   @default("")
   mode      String   @default("kiosk") // kiosk | h5
+  role      String   @default("user") // user | admin
   status    String   @default("active")
 
-  branch Branch @relation(fields: [branchId], references: [id])
-
-  commands DeviceCommand[]
+  branch    Branch          @relation(fields: [branchId], references: [id])
+  commands    DeviceCommand[]
+  authLogs    DeviceAuthLog[]
+  fingerprints DeviceFingerprint[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model DeviceAuthLog {
+  id        String   @id @default(cuid())
+  deviceId  String
+  uuid      String   @default("")
+  userAgent String   @default("")
+  ip        String   @default("")
+
+  device Device @relation(fields: [deviceId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([deviceId])
+  @@index([uuid])
+}
+
+model DeviceFingerprint {
+  id           String   @id @default(cuid())
+  deviceId     String
+  uuid         String
+  lastSeenDate String   @default("") // "YYYY-MM-DD"，每日首次认证更新
+
+  device Device @relation(fields: [deviceId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([deviceId, uuid])
+  @@index([uuid])
+  @@index([lastSeenDate])
 }
 
 model DeviceCommand {

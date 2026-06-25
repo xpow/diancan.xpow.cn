@@ -215,6 +215,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { clearCart, readCart } from '@/utils/cart'
 import { getDishImage } from '@/utils/dishImages'
+import { apiPost, getDeviceToken, setDeviceToken } from '@/utils/api'
 import KioskTopBar from '@/components/KioskTopBar.vue'
 
 interface QuoteLineItem {
@@ -266,6 +267,9 @@ const merchantName = ref('Sizzling Skewers')
 const branchName = ref('')
 const deviceCode = ref('')
 const statusText = ref('')
+const merchantId = ref('')
+const branchId = ref('')
+const deviceId = ref('')
 const displayTitle = computed(() => {
   const m = merchantName.value
   const b = branchName.value
@@ -314,6 +318,7 @@ async function reloadQuote() {
       deviceCode?: string
       statusText?: string
       deviceActive?: boolean
+      commands?: { id: string; command: string }[]
     }
 
     if (bootstrap.deviceActive === false) {
@@ -322,39 +327,46 @@ async function reloadQuote() {
       return
     }
 
-    if (bootstrap.merchantName) {
-      merchantName.value = bootstrap.merchantName
-    }
-    if (bootstrap.branchName) {
-      branchName.value = bootstrap.branchName
-    }
-    if (bootstrap.deviceCode) {
-      deviceCode.value = bootstrap.deviceCode
-    }
-    if (bootstrap.statusText) {
-      statusText.value = bootstrap.statusText
+    // 验证 token 对应的设备与 SN 匹配
+    const authId = localStorage.getItem('kiosk-device-auth-id')
+    if (authId && bootstrap.deviceId && bootstrap.deviceId !== authId) {
+      localStorage.removeItem('kiosk-device-token')
+      localStorage.removeItem('kiosk-device-auth-id')
+      router.push('/home')
+      return
     }
 
-    const quoteResponse = await fetch('/api/cart/quote', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        merchantId: bootstrap.merchantId,
-        branchId: bootstrap.branchId,
-        deviceId: bootstrap.deviceId,
-        items: cartItems.value.map((item) => ({
-          dishId: item.baseDishId,
-          quantity: item.quantity,
-          specs: item.specs ?? '',
-        })),
-      }),
+    // 执行设备指令
+    if (bootstrap.commands?.length) {
+      for (const cmd of bootstrap.commands) {
+        if (cmd.command === 'clear_storage') {
+          localStorage.clear()
+          document.cookie.split(';').forEach((c) => {
+            document.cookie = c.replace(/^ +/, '').replace(/=.*/, `=;expires=${new Date(0).toUTCString()};path=/`)
+          })
+        }
+        fetch(`/api/commands/${cmd.id}/ack`, { method: 'POST' }).catch(() => {})
+      }
+      if (bootstrap.commands.some((c) => c.command === 'clear_storage')) {
+        location.reload()
+      }
+    }
+
+    if (bootstrap.merchantName) merchantName.value = bootstrap.merchantName
+    if (bootstrap.branchName) branchName.value = bootstrap.branchName
+    if (bootstrap.deviceCode) deviceCode.value = bootstrap.deviceCode
+    if (bootstrap.statusText) statusText.value = bootstrap.statusText
+    merchantId.value = bootstrap.merchantId
+    branchId.value = bootstrap.branchId
+    deviceId.value = bootstrap.deviceId
+
+    quote.value = await apiPost<QuoteResponse>('/api/cart/quote', {
+      items: cartItems.value.map((item) => ({
+        dishId: item.baseDishId,
+        quantity: item.quantity,
+        specs: item.specs ?? '',
+      })),
     })
-
-    if (!quoteResponse.ok) {
-      throw new Error('试算失败，请确认 api-core 已启动')
-    }
-
-    quote.value = await quoteResponse.json() as QuoteResponse
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '试算失败'
   } finally {
@@ -369,53 +381,26 @@ async function submitOrder() {
   orderError.value = ''
 
   try {
-    // Verify device SN
-    const savedSN = localStorage.getItem('kiosk-device-sn')
-    if (!savedSN) throw new Error('设备未认证，请返回首页重新认证')
-    const authRes = await fetch('/api/system/device-auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sn: savedSN }),
+    // 检查 token，没有则用 SN 重新认证
+    let token = getDeviceToken()
+    if (!token) {
+      const savedSN = localStorage.getItem('kiosk-device-sn')
+      if (!savedSN) throw new Error('设备未认证，请返回首页重新认证')
+      const authData = await apiPost<{ token: string }>('/api/system/device-auth', { sn: savedSN })
+      setDeviceToken(authData.token)
+      token = authData.token
+    }
+
+    createdOrder.value = await apiPost<CreatedOrder>('/api/orders', {
+      merchantId: merchantId.value,
+      branchId: branchId.value,
+      orderType: orderType.value,
+      items: cartItems.value.map((item) => ({
+        dishId: item.baseDishId,
+        quantity: item.quantity,
+        specs: item.specs ?? '',
+      })),
     })
-    if (!authRes.ok) {
-      localStorage.removeItem('kiosk-device-sn')
-      throw new Error('设备码已失效，请返回首页重新认证')
-    }
-    const authData = await authRes.json()
-
-    const bootstrapResponse = await fetch('/api/system/bootstrap')
-    if (!bootstrapResponse.ok) {
-      throw new Error('点菜机启动配置获取失败')
-    }
-
-    const bootstrap = await bootstrapResponse.json() as {
-      merchantId: string
-      branchId: string
-      deviceId: string
-    }
-
-    const orderResponse = await fetch('/api/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        merchantId: bootstrap.merchantId,
-        branchId: bootstrap.branchId,
-        deviceId: authData.deviceId,
-        orderType: orderType.value,
-        quoteId: quote.value.quoteId,
-        items: cartItems.value.map((item) => ({
-          dishId: item.baseDishId,
-          quantity: item.quantity,
-          specs: item.specs ?? '',
-        })),
-      }),
-    })
-
-    if (!orderResponse.ok) {
-      throw new Error('下单失败，请稍后重试')
-    }
-
-    createdOrder.value = await orderResponse.json() as CreatedOrder
     showPaymentPopup.value = false
     clearCart()
     cartItems.value = []
@@ -426,6 +411,9 @@ async function submitOrder() {
     }
   } catch (error) {
     orderError.value = error instanceof Error ? error.message : '下单失败'
+    if (orderError.value.includes('令牌')) {
+      clearDeviceToken()
+    }
   } finally {
     submitting.value = false
   }

@@ -1,12 +1,83 @@
 import cors from 'cors'
 import express from 'express'
+import type { Request, Response, NextFunction } from 'express'
 import session from 'express-session'
+import rateLimit from 'express-rate-limit'
+import jwt from 'jsonwebtoken'
 import { PrismaClient } from '@prisma/client'
 import adminRouter from './admin.js'
+import { loadGlobalCache, buildGlobalCache } from './cache.js'
 
 const app = express()
 const port = Number(process.env.PORT || 3011)
 const prisma = new PrismaClient()
+
+// JWT 配置
+const JWT_SECRET = process.env.JWT_SECRET || 'diancan-jwt-dev-secret'
+const JWT_EXPIRES_IN = '24h'
+
+// 设备指纹有效期（测试用 30s，上线改回 7 * 24 * 60 * 60 * 1000）
+const FINGERPRINT_EXPIRY_MS = 30 * 1000
+
+// JWT 认证中间件
+interface JwtPayload {
+  deviceId: string
+  sn: string
+  iat: number
+  exp: number
+}
+declare global {
+  namespace Express {
+    interface Request {
+      authDevice?: { deviceId: string; sn: string }
+    }
+  }
+}
+function authMiddleware(req: Request, res: Response, next: NextFunction) {
+  // 内部调用放行
+  if (req.headers['x-internal-request'] === 'true') {
+    req.authDevice = {
+      deviceId: (req.body?.deviceId as string) || (req.query?.deviceId as string) || '',
+      sn: 'internal',
+    }
+    return next()
+  }
+  const authHeader = req.headers.authorization
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: '缺少认证令牌' })
+  }
+  const token = authHeader.slice(7)
+  try {
+    const payload = jwt.verify(token, JWT_SECRET) as JwtPayload
+    req.authDevice = { deviceId: payload.deviceId, sn: payload.sn }
+    next()
+  } catch {
+    return res.status(401).json({ message: '认证令牌无效或已过期' })
+  }
+}
+
+// 速率限制器
+const authLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { message: '请求过于频繁，请稍后再试' },
+  standardHeaders: false,
+  legacyHeaders: false,
+})
+const orderLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 6,
+  message: { message: '下单过于频繁，请稍后再试' },
+  standardHeaders: false,
+  legacyHeaders: false,
+})
+const generalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  message: { message: '请求过于频繁，请稍后再试' },
+  standardHeaders: false,
+  legacyHeaders: false,
+})
 
 // 按设备筛选促销：rules.deviceIds 为空则不限制，否则只返回包含指定设备的促销
 function filterPromotionsByDevice(promotions: any[], deviceId?: string): any[] {
@@ -18,7 +89,53 @@ function filterPromotionsByDevice(promotions: any[], deviceId?: string): any[] {
   })
 }
 
-app.use(cors({ origin: true, credentials: true }))
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : undefined
+app.use(cors({
+  origin: allowedOrigins ?? true,
+  credentials: true,
+}))
+
+// 来源验证中间件：拒绝空来源或非合法来源的请求
+const ORIGIN_WHITELIST = new Set([
+  ...(allowedOrigins ?? []),
+  'http://localhost:5173',
+  'http://localhost:4173',
+  'http://localhost:3011',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:4173',
+  'http://127.0.0.1:3011',
+])
+// 将配置中的域名也加入白名单（无协议版本，支持端口匹配）
+const originPatterns = (allowedOrigins ?? []).map((o) => {
+  try { return new URL(o) } catch { return null }
+}).filter(Boolean).map((u) => `${u!.host}`)
+app.use((req, res, next) => {
+  // 内部调用放行（服务端自请求）
+  if (req.headers['x-internal-request'] === 'true') return next()
+  // 健康检查放行
+  if (req.path === '/api/health') return next()
+
+  const origin = req.headers.origin as string | undefined
+  const referer = req.headers.referer as string | undefined
+  const source = origin || referer
+
+  if (!source) {
+    return res.status(403).json({ message: '拒绝访问：缺少来源信息' })
+  }
+
+  // 精确匹配
+  if (ORIGIN_WHITELIST.has(source)) return next()
+  // 去掉尾部斜杠再匹配
+  if (ORIGIN_WHITELIST.has(source.replace(/\/$/, ''))) return next()
+
+  // 按 host 匹配（忽略协议和端口差异）
+  try {
+    const url = new URL(source)
+    if (originPatterns.includes(url.host) || url.host.startsWith('localhost') || url.host === '127.0.0.1') return next()
+  } catch {}
+
+  return res.status(403).json({ message: '拒绝访问：非法来源' })
+})
 app.use(express.json())
 app.use(session({
   secret: process.env.SESSION_SECRET || 'diancan-dev-secret',
@@ -29,35 +146,32 @@ app.use(session({
 
 app.use('/api/admin', adminRouter)
 
-app.get('/api/health', (_req, res) => {
+app.get('/api/health', generalLimiter, (_req, res) => {
   res.json({ ok: true, service: 'api-core' })
 })
 
-app.get('/api/system/bootstrap', async (req, res) => {
-  const merchant = await prisma.merchant.findFirst()
-  if (!merchant) return res.status(404).json({ message: 'merchant not found' })
+app.get('/api/system/bootstrap', generalLimiter, async (req, res) => {
+  let cache = loadGlobalCache()
+  if (!cache) {
+    try { cache = await buildGlobalCache() } catch { return res.status(500).json({ message: '初始化失败' }) }
+  }
 
-  const branch = await prisma.branch.findFirst({ where: { merchantId: merchant.id } })
+  const { merchant, branch, promotions: activePromotions, featuredItems, devices: allDevices } = cache
+
   let device: any = null
   const deviceSn = req.query.sn as string | undefined
   if (deviceSn) {
-    device = await prisma.device.findUnique({ where: { sn: deviceSn } })
-    if (device?.status !== 'active') device = null // 已下线的设备视为未认证
+    device = allDevices.find((d: any) => d.sn === deviceSn)
+    if (device?.status !== 'active') device = null
   }
-  if (!device) {
-    device = await prisma.device.findFirst({ where: { branchId: branch?.id } })
+  if (!device && !deviceSn) {
+    device = allDevices.find((d: any) => d.status === 'active') ?? allDevices[0] ?? null
   }
-  const allDevices = branch ? await prisma.device.findMany({ where: { branchId: branch.id, status: 'active' } }) : []
-  const features = JSON.parse(merchant.features)
-  const featuredItems = await prisma.featuredItem.findMany({
-    where: { merchantId: merchant.id, active: true },
-    orderBy: { sort: 'asc' },
-  })
 
-  const activePromotions = await prisma.promotion.findMany({
-    where: { merchantId: merchant.id, status: 'active' },
-    include: { items: { include: { dish: { select: { id: true, image: true, name: true } } } } },
-  })
+  const availablePromotions = filterPromotionsByDevice(
+    activePromotions.filter((p: any) => p.status === 'active' && ['full_reduction', 'welfare_item', 'time_discount', 'new_user', 'holiday_gift', 'total_discount'].includes(p.type)),
+    device?.id,
+  )
 
   res.json({
     merchantId: merchant.id,
@@ -69,49 +183,39 @@ app.get('/api/system/bootstrap', async (req, res) => {
     deviceCode: device?.code ?? '',
     deviceMode: device?.mode ?? 'kiosk',
     deviceActive: device?.status === 'active',
-    devices: allDevices.map((d) => ({ id: d.id, code: d.code, name: d.name, mode: d.mode })),
     slogan: merchant.slogan,
     businessHours: merchant.businessHours,
     todayLocation: branch?.todayLocation ?? '',
     locationHint: branch?.locationHint ?? '',
     statusText: merchant.statusText,
-    features,
-    promotions: filterPromotionsByDevice(activePromotions, device?.id)
-      .filter((p) => ['full_reduction', 'welfare_item', 'time_discount', 'new_user', 'holiday_gift', 'total_discount'].includes(p.type))
-      .map((p) => {
-        const rules = JSON.parse(p.rules)
-        let subtitle = ''
-        if (p.type === 'full_reduction') subtitle = `满¥${rules.threshold}减¥${rules.discount}`
-        else if (p.type === 'welfare_item') subtitle = `指定商品福利价`
-        else if (p.type === 'time_discount') {
-          const rate = rules.discountRate
-          const discountLabels: Record<number, string> = { 0.1: '1折', 0.2: '2折', 0.3: '3折', 0.4: '4折', 0.5: '5折', 0.6: '6折', 0.7: '7折', 0.8: '8折', 0.85: '85折', 0.9: '9折' }
-          const label = rate ? discountLabels[rate] || '' : ''
-          subtitle = label ? `指定商品${label}` : ''
-        } else if (p.type === 'total_discount') {
-          const val = rules.discountType === 'percentage' ? `${rules.discountValue}%` : `¥${rules.discountValue}`
-          subtitle = `订单总价减${val}`
-        }
-        return {
-          id: p.id,
-          title: p.name,
-          subtitle,
-          type: p.type,
-          tag: p.type === 'time_discount' ? '限时' : p.type === 'new_user' ? '新人' : p.type === 'holiday_gift' ? '节日' : p.type === 'total_discount' ? '折扣' : '活动',
-          tone: p.type === 'full_reduction' || p.type === 'time_discount' ? 'primary' as const : 'neutral' as const,
-          image: p.items?.[0]?.dish?.image || null,
-          dishId: p.items?.[0]?.dishId || null,
-          itemIds: p.items?.map((i) => i.dishId).filter(Boolean) || [],
-        }
-      }),
-    featuredItems: featuredItems.map((f) => ({
-      id: f.id,
-      title: f.title,
-      description: f.description,
-      priceText: f.priceText,
-      badge: f.badge,
-      badgeTone: f.badgeTone,
-    })),
+    features: merchant.features,
+    promotions: availablePromotions.map((p: any) => {
+      const rules = typeof p.rules === 'string' ? JSON.parse(p.rules) : p.rules
+      let subtitle = ''
+      if (p.type === 'full_reduction') subtitle = `满¥${rules.threshold}减¥${rules.discount}`
+      else if (p.type === 'welfare_item') subtitle = `指定商品福利价`
+      else if (p.type === 'time_discount') {
+        const rate = rules.discountRate
+        const discountLabels: Record<number, string> = { 0.1: '1折', 0.2: '2折', 0.3: '3折', 0.4: '4折', 0.5: '5折', 0.6: '6折', 0.7: '7折', 0.8: '8折', 0.85: '85折', 0.9: '9折' }
+        const label = rate ? discountLabels[rate] || '' : ''
+        subtitle = label ? `指定商品${label}` : ''
+      } else if (p.type === 'total_discount') {
+        const val = rules.discountType === 'percentage' ? `${rules.discountValue}%` : `¥${rules.discountValue}`
+        subtitle = `订单总价减${val}`
+      }
+      return {
+        id: p.id,
+        title: p.name,
+        subtitle,
+        type: p.type,
+        tag: p.type === 'time_discount' ? '限时' : p.type === 'new_user' ? '新人' : p.type === 'holiday_gift' ? '节日' : p.type === 'total_discount' ? '折扣' : '活动',
+        tone: p.type === 'full_reduction' || p.type === 'time_discount' ? 'primary' as const : 'neutral' as const,
+        image: p.items?.[0]?.dish?.image || null,
+        dishId: p.items?.[0]?.dishId || null,
+        itemIds: p.items?.map((i: any) => i.dishId).filter(Boolean) || [],
+      }
+    }),
+    featuredItems,
     commands: device ? await prisma.deviceCommand.findMany({
       where: { deviceId: device.id, status: 'pending' },
       select: { id: true, command: true, params: true },
@@ -119,44 +223,37 @@ app.get('/api/system/bootstrap', async (req, res) => {
   })
 })
 
-app.post('/api/commands/:id/ack', async (req, res) => {
+app.post('/api/commands/:id/ack', generalLimiter, async (req, res) => {
   const { id } = req.params
   await prisma.deviceCommand.update({ where: { id }, data: { status: 'executed', executedAt: new Date() } })
   res.json({ success: true })
 })
 
-app.get('/api/catalog/menu', async (req, res) => {
-  const merchant = await prisma.merchant.findFirst()
-  if (!merchant) return res.status(404).json({ message: 'merchant not found' })
+app.get('/api/catalog/menu', generalLimiter, async (req, res) => {
+  let cache = loadGlobalCache()
+  if (!cache) {
+    try { cache = await buildGlobalCache() } catch { return res.status(500).json({ message: '初始化失败' }) }
+  }
 
-  const categories = await prisma.category.findMany({
-    where: { branch: { merchantId: merchant.id } },
-    orderBy: { sort: 'asc' },
-  })
+  const { merchant, categories, dishes: allDishes, promotions, devices } = cache
+  const activeDishes = allDishes.filter((d: any) => d.status === 'active')
+  const dishPriceMap = new Map(activeDishes.map((d: any) => [d.id, d.price]))
 
-  const dishes = await prisma.dish.findMany({
-    where: { merchantId: merchant.id, status: 'active' },
-    orderBy: [{ sort: 'asc' }, { createdAt: 'desc' }],
-  })
-  const dishPriceMap = new Map(dishes.map((d) => [d.id, d.price]))
-
+  const deviceId = req.query.deviceId as string || devices.find((d: any) => d.status === 'active')?.id
   const activePromotions = filterPromotionsByDevice(
-    await prisma.promotion.findMany({
-      where: { status: 'active' },
-      include: { items: true },
-    }),
-    req.query.deviceId as string || (await prisma.device.findFirst({ where: { branch: { merchantId: merchant.id }, status: 'active' } }))?.id,
+    promotions.filter((p: any) => p.status === 'active'),
+    deviceId,
   )
+  const now = new Date()
   const promoDishMap = new Map<string, { promoPrice: number; type: string; name: string }>()
   for (const promo of activePromotions) {
-    // 已过期的限时折扣跳过
-    if (promo.endDate && new Date(promo.endDate) < new Date()) continue
-    if (promo.startDate && new Date(promo.startDate) > new Date()) continue
+    if (promo.endDate && new Date(promo.endDate) < now) continue
+    if (promo.startDate && new Date(promo.startDate) > now) continue
 
     for (const pi of promo.items) {
       if (promo.type === 'time_discount') {
         const price = pi.promoPrice ?? (() => {
-          const rules = JSON.parse(promo.rules)
+          const rules = typeof promo.rules === 'string' ? JSON.parse(promo.rules) : promo.rules
           const rate = rules.discountRate ?? 1
           const origPrice = dishPriceMap.get(pi.dishId) ?? 0
           return Math.round(origPrice * rate * 100) / 100
@@ -171,8 +268,8 @@ app.get('/api/catalog/menu', async (req, res) => {
   res.json({
     merchant: { id: merchant.id, name: merchant.name },
     branch: { id: '', name: '' },
-    categories: categories.map((c) => ({ id: c.id, name: c.name, sort: c.sort })),
-    dishes: dishes.map((d) => {
+    categories,
+    dishes: activeDishes.map((d: any) => {
       const promo = promoDishMap.get(d.id)
       return {
         id: d.id,
@@ -181,7 +278,7 @@ app.get('/api/catalog/menu', async (req, res) => {
         price: d.price,
         desc: d.desc,
         image: d.image,
-        tags: JSON.parse(d.tags) as string[],
+        tags: typeof d.tags === 'string' ? JSON.parse(d.tags) : d.tags,
         specsPreset: d.specsPreset,
         portionSize: d.portionSize,
         promoPrice: promo?.promoPrice ?? null,
@@ -191,8 +288,9 @@ app.get('/api/catalog/menu', async (req, res) => {
   })
 })
 
-app.post('/api/cart/quote', async (req, res) => {
+app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => {
   const { items } = req.body ?? {}
+  const deviceId = req.authDevice!.deviceId
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ message: 'items is required' })
   }
@@ -219,7 +317,7 @@ app.post('/api/cart/quote', async (req, res) => {
       where: { status: 'active' },
       include: { items: true },
     }),
-    req.query.deviceId as string || (await prisma.device.findFirst({ where: { branch: { merchantId: (await prisma.merchant.findFirst())?.id }, status: 'active' } }))?.id,
+    deviceId,
   )
   const now = new Date()
   const welfarePromos = activePromotions.filter((p) => p.type === 'welfare_item')
@@ -478,8 +576,14 @@ app.post('/api/cart/quote', async (req, res) => {
   })
 })
 
-app.post('/api/orders', async (req, res) => {
-  const { merchantId, branchId, deviceId, items, orderType } = req.body ?? {}
+app.post('/api/orders', orderLimiter, authMiddleware, async (req, res) => {
+  const { merchantId, branchId, deviceId: reqDeviceId, items, orderType } = req.body ?? {}
+  const deviceId = req.authDevice!.deviceId
+
+  // 校验 deviceId 与令牌一致
+  if (reqDeviceId && reqDeviceId !== deviceId) {
+    return res.status(403).json({ message: '设备ID与令牌不匹配' })
+  }
 
   if (!merchantId || !branchId || !deviceId) {
     return res.status(400).json({ message: 'merchantId, branchId and deviceId are required' })
@@ -504,9 +608,12 @@ app.post('/api/orders', async (req, res) => {
   const quoteReq = { body: { items: normalizedItems } } as any
   const quoteRes = await fetch(`http://localhost:${port}/api/cart/quote`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ items: normalizedItems }),
+    headers: { 'Content-Type': 'application/json', 'X-Internal-Request': 'true' },
+    body: JSON.stringify({ items: normalizedItems, deviceId }),
   })
+  if (!quoteRes.ok) {
+    return res.status(500).json({ message: '试算失败' })
+  }
   const quote = await quoteRes.json()
 
   // 取餐号: branchCode(字母) + deviceCode(2位数字) + 当日流水(3位)
@@ -517,6 +624,7 @@ app.post('/api/orders', async (req, res) => {
   }
   const branchCode = branch?.code?.toUpperCase() || 'X'
   const devCode = (device?.code || '00').padStart(2, '0')
+  console.log(`[DEBUG] order deviceId=${deviceId} code=${device?.code} sn=${device?.sn} pickupCode=${branchCode}${devCode}`)
   const todayStart = new Date()
   todayStart.setHours(0, 0, 0, 0)
   const todayOrderCount = await prisma.order.count({
@@ -597,21 +705,14 @@ app.post('/api/orders', async (req, res) => {
   })
 })
 
-app.get('/api/orders', async (req, res) => {
-  const { sn, deviceId: queryDeviceId } = req.query as Record<string, string>
+app.get('/api/orders', generalLimiter, authMiddleware, async (req, res) => {
+  const deviceId = req.authDevice!.deviceId
 
-  // 如果有 SN 或 deviceId，检查设备权限
+  // 从令牌获取设备，按设备权限筛选
   let where: any = {}
-  if (sn) {
-    const device = await prisma.device.findUnique({ where: { sn } })
-    if (device && device.code !== '01' && device.code !== '02') {
-      where.deviceId = device.id
-    }
-  } else if (queryDeviceId) {
-    const device = await prisma.device.findUnique({ where: { id: queryDeviceId } })
-    if (device && device.code !== '01' && device.code !== '02') {
-      where.deviceId = device.id
-    }
+  const device = await prisma.device.findUnique({ where: { id: deviceId } })
+  if (device && device.role !== 'admin') {
+    where.deviceId = device.id
   }
 
   const orders = await prisma.order.findMany({
@@ -651,7 +752,7 @@ app.get('/api/orders', async (req, res) => {
   })
 })
 
-app.get('/api/orders/:orderNo', async (req, res) => {
+app.get('/api/orders/:orderNo', generalLimiter, authMiddleware, async (req, res) => {
   const { orderNo } = req.params
   const order = await prisma.order.findUnique({
     where: { orderNo },
@@ -685,8 +786,8 @@ app.get('/api/orders/:orderNo', async (req, res) => {
 })
 
 // 设备认证：通过8位SN匹配点餐机
-app.post('/api/system/device-auth', async (req, res) => {
-  const { sn } = req.body ?? {}
+app.post('/api/system/device-auth', authLimiter, async (req, res) => {
+  const { sn, uuid, userAgent } = req.body ?? {}
   if (!sn || typeof sn !== 'string' || sn.length !== 8) {
     return res.status(400).json({ message: '请输入8位设备码' })
   }
@@ -697,7 +798,40 @@ app.post('/api/system/device-auth', async (req, res) => {
   if (device.status !== 'active') {
     return res.status(403).json({ message: '该设备已下线，无法使用' })
   }
+  console.log(`[DEBUG] device-auth sn=${sn} deviceId=${device.id} code=${device.code}`)
+  // 记录认证日志
+  const authUuid = uuid || ''
+  prisma.deviceAuthLog.create({
+    data: {
+      deviceId: device.id,
+      uuid: authUuid,
+      userAgent: userAgent || '',
+      ip: req.ip || req.socket.remoteAddress || '',
+    },
+  }).catch((e) => console.error('[device-auth] log failed', e))
+  // 每日首次认证更新指纹有效期（同一天不重复写，但有效期快过期时也更新）
+  if (authUuid) {
+    const today = new Date().toISOString().slice(0, 10)
+    const expiryThreshold = new Date(Date.now() - FINGERPRINT_EXPIRY_MS / 2)
+    const fp = await prisma.deviceFingerprint.findUnique({
+      where: { deviceId_uuid: { deviceId: device.id, uuid: authUuid } },
+      select: { lastSeenDate: true, updatedAt: true },
+    })
+    if (!fp || fp.lastSeenDate !== today || fp.updatedAt < expiryThreshold) {
+      prisma.deviceFingerprint.upsert({
+        where: { deviceId_uuid: { deviceId: device.id, uuid: authUuid } },
+        create: { deviceId: device.id, uuid: authUuid, lastSeenDate: today },
+        update: { lastSeenDate: today },
+      }).catch((e) => console.error('[device-auth] fingerprint upsert failed', e))
+    }
+  }
+  const token = jwt.sign(
+    { deviceId: device.id, sn: device.sn },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRES_IN },
+  )
   res.json({
+    token,
     deviceId: device.id,
     deviceCode: device.code,
     deviceName: device.name,

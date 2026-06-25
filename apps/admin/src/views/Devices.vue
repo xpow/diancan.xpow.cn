@@ -1,94 +1,19 @@
 <template>
-  <div class="merchant-page">
+  <div class="devices-page">
     <div class="page-header">
-      <h2 class="page-title">商家设置</h2>
-      <Button label="保存" icon="pi pi-save" @click="saveMerchant" />
-    </div>
-
-    <div class="card">
-      <h3 class="card-title">基本信息</h3>
-      <div class="form-group">
-        <label>商家名称</label>
-        <InputText v-model="form.name" class="w-full" />
-      </div>
-      <div class="form-group">
-        <label>标语</label>
-        <InputText v-model="form.slogan" class="w-full" />
-      </div>
-      <div class="form-row">
-        <div class="form-group flex-1">
-          <label>营业时间</label>
-          <InputText v-model="form.businessHours" class="w-full" placeholder="例：17:00-02:00" />
-        </div>
-        <div class="form-group flex-1">
-          <label>营业状态文字</label>
-          <InputText v-model="form.statusText" class="w-full" placeholder="例：营业中" />
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Logo URL</label>
-        <InputText v-model="form.logoUrl" class="w-full" placeholder="https://..." />
+      <h2 class="page-title">设备管理</h2>
+      <div class="header-actions">
+        <Button
+          :label="filterUser ? '全部' : '仅用户设备'"
+          :icon="filterUser ? 'pi pi-list' : 'pi pi-user'"
+          severity="secondary"
+          @click="filterUser = !filterUser"
+        />
+        <Button label="新增设备" icon="pi pi-plus" @click="openDeviceDialog()" />
       </div>
     </div>
 
-    <div class="section-header" style="margin-top:24px">
-      <h3 class="card-title">分店管理</h3>
-      <Button label="新增分店" icon="pi pi-plus" @click="openBranchDialog()" />
-    </div>
-    <DataTable :value="branches" striped-rows>
-      <Column field="code" header="编号" style="width:80px" />
-      <Column field="name" header="名称" />
-      <Column field="address" header="地址" />
-      <Column field="todayLocation" header="今日出摊位置" />
-      <Column field="deviceCount" header="设备数" />
-      <Column field="orderCount" header="订单数" />
-      <Column field="status" header="状态">
-        <template #body="{ data }">
-          <Tag :value="data.status === 'active' ? '营业中' : '已关闭'" :severity="data.status === 'active' ? 'success' : 'danger'" />
-        </template>
-      </Column>
-      <Column header="操作" style="width:160px">
-        <template #body="{ data }">
-          <Button icon="pi pi-pencil" label="编辑" severity="info" text size="small" @click="openBranchDialog(data)" />
-          <Button icon="pi pi-trash" label="删除" severity="danger" size="small" @click="deleteBranch(data.id)" />
-        </template>
-      </Column>
-    </DataTable>
-
-    <!-- Branch Dialog -->
-    <Dialog v-model:visible="showBranch" :header="editingBranch ? '编辑分店' : '新增分店'" style="width:520px">
-      <div class="form-row">
-        <div class="form-group flex-1">
-          <label>编号（字母）</label>
-          <InputText v-model="branchForm.code" class="w-full" maxlength="2" placeholder="A" />
-        </div>
-        <div class="form-group flex-1">
-          <label>名称</label>
-          <InputText v-model="branchForm.name" class="w-full" />
-        </div>
-      </div>
-      <div class="form-group">
-        <label>地址</label>
-        <InputText v-model="branchForm.address" class="w-full" />
-      </div>
-      <div class="form-group">
-        <label>今日出摊位置</label>
-        <InputText v-model="branchForm.todayLocation" class="w-full" placeholder="如：东门入口第3个摊位" />
-      </div>
-      <div class="form-group">
-        <label>位置提示</label>
-        <InputText v-model="branchForm.locationHint" class="w-full" placeholder="如：对着蜜雪冰城" />
-      </div>
-      <template #footer>
-        <Button label="取消" severity="secondary" @click="showBranch = false" />
-        <Button label="保存" @click="saveBranch" />
-      </template>
-    </Dialog>
-
-    <div class="section-header" style="margin-top:24px">
-      <h3 class="card-title">设备管理</h3>
-    </div>
-    <DataTable :value="adminDevices" striped-rows>
+    <DataTable :value="filteredDevices" striped-rows>
       <Column field="code" header="编号" style="width:60px" />
       <Column field="name" header="名称" />
       <Column field="role" header="角色">
@@ -214,14 +139,14 @@ import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import Tag from 'primevue/tag'
 
-const form = ref({ name: '', slogan: '', businessHours: '', statusText: '', logoUrl: '' })
-
-const branches = ref<any[]>([])
-const showBranch = ref(false)
-const editingBranch = ref(false)
-const branchForm = ref({ code: '', name: '', address: '', todayLocation: '', locationHint: '' })
-
 const devices = ref<any[]>([])
+const branches = ref<any[]>([])
+const filterUser = ref(true)
+
+const filteredDevices = computed(() =>
+  filterUser.value ? devices.value.filter((d) => d.role === 'user') : devices.value,
+)
+
 const showDevice = ref(false)
 const editingDevice = ref(false)
 const editingDeviceId = ref('')
@@ -234,60 +159,15 @@ const commandOptions = [
   { label: '清除缓存和 Cookies', value: 'clear_storage' },
 ]
 
-const adminDevices = computed(() => devices.value.filter((d) => d.role === 'admin'))
-
-async function fetchMerchant() {
-  const res = await fetch('/api/admin/merchant')
-  const data = await res.json()
-  form.value = {
-    name: data.name || '',
-    slogan: data.slogan || '',
-    businessHours: data.businessHours || '',
-    statusText: data.statusText || '',
-    logoUrl: data.logoUrl || '',
-  }
-  branches.value = data.branches || []
-}
-
-async function saveMerchant() {
-  await fetch('/api/admin/merchant', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(form.value),
-  })
-}
-
-/* Branch */
-function openBranchDialog(branch?: any) {
-  editingBranch.value = !!branch
-  branchForm.value = branch
-    ? { code: branch.code || '', name: branch.name, address: branch.address || '', todayLocation: branch.todayLocation || '', locationHint: branch.locationHint || '' }
-    : { code: '', name: '', address: '', todayLocation: '', locationHint: '' }
-  showBranch.value = true
-}
-
-async function saveBranch() {
-  const url = editingBranch.value
-    ? `/api/admin/branches/${(branches.value.find((b) => b.name === branchForm.value.name)?.id)}`
-    : '/api/admin/branches'
-  await fetch(url, {
-    method: editingBranch.value ? 'PUT' : 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(branchForm.value),
-  })
-  showBranch.value = false
-  fetchMerchant()
-}
-
-async function deleteBranch(id: string) {
-  if (!confirm('确认删除？')) return
-  await fetch(`/api/admin/branches/${id}`, { method: 'DELETE' })
-  fetchMerchant()
-}
-
 async function fetchDevices() {
   const res = await fetch('/api/admin/devices')
   devices.value = await res.json()
+}
+
+async function fetchBranches() {
+  const res = await fetch('/api/admin/merchant')
+  const data = await res.json()
+  branches.value = data.branches || []
 }
 
 function openDeviceDialog(device?: any) {
@@ -357,8 +237,10 @@ function openCommandDialog(device: any) {
 
 const showAuthLog = ref(false)
 const authLogs = ref<any[]>([])
+const authTargetName = ref('')
 
 async function showAuthLogs(device: any) {
+  authTargetName.value = device.name
   const res = await fetch(`/api/admin/devices/${device.id}/auth-logs`)
   const data = await res.json()
   authLogs.value = data.list || []
@@ -381,22 +263,18 @@ async function sendCommand() {
 }
 
 onMounted(() => {
-  fetchMerchant()
   fetchDevices()
+  fetchBranches()
 })
 </script>
 
 <style scoped>
-.merchant-page { max-width: none; }
+.devices-page { max-width: none; }
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .page-title { margin: 0; font-size: 22px; font-weight: 700; }
-.card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-.card-title { margin: 0 0 16px; font-size: 16px; font-weight: 700; }
-.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.header-actions { display: flex; gap: 8px; }
 .form-group { margin-bottom: 12px; }
 .form-group label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 4px; }
-.form-row { display: flex; gap: 12px; }
-.flex-1 { flex: 1; }
 .w-full { width: 100%; }
 .sn-text { font-family: monospace; font-size: 13px; letter-spacing: 1px; }
 .sn-empty { color: #999; }
