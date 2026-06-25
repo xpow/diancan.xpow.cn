@@ -5,10 +5,10 @@
     </div>
 
     <div class="stats-grid">
-      <div class="stat-card">
+      <router-link to="/orders" class="stat-card">
         <div class="stat-value">{{ stats.todayOrders }}</div>
         <div class="stat-label">今日有效订单</div>
-      </div>
+      </router-link>
       <div class="stat-card">
         <div class="stat-value">¥{{ stats.todayCompletedRevenue.toFixed(2) }}</div>
         <div class="stat-label">今日完成</div>
@@ -17,26 +17,26 @@
         <div class="stat-value">¥{{ stats.todayEstimatedRevenue.toFixed(2) }}</div>
         <div class="stat-label">今日预估</div>
       </div>
-      <div class="stat-card">
+      <router-link to="/orders" class="stat-card">
         <div class="stat-value">{{ stats.totalOrders }}</div>
         <div class="stat-label">总有效订单</div>
-      </div>
-      <div class="stat-card">
+      </router-link>
+      <router-link to="/stats" class="stat-card">
         <div class="stat-value">¥{{ stats.completedRevenue.toFixed(2) }}</div>
         <div class="stat-label">已完成收入</div>
-      </div>
+      </router-link>
       <div class="stat-card">
         <div class="stat-value">¥{{ stats.estimatedRevenue.toFixed(2) }}</div>
         <div class="stat-label">预估收入</div>
       </div>
-      <div class="stat-card">
+      <router-link to="/orders?status=pending" class="stat-card">
         <div class="stat-value">{{ stats.pendingOrders }}</div>
         <div class="stat-label">待处理</div>
-      </div>
-      <div class="stat-card">
+      </router-link>
+      <router-link to="/orders?status=ready" class="stat-card">
         <div class="stat-value">{{ stats.readyOrders }}</div>
         <div class="stat-label">待取餐</div>
-      </div>
+      </router-link>
     </div>
 
     <div class="page-header" style="margin-top:32px">
@@ -126,7 +126,8 @@ onMounted(fetchData)
 
 <style scoped>
 .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-.stat-card { background: #fff; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.stat-card { display: block; background: #fff; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.08); text-decoration: none; transition: box-shadow 0.2s, transform 0.2s; }
+.stat-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.12); transform: translateY(-2px); cursor: pointer; }
 .stat-value { font-size: 28px; font-weight: 800; color: var(--p-primary-color, #FF6B00); }
 .stat-label { font-size: 13px; color: #666; margin-top: 4px; }
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }

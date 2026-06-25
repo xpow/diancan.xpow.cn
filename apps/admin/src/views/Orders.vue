@@ -112,7 +112,7 @@ interface Order {
 }
 
 const orders = ref<Order[]>([])
-const statusFilter = ref<string>('all')
+const statusFilter = ref<string>(new URLSearchParams(location.search).get('status') || 'all')
 const statusOptions = [
   { label: '全部', value: 'all' },
   { label: '待处理', value: 'pending' },
