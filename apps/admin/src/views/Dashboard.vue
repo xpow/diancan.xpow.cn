@@ -48,6 +48,7 @@
           <Tag :value="data.pickupCode" severity="warn" />
         </template>
       </Column>
+      <Column field="orderNo" header="订单号" />
       <Column field="status" header="状态">
         <template #body="{ data }">
           <Tag :value="statusLabel(data.status)" :severity="statusSeverity(data.status)" />
@@ -58,20 +59,71 @@
           ¥{{ data.totals.payableAmount?.toFixed(2) }}
         </template>
       </Column>
+      <Column header="商品" style="min-width:220px">
+        <template #body="{ data }">
+          <div v-for="item in data.items" :key="item.id" class="order-item-line">
+            <span class="item-name">{{ item.name }}</span>
+            <span class="item-qty">x{{ item.quantity }}</span>
+            <span v-if="item.specs" class="item-spec">{{ item.specs }}</span>
+            <span v-if="item.promotionLabel" class="item-promo">{{ item.promotionLabel }}</span>
+          </div>
+        </template>
+      </Column>
       <Column field="createdAt" header="时间">
         <template #body="{ data }">
           {{ new Date(data.createdAt).toLocaleString('zh-CN') }}
         </template>
       </Column>
+      <Column header="操作" style="width:180px">
+        <template #body="{ data }">
+          <div class="action-group">
+            <Button
+              v-if="data.status === 'pending' || data.status === 'paid'"
+              label="开始制作"
+              icon="pi pi-play"
+              size="small"
+              @click="updateStatus(data.id, 'preparing')"
+            />
+            <Button
+              v-if="data.status === 'pending' || data.status === 'paid' || data.status === 'preparing'"
+              label="取消"
+              icon="pi pi-times"
+              size="small"
+              severity="danger"
+              text
+              @click="openCancelDialog(data.id)"
+            />
+          </div>
+        </template>
+      </Column>
     </DataTable>
+    <Dialog v-model:visible="showCancel" header="取消订单" style="width:400px">
+      <p class="cancel-hint">请选择取消原因：</p>
+      <div class="cancel-options">
+        <div
+          v-for="reason in cancelReasons"
+          :key="reason"
+          :class="['cancel-option', selectedReason === reason && 'selected']"
+          @click="selectedReason = reason"
+        >
+          {{ reason }}
+        </div>
+      </div>
+      <template #footer>
+        <Button label="取消" severity="secondary" @click="showCancel = false" />
+        <Button label="确认取消" severity="danger" :disabled="!selectedReason" @click="confirmCancel" />
+      </template>
+    </Dialog>
     <div v-if="!recentOrders.length" class="empty">暂无订单</div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
+import Dialog from 'primevue/dialog'
 import Tag from 'primevue/tag'
 
 const VALID_STATUSES = ['pending', 'paid', 'preparing', 'ready', 'completed']
@@ -80,6 +132,10 @@ const ESTIMATE_STATUSES = ['pending', 'paid', 'preparing', 'ready']
 
 const stats = ref({ todayOrders: 0, todayCompletedRevenue: 0, todayEstimatedRevenue: 0, totalOrders: 0, completedRevenue: 0, estimatedRevenue: 0, pendingOrders: 0, readyOrders: 0 })
 const recentOrders = ref<any[]>([])
+const showCancel = ref(false)
+const cancelOrderId = ref('')
+const selectedReason = ref('')
+const cancelReasons = ['等待时间过长，客户不要了', '客户有事不要了', '测试订单', '菜品不足，无法出餐', '菜单下错了，重新下单']
 
 function statusLabel(s: string) {
   const map: Record<string, string> = { pending: '待处理', paid: '待处理', preparing: '制作中', ready: '可取餐', completed: '已完成', cancelled: '已取消' }
@@ -91,12 +147,16 @@ function statusSeverity(s: string) {
 }
 
 async function fetchData() {
-  const [ordersRes] = await Promise.all([
-    fetch('/api/admin/orders?limit=5'),
+  const [pendingRes, paidRes] = await Promise.all([
+    fetch('/api/admin/orders?status=pending&limit=20'),
+    fetch('/api/admin/orders?status=paid&limit=20'),
   ])
-  const orders = (await ordersRes.json()).items ?? []
+  const pendingOrders = (await pendingRes.json()).items ?? []
+  const paidOrders = (await paidRes.json()).items ?? []
 
-  recentOrders.value = orders
+  recentOrders.value = [...pendingOrders, ...paidOrders]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 20)
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -121,6 +181,27 @@ async function fetchData() {
   }
 }
 
+async function updateStatus(id: string, status: string, cancelReason?: string) {
+  await fetch(`/api/admin/orders/${id}/status`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status, cancelReason }),
+  })
+  await fetchData()
+}
+
+function openCancelDialog(id: string) {
+  cancelOrderId.value = id
+  selectedReason.value = ''
+  showCancel.value = true
+}
+
+async function confirmCancel() {
+  if (!selectedReason.value) return
+  await updateStatus(cancelOrderId.value, 'cancelled', selectedReason.value)
+  showCancel.value = false
+}
+
 onMounted(fetchData)
 </script>
 
@@ -132,5 +213,19 @@ onMounted(fetchData)
 .stat-label { font-size: 13px; color: #666; margin-top: 4px; }
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .page-title { margin: 0; font-size: 22px; font-weight: 700; }
+.order-item-line { display: flex; align-items: center; gap: 4px; padding: 2px 0; white-space: nowrap; }
+.item-name { font-weight: 600; }
+.item-qty { color: #666; }
+.item-spec { color: var(--text-color-secondary); font-size: 12px; margin-left: 4px; }
+.item-promo { background: #fff3e0; color: #e65100; font-size: 11px; padding: 1px 6px; border-radius: 4px; }
+.action-group { display: flex; gap: 8px; flex-wrap: wrap; }
 .empty { text-align: center; padding: 40px; color: var(--text-color-secondary); }
+</style>
+
+<style>
+.cancel-hint { margin: 0 0 12px; font-size: 14px; color: var(--text-color-secondary); }
+.cancel-options { display: flex; flex-direction: column; gap: 8px; }
+.cancel-option { padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.15s; }
+.cancel-option:hover { border-color: var(--p-primary-color, #FF6B00); }
+.cancel-option.selected { border-color: var(--p-primary-color, #FF6B00); background: #fff3e8; font-weight: 600; }
 </style>
