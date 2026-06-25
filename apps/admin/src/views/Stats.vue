@@ -63,7 +63,7 @@ interface DishSales {
 const items = ref<DishSales[]>([])
 const loaded = ref(false)
 const quickRange = ref('all')
-const dateRange = ref()
+const dateRange = ref<[Date | null, Date | null] | undefined>()
 const selected = ref<Set<string>>(new Set())
 
 const subtotal = computed(() => {
@@ -119,8 +119,19 @@ function setQuick(key: string) {
   fetchStats()
 }
 
-function onDateChange(value: (Date | null)[]) {
+function onDateChange(value: (Date | null)[] | undefined) {
   quickRange.value = ''
+  if (!value || value.length === 0) {
+    dateRange.value = undefined
+    fetchStats()
+    return
+  }
+
+  const [start, end] = value
+  dateRange.value = [start ?? null, end ?? null]
+
+  // 范围模式下，只有开始/结束都选定后才按自定义区间查询
+  if (start && !end) return
   fetchStats()
 }
 

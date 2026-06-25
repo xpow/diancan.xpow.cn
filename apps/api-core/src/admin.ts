@@ -866,34 +866,52 @@ router.post('/devices/:id/commands', async (req, res) => {
 // 菜品销量统计
 router.get('/stats/dish-sales', async (req, res) => {
   const { startDate, endDate } = req.query
-  const conditions: string[] = [`o."status" != 'cancelled'`]
-  const params: any[] = []
-  if (startDate) {
-    conditions.push(`o."createdAt" >= ?`)
-    params.push(new Date(startDate as string).toISOString())
+  const where: any = {
+    status: { not: 'cancelled' },
   }
-  if (endDate) {
-    conditions.push(`o."createdAt" < ?`)
-    params.push(new Date(endDate as string).toISOString())
+  if (startDate || endDate) {
+    where.createdAt = {}
+    if (startDate) where.createdAt.gte = new Date(startDate as string)
+    if (endDate) where.createdAt.lt = new Date(endDate as string)
   }
-  const where = conditions.join(' AND ')
 
-  const rows = await prisma.$queryRawUnsafe(`
-    SELECT oi."dishId" AS "dishId", oi."name" AS "name",
-           SUM(oi."quantity") AS "totalQuantity",
-           SUM(oi."finalSubtotal") AS "totalRevenue"
-    FROM "OrderItem" oi
-    INNER JOIN "Order" o ON oi."orderId" = o."id"
-    WHERE ${where}
-    GROUP BY oi."dishId", oi."name"
-    ORDER BY "totalQuantity" DESC
-  `, ...params)
-  const result = (rows as any[]).map((r) => ({
-    dishId: r.dishId,
-    name: r.name,
-    totalQuantity: Number(r.totalQuantity),
-    totalRevenue: Number(r.totalRevenue),
-  }))
+  const orders = await prisma.order.findMany({
+    where,
+    select: {
+      items: {
+        select: {
+          dishId: true,
+          name: true,
+          quantity: true,
+          finalSubtotal: true,
+        },
+      },
+    },
+  })
+
+  const salesMap = new Map<string, {
+    dishId: string
+    name: string
+    totalQuantity: number
+    totalRevenue: number
+  }>()
+
+  for (const order of orders) {
+    for (const item of order.items) {
+      const key = item.dishId || item.name
+      const current = salesMap.get(key) ?? {
+        dishId: item.dishId,
+        name: item.name,
+        totalQuantity: 0,
+        totalRevenue: 0,
+      }
+      current.totalQuantity += item.quantity
+      current.totalRevenue += item.finalSubtotal
+      salesMap.set(key, current)
+    }
+  }
+
+  const result = Array.from(salesMap.values()).sort((a, b) => b.totalQuantity - a.totalQuantity)
   res.json(result)
 })
 
