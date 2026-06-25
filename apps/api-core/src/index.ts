@@ -17,7 +17,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'diancan-jwt-dev-secret'
 const JWT_EXPIRES_IN = '24h'
 
 // 设备指纹有效期（测试用 30s，上线改回 7 * 24 * 60 * 60 * 1000）
-const FINGERPRINT_EXPIRY_MS = 30 * 1000
+const FINGERPRINT_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000
 
 // JWT 认证中间件
 interface JwtPayload {

@@ -7,7 +7,7 @@ const router: ReturnType<typeof Router> = Router()
 const prisma = new PrismaClient()
 
 // 设备指纹有效期（测试用 30s，上线改回 7 * 24 * 60 * 60 * 1000）
-const FINGERPRINT_EXPIRY_MS = 30 * 1000
+const FINGERPRINT_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000
 
 const ADMIN_PASSWORD_HASH = crypto.createHash('md5').update('xpow!1234').digest('hex')
 console.log('[admin] password hash:', ADMIN_PASSWORD_HASH)
