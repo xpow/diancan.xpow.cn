@@ -101,9 +101,12 @@ const ORIGIN_WHITELIST = new Set([
   'http://localhost:5173',
   'http://localhost:4173',
   'http://localhost:3011',
+  'http://localhost:5178',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:4173',
   'http://127.0.0.1:3011',
+  'https://admin-diancan.xpow.cn',
+  'http://admin-diancan.xpow.cn',
 ])
 // 将配置中的域名也加入白名单（无协议版本，支持端口匹配）
 const originPatterns = (allowedOrigins ?? []).map((o) => {
@@ -131,7 +134,7 @@ app.use((req, res, next) => {
   // 按 host 匹配（忽略协议和端口差异）
   try {
     const url = new URL(source)
-    if (originPatterns.includes(url.host) || url.host.startsWith('localhost') || url.host === '127.0.0.1') return next()
+    if (originPatterns.includes(url.host) || url.host.startsWith('localhost') || url.host === '127.0.0.1' || url.host.endsWith('.xpow.cn')) return next()
   } catch {}
 
   return res.status(403).json({ message: '拒绝访问：非法来源' })
