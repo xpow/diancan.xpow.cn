@@ -145,7 +145,7 @@ router.get('/backup.sql', async (_req, res) => {
 router.get('/orders', async (_req, res) => {
   const { status, branchId, page = '1', limit = '50' } = _req.query as Record<string, string>
   const where: any = {}
-  if (status) where.status = status
+  if (status) where.status = status.includes(',') ? { in: status.split(',') } : status
   if (branchId) where.branchId = branchId
 
   const skip = (Math.max(1, Number(page)) - 1) * Number(limit)

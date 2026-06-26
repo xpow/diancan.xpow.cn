@@ -278,11 +278,9 @@ async function completeOrder(group: { pickupCode: string; orderId: string }) {
 
 async function fetchOrders() {
   try {
-    const res = await fetch('/api/admin/orders?limit=200')
+    const res = await fetch('/api/admin/orders?status=paid,preparing,ready&limit=50')
     const body = await res.json()
-    const active: Order[] = (body.items ?? []).filter((o: any) =>
-      ['paid', 'preparing', 'ready'].includes(o.status)
-    )
+    const active: Order[] = (body.items ?? [])
     active.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     orders.value = active
 
