@@ -436,7 +436,7 @@ onUnmounted(() => {
 .empty-state { display: flex; flex-direction: column; align-items: center; gap: var(--spacing-md); padding: 80px 0; }
 .empty-icon { font-size: 64px !important; color: var(--outline-variant); }
 .empty-text { font-size: var(--text-body-lg); font-weight: 600; color: var(--secondary); margin: 0; }
-.empty-cta { display: flex; align-items: center; justify-content: center; padding: var(--spacing-md) 32px; border-radius: var(--radius-full); background: var(--primary-container); color: var(--on-primary); font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; text-decoration: none; box-shadow: 0 8px 20px rgba(255,107,0,0.15); }
+.empty-cta { display: flex; align-items: center; justify-content: center; padding: var(--spacing-md) 32px; border-radius: var(--radius-full); background: var(--primary-container); color: var(--on-primary); font-family: var(--font-display); font-size: var(--text-body-lg); font-weight: 700; text-decoration: none; box-shadow: 0 8px 20px rgba(255,107,0,0.15); }
 
 /* Bottom Navigation */
 .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; display: flex; justify-content: space-around; align-items: center; padding: var(--spacing-xs) var(--gutter); background: var(--frosted-bg-heavy); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top-left-radius: var(--radius-xl); border-top-right-radius: var(--radius-xl); box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.04); }
@@ -488,7 +488,7 @@ onUnmounted(() => {
 
   .empty-cta {
     padding: 12px 22px;
-    font-size: var(--text-headline-lg);
+    font-size: var(--text-body-md);
   }
 
   .bottom-nav {
