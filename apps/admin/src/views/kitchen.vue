@@ -283,11 +283,11 @@ async function fetchOrders() {
   try {
     const res = await fetch('/api/orders')
     const body = await res.json()
-    const active: Order[] = (body.items ?? []).filter((o: any) =>
-      ['paid', 'preparing', 'ready'].includes(o.status)
+    const all: Order[] = (body.items ?? []).filter((o: any) =>
+      ['paid', 'preparing', 'ready', 'completed', 'cancelled'].includes(o.status)
     )
-    active.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    orders.value = active
+    all.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    orders.value = all
 
     for (const order of active) {
       const allPending = order.items.every((item) => item.status === 'pending')
