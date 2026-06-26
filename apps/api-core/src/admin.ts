@@ -134,7 +134,7 @@ router.get('/backup.sql', async (_req, res) => {
 
   lines.push('', 'COMMIT;', '')
 
-  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')
+  const stamp = new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')
   res.setHeader('Content-Type', 'application/sql; charset=utf-8')
   res.setHeader('Content-Disposition', `attachment; filename="diancan-backup-${stamp}.sql"`)
   res.send(lines.join('\n'))
