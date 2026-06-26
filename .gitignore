@@ -8,3 +8,4 @@ docs/
 *.log
 *.tsbuildinfo
 cache/
+package-lock.json
