@@ -2,6 +2,7 @@
   <div class="dashboard">
     <div class="page-header">
       <h2 class="page-title">总览</h2>
+      <Button label="数据库备份" icon="pi pi-download" severity="secondary" @click="downloadBackup" />
     </div>
 
     <div class="stats-grid">
@@ -200,6 +201,20 @@ async function confirmCancel() {
   if (!selectedReason.value) return
   await updateStatus(cancelOrderId.value, 'cancelled', selectedReason.value)
   showCancel.value = false
+}
+
+async function downloadBackup() {
+  const res = await fetch('/api/admin/backup.sql')
+  if (!res.ok) return
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = res.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1] ?? 'diancan-backup.sql'
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }
 
 onMounted(fetchData)
