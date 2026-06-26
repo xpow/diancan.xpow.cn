@@ -1,5 +1,6 @@
 const TOKEN_KEY = 'kiosk-device-token'
 const UUID_KEY = 'kiosk-device-uuid'
+const REFRESH_BUFFER_MINUTES = 10
 let tokenPromise: Promise<void> | null = null
 
 function getOrCreateUUID(): string {
@@ -27,11 +28,28 @@ export function clearDeviceToken(): void {
   localStorage.removeItem(TOKEN_KEY)
 }
 
-/** 确保 token 存在，没有则用 SN 自动换取 */
+function decodeToken(token: string): { exp: number } | null {
+  try {
+    return JSON.parse(atob(token.split('.')[1]))
+  } catch {
+    return null
+  }
+}
+
+function isTokenExpiringSoon(): boolean {
+  const token = getDeviceToken()
+  if (!token) return true
+  const payload = decodeToken(token)
+  if (!payload) return true
+  return payload.exp * 1000 - Date.now() < REFRESH_BUFFER_MINUTES * 60 * 1000
+}
+
+/** 确保有效 token 存在，没有或用 SN 自动换取，或在过期前主动续期 */
 export async function ensureToken(): Promise<void> {
-  if (getDeviceToken()) return
   const sn = localStorage.getItem('kiosk-device-sn')
   if (!sn) throw new Error('设备未认证')
+  // token 还有效且未接近过期 → 跳过
+  if (getDeviceToken() && !isTokenExpiringSoon()) return
   // 防止并发重复请求
   if (!tokenPromise) {
     tokenPromise = (async () => {
@@ -53,7 +71,7 @@ export async function ensureToken(): Promise<void> {
 }
 
 async function apiFetch(url: string, options: RequestInit = {}): Promise<Response> {
-  // 自动补 token
+  // 自动补/续 token
   await ensureToken().catch(() => {})
   const token = getDeviceToken()
   const headers = new Headers(options.headers)
