@@ -304,7 +304,7 @@ async function fetchMerchantName() {
 
 async function fetchOrders() {
   try {
-    const data = await apiGet<{ items: OrderSummary[] }>('/api/orders?status=paid,preparing,ready')
+    const data = await apiGet<{ items: OrderSummary[] }>('/api/orders?scope=active')
     orders.value = data.items ?? []
 
     if (!firstLoad) {

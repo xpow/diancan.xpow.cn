@@ -710,7 +710,7 @@ app.post('/api/orders', orderLimiter, authMiddleware, async (req, res) => {
 
 app.get('/api/orders', generalLimiter, authMiddleware, async (req, res) => {
   const deviceId = req.authDevice!.deviceId
-  const { status } = req.query as Record<string, string>
+  const { scope } = req.query as Record<string, string>
 
   // 从令牌获取设备，按设备权限筛选
   let where: any = {}
@@ -718,7 +718,7 @@ app.get('/api/orders', generalLimiter, authMiddleware, async (req, res) => {
   if (device && device.role !== 'admin') {
     where.deviceId = device.id
   }
-  if (status) where.status = status.includes(',') ? { in: status.split(',') } : status
+  if (scope === 'active') where.status = { in: ['paid', 'preparing', 'ready'] }
 
   const orders = await prisma.order.findMany({
     where,

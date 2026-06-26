@@ -212,18 +212,11 @@ function playBeep() {
   } catch {}
 }
 
-const statuses = ['pending', 'preparing', 'ready']
-
 async function fetchOrders() {
   try {
-    const all = await Promise.all(
-      statuses.map((s) =>
-        fetch(`/api/orders?branchId=${BRANCH_ID}&status=${s}&limit=10`).then((r) =>
-          r.json()
-        )
-      )
-    )
-    const merged = all.flat().sort(
+    const res = await fetch(`/api/orders?branchId=${BRANCH_ID}&scope=active&limit=10`)
+    const body = await res.json()
+    const merged = (Array.isArray(body) ? body : (body.items ?? [])).sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
     for (const o of merged) {
