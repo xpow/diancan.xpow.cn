@@ -148,7 +148,6 @@ function dishImage(item: any): string {
 const tabs = [
   { key: 'active', label: '进行中', icon: 'hourglass_empty' },
   { key: 'ready', label: '待取餐', icon: 'notifications_active' },
-  { key: 'completed', label: '已完成', icon: 'check_circle' },
 ]
 
 const filteredOrders = computed(() => {
@@ -162,7 +161,6 @@ function badgeCount(key: string) {
     return n || ''
   }
   if (key === 'ready') return orders.value.filter((o) => o.status === 'ready').length || ''
-  if (key === 'completed') return orders.value.filter((o) => o.status === 'completed').length || ''
   return ''
 }
 
@@ -262,16 +260,7 @@ onMounted(async () => {
   }
 
   // 3. API 拉订单（页面刷新后）
-  await Promise.all([
-    fetchOrders(),
-    fetch(`/api/orders?status=completed&branchId=${BRANCH_ID}&limit=10`).then(async (r) => {
-      try {
-        const body = await r.json()
-        const completedOrders = Array.isArray(body) ? body : (body.items ?? [])
-        if (completedOrders.length) orders.value.push(...completedOrders)
-      } catch {}
-    }),
-  ])
+  await fetchOrders()
   timer = setInterval(fetchOrders, POLL_MS)
 })
 
