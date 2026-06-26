@@ -24,6 +24,12 @@
           <Tag :value="data.orderType === 'dine-in' ? '堂食' : '自取'" :severity="data.orderType === 'dine-in' ? 'info' : 'contrast'" />
         </template>
       </Column>
+      <Column field="paymentMethod" header="支付方式" style="width:90px">
+        <template #body="{ data }">
+          <span v-if="data.paymentMethod">{{ payLabel(data.paymentMethod) }}</span>
+          <span v-else class="text-muted">-</span>
+        </template>
+      </Column>
       <Column field="totals.payableAmount" header="实付" style="width:100px">
         <template #body="{ data }">
           <span style="font-weight:700">¥{{ data.totals.payableAmount?.toFixed(2) }}</span>
@@ -104,12 +110,16 @@ interface Order {
   pickupCode: string
   status: string
   orderType: string
+  paymentMethod?: string
   totals: { originalAmount: number; discountAmount: number; payableAmount: number }
   items: OrderItem[]
   createdAt: string
   cancelReason?: string
   cancelledAt?: string
 }
+
+const payLabels: Record<string, string> = { wechat: '微信', alipay: '支付宝', cash: '现金' }
+function payLabel(m: string): string { return payLabels[m] || m }
 
 const orders = ref<Order[]>([])
 const statusFilter = ref<string>(new URLSearchParams(location.search).get('status') || 'all')

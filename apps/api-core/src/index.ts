@@ -592,7 +592,7 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
 })
 
 app.post('/api/orders', orderLimiter, authMiddleware, async (req, res) => {
-  const { merchantId, branchId, deviceId: reqDeviceId, items, orderType } = req.body ?? {}
+  const { merchantId, branchId, deviceId: reqDeviceId, items, orderType, paymentMethod } = req.body ?? {}
   const deviceId = req.authDevice!.deviceId
 
   // 校验 deviceId 与令牌一致
@@ -659,6 +659,7 @@ app.post('/api/orders', orderLimiter, authMiddleware, async (req, res) => {
       orderNo,
       pickupCode,
       status: 'paid',
+      paymentMethod: typeof paymentMethod === 'string' ? paymentMethod : '',
       orderType: type,
       merchantId,
       branchId,

@@ -50,6 +50,11 @@
         </template>
       </Column>
       <Column field="orderNo" header="订单号" />
+      <Column field="paymentMethod" header="支付方式" style="width:70px">
+        <template #body="{ data }">
+          <span v-if="data.paymentMethod">{{ payLabel(data.paymentMethod) }}</span>
+        </template>
+      </Column>
       <Column field="status" header="状态">
         <template #body="{ data }">
           <Tag :value="statusLabel(data.status)" :severity="statusSeverity(data.status)" />
@@ -138,6 +143,8 @@ const cancelOrderId = ref('')
 const selectedReason = ref('')
 const cancelReasons = ['等待时间过长，客户不要了', '客户有事不要了', '测试订单', '菜品不足，无法出餐', '菜单下错了，重新下单']
 
+const payLabels: Record<string, string> = { wechat: '微信', alipay: '支付宝', cash: '现金' }
+function payLabel(m: string): string { return payLabels[m] || m }
 function statusLabel(s: string) {
   const map: Record<string, string> = { pending: '待处理', paid: '待处理', preparing: '制作中', ready: '可取餐', completed: '已完成', cancelled: '已取消' }
   return map[s] || s

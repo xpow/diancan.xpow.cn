@@ -225,6 +225,7 @@ model Order {
   originalAmount  Float    @default(0)
   discountAmount  Float    @default(0)
   payableAmount   Float    @default(0)
+  paymentMethod   String   @default("")  // wechat | alipay | cash | ""
 
   branch   Branch   @relation(fields: [branchId], references: [id])
   merchant Merchant @relation(fields: [merchantId], references: [id])

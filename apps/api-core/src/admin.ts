@@ -170,6 +170,7 @@ router.get('/orders', async (_req, res) => {
       pickupCode: o.pickupCode,
       status: o.status,
       orderType: o.orderType,
+      paymentMethod: o.paymentMethod || undefined,
       totals: {
         originalAmount: o.originalAmount,
         discountAmount: o.discountAmount,
@@ -200,7 +201,7 @@ router.get('/orders', async (_req, res) => {
 
 router.put('/orders/:id/status', async (req, res) => {
   const { id } = req.params
-  const { status, cancelReason } = req.body ?? {}
+  const { status, cancelReason, paymentMethod } = req.body ?? {}
   const validStatuses = ['pending', 'paid', 'preparing', 'ready', 'completed', 'cancelled']
   if (!status || !validStatuses.includes(status)) {
     return res.status(400).json({ message: '无效状态' })
@@ -214,6 +215,9 @@ router.put('/orders/:id/status', async (req, res) => {
     data.cancelledAt = new Date()
     if (cancelReason) data.cancelReason = cancelReason
   }
+  if (status === 'paid' && typeof paymentMethod === 'string' && paymentMethod) {
+    data.paymentMethod = paymentMethod
+  }
 
   const updated = await prisma.order.update({
     where: { id },
@@ -221,7 +225,7 @@ router.put('/orders/:id/status', async (req, res) => {
     include: { items: true },
   })
 
-  res.json({ id: updated.id, status: updated.status })
+  res.json({ id: updated.id, status: updated.status, paymentMethod: updated.paymentMethod })
 })
 
 router.put('/orders/:orderId/items/:itemId/status', async (req, res) => {

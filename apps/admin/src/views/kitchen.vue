@@ -27,6 +27,7 @@
       <div v-for="group in filtered" :key="group.orderId" class="order-group">
         <div class="group-header">
           <span class="group-code">{{ group.pickupCode }}</span>
+          <span v-if="group.paymentMethod" class="group-pay">{{ payLabel(group.paymentMethod) }}</span>
           <span class="group-time">{{ group.time }}</span>
         </div>
         <div
@@ -118,6 +119,7 @@ interface Order {
   id: string
   orderNo: string
   pickupCode: string
+  paymentMethod?: string
   status: string
   items: OrderItem[]
   createdAt: string
@@ -168,14 +170,18 @@ const itemCounts = computed(() => {
   return m
 })
 
+const payLabels: Record<string, string> = { wechat: '微信', alipay: '支付宝', cash: '现金' }
+function payLabel(m: string): string { return payLabels[m] || m }
+
 const filtered = computed(() => {
-  const groups: Record<string, { orderNo: string; pickupCode: string; orderId: string; time: string; items: OrderItem[] }> = {}
+  const groups: Record<string, { orderNo: string; pickupCode: string; paymentMethod?: string; orderId: string; time: string; items: OrderItem[] }> = {}
   for (const order of orders.value) {
     const filteredItems = order.items.filter((item) => item.status === tab.value)
     if (!filteredItems.length) continue
     groups[order.id] = {
       orderNo: order.orderNo,
       pickupCode: order.pickupCode,
+      paymentMethod: order.paymentMethod,
       orderId: order.id,
       time: new Date(order.createdAt).toLocaleString('zh-CN'),
       items: filteredItems,
@@ -365,6 +371,7 @@ main { padding: 12px 16px; display: flex; flex-direction: column; gap: 16px; }
   padding: 12px 16px 0;
 }
 .group-code { font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--text); }
+.group-pay { font-size: 12px; background: var(--surface-card); padding: 2px 8px; border-radius: 6px; color: var(--secondary); }
 .group-time { font-size: 11px; color: var(--secondary); }
 
 .item-card {

@@ -395,6 +395,7 @@ async function submitOrder() {
       merchantId: merchantId.value,
       branchId: branchId.value,
       orderType: orderType.value,
+      paymentMethod: paymentMethod.value,
       items: cartItems.value.map((item) => ({
         dishId: item.baseDishId,
         quantity: item.quantity,
