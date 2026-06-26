@@ -6,3 +6,5 @@ dist/
 .turbo/
 docs/
 *.log
+*.tsbuildinfo
+cache/
