@@ -799,7 +799,7 @@ onMounted(() => {
 .device-dialog-header h3 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: var(--text-headline-md);
+  font-size: var(--text-headline-sm);
 }
 .device-dialog-header .material-icons {
   font-size: 28px;
@@ -837,7 +837,7 @@ onMounted(() => {
   background: var(--primary-container);
   color: var(--on-primary);
   font-family: var(--font-display);
-  font-size: var(--text-headline-md);
+  font-size: var(--text-body-lg);
   font-weight: 700;
   cursor: pointer;
   transition: opacity var(--transition-fast);
@@ -924,7 +924,7 @@ onMounted(() => {
 
   .device-confirm-btn {
     padding: 12px;
-    font-size: var(--text-headline-lg);
+    font-size: var(--text-body-lg);
   }
 }
 </style>
