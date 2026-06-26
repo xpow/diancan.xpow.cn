@@ -185,6 +185,7 @@ router.get('/orders', async (_req, res) => {
         specs: i.specs || undefined,
         promotionLabel: i.promotionLabel || undefined,
         status: i.status,
+        portionSize: i.portionSize || undefined,
       })),
       createdAt: o.createdAt.toISOString(),
       cancelReason: o.cancelReason || undefined,

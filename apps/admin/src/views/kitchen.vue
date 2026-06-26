@@ -281,7 +281,7 @@ async function completeOrder(group: { pickupCode: string; orderId: string }) {
 
 async function fetchOrders() {
   try {
-    const res = await fetch('/api/orders')
+    const res = await fetch('/api/admin/orders?limit=200')
     const body = await res.json()
     const all: Order[] = (body.items ?? []).filter((o: any) =>
       ['paid', 'preparing', 'ready', 'completed', 'cancelled'].includes(o.status)
