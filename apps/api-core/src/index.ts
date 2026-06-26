@@ -49,8 +49,20 @@ function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const token = authHeader.slice(7)
   try {
     const payload = jwt.verify(token, JWT_SECRET) as JwtPayload
-    req.authDevice = { deviceId: payload.deviceId, sn: payload.sn }
-    next()
+    // 校验设备是否仍有效
+    prisma.device.findUnique({ where: { id: payload.deviceId }, select: { status: true, sn: true } }).then((device) => {
+      if (!device || device.status !== 'active') {
+        return res.status(401).json({ message: '设备已下线，请重新认证' })
+      }
+      if (device.sn !== payload.sn) {
+        return res.status(401).json({ message: '设备信息已变更，请重新认证' })
+      }
+      req.authDevice = { deviceId: payload.deviceId, sn: payload.sn }
+      next()
+    }).catch((err) => {
+      console.error('[auth] DB check failed', err)
+      return res.status(500).json({ message: '服务器内部错误' })
+    })
   } catch {
     return res.status(401).json({ message: '认证令牌无效或已过期' })
   }
