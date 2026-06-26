@@ -65,16 +65,11 @@ async function apiFetch(url: string, options: RequestInit = {}): Promise<Respons
     headers.set('Content-Type', 'application/json')
   }
   const res = await fetch(url, { ...options, headers })
-  // 401 → token 失效
+  // 401 → token 失效，不清除 SN 以便 ensureToken 自动续期
   if (res.status === 401) {
     const data = await res.json().catch(() => ({}))
     if (data.message === '认证令牌无效或已过期') {
       clearDeviceToken()
-      localStorage.removeItem('kiosk-device-sn')
-      // 避免在多个地方重复跳转
-      if (!window.location.pathname.includes('/home')) {
-        window.location.href = '/home'
-      }
     }
   }
   return res

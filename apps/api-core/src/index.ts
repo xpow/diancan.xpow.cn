@@ -14,7 +14,7 @@ const prisma = new PrismaClient()
 
 // JWT 配置
 const JWT_SECRET = process.env.JWT_SECRET || 'diancan-jwt-dev-secret'
-const JWT_EXPIRES_IN = '24h'
+const JWT_EXPIRES_IN = '3650d'
 
 // 设备指纹有效期（测试用 30s，上线改回 7 * 24 * 60 * 60 * 1000）
 const FINGERPRINT_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000

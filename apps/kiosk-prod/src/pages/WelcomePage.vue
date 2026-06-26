@@ -289,7 +289,7 @@ async function loadBootstrap() {
 
   // 验证 token 对应的设备与 SN 匹配
   const authId = localStorage.getItem('kiosk-device-auth-id')
-  if (authId && data.deviceId && data.deviceId !== authId) {
+  if (data.deviceId && authId && data.deviceId !== authId) {
     localStorage.removeItem('kiosk-device-token')
     localStorage.removeItem('kiosk-device-auth-id')
     deviceAuthed.value = false
