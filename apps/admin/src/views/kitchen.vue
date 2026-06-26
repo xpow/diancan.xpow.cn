@@ -283,8 +283,8 @@ async function fetchOrders() {
   try {
     const res = await fetch('/api/admin/orders?limit=200')
     const body = await res.json()
-    const all: Order[] = (body.items ?? []).filter((o: any) =>
-      ['paid', 'preparing', 'ready', 'completed', 'cancelled'].includes(o.status)
+    const active: Order[] = (body.items ?? []).filter((o: any) =>
+      ['paid', 'preparing', 'ready'].includes(o.status)
     )
     all.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     orders.value = all
