@@ -146,7 +146,7 @@ async function fetchStats() {
     const params = new URLSearchParams()
     if (s) {
       params.set('startDate', fmt(s))
-      const end = quickRange.value === '' ? (e ?? s) : e
+      const end = quickRange.value === '' ? (e ?? s) : e!
       params.set('endDate', fmt(new Date(end.getTime() + 86400000)))
     }
     const qs = params.toString()
