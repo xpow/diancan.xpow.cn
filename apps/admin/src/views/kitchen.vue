@@ -26,7 +26,7 @@
     <main>
       <div v-for="group in filtered" :key="group.orderId" class="order-group">
         <div class="group-header">
-          <span class="group-code">{{ group.orderNo }}</span>
+          <span class="group-code">{{ group.pickupCode }}</span>
           <span class="group-time">{{ group.time }}</span>
         </div>
         <div
@@ -169,12 +169,13 @@ const itemCounts = computed(() => {
 })
 
 const filtered = computed(() => {
-  const groups: Record<string, { orderNo: string; orderId: string; time: string; items: OrderItem[] }> = {}
+  const groups: Record<string, { orderNo: string; pickupCode: string; orderId: string; time: string; items: OrderItem[] }> = {}
   for (const order of orders.value) {
     const filteredItems = order.items.filter((item) => item.status === tab.value)
     if (!filteredItems.length) continue
     groups[order.id] = {
       orderNo: order.orderNo,
+      pickupCode: order.pickupCode,
       orderId: order.id,
       time: new Date(order.createdAt).toLocaleString('zh-CN'),
       items: filteredItems,
