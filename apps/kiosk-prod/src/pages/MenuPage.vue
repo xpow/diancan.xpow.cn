@@ -314,7 +314,12 @@ async function fetchQuote() {
         specs: i.specs ?? '',
       })),
     })
-  } catch {
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : ''
+    if (msg.includes('已下线') || msg.includes('已失效') || msg.includes('未认证')) {
+      window.location.href = '/home'
+      return
+    }
     cartQuote.value = null
   }
 }

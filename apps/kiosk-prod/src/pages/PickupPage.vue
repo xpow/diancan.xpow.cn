@@ -313,7 +313,12 @@ async function fetchOrders() {
     }
     firstLoad = false
     prevStatusMap.value = Object.fromEntries(orders.value.map((o) => [o.orderNo, o.status]))
-  } catch {}
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : ''
+    if (msg.includes('已下线') || msg.includes('已失效') || msg.includes('未认证')) {
+      window.location.href = '/home'
+    }
+  }
 }
 
 let timer: ReturnType<typeof setTimeout> | null = null

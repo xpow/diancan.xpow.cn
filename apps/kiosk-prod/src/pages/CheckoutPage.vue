@@ -368,7 +368,12 @@ async function reloadQuote() {
       })),
     })
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : '试算失败'
+    const msg = error instanceof Error ? error.message : '试算失败'
+    if (msg.includes('已下线') || msg.includes('已失效') || msg.includes('未认证')) {
+      router.push('/home')
+      return
+    }
+    errorMessage.value = msg
   } finally {
     loading.value = false
   }
@@ -411,8 +416,13 @@ async function submitOrder() {
       window.location.hash = '#/orders'
     }
   } catch (error) {
-    orderError.value = error instanceof Error ? error.message : '下单失败'
-    if (orderError.value.includes('令牌')) {
+    const msg = error instanceof Error ? error.message : '下单失败'
+    if (msg.includes('已下线') || msg.includes('已失效') || msg.includes('未认证')) {
+      router.push('/home')
+      return
+    }
+    orderError.value = msg
+    if (msg.includes('令牌')) {
       clearDeviceToken()
     }
   } finally {

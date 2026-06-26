@@ -89,6 +89,10 @@ async function apiFetch(url: string, options: RequestInit = {}): Promise<Respons
     if (data.message === '认证令牌无效或已过期') {
       clearDeviceToken()
     }
+    if (data.message?.includes('设备已下线')) {
+      clearDeviceToken()
+      localStorage.removeItem('kiosk-device-sn')
+    }
   }
   return res
 }
