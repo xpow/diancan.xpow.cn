@@ -304,7 +304,7 @@ async function fetchMerchantName() {
 
 async function fetchOrders() {
   try {
-    const data = await apiGet<{ items: OrderSummary[] }>('/api/orders')
+    const data = await apiGet<{ items: OrderSummary[] }>('/api/orders?status=paid,preparing,ready')
     orders.value = data.items ?? []
 
     if (!firstLoad) {
@@ -467,8 +467,7 @@ onUnmounted(() => {
     font-size: var(--text-body-md);
   }
 
-  .ticket-card,
-  .ticket-footer {
+  .ticket-card {
     border-radius: var(--radius-lg);
   }
 
