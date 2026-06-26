@@ -12,6 +12,23 @@ const FINGERPRINT_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000
 const ADMIN_PASSWORD_HASH = crypto.createHash('md5').update('xpow!1234').digest('hex')
 console.log('[admin] password hash:', ADMIN_PASSWORD_HASH)
 
+function quoteIdentifier(name: string): string {
+  return `"${String(name).replace(/"/g, '""')}"`
+}
+
+function sqlValue(value: unknown): string {
+  if (value === null || value === undefined) return 'NULL'
+  if (typeof value === 'number') return Number.isFinite(value) ? String(value) : 'NULL'
+  if (typeof value === 'bigint') return value.toString()
+  if (typeof value === 'boolean') return value ? '1' : '0'
+  if (value instanceof Date) return `'${value.toISOString().replace(/'/g, "''")}'`
+  if (value instanceof Uint8Array) {
+    return `X'${Buffer.from(value).toString('hex').toUpperCase()}'`
+  }
+  const text = String(value).replace(/'/g, "''")
+  return `'${text}'`
+}
+
 declare module 'express-session' {
   interface SessionData {
     adminAuthed?: boolean
@@ -58,6 +75,70 @@ router.post('/auth/logout', (req, res) => {
 
 /* ===== All routes below require auth ===== */
 router.use(requireAuth)
+
+/* ===== Backup ===== */
+
+router.get('/backup.sql', async (_req, res) => {
+  const tables = await prisma.$queryRawUnsafe<Array<{ name: string; sql: string | null }>>(`
+    SELECT name, sql
+    FROM sqlite_master
+    WHERE type = 'table'
+      AND name NOT LIKE 'sqlite_%'
+    ORDER BY name ASC
+  `)
+
+  const postObjects = await prisma.$queryRawUnsafe<Array<{ type: string; name: string; tbl_name: string; sql: string | null }>>(`
+    SELECT type, name, tbl_name, sql
+    FROM sqlite_master
+    WHERE type IN ('index', 'trigger', 'view')
+      AND name NOT LIKE 'sqlite_%'
+      AND sql IS NOT NULL
+    ORDER BY
+      CASE type
+        WHEN 'view' THEN 1
+        WHEN 'index' THEN 2
+        WHEN 'trigger' THEN 3
+        ELSE 4
+      END,
+      name ASC
+  `)
+
+  const lines: string[] = [
+    '-- diancan.xpow.cn admin backup',
+    `-- generated at ${new Date().toISOString()}`,
+    'PRAGMA foreign_keys=OFF;',
+    'BEGIN TRANSACTION;',
+    '',
+  ]
+
+  for (const table of tables) {
+    if (table.sql) {
+      lines.push(`${table.sql};`)
+    }
+
+    const rows = await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`SELECT * FROM ${quoteIdentifier(table.name)}`)
+    if (rows.length > 0) {
+      const columns = Object.keys(rows[0]).map(quoteIdentifier).join(', ')
+      for (const row of rows) {
+        const values = Object.values(row).map(sqlValue).join(', ')
+        lines.push(`INSERT INTO ${quoteIdentifier(table.name)} (${columns}) VALUES (${values});`)
+      }
+    }
+
+    lines.push('')
+  }
+
+  for (const obj of postObjects) {
+    if (obj.sql) lines.push(`${obj.sql};`)
+  }
+
+  lines.push('', 'COMMIT;', '')
+
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')
+  res.setHeader('Content-Type', 'application/sql; charset=utf-8')
+  res.setHeader('Content-Disposition', `attachment; filename="diancan-backup-${stamp}.sql"`)
+  res.send(lines.join('\n'))
+})
 
 /* ===== Orders ===== */
 

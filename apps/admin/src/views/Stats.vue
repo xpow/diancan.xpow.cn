@@ -144,11 +144,10 @@ async function fetchStats() {
   try {
     const [s, e] = dateRange.value ?? []
     const params = new URLSearchParams()
-    if (s) params.set('startDate', fmt(s))
-    if (e) {
-      // DatePicker 返回的结束日期是当天00:00，后端用<排除，需加一天
-      const adjusted = quickRange.value === '' ? new Date(e.getTime() + 86400000) : e
-      params.set('endDate', fmt(adjusted))
+    if (s) {
+      params.set('startDate', fmt(s))
+      const end = quickRange.value === '' ? (e ?? s) : e
+      params.set('endDate', fmt(new Date(end.getTime() + 86400000)))
     }
     const qs = params.toString()
     const res = await fetch(`/api/admin/stats/dish-sales${qs ? '?' + qs : ''}`)
