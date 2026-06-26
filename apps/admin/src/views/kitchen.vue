@@ -24,9 +24,9 @@
     </div>
 
     <main>
-      <div v-for="group in filtered" :key="group.pickupCode" class="order-group">
+      <div v-for="group in filtered" :key="group.orderId" class="order-group">
         <div class="group-header">
-          <span class="group-code">{{ group.pickupCode }}</span>
+          <span class="group-code">{{ group.orderNo }}</span>
           <span class="group-time">{{ group.time }}</span>
         </div>
         <div
@@ -73,7 +73,7 @@
           @click="completeOrder(group)"
         >
           <span class="material-symbols-outlined">checklist</span>
-          全部取餐 ({{ group.pickupCode }})
+          全部取餐
         </button>
       </div>
 
@@ -169,19 +169,16 @@ const itemCounts = computed(() => {
 })
 
 const filtered = computed(() => {
-  const groups: Record<string, { pickupCode: string; time: string; orderId: string; items: OrderItem[] }> = {}
+  const groups: Record<string, { orderNo: string; orderId: string; time: string; items: OrderItem[] }> = {}
   for (const order of orders.value) {
     const filteredItems = order.items.filter((item) => item.status === tab.value)
     if (!filteredItems.length) continue
-    if (!groups[order.pickupCode]) {
-      groups[order.pickupCode] = {
-        pickupCode: order.pickupCode,
-        time: new Date(order.createdAt).toLocaleString('zh-CN'),
-        orderId: order.id,
-        items: [],
-      }
+    groups[order.id] = {
+      orderNo: order.orderNo,
+      orderId: order.id,
+      time: new Date(order.createdAt).toLocaleString('zh-CN'),
+      items: filteredItems,
     }
-    groups[order.pickupCode].items.push(...filteredItems)
   }
   return Object.values(groups).map((g) => ({
     ...g,
