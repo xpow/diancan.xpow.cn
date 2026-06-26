@@ -214,7 +214,7 @@ function playBeep() {
   } catch {}
 }
 
-const statuses = ['pending', 'preparing', 'ready', 'completed']
+const statuses = ['pending', 'preparing', 'ready']
 
 async function fetchOrders() {
   try {
@@ -262,7 +262,16 @@ onMounted(async () => {
   }
 
   // 3. API 拉订单（页面刷新后）
-  await fetchOrders()
+  await Promise.all([
+    fetchOrders(),
+    fetch(`/api/orders?status=completed&branchId=${BRANCH_ID}&limit=10`).then(async (r) => {
+      try {
+        const body = await r.json()
+        const completedOrders = Array.isArray(body) ? body : (body.items ?? [])
+        if (completedOrders.length) orders.value.push(...completedOrders)
+      } catch {}
+    }),
+  ])
   timer = setInterval(fetchOrders, POLL_MS)
 })
 
