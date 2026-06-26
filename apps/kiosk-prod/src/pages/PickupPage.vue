@@ -86,7 +86,7 @@
       <div v-if="!filteredOrders.length" class="empty-state">
         <span class="material-icons empty-icon">receipt_long</span>
         <p class="empty-text">暂无{{ tabLabel }}订单</p>
-        <router-link to="/menu" class="empty-cta">去点餐</router-link>
+        <router-link to="/menu" class="empty-cta"><span class="material-icons">add</span> 去点餐</router-link>
       </div>
     </div>
 
