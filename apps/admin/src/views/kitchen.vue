@@ -283,8 +283,8 @@ async function fetchOrders() {
     const active: Order[] = (body.items ?? []).filter((o: any) =>
       ['paid', 'preparing', 'ready'].includes(o.status)
     )
-    all.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    orders.value = all
+    active.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    orders.value = active
 
     for (const order of active) {
       const allPending = order.items.every((item) => item.status === 'pending')
