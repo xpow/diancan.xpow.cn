@@ -54,7 +54,7 @@
                   <img :src="dishImage(item)" :alt="item.name" class="ticket-item-img-el" />
                 </div>
                 <div>
-                  <p class="ticket-item-name">{{ item.name }}<template v-if="item.portionSize"> <span class="ticket-item-unit">（¥{{ (item.finalUnitPrice ?? item.unitPrice).toFixed(2) }}/{{ item.portionSize }}串）</span></template></p>
+                  <p class="ticket-item-name">{{ item.name }}<template v-if="item.portionSize && (item.finalUnitPrice ?? item.unitPrice) > 0"> <span class="ticket-item-unit">（¥{{ (item.finalUnitPrice ?? item.unitPrice).toFixed(2) }}/{{ item.portionSize }}串）</span></template><template v-else-if="(item.finalUnitPrice ?? item.unitPrice) === 0"> <span class="ticket-item-unit tag-gift">赠品</span></template></p>
                   <p v-if="item.specs" class="ticket-item-spec">{{ item.specs }}</p>
                 </div>
               </div>

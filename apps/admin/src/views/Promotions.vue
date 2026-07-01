@@ -76,6 +76,38 @@
         </div>
       </template>
 
+      <!-- 买赠配置 -->
+      <template v-if="form.type === 'buy_get'">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>满 X 件</label>
+            <InputNumber v-model="form.rules.threshold" :min="1" class="w-full" placeholder="10" />
+          </div>
+          <div class="form-group flex-1">
+            <label>送 Y 件</label>
+            <InputNumber v-model="form.rules.giftQty" :min="1" class="w-full" placeholder="2" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>触发商品 <span class="text-muted">(不选则所有商品都参与)</span></label>
+          <MultiSelect v-model="form.rules.triggerDishIds" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="选择触发活动的商品" filter class="w-full" />
+        </div>
+        <div class="form-group">
+          <label>赠送商品</label>
+          <Select v-model="form.rules.giftDishId" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="选择赠送的菜品" filter showClear class="w-full" />
+        </div>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>赠送模式</label>
+            <Select v-model="form.rules.mode" :options="[{ label: '每满X件送Y件（可叠加）', value: 'repeat' }, { label: '满X件送Y件（仅一次）', value: 'once' }]" optionLabel="label" optionValue="value" class="w-full" />
+          </div>
+          <div class="form-group flex-1">
+            <label>最多赠送次数 <span class="text-muted">(0=不限)</span></label>
+            <InputNumber v-model="form.rules.maxGifts" :min="0" class="w-full" placeholder="0" />
+          </div>
+        </div>
+      </template>
+
       <!-- 福利品配置 -->
       <template v-if="form.type === 'welfare_item'">
         <div v-for="(item, idx) in form.items" :key="idx" class="promo-item-card">
@@ -266,12 +298,13 @@ const editing = ref(false)
 const editingId = ref('')
 
 const typeOptions = [
-  { label: '满减', value: 'full_reduction' },
-  { label: '福利品', value: 'welfare_item' },
-  { label: '限时折扣', value: 'time_discount' },
-  { label: '新人福利', value: 'new_user' },
-  { label: '节假日赠送单品', value: 'holiday_gift' },
-  { label: '总价折扣', value: 'total_discount' },
+    { label: '满减', value: 'full_reduction' },
+    { label: '买赠', value: 'buy_get' },
+    { label: '福利品', value: 'welfare_item' },
+    { label: '限时折扣', value: 'time_discount' },
+    { label: '新人福利', value: 'new_user' },
+    { label: '节假日赠送单品', value: 'holiday_gift' },
+    { label: '总价折扣', value: 'total_discount' },
 ]
 const discountTypeOptions = [
   { label: '百分比折扣', value: 'percentage' },
@@ -370,6 +403,14 @@ function autoGenerateName(): string | undefined {  if (form.value.type === 'full
     const d = form.value.rules.discount
     if (t && d) return `满¥${t}减¥${d}`
   }
+  if (form.value.type === 'buy_get') {
+    const { threshold, giftQty, giftDishId, mode } = form.value.rules
+    if (threshold && giftDishId && giftQty) {
+      const dish = dishes.value.find((d) => d.id === giftDishId)
+      const modeText = mode === 'repeat' ? '每' : ''
+      return `${modeText}满${threshold}件送${dish?.name || '?'} x${giftQty}`
+    }
+  }
   if (form.value.type === 'welfare_item') {
     const item = form.value.items[0]
     if (item?.dishId) {
@@ -437,6 +478,9 @@ watch(
       }
       if (form.value.type === 'full_reduction') {
         form.value.rules = { threshold: null, discount: null, excludedDishIds: [] }
+      }
+      if (form.value.type === 'buy_get') {
+        form.value.rules = { threshold: null, giftQty: null, triggerDishIds: [], giftDishId: null, mode: 'repeat', maxGifts: 0 }
       }
     }
   },
@@ -537,6 +581,11 @@ function statusSeverity(status: string): string {
 
 function ruleText(p: Promotion): string {
   if (p.type === 'full_reduction') return `满 ¥${p.rules.threshold} 减 ¥${p.rules.discount}`
+  if (p.type === 'buy_get') {
+    const dish = dishes.value.find((d) => d.id === p.rules.giftDishId)
+    const modeText = p.rules.mode === 'repeat' ? '每' : ''
+    return `${modeText}满${p.rules.threshold}件送${dish?.name || '?'} x${p.rules.giftQty || 1}`
+  }
   if (p.type === 'welfare_item') {
     const item = p.items?.[0]
     if (!item) return '-'

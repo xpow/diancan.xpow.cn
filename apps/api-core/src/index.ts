@@ -539,6 +539,70 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
     }
   }
 
+  // ==== 买赠（满X件送Y）====
+  const buyGetPromos = activePromotions.filter((p) => p.type === 'buy_get')
+  const giftDishIds = new Set<string>()
+  for (const promo of buyGetPromos) {
+    const giftId = JSON.parse(promo.rules).giftDishId
+    if (giftId) giftDishIds.add(giftId)
+  }
+  if (giftDishIds.size > 0) {
+    const giftDishes = await prisma.dish.findMany({ where: { id: { in: [...giftDishIds] } } })
+    for (const d of giftDishes) dishMap.set(d.id, d)
+  }
+  for (const promo of buyGetPromos) {
+    const rules = JSON.parse(promo.rules)
+    const threshold = rules.threshold ?? 0
+    const giftQtyIncrement = rules.giftQty ?? 1
+    const triggerDishIds: string[] = rules.triggerDishIds ?? []
+    const mode = rules.mode ?? 'once'
+    const maxGifts = rules.maxGifts ?? 0
+
+    // 统计触发商品的合计数量
+    let triggerTotal = 0
+    for (const item of itemDetails) {
+      if (triggerDishIds.length === 0 || triggerDishIds.includes(item.dishId)) {
+        triggerTotal += item.quantity
+      }
+    }
+
+    if (triggerTotal < threshold) {
+      const diff = threshold - triggerTotal
+      hints.push(`再点 ${diff} 件可享${promo.name}。`)
+      continue
+    }
+
+    // 达标，计算赠品数量
+    let giftCount = mode === 'repeat' ? Math.floor(triggerTotal / threshold) * giftQtyIncrement : giftQtyIncrement
+    if (maxGifts > 0) giftCount = Math.min(giftCount, maxGifts)
+    if (giftCount <= 0) continue
+
+    const giftDishId = rules.giftDishId || ''
+    const giftDish = dishMap.get(giftDishId)
+    if (!giftDish) continue
+
+    itemDetails.push({
+      dishId: giftDish.id,
+      name: giftDish.name,
+      quantity: giftCount,
+      unitPrice: 0,
+      finalUnitPrice: 0,
+      subtotal: 0,
+      finalSubtotal: 0,
+      specs: '',
+      promotionLabel: promo.name,
+      portionSize: giftDish.portionSize || undefined,
+    })
+
+    appliedPromotions.push({
+      id: promo.id,
+      name: promo.name,
+      type: 'buy_get',
+      discount: 0,
+      description: `满${threshold}件赠${giftDish.name} x${giftCount}`,
+    })
+  }
+
   // 生成提示文案：已命中的活动有排除 → 显示排除提示；再找第一个未满足的档位显示"再点..."
   // 排除提示：当前已满足档位中有排除的商品
   if (activePromoWithExclusion) {
