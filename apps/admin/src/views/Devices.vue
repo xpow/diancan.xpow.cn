@@ -123,6 +123,11 @@
           </template>
         </Column>
         <Column field="ip" header="IP" />
+        <Column field="userAgent" header="User-Agent" style="max-width:300px">
+          <template #body="{ data }">
+            <span class="ua-text">{{ data.userAgent || '-' }}</span>
+          </template>
+        </Column>
       </DataTable>
       <p v-else class="empty-hint">暂无记录</p>
     </Dialog>
