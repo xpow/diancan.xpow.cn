@@ -919,11 +919,11 @@ router.get('/devices/:id/auth-logs', async (req, res) => {
 
 function parseDeviceType(ua: string): string {
   if (!ua) return '未知'
-  // iOS
-  const iphone = ua.match(/iPhone\s*\d+[\d,]*/)
-  if (iphone) return `iPhone ${iphone[0].replace(/\s+/g, ' ')}`
-  const ipad = ua.match(/iPad[\d,]*/)
-  if (ipad) return 'iPad'
+  // iOS（先检测 iPhone/iPad，避免被 "like Mac OS X" 干扰）
+  if (ua.includes('iPhone')) return 'iPhone'
+  const iphoneModel = ua.match(/iPhone\s*\d+[\d,]*/)
+  if (iphoneModel) return `iPhone ${iphoneModel[0].replace(/\s+/g, ' ')}`
+  if (ua.includes('iPad')) return 'iPad'
   // Android 机型
   const androidModel = ua.match(/; ([\w\s]+?(?:Pro|Ultra|Max|Plus|Mini|Lite|SE|Note))[\s;]|; (SM-\w+)|; ([\w]+-\w+)/)
   if (androidModel) return androidModel[1] || androidModel[2] || androidModel[3]
