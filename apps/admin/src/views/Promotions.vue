@@ -487,12 +487,11 @@ watch(
 )
 
 watch(
-  () => [form.value.type, form.value.rules, form.value.items.map((i: any) => ({ dishId: i.dishId, promoPrice: i.promoPrice, limitType: i.limitType, maxQty: i.maxQty }))],
+  () => [form.value.type, JSON.stringify(form.value.rules), form.value.items.length > 0 ? form.value.items.map((i: any) => ({ dishId: i.dishId, promoPrice: i.promoPrice, limitType: i.limitType, maxQty: i.maxQty })) : ''],
   () => {
     const generated = autoGenerateName()
     if (generated) form.value.name = generated
   },
-  { deep: true },
 )
 
 async function save() {
