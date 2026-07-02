@@ -169,6 +169,7 @@ const router = useRouter()
 
 function promoIcon(type: string): string {
   const map: Record<string, string> = {
+    buy_get: 'card_giftcard',
     full_reduction: 'local_offer',
     welfare_item: 'redeem',
     time_discount: 'timer',

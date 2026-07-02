@@ -184,7 +184,7 @@ app.get('/api/system/bootstrap', generalLimiter, async (req, res) => {
   }
 
   const availablePromotions = filterPromotionsByDevice(
-    activePromotions.filter((p: any) => p.status === 'active' && ['full_reduction', 'welfare_item', 'time_discount', 'new_user', 'holiday_gift', 'total_discount'].includes(p.type)),
+    activePromotions.filter((p: any) => p.status === 'active' && ['buy_get', 'full_reduction', 'welfare_item', 'time_discount', 'new_user', 'holiday_gift', 'total_discount'].includes(p.type)),
     device?.id,
   )
 
