@@ -919,19 +919,48 @@ router.get('/devices/:id/auth-logs', async (req, res) => {
 
 function parseDeviceType(ua: string): string {
   if (!ua) return '未知'
-  // iOS（先检测 iPhone/iPad，避免被 "like Mac OS X" 干扰）
-  if (ua.includes('iPhone')) return 'iPhone'
-  const iphoneModel = ua.match(/iPhone\s*\d+[\d,]*/)
-  if (iphoneModel) return `iPhone ${iphoneModel[0].replace(/\s+/g, ' ')}`
-  if (ua.includes('iPad')) return 'iPad'
-  // Android 机型
-  const androidModel = ua.match(/; ([\w\s]+?(?:Pro|Ultra|Max|Plus|Mini|Lite|SE|Note))[\s;]|; (SM-\w+)|; ([\w]+-\w+)/)
-  if (androidModel) return androidModel[1] || androidModel[2] || androidModel[3]
-  // PC 浏览器
-  if (ua.includes('Windows')) return 'Windows PC'
-  if (ua.includes('Mac OS')) return 'macOS'
-  if (ua.includes('Linux')) return 'Linux'
-  return '其他设备'
+  // 操作系统
+  let os = ''
+  if (ua.includes('iPhone')) {
+    const m = ua.match(/iPhone OS (\S+)/)
+    os = m ? `iOS ${m[1].replace(/_/g, '.')}` : 'iPhone'
+  } else if (ua.includes('iPad')) {
+    const m = ua.match(/iPad[\d,]*|iPad.*OS (\S+)/)
+    os = m?.[1] ? `iPadOS ${m[1].replace(/_/g, '.')}` : 'iPad'
+  } else if (ua.includes('Android')) {
+    const m = ua.match(/Android ([\d.]+)/)
+    os = m ? `Android ${m[1]}` : 'Android'
+  } else if (ua.includes('Windows NT 10')) {
+    os = 'Windows 10/11'
+  } else if (ua.includes('Windows NT 6.3')) {
+    os = 'Windows 8.1'
+  } else if (ua.includes('Windows NT 6.1')) {
+    os = 'Windows 7'
+  } else if (ua.includes('Windows')) {
+    os = 'Windows'
+  } else if (ua.includes('Mac OS X')) {
+    const m = ua.match(/Mac OS X ([\d_]+)/)
+    os = m ? `macOS ${m[1].replace(/_/g, '.')}` : 'macOS'
+  } else if (ua.includes('Linux')) {
+    os = 'Linux'
+  }
+  // 浏览器
+  let browser = ''
+  if (ua.includes('Edg/') || ua.includes('Edge/')) {
+    const m = ua.match(/Edg[e]?\/([\d.]+)/)
+    browser = m ? `Edge ${m[1]}` : 'Edge'
+  } else if (ua.includes('Chrome/') && !ua.includes('Edg/') && !ua.includes('OPR/')) {
+    const m = ua.match(/Chrome\/([\d.]+)/)
+    browser = m ? `Chrome ${m[1]}` : 'Chrome'
+  } else if (ua.includes('Safari/') && !ua.includes('Chrome/')) {
+    const m = ua.match(/Version\/([\d.]+)/)
+    browser = m ? `Safari ${m[1]}` : 'Safari'
+  } else if (ua.includes('Firefox/')) {
+    const m = ua.match(/Firefox\/([\d.]+)/)
+    browser = m ? `Firefox ${m[1]}` : 'Firefox'
+  }
+  const parts = [os, browser].filter(Boolean)
+  return parts.length > 0 ? parts.join(' / ') : '其他设备'
 }
 
 // 下发设备指令
