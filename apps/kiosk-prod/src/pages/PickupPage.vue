@@ -75,7 +75,7 @@
           </div>
 
           <div class="ticket-footer">
-            <template v-if="order.status === 'unpaid'">
+            <template v-if="!order.paidAt">
               <div class="pay-reminder">
                 <span class="material-icons pay-reminder-icon">payment</span>
                 <span class="pay-reminder-text">待支付</span>
