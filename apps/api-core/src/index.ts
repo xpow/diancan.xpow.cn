@@ -793,10 +793,10 @@ app.post('/api/orders/:orderNo/pay', orderLimiter, authMiddleware, async (req, r
   const deviceId = req.authDevice!.deviceId
   const { paymentMethod: pm } = req.body ?? {}
 
-  const order = await prisma.order.findUnique({ where: { orderNo }, select: { id: true, deviceId: true, status: true } })
+  const order = await prisma.order.findUnique({ where: { orderNo }, select: { id: true, deviceId: true, status: true, paidAt: true } })
   if (!order) return res.status(404).json({ message: '订单不存在' })
   if (order.deviceId !== deviceId) return res.status(403).json({ message: '无权操作此订单' })
-  if (order.status !== 'unpaid') return res.status(400).json({ message: '订单不是未支付状态' })
+  if (order.paidAt) return res.status(400).json({ message: '订单不是未支付状态' })
 
   const updated = await prisma.order.update({
     where: { id: order.id },
