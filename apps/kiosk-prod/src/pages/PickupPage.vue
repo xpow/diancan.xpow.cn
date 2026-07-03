@@ -29,10 +29,11 @@
           @mouseleave="onLongPressEnd"
           :title="'长按复制取餐码'"
         >
-          <div class="ticket-header">
+          <div class="ticket-header" :class="{ 'ticket-header-unpaid': order.status === 'unpaid' }">
             <p class="ticket-label">
               取餐订单
               <span v-if="order.orderType === 'takeaway'" class="takeaway-badge">自提</span>
+              <span v-if="order.status === 'unpaid'" class="unpaid-badge">未付款</span>
             </p>
             <div class="ticket-number">{{ order.pickupCode }}</div>
             <div class="ticket-status" :class="'ticket-status-' + order.status">
@@ -491,7 +492,9 @@ onUnmounted(() => {
 .ticket-header { position: relative; text-align: center; padding: var(--spacing-lg); border-bottom: 1px dashed var(--outline-variant); }
 .ticket-label { display: flex; align-items: center; justify-content: center; gap: 8px; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; color: var(--secondary); margin: 0 0 var(--spacing-sm); text-transform: uppercase; letter-spacing: 0.08em; }
 .takeaway-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--radius-full); background: var(--primary-container); color: var(--on-primary); font-size: 11px; font-weight: 700; text-transform: none; letter-spacing: normal; }
+.unpaid-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--radius-full); background: var(--error); color: #fff; font-size: 11px; font-weight: 700; text-transform: none; letter-spacing: normal; }
 .ticket-number { font-family: var(--font-display); font-size: 64px; font-weight: 800; color: var(--primary-container); letter-spacing: -0.04em; line-height: 1; }
+.ticket-header-unpaid .ticket-number { color: var(--error); }
 .ticket-status { margin-top: var(--spacing-sm); font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; }
 .ticket-status-unpaid { color: var(--error); }
 .ticket-status-paid { color: var(--tertiary); }
