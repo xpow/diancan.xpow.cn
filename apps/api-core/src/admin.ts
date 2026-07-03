@@ -992,7 +992,7 @@ router.get('/stats/dish-sales', async (req, res) => {
   if (startDate || endDate) {
     where.createdAt = {}
     if (startDate) where.createdAt.gte = new Date(startDate as string)
-    if (endDate) where.createdAt.lt = new Date(endDate as string)
+    if (endDate) where.createdAt.lte = new Date(endDate as string)
   }
 
   const orders = await prisma.order.findMany({

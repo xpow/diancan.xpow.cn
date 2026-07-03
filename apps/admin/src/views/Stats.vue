@@ -147,7 +147,7 @@ async function fetchStats() {
     if (s) {
       params.set('startDate', fmt(s))
       const end = quickRange.value === '' ? (e ?? s) : e!
-      params.set('endDate', fmt(new Date(end.getTime() + 86400000)))
+      params.set('endDate', fmt(end))
     }
     const qs = params.toString()
     const res = await fetch(`/api/admin/stats/dish-sales${qs ? '?' + qs : ''}`)
