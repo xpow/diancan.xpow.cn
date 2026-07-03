@@ -1031,11 +1031,11 @@ onMounted(() => {
   text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
 }
 .popup-header { margin-bottom: var(--spacing-lg); }
-.popup-icon .material-icons { font-size: 48px; color: var(--primary-container); }
-.popup-header h3 { margin: var(--spacing-sm) 0 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; line-height: 1.3; }
-.popup-amount { font-family: var(--font-display); font-size: var(--text-display-lg); font-weight: 800; color: var(--primary-container); margin: var(--spacing-sm) 0 0; line-height: 1.2; }
+.popup-icon .material-icons { font-size: 40px; color: var(--primary-container); }
+.popup-header h3 { margin: var(--spacing-sm) 0 0; font-family: var(--font-display); font-size: 20px; font-weight: 700; line-height: 1.3; }
+.popup-amount { font-family: var(--font-display); font-size: 26px; font-weight: 800; color: var(--primary-container); margin: var(--spacing-sm) 0 0; line-height: 1.2; }
 .popup-qr {
-  width: 260px; height: 260px; margin: 0 auto var(--spacing-lg);
+  width: 240px; height: 240px; margin: 0 auto var(--spacing-lg);
   background: var(--surface-container-low); border-radius: var(--radius-lg);
   display: flex; align-items: center; justify-content: center;
   overflow: hidden;
@@ -1048,11 +1048,12 @@ onMounted(() => {
 }
 .popup-paid-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm);
-  flex: 1; padding: var(--spacing-md);
+  flex: 1; padding: 12px;
   border: none; border-radius: var(--radius-full);
   background: var(--primary-container); color: var(--on-primary);
-  font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700;
+  font-family: var(--font-display); font-size: 18px; font-weight: 700;
   cursor: pointer; transition: transform var(--transition-fast);
+  white-space: nowrap;
 }
 .popup-paid-btn:active { transform: scale(0.98); }
 .popup-paid-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
@@ -1064,11 +1065,12 @@ onMounted(() => {
 }
 .popup-paylater-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm);
-  flex: 1; padding: var(--spacing-md);
+  flex: 1; padding: 12px;
   border: 1px solid var(--outline-variant); border-radius: var(--radius-full);
   background: transparent; color: var(--secondary);
-  font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 600;
+  font-family: var(--font-display); font-size: 18px; font-weight: 600;
   cursor: pointer; transition: all var(--transition-fast);
+  white-space: nowrap;
 }
 .popup-paylater-btn:active { transform: scale(0.98); }
 .popup-paylater-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
@@ -1087,9 +1089,11 @@ onMounted(() => {
 
   .hero-overlay h2,
   .card-header h3,
-  .total-label,
-  .popup-header h3 {
+  .total-label {
     font-size: var(--text-headline-lg);
+  }
+  .popup-header h3 {
+    font-size: 18px;
   }
 
   .back-link {
@@ -1111,9 +1115,11 @@ onMounted(() => {
 
   .success-value,
   .amount,
-  .popup-amount,
   .total-amount {
     font-size: var(--text-headline-lg);
+  }
+  .popup-amount {
+    font-size: 22px;
   }
 
   .success-code {
@@ -1182,19 +1188,24 @@ onMounted(() => {
   }
 
   .payment-popup {
-    width: min(340px, calc(100vw - 24px));
+    width: min(320px, calc(100vw - 24px));
     padding: var(--spacing-lg);
   }
 
   .popup-qr {
-    width: min(220px, 62vw);
-    height: min(220px, 62vw);
+    width: min(200px, 58vw);
+    height: min(200px, 58vw);
     margin-bottom: var(--spacing-md);
   }
+  .popup-icon .material-icons { font-size: 32px; }
 
   .popup-paid-btn {
-    padding: 12px;
-    font-size: var(--text-headline-lg);
+    padding: 10px;
+    font-size: 16px;
+  }
+  .popup-paylater-btn {
+    padding: 10px;
+    font-size: 16px;
   }
 
   .popup-cancel-btn {
