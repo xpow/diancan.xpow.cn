@@ -148,7 +148,7 @@
             </template>
             <template v-else>
               <span class="material-icons">check_circle</span>
-              <span>我已付款</span>
+              <span>我已支付</span>
             </template>
           </button>
           <button class="popup-cancel-btn" @click="showPayPopup = false">关闭</button>
@@ -590,9 +590,9 @@ onUnmounted(() => {
   text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
 }
 .popup-header { margin-bottom: var(--spacing-lg); }
-.popup-icon .material-icons { font-size: 48px; color: var(--primary-container); }
-.popup-header h3 { margin: var(--spacing-sm) 0 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; line-height: 1.3; }
-.popup-amount { font-family: var(--font-display); font-size: var(--text-display-lg); font-weight: 800; color: var(--primary-container); margin: var(--spacing-sm) 0 0; line-height: 1.2; }
+.popup-icon .material-icons { font-size: 40px; color: var(--primary-container); }
+.popup-header h3 { margin: var(--spacing-sm) 0 0; font-family: var(--font-display); font-size: 20px; font-weight: 700; line-height: 1.3; }
+.popup-amount { font-family: var(--font-display); font-size: 26px; font-weight: 800; color: var(--primary-container); margin: var(--spacing-sm) 0 0; line-height: 1.2; }
 .popup-order-no { font-size: var(--text-label-sm); color: var(--secondary); margin: var(--spacing-xs) 0 0; }
 .popup-qr-row { display: flex; gap: var(--spacing-lg); justify-content: center; margin-bottom: var(--spacing-lg); }
 .popup-qr-box { display: flex; flex-direction: column; align-items: center; gap: 4px; }
@@ -602,11 +602,12 @@ onUnmounted(() => {
 .popup-error { color: var(--error); font-size: var(--text-body-sm); line-height: 1.5; margin-bottom: var(--spacing-md); padding: 8px; background: var(--error-container); border-radius: var(--radius-md); }
 .popup-paid-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm);
-  width: 100%; padding: var(--spacing-md);
+  width: 100%; padding: 12px;
   border: none; border-radius: var(--radius-full);
   background: var(--primary-container); color: var(--on-primary);
-  font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700;
+  font-family: var(--font-display); font-size: 18px; font-weight: 700;
   cursor: pointer; transition: transform var(--transition-fast);
+  white-space: nowrap;
 }
 .popup-paid-btn:active { transform: scale(0.98); }
 .popup-paid-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
