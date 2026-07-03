@@ -850,6 +850,7 @@ app.get('/api/orders', generalLimiter, authMiddleware, async (req, res) => {
         portionSize: i.portionSize || undefined,
       })),
       createdAt: o.createdAt.toISOString(),
+      paidAt: o.paidAt?.toISOString() || undefined,
     })),
   })
 })

@@ -29,11 +29,11 @@
           @mouseleave="onLongPressEnd"
           :title="'长按复制取餐码'"
         >
-          <div class="ticket-header" :class="{ 'ticket-header-unpaid': order.status === 'unpaid' }">
+          <div class="ticket-header" :class="{ 'ticket-header-unpaid': !order.paidAt }">
             <p class="ticket-label">
               取餐订单
               <span v-if="order.orderType === 'takeaway'" class="takeaway-badge">自提</span>
-              <span v-if="order.status === 'unpaid'" class="unpaid-badge">未付款</span>
+              <span v-if="!order.paidAt" class="unpaid-badge">未付款</span>
             </p>
             <div class="ticket-number">{{ order.pickupCode }}</div>
             <div class="ticket-status" :class="'ticket-status-' + order.status">
@@ -68,7 +68,7 @@
             <div class="ticket-total">
               <span class="ticket-total-label">合计 {{ (order.items || []).length }} 项商品</span>
               <div class="ticket-total-right">
-                <span class="ticket-total-sub">{{ order.status === 'unpaid' ? '待付金额' : '实付金额' }}</span>
+                <span class="ticket-total-sub">{{ !order.paidAt ? '待付金额' : '实付金额' }}</span>
                 <span class="ticket-total-price"><small class="c-sign">¥</small>{{ (order.totals?.payableAmount || 0).toFixed(2) }}</span>
               </div>
             </div>
