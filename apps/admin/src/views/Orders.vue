@@ -48,6 +48,7 @@
       <Column field="status" header="状态" style="width:140px">
         <template #body="{ data }">
           <Tag :value="statusLabel(data.status)" :severity="statusSeverity(data.status)" />
+          <Tag v-if="data.status !== 'unpaid' && !data.paidAt" value="未付款" severity="danger" style="margin-left:4px" />
           <div v-if="data.cancelReason" class="cancel-reason">{{ data.cancelReason }}</div>
           <div v-if="data.cancelledAt" class="cancel-reason">{{ new Date(data.cancelledAt).toLocaleString('zh-CN') }}</div>
         </template>

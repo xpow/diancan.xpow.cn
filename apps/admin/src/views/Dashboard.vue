@@ -58,6 +58,7 @@
       <Column field="status" header="状态">
         <template #body="{ data }">
           <Tag :value="statusLabel(data.status)" :severity="statusSeverity(data.status)" />
+          <Tag v-if="data.status !== 'unpaid' && !data.paidAt" value="未付款" severity="danger" style="margin-left:4px" />
         </template>
       </Column>
       <Column field="totals.payableAmount" header="金额" style="text-align:right">
@@ -155,14 +156,16 @@ function statusSeverity(s: string) {
 }
 
 async function fetchData() {
-  const [pendingRes, paidRes] = await Promise.all([
+  const [pendingRes, paidRes, unpaidRes] = await Promise.all([
     fetch('/api/admin/orders?status=pending&limit=20'),
     fetch('/api/admin/orders?status=paid&limit=20'),
+    fetch('/api/admin/orders?status=unpaid&limit=20'),
   ])
   const pendingOrders = (await pendingRes.json()).items ?? []
   const paidOrders = (await paidRes.json()).items ?? []
+  const unpaidOrders = (await unpaidRes.json()).items ?? []
 
-  recentOrders.value = [...pendingOrders, ...paidOrders]
+  recentOrders.value = [...pendingOrders, ...paidOrders, ...unpaidOrders]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 20)
 
