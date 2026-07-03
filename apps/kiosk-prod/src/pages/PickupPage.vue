@@ -145,7 +145,7 @@
             </template>
             <template v-else>
               <span class="material-icons">check_circle</span>
-              <span>立即付款</span>
+              <span>我已支付</span>
             </template>
           </button>
           <button class="popup-cancel-btn" @click="showPayPopup = false">关闭</button>
