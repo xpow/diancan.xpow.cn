@@ -587,6 +587,7 @@ onUnmounted(() => {
   background: var(--surface); border-radius: var(--radius-xl);
   padding: var(--spacing-xl); width: 380px; max-width: 90vw;
   text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  border: 1px solid var(--card-border-strong);
 }
 .popup-header { margin-bottom: var(--spacing-lg); }
 .popup-icon .material-icons { font-size: 40px; color: var(--primary-container); }
