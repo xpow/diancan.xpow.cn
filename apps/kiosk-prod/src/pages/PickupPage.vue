@@ -68,7 +68,7 @@
             <div class="ticket-total">
               <span class="ticket-total-label">合计 {{ (order.items || []).length }} 项商品</span>
               <div class="ticket-total-right">
-                <span class="ticket-total-sub">实付金额</span>
+                <span class="ticket-total-sub">{{ order.status === 'unpaid' ? '待付金额' : '实付金额' }}</span>
                 <span class="ticket-total-price"><small class="c-sign">¥</small>{{ (order.totals?.payableAmount || 0).toFixed(2) }}</span>
               </div>
             </div>
