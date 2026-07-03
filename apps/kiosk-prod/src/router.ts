@@ -1,4 +1,5 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
+import { readCart } from './utils/cart'
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -11,6 +12,12 @@ const router = createRouter({
     { path: '/pickup', name: 'pickup', component: () => import('./pages/PickupPage.vue') },
     { path: '/orders', redirect: '/pickup' },
   ],
+})
+
+router.beforeEach((to) => {
+  if (to.path === '/checkout' && readCart().length === 0) {
+    return '/menu'
+  }
 })
 
 export default router

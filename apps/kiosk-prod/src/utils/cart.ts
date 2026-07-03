@@ -13,7 +13,7 @@ export interface StoredCartItem {
   portionSize?: number
 }
 
-const CART_STORAGE_KEY = 'diancan-kiosk-cart'
+const CART_STORAGE_KEY = 'kiosk-cart'
 
 export function readCart(): StoredCartItem[] {
   const raw = localStorage.getItem(CART_STORAGE_KEY)
