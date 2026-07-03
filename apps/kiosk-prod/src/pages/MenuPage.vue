@@ -676,7 +676,7 @@ onBeforeUnmount(() => {
 .cart-icon-wrap .material-icons { font-size: 30px !important; color: var(--on-primary); }
 .cart-badge { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--radius-full); background: var(--error); color: var(--on-error); font-family: var(--font-display); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid var(--surface); }
 .cart-info { display: flex; flex-direction: column; }
-.cart-label { font-family: var(--font-display); font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--secondary); }
+.cart-label { font-family: var(--font-display); font-size: 13px; font-weight: 600; text-transform: uppercase; color: var(--secondary); }
 .cart-total { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: var(--primary-container); }
 .cart-btn { display: inline-flex; align-items: center; justify-content: center; padding: 14px 22px; border: none; border-radius: var(--radius-full); background: var(--primary-container); color: var(--on-primary); font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; line-height: 1; white-space: nowrap; cursor: pointer; box-shadow: var(--shadow-primary); }
 .cart-sheet { padding: 0 var(--container-margin) var(--container-margin); min-height: 200px; max-width: 600px; margin: 0 auto; }
