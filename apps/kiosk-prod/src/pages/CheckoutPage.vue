@@ -176,6 +176,7 @@
               <p v-if="orderError" class="popup-error">{{ orderError }}</p>
               <div class="popup-btn-row">
                 <button class="popup-paylater-btn" :disabled="submitting" @click="submitOrder(true)">
+                  <span class="material-icons">schedule</span>
                   <span>暂不付款</span>
                 </button>
                 <button class="popup-paid-btn" :disabled="submitting" @click="submitOrder">
