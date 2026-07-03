@@ -236,6 +236,7 @@ model Order {
   updatedAt DateTime @updatedAt
   cancelReason String?
   cancelledAt DateTime?
+  paidAt      DateTime?
 }
 
 model OrderItem {

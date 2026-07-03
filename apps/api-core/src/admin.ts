@@ -192,6 +192,7 @@ router.get('/orders', async (_req, res) => {
       createdAt: o.createdAt.toISOString(),
       cancelReason: o.cancelReason || undefined,
       cancelledAt: o.cancelledAt?.toISOString() || undefined,
+      paidAt: o.paidAt?.toISOString() || undefined,
     })),
     total,
     page: Number(page),
@@ -217,6 +218,9 @@ router.put('/orders/:id/status', async (req, res) => {
   }
   if (status === 'paid' && typeof paymentMethod === 'string' && paymentMethod) {
     data.paymentMethod = paymentMethod
+  }
+  if (status === 'paid') {
+    data.paidAt = new Date()
   }
 
   const updated = await prisma.order.update({

@@ -724,6 +724,7 @@ app.post('/api/orders', orderLimiter, authMiddleware, async (req, res) => {
       orderNo,
       pickupCode,
       status: payLater ? 'unpaid' : 'paid',
+      paidAt: payLater ? undefined : new Date(),
       paymentMethod: typeof paymentMethod === 'string' ? paymentMethod : '',
       orderType: type,
       merchantId,
@@ -799,7 +800,7 @@ app.post('/api/orders/:orderNo/pay', orderLimiter, authMiddleware, async (req, r
 
   const updated = await prisma.order.update({
     where: { id: order.id },
-    data: { status: 'paid', paymentMethod: typeof pm === 'string' && pm ? pm : '' },
+    data: { status: 'paid', paidAt: new Date(), paymentMethod: typeof pm === 'string' && pm ? pm : '' },
   })
   res.json({ orderNo: updated.orderNo, status: updated.status })
 })
