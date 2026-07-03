@@ -174,26 +174,22 @@
               </div>
               <p class="popup-hint">打开{{ paymentMethod === 'wechat' ? '微信' : '支付宝' }}扫一扫付款</p>
               <p v-if="orderError" class="popup-error">{{ orderError }}</p>
-              <button class="popup-paid-btn" :disabled="submitting" @click="submitOrder">
-                <template v-if="submitting">
-                  <span class="spinner"></span>
-                  <span>处理中...</span>
-                </template>
-                <template v-else>
-                  <span class="material-icons">check_circle</span>
-                  <span>我已支付</span>
-                </template>
-              </button>
-              <button class="popup-cancel-btn" @click="showPaymentPopup = false">取消支付</button>
-              <button class="popup-paylater-btn" :disabled="submitting" @click="submitOrder(true)">
-                <template v-if="submitting">
-                  <span class="spinner"></span>
-                  <span>处理中...</span>
-                </template>
-                <template v-else>
+              <div class="popup-btn-row">
+                <button class="popup-paylater-btn" :disabled="submitting" @click="submitOrder(true)">
                   <span>暂不付款</span>
-                </template>
-              </button>
+                </button>
+                <button class="popup-paid-btn" :disabled="submitting" @click="submitOrder">
+                  <template v-if="submitting">
+                    <span class="spinner"></span>
+                    <span>处理中...</span>
+                  </template>
+                  <template v-else>
+                    <span class="material-icons">check_circle</span>
+                    <span>我已支付</span>
+                  </template>
+                </button>
+              </div>
+              <button class="popup-cancel-btn" @click="showPaymentPopup = false">取消支付</button>
             </div>
           </div>
         </Teleport>
@@ -1047,9 +1043,12 @@ onMounted(() => {
 .qr-img { width: 100%; height: 100%; object-fit: contain; }
 .popup-hint { font-size: var(--text-body-sm); line-height: 1.5; color: var(--secondary); margin-bottom: var(--spacing-lg); }
 .popup-error { color: var(--error); font-size: var(--text-body-sm); line-height: 1.5; margin-bottom: var(--spacing-md); padding: 8px; background: var(--error-container); border-radius: var(--radius-md); }
+.popup-btn-row {
+  display: flex; gap: var(--spacing-sm);
+}
 .popup-paid-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm);
-  width: 100%; padding: var(--spacing-md);
+  flex: 1; padding: var(--spacing-md);
   border: none; border-radius: var(--radius-full);
   background: var(--primary-container); color: var(--on-primary);
   font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700;
@@ -1065,12 +1064,11 @@ onMounted(() => {
 }
 .popup-paylater-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm);
-  width: 100%; padding: var(--spacing-sm) var(--spacing-md);
+  flex: 1; padding: var(--spacing-md);
   border: 1px solid var(--outline-variant); border-radius: var(--radius-full);
   background: transparent; color: var(--secondary);
-  font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600;
+  font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 600;
   cursor: pointer; transition: all var(--transition-fast);
-  margin-top: var(--spacing-sm);
 }
 .popup-paylater-btn:active { transform: scale(0.98); }
 .popup-paylater-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
