@@ -34,11 +34,9 @@
               取餐订单
               <span v-if="order.orderType === 'takeaway'" class="takeaway-badge">自提</span>
               <span v-if="!order.paidAt" class="unpaid-badge">未付款</span>
+              <span class="status-badge" :class="'status-' + order.status">{{ statusLabel(order.status) }}</span>
             </p>
             <div class="ticket-number">{{ order.pickupCode }}</div>
-            <div class="ticket-status" :class="'ticket-status-' + order.status">
-              {{ statusLabel(order.status) }}
-            </div>
             <div class="ticket-hole-left"></div>
             <div class="ticket-hole-right"></div>
           </div>
@@ -489,16 +487,17 @@ onUnmounted(() => {
 .ticket-card::after { right: -13px; box-shadow: inset 0 0 0 1px var(--ticket-card-border); } */
 
 .ticket-header { position: relative; text-align: center; padding: var(--spacing-lg); border-bottom: 1px dashed var(--outline-variant); }
-.ticket-label { display: flex; align-items: center; justify-content: center; gap: 8px; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; color: var(--secondary); margin: 0 0 var(--spacing-sm); text-transform: uppercase; letter-spacing: 0.08em; }
-.takeaway-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--radius-full); background: var(--primary-container); color: var(--on-primary); font-size: 11px; font-weight: 700; text-transform: none; letter-spacing: normal; }
-.unpaid-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--radius-full); background: var(--error-container); color: var(--on-error-container); font-size: 11px; font-weight: 700; text-transform: none; letter-spacing: normal; }
+.ticket-label { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; color: var(--secondary); margin: 0 0 var(--spacing-sm); text-transform: uppercase; letter-spacing: 0.08em; }
+.takeaway-badge, .unpaid-badge, .status-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--radius-full); font-size: 11px; font-weight: 700; text-transform: none; letter-spacing: normal; }
+.takeaway-badge { background: var(--primary-container); color: var(--on-primary); }
+.unpaid-badge { background: var(--error-container); color: var(--on-error-container); }
+.status-badge { background: var(--surface-container-high); color: var(--on-surface); }
+.status-unpaid { background: var(--error-container); color: var(--on-error-container); }
+.status-paid, .status-preparing { background: var(--secondary-container); color: var(--on-secondary-container); }
+.status-ready { background: var(--tertiary-container); color: var(--on-tertiary-container); }
+.status-completed { background: var(--surface-variant); color: var(--on-surface-variant); }
 .ticket-number { font-family: var(--font-display); font-size: 64px; font-weight: 800; color: var(--primary-container); letter-spacing: -0.04em; line-height: 1; }
 .ticket-header-unpaid .ticket-number { color: #ef5350; }
-.ticket-status { margin-top: var(--spacing-sm); font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; }
-.ticket-status-unpaid { color: var(--error); }
-.ticket-status-paid { color: var(--tertiary); }
-.ticket-status-preparing { color: var(--primary-container); }
-.ticket-status-ready { color: var(--tertiary); }
 
 .ticket-hole-left, .ticket-hole-right { position: absolute; bottom: -12px; width: 24px; height: 24px; border-radius: 50%; background: var(--surface); }
 .ticket-hole-left { left: -12px; }
