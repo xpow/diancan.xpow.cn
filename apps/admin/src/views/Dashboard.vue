@@ -83,15 +83,15 @@
       <Column header="操作" style="width:180px">
         <template #body="{ data }">
           <div class="action-group">
+<Button
+  v-if="data.status === 'unpaid' || data.status === 'pending' || data.status === 'paid'"
+  label="开始制作"
+  icon="pi pi-play"
+  size="small"
+  @click="updateStatus(data.id, 'preparing')"
+/>
             <Button
-              v-if="data.status === 'pending' || data.status === 'paid'"
-              label="开始制作"
-              icon="pi pi-play"
-              size="small"
-              @click="updateStatus(data.id, 'preparing')"
-            />
-            <Button
-              v-if="data.status === 'pending' || data.status === 'paid' || data.status === 'preparing'"
+              v-if="data.status === 'unpaid' || data.status === 'pending' || data.status === 'paid' || data.status === 'preparing'"
               label="取消"
               icon="pi pi-times"
               size="small"
@@ -146,11 +146,11 @@ const cancelReasons = ['等待时间过长，客户不要了', '客户有事不�
 const payLabels: Record<string, string> = { wechat: '微信', alipay: '支付宝', cash: '现金' }
 function payLabel(m: string): string { return payLabels[m] || m }
 function statusLabel(s: string) {
-  const map: Record<string, string> = { pending: '待处理', paid: '待处理', preparing: '制作中', ready: '可取餐', completed: '已完成', cancelled: '已取消' }
+  const map: Record<string, string> = { unpaid: '未付款', pending: '待处理', paid: '待处理', preparing: '制作中', ready: '可取餐', completed: '已完成', cancelled: '已取消' }
   return map[s] || s
 }
 function statusSeverity(s: string) {
-  const map: Record<string, string> = { pending: 'warn', paid: 'warn', preparing: 'info', ready: 'success', completed: 'contrast', cancelled: 'danger' }
+  const map: Record<string, string> = { unpaid: 'danger', pending: 'warn', paid: 'warn', preparing: 'info', ready: 'success', completed: 'contrast', cancelled: 'danger' }
   return map[s] || 'info'
 }
 
