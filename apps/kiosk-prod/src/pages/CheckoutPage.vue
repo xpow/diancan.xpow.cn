@@ -179,7 +179,7 @@
                   <span class="material-icons">schedule</span>
                   <span>暂不付款</span>
                 </button>
-                <button class="popup-paid-btn" :disabled="submitting" @click="submitOrder">
+                <button class="popup-paid-btn" :disabled="submitting" @click="submitOrder()">
                   <template v-if="submitting">
                     <span class="spinner"></span>
                     <span>处理中...</span>
