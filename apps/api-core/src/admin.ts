@@ -145,7 +145,7 @@ router.get('/backup.sql', async (_req, res) => {
 router.get('/orders', async (_req, res) => {
   const { status, scope, branchId, page = '1', limit = '50' } = _req.query as Record<string, string>
   const where: any = {}
-  if (scope === 'active') where.status = { in: ['paid', 'preparing', 'ready'] }
+  if (scope === 'active') where.status = { in: ['unpaid', 'paid', 'preparing', 'ready'] }
   else if (status) where.status = status.includes(',') ? { in: status.split(',') } : status
   if (branchId) where.branchId = branchId
 
@@ -202,7 +202,7 @@ router.get('/orders', async (_req, res) => {
 router.put('/orders/:id/status', async (req, res) => {
   const { id } = req.params
   const { status, cancelReason, paymentMethod } = req.body ?? {}
-  const validStatuses = ['pending', 'paid', 'preparing', 'ready', 'completed', 'cancelled']
+  const validStatuses = ['pending', 'unpaid', 'paid', 'preparing', 'ready', 'completed', 'cancelled']
   if (!status || !validStatuses.includes(status)) {
     return res.status(400).json({ message: '无效状态' })
   }

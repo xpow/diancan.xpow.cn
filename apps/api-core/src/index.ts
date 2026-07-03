@@ -657,7 +657,7 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
 })
 
 app.post('/api/orders', orderLimiter, authMiddleware, async (req, res) => {
-  const { merchantId, branchId, deviceId: reqDeviceId, items, orderType, paymentMethod } = req.body ?? {}
+  const { merchantId, branchId, deviceId: reqDeviceId, items, orderType, paymentMethod, payLater } = req.body ?? {}
   const deviceId = req.authDevice!.deviceId
 
   // 校验 deviceId 与令牌一致
@@ -723,7 +723,7 @@ app.post('/api/orders', orderLimiter, authMiddleware, async (req, res) => {
     data: {
       orderNo,
       pickupCode,
-      status: 'paid',
+      status: payLater ? 'unpaid' : 'paid',
       paymentMethod: typeof paymentMethod === 'string' ? paymentMethod : '',
       orderType: type,
       merchantId,
@@ -786,6 +786,24 @@ app.post('/api/orders', orderLimiter, authMiddleware, async (req, res) => {
   })
 })
 
+// 未支付订单确认付款
+app.post('/api/orders/:orderNo/pay', orderLimiter, authMiddleware, async (req, res) => {
+  const { orderNo } = req.params
+  const deviceId = req.authDevice!.deviceId
+  const { paymentMethod: pm } = req.body ?? {}
+
+  const order = await prisma.order.findUnique({ where: { orderNo }, select: { id: true, deviceId: true, status: true } })
+  if (!order) return res.status(404).json({ message: '订单不存在' })
+  if (order.deviceId !== deviceId) return res.status(403).json({ message: '无权操作此订单' })
+  if (order.status !== 'unpaid') return res.status(400).json({ message: '订单不是未支付状态' })
+
+  const updated = await prisma.order.update({
+    where: { id: order.id },
+    data: { status: 'paid', paymentMethod: typeof pm === 'string' && pm ? pm : '' },
+  })
+  res.json({ orderNo: updated.orderNo, status: updated.status })
+})
+
 app.get('/api/orders', generalLimiter, authMiddleware, async (req, res) => {
   const deviceId = req.authDevice!.deviceId
   const { scope } = req.query as Record<string, string>
@@ -796,7 +814,7 @@ app.get('/api/orders', generalLimiter, authMiddleware, async (req, res) => {
   if (device && device.role !== 'admin') {
     where.deviceId = device.id
   }
-  if (scope === 'active') where.status = { in: ['paid', 'preparing', 'ready'] }
+  if (scope === 'active') where.status = { in: ['unpaid', 'paid', 'preparing', 'ready'] }
 
   const orders = await prisma.order.findMany({
     where,

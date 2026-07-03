@@ -185,6 +185,15 @@
                 </template>
               </button>
               <button class="popup-cancel-btn" @click="showPaymentPopup = false">取消支付</button>
+              <button class="popup-paylater-btn" :disabled="submitting" @click="submitOrder(true)">
+                <template v-if="submitting">
+                  <span class="spinner"></span>
+                  <span>处理中...</span>
+                </template>
+                <template v-else>
+                  <span>暂不付款</span>
+                </template>
+              </button>
             </div>
           </div>
         </Teleport>
@@ -380,7 +389,7 @@ async function reloadQuote() {
   }
 }
 
-async function submitOrder() {
+async function submitOrder(payLater = false) {
   if (!quote.value || !cartItems.value.length || submitting.value) return
 
   submitting.value = true
@@ -402,6 +411,7 @@ async function submitOrder() {
       branchId: branchId.value,
       orderType: orderType.value,
       paymentMethod: paymentMethod.value,
+      payLater,
       items: cartItems.value.map((item) => ({
         dishId: item.baseDishId,
         quantity: item.quantity,
@@ -1053,6 +1063,17 @@ onMounted(() => {
   font-family: var(--font-display); font-size: var(--text-body-sm); color: var(--secondary);
   cursor: pointer; text-decoration: underline;
 }
+.popup-paylater-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm);
+  width: 100%; padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--outline-variant); border-radius: var(--radius-full);
+  background: transparent; color: var(--secondary);
+  font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600;
+  cursor: pointer; transition: all var(--transition-fast);
+  margin-top: var(--spacing-sm);
+}
+.popup-paylater-btn:active { transform: scale(0.98); }
+.popup-paylater-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
 .c-sign { font-size: 0.85em; padding: 0 1px; }
 

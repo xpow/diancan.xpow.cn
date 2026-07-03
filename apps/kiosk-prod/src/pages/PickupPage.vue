@@ -74,11 +74,33 @@
           </div>
 
           <div class="ticket-footer">
-            <p class="ticket-thanks">感谢您选择{{ displayTitle }}</p>
-            <p class="ticket-hint">
-              <span class="material-icons hint-icon">photo_camera</span>
-              请拍照保存
-            </p>
+            <template v-if="order.status === 'unpaid'">
+              <div class="pay-reminder">
+                <span class="material-icons pay-reminder-icon">payment</span>
+                <span class="pay-reminder-text">待支付</span>
+              </div>
+              <div class="pay-qr-row">
+                <div class="pay-qr-box" @click="selectedPayOrder = order; showPayPopup = true">
+                  <img :src="qrMap.wechat" alt="微信支付" class="pay-qr-img" />
+                  <span class="pay-qr-label">微信</span>
+                </div>
+                <div class="pay-qr-box" @click="selectedPayOrder = order; showPayPopup = true">
+                  <img :src="qrMap.alipay" alt="支付宝" class="pay-qr-img" />
+                  <span class="pay-qr-label">支付宝</span>
+                </div>
+              </div>
+              <button class="pay-now-btn" @click="selectedPayOrder = order; showPayPopup = true">
+                <span class="material-icons">check_circle</span>
+                我已付款
+              </button>
+            </template>
+            <template v-else>
+              <p class="ticket-thanks">感谢您选择{{ displayTitle }}</p>
+              <p class="ticket-hint">
+                <span class="material-icons hint-icon">photo_camera</span>
+                请拍照保存
+              </p>
+            </template>
           </div>
         </div>
       </template>
@@ -93,6 +115,45 @@
     <transition name="toast">
       <div v-if="toastVisible" class="toast">{{ toastMessage }}</div>
     </transition>
+
+    <!-- Payment Popup -->
+    <Teleport to="body">
+      <div v-if="showPayPopup && selectedPayOrder" class="payment-overlay" @click.self="showPayPopup = false">
+        <div class="payment-popup">
+          <div class="popup-header">
+            <span class="popup-icon">
+              <span class="material-icons">qr_code_scanner</span>
+            </span>
+            <h3>扫码付款</h3>
+            <p class="popup-amount"><small class="c-sign">¥</small>{{ selectedPayOrder.totals.payableAmount.toFixed(2) }}</p>
+            <p class="popup-order-no">{{ selectedPayOrder.orderNo }}</p>
+          </div>
+          <div class="popup-qr-row">
+            <div class="popup-qr-box">
+              <img :src="qrMap.wechat" alt="微信支付" class="popup-qr-img" />
+              <span class="popup-qr-label">微信支付</span>
+            </div>
+            <div class="popup-qr-box">
+              <img :src="qrMap.alipay" alt="支付宝" class="popup-qr-img" />
+              <span class="popup-qr-label">支付宝</span>
+            </div>
+          </div>
+          <p class="popup-hint">打开微信或支付宝扫一扫付款</p>
+          <p v-if="payError" class="popup-error">{{ payError }}</p>
+          <button class="popup-paid-btn" :disabled="paySubmitting" @click="confirmPay">
+            <template v-if="paySubmitting">
+              <span class="spinner"></span>
+              <span>处理中...</span>
+            </template>
+            <template v-else>
+              <span class="material-icons">check_circle</span>
+              <span>我已付款</span>
+            </template>
+          </button>
+          <button class="popup-cancel-btn" @click="showPayPopup = false">关闭</button>
+        </div>
+      </div>
+    </Teleport>
 
     <nav class="bottom-nav">
       <router-link to="/" class="nav-item">
@@ -114,7 +175,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { getDishImage } from '@/utils/dishImages'
-import { apiGet } from '@/utils/api'
+import { apiGet, apiPost } from '@/utils/api'
 import KioskTopBar from '@/components/KioskTopBar.vue'
 
 interface OrderItem {
@@ -161,6 +222,17 @@ const longPressTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 const toastMessage = ref('')
 const toastVisible = ref(false)
 
+const selectedPayOrder = ref<OrderSummary | null>(null)
+const showPayPopup = ref(false)
+const paySubmitting = ref(false)
+const payError = ref('')
+const qrModules = import.meta.glob('@/assets/images/payments/*.{jpg,png,webp}', { eager: true, query: '?url', import: 'default' })
+const qrMap: Record<string, string> = {}
+for (const [path, url] of Object.entries(qrModules)) {
+  const match = path.match(/([^/\\]+)\.(jpg|png|webp)$/)
+  if (match) qrMap[match[1]] = url as string
+}
+
 function dishImage(item: OrderItem): string {
   return getDishImage(item.dishId)
 }
@@ -171,7 +243,7 @@ const tabs = [
 ]
 
 const filteredOrders = computed(() => {
-  if (tab.value === 'active') return orders.value.filter((o) => o.status === 'paid' || o.status === 'preparing')
+  if (tab.value === 'active') return orders.value.filter((o) => o.status === 'unpaid' || o.status === 'paid' || o.status === 'preparing')
   if (tab.value === 'ready') return orders.value.filter((o) => o.status === 'ready')
   return []
 })
@@ -182,13 +254,14 @@ const tabLabel = computed(() => {
 })
 
 function badgeCount(key: string) {
-  if (key === 'active') return orders.value.filter((o) => o.status === 'paid' || o.status === 'preparing').length || ''
+  if (key === 'active') return orders.value.filter((o) => o.status === 'unpaid' || o.status === 'paid' || o.status === 'preparing').length || ''
   if (key === 'ready') return orders.value.filter((o) => o.status === 'ready').length || ''
   return ''
 }
 
 function statusLabel(s: string) {
   const m: Record<string, string> = {
+    unpaid: '待支付',
     paid: '制作中',
     preparing: '制作中',
     ready: '待取餐',
@@ -204,6 +277,23 @@ function formatTime(ts: string) {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+async function confirmPay() {
+  if (!selectedPayOrder.value || paySubmitting.value) return
+  paySubmitting.value = true
+  payError.value = ''
+  try {
+    await apiPost(`/api/orders/${selectedPayOrder.value.orderNo}/pay`, { paymentMethod: 'wechat' })
+    showPayPopup.value = false
+    selectedPayOrder.value = null
+    showToast('付款成功')
+    await fetchOrders()
+  } catch (error) {
+    payError.value = error instanceof Error ? error.message : '付款失败'
+  } finally {
+    paySubmitting.value = false
+  }
 }
 
 function showToast(msg: string) {
@@ -329,7 +419,7 @@ function scheduleNextPoll() {
     const prevOrders = orders.value.map((o) => o.status).join(',')
     await fetchOrders()
     const hasChanged = orders.value.map((o) => o.status).join(',') !== prevOrders
-    const hasActive = orders.value.some((o) => o.status === 'paid' || o.status === 'preparing' || o.status === 'ready')
+    const hasActive = orders.value.some((o) => o.status === 'unpaid' || o.status === 'paid' || o.status === 'preparing' || o.status === 'ready')
 
     if (hasChanged) {
       pollInterval = POLL_MS
@@ -353,7 +443,7 @@ function stopPolling() {
 onMounted(() => {
   void fetchMerchantName()
   void fetchOrders().then(() => {
-    const hasActive = orders.value.some((o) => o.status === 'paid' || o.status === 'preparing' || o.status === 'ready')
+    const hasActive = orders.value.some((o) => o.status === 'unpaid' || o.status === 'paid' || o.status === 'preparing' || o.status === 'ready')
     if (hasActive) scheduleNextPoll()
   })
 })
@@ -403,6 +493,7 @@ onUnmounted(() => {
 .takeaway-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--radius-full); background: var(--primary-container); color: var(--on-primary); font-size: 11px; font-weight: 700; text-transform: none; letter-spacing: normal; }
 .ticket-number { font-family: var(--font-display); font-size: 64px; font-weight: 800; color: var(--primary-container); letter-spacing: -0.04em; line-height: 1; }
 .ticket-status { margin-top: var(--spacing-sm); font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; }
+.ticket-status-unpaid { color: var(--error); }
 .ticket-status-paid { color: var(--tertiary); }
 .ticket-status-preparing { color: var(--primary-container); }
 .ticket-status-ready { color: var(--tertiary); }
@@ -456,6 +547,79 @@ onUnmounted(() => {
 .toast-enter-from { opacity: 0; transform: translateX(-50%) translateY(12px); }
 .toast-leave-to { opacity: 0; transform: translateX(-50%) translateY(-8px); }
 .c-sign { font-size: 0.85em; padding: 0 1px; }
+
+/* Payment Footer for unpaid orders */
+.pay-reminder {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  margin-bottom: var(--spacing-md);
+}
+.pay-reminder-icon { font-size: 20px !important; color: var(--error); }
+.pay-reminder-text { font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; color: var(--error); }
+.pay-qr-row {
+  display: flex; gap: var(--spacing-md); justify-content: center;
+  margin-bottom: var(--spacing-md);
+}
+.pay-qr-box {
+  width: 100px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.pay-qr-img { width: 100%; height: 100px; object-fit: contain; border-radius: var(--radius-md); background: #fff; }
+.pay-qr-label { font-size: var(--text-label-sm); font-weight: 600; color: var(--secondary); }
+.pay-now-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-xl);
+  border: none; border-radius: var(--radius-full);
+  background: var(--primary-container); color: var(--on-primary);
+  font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700;
+  cursor: pointer; transition: transform var(--transition-fast);
+}
+.pay-now-btn:active { transform: scale(0.98); }
+
+/* Payment Popup (reuse checkout styles) */
+.payment-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+}
+.payment-popup {
+  background: var(--surface); border-radius: var(--radius-xl);
+  padding: var(--spacing-xl); width: 380px; max-width: 90vw;
+  text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.popup-header { margin-bottom: var(--spacing-lg); }
+.popup-icon .material-icons { font-size: 48px; color: var(--primary-container); }
+.popup-header h3 { margin: var(--spacing-sm) 0 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; line-height: 1.3; }
+.popup-amount { font-family: var(--font-display); font-size: var(--text-display-lg); font-weight: 800; color: var(--primary-container); margin: var(--spacing-sm) 0 0; line-height: 1.2; }
+.popup-order-no { font-size: var(--text-label-sm); color: var(--secondary); margin: var(--spacing-xs) 0 0; }
+.popup-qr-row { display: flex; gap: var(--spacing-lg); justify-content: center; margin-bottom: var(--spacing-lg); }
+.popup-qr-box { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.popup-qr-img { width: 120px; height: 120px; object-fit: contain; background: #fff; border-radius: var(--radius-lg); }
+.popup-qr-label { font-size: var(--text-label-sm); font-weight: 600; color: var(--secondary); }
+.popup-hint { font-size: var(--text-body-sm); line-height: 1.5; color: var(--secondary); margin-bottom: var(--spacing-lg); }
+.popup-error { color: var(--error); font-size: var(--text-body-sm); line-height: 1.5; margin-bottom: var(--spacing-md); padding: 8px; background: var(--error-container); border-radius: var(--radius-md); }
+.popup-paid-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm);
+  width: 100%; padding: var(--spacing-md);
+  border: none; border-radius: var(--radius-full);
+  background: var(--primary-container); color: var(--on-primary);
+  font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700;
+  cursor: pointer; transition: transform var(--transition-fast);
+}
+.popup-paid-btn:active { transform: scale(0.98); }
+.popup-paid-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.popup-cancel-btn {
+  display: block; margin: var(--spacing-md) auto 0;
+  background: none; border: none;
+  font-family: var(--font-display); font-size: var(--text-body-sm); color: var(--secondary);
+  cursor: pointer; text-decoration: underline;
+}
+.spinner {
+  width: 20px; height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
 
 @media (max-width: 499px) {
   .page-content {
