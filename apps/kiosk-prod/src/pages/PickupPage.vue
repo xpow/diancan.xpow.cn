@@ -200,6 +200,7 @@ interface OrderSummary {
   items: OrderItem[]
   totals: OrderTotals
   createdAt: string
+  paidAt?: string
 }
 
 const orders = ref<OrderSummary[]>([])
@@ -241,8 +242,8 @@ const tabs = [
 ]
 
 const filteredOrders = computed(() => {
-  if (tab.value === 'active') return orders.value.filter((o) => o.status === 'unpaid' || o.status === 'paid' || o.status === 'preparing')
-  if (tab.value === 'ready') return orders.value.filter((o) => o.status === 'ready')
+  if (tab.value === 'active') return orders.value.filter((o) => o.status === 'unpaid' || o.status === 'paid' || o.status === 'preparing' || (o.status === 'completed' && !o.paidAt))
+  if (tab.value === 'ready') return orders.value.filter((o) => o.status === 'ready' || (o.status === 'completed' && !o.paidAt))
   return []
 })
 
@@ -252,8 +253,8 @@ const tabLabel = computed(() => {
 })
 
 function badgeCount(key: string) {
-  if (key === 'active') return orders.value.filter((o) => o.status === 'unpaid' || o.status === 'paid' || o.status === 'preparing').length || ''
-  if (key === 'ready') return orders.value.filter((o) => o.status === 'ready').length || ''
+  if (key === 'active') return orders.value.filter((o) => o.status === 'unpaid' || o.status === 'paid' || o.status === 'preparing' || (o.status === 'completed' && !o.paidAt)).length || ''
+  if (key === 'ready') return orders.value.filter((o) => o.status === 'ready' || (o.status === 'completed' && !o.paidAt)).length || ''
   return ''
 }
 
