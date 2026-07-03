@@ -705,6 +705,8 @@ app.post('/api/orders', orderLimiter, authMiddleware, async (req, res) => {
   const branchCode = branch?.code?.toUpperCase() || 'X'
   const devCode = (device?.code || '00').padStart(2, '0')
   console.log(`[DEBUG] order deviceId=${deviceId} code=${device?.code} sn=${device?.sn} pickupCode=${branchCode}${devCode}`)
+  const type = orderType === 'takeaway' ? 'takeaway' : 'dine-in'
+
   const todayStart = new Date()
   todayStart.setHours(0, 0, 0, 0)
   const todayOrderCount = await prisma.order.count({
@@ -713,11 +715,9 @@ app.post('/api/orders', orderLimiter, authMiddleware, async (req, res) => {
   const dailySeq = String(todayOrderCount + 1).padStart(3, '0')
   const pickupCode = `${branchCode}${devCode}${dailySeq}`
 
-  // 订单号
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '')
-  const orderNo = `DC${dateStr}${dailySeq}${devCode}`
-
-  const type = orderType === 'takeaway' ? 'takeaway' : 'dine-in'
+  const rand = Math.random().toString(36).substring(2, 6).toUpperCase()
+  const orderNo = `DC${dateStr}${dailySeq}${devCode}${rand}`
 
   const order = await prisma.order.create({
     data: {
