@@ -9,7 +9,7 @@ import adminRouter from './admin.js'
 import { loadGlobalCache, buildGlobalCache } from './cache.js'
 
 const app = express()
-app.set('trust proxy', true)
+app.set('trust proxy', 1)
 const port = Number(process.env.PORT || 3011)
 const prisma = new PrismaClient()
 
