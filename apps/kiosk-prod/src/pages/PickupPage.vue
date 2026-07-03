@@ -90,7 +90,7 @@
               </div>
               <button class="pay-now-btn" @click="selectedPayOrder = order; showPayPopup = true">
                 <span class="material-icons">check_circle</span>
-                我已付款
+                 立即付款
               </button>
             </template>
             <template v-else>
@@ -145,7 +145,7 @@
             </template>
             <template v-else>
               <span class="material-icons">check_circle</span>
-              <span>我已支付</span>
+              <span>立即付款</span>
             </template>
           </button>
           <button class="popup-cancel-btn" @click="showPayPopup = false">关闭</button>
