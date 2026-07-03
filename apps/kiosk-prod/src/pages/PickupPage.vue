@@ -127,7 +127,6 @@
             </span>
             <h3>扫码付款</h3>
             <p class="popup-amount"><small class="c-sign">¥</small>{{ selectedPayOrder.totals.payableAmount.toFixed(2) }}</p>
-            <p class="popup-order-no">{{ selectedPayOrder.orderNo }}</p>
           </div>
           <div class="popup-qr-row">
             <div class="popup-qr-box">
@@ -596,7 +595,7 @@ onUnmounted(() => {
 .popup-order-no { font-size: var(--text-label-sm); color: var(--secondary); margin: var(--spacing-xs) 0 0; }
 .popup-qr-row { display: flex; gap: var(--spacing-lg); justify-content: center; margin-bottom: var(--spacing-lg); }
 .popup-qr-box { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.popup-qr-img { width: 120px; height: 120px; object-fit: contain; background: #fff; border-radius: var(--radius-lg); }
+.popup-qr-img { width: 140px; height: 140px; object-fit: contain; background: #fff; border-radius: var(--radius-lg); }
 .popup-qr-label { font-size: var(--text-label-sm); font-weight: 600; color: var(--secondary); }
 .popup-hint { font-size: var(--text-body-sm); line-height: 1.5; color: var(--secondary); margin-bottom: var(--spacing-lg); }
 .popup-error { color: var(--error); font-size: var(--text-body-sm); line-height: 1.5; margin-bottom: var(--spacing-md); padding: 8px; background: var(--error-container); border-radius: var(--radius-md); }
