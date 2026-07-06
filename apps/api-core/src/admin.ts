@@ -956,6 +956,9 @@ function parseDeviceType(ua: string): string {
   } else if (ua.includes('Chrome/') && !ua.includes('Edg/') && !ua.includes('OPR/')) {
     const m = ua.match(/Chrome\/([\d.]+)/)
     browser = m ? `Chrome ${m[1]}` : 'Chrome'
+  } else if (ua.includes('MicroMessenger')) {
+    const m = ua.match(/MicroMessenger\/([\d.]+)/)
+    browser = m ? `微信 ${m[1]}` : '微信'
   } else if (ua.includes('Safari/') && !ua.includes('Chrome/')) {
     const m = ua.match(/Version\/([\d.]+)/)
     browser = m ? `Safari ${m[1]}` : 'Safari'
@@ -963,7 +966,12 @@ function parseDeviceType(ua: string): string {
     const m = ua.match(/Firefox\/([\d.]+)/)
     browser = m ? `Firefox ${m[1]}` : 'Firefox'
   }
-  const parts = [os, browser].filter(Boolean)
+  // 网络类型（WeChat UA: NetType/WIFI）
+  let netType = ''
+  const nm = ua.match(/NetType\/(\S+)/)
+  if (nm) netType = nm[1] === 'WIFI' ? 'WiFi' : nm[1]
+
+  const parts = [os, browser, netType].filter(Boolean)
   return parts.length > 0 ? parts.join(' / ') : '其他设备'
 }
 
