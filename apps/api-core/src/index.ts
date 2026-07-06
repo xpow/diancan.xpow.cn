@@ -904,13 +904,23 @@ app.post('/api/system/device-auth', authLimiter, async (req, res) => {
     return res.status(403).json({ message: '该设备已下线，无法使用' })
   }
   console.log(`[DEBUG] device-auth sn=${sn} deviceId=${device.id} code=${device.code}`)
-  // 复用设备已有指纹的 UUID，避免 localStorage 清除后 UUID 漂移
-  const existingFp = await prisma.deviceFingerprint.findFirst({
-    where: { deviceId: device.id },
-    orderBy: { updatedAt: 'desc' },
-    select: { uuid: true },
-  })
-  const authUuid = existingFp?.uuid || uuid || ''
+  // 复用该 uuid 已有指纹（同一设备重连），新 uuid 则作为独立设备计入
+  let authUuid = ''
+  if (uuid) {
+    const existing = await prisma.deviceFingerprint.findUnique({
+      where: { deviceId_uuid: { deviceId: device.id, uuid } },
+      select: { uuid: true },
+    })
+    authUuid = existing ? existing.uuid : uuid
+  } else {
+    // 旧客户端未传 uuid 时兼容回退
+    const fp = await prisma.deviceFingerprint.findFirst({
+      where: { deviceId: device.id },
+      orderBy: { updatedAt: 'desc' },
+      select: { uuid: true },
+    })
+    authUuid = fp?.uuid || ''
+  }
   prisma.deviceAuthLog.create({
     data: {
       deviceId: device.id,
