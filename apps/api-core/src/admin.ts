@@ -953,12 +953,12 @@ function parseDeviceType(ua: string): string {
   if (ua.includes('Edg/') || ua.includes('Edge/')) {
     const m = ua.match(/Edg[e]?\/([\d.]+)/)
     browser = m ? `Edge ${m[1]}` : 'Edge'
-  } else if (ua.includes('Chrome/') && !ua.includes('Edg/') && !ua.includes('OPR/')) {
-    const m = ua.match(/Chrome\/([\d.]+)/)
-    browser = m ? `Chrome ${m[1]}` : 'Chrome'
   } else if (ua.includes('MicroMessenger')) {
     const m = ua.match(/MicroMessenger\/([\d.]+)/)
     browser = m ? `微信 ${m[1]}` : '微信'
+  } else if (ua.includes('Chrome/') && !ua.includes('Edg/') && !ua.includes('OPR/')) {
+    const m = ua.match(/Chrome\/([\d.]+)/)
+    browser = m ? `Chrome ${m[1]}` : 'Chrome'
   } else if (ua.includes('Safari/') && !ua.includes('Chrome/')) {
     const m = ua.match(/Version\/([\d.]+)/)
     browser = m ? `Safari ${m[1]}` : 'Safari'
