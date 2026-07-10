@@ -21,8 +21,26 @@
           <InputText v-model="form.businessHours" class="w-full" placeholder="例：17:00-02:00" />
         </div>
         <div class="form-group flex-1">
-          <label>营业状态文字</label>
-          <InputText v-model="form.statusText" class="w-full" placeholder="例：营业中" />
+          <label>营业状态</label>
+          <div class="status-toggle">
+            <Button
+              :label="'营业中'"
+              :severity="form.statusText === '营业中' ? 'success' : 'secondary'"
+              :outlined="form.statusText !== '营业中'"
+              size="small"
+              @click="setStatus('营业中')"
+            />
+            <Button
+              :label="'休息中'"
+              :severity="form.statusText === '休息中' ? 'danger' : 'secondary'"
+              :outlined="form.statusText !== '休息中'"
+              size="small"
+              @click="setStatus('休息中')"
+            />
+          </div>
+          <p v-if="form.statusText === '休息中' && form.restReason" class="rest-reason-text">
+            原因：{{ form.restReason }} <Button icon="pi pi-pencil" text size="small" @click="showRestReason = true" />
+          </p>
         </div>
       </div>
       <div class="form-group">
@@ -30,6 +48,24 @@
         <InputText v-model="form.logoUrl" class="w-full" placeholder="https://..." />
       </div>
     </div>
+
+    <!-- 休息原因弹窗 -->
+    <Dialog v-model:visible="showRestReason" header="选择休息原因" style="width:380px">
+      <div class="reason-list">
+        <div
+          v-for="reason in restReasons" :key="reason"
+          :class="['reason-option', form.restReason === reason && 'reason-option-active']"
+          @click="form.restReason = reason"
+        >
+          <span class="reason-radio" :class="{ 'reason-radio-checked': form.restReason === reason }"></span>
+          {{ reason }}
+        </div>
+      </div>
+      <template #footer>
+        <Button label="取消" severity="secondary" @click="showRestReason = false" />
+        <Button label="确定" @click="confirmRestReason" />
+      </template>
+    </Dialog>
 
     <div class="section-header" style="margin-top:24px">
       <h3 class="card-title">分店管理</h3>
@@ -214,7 +250,9 @@ import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import Tag from 'primevue/tag'
 
-const form = ref({ name: '', slogan: '', businessHours: '', statusText: '', logoUrl: '' })
+const form = ref({ name: '', slogan: '', businessHours: '', statusText: '', restReason: '', logoUrl: '' })
+const showRestReason = ref(false)
+const restReasons = ['天气原因', '市政管理', '停业休息']
 
 const branches = ref<any[]>([])
 const showBranch = ref(false)
@@ -244,9 +282,23 @@ async function fetchMerchant() {
     slogan: data.slogan || '',
     businessHours: data.businessHours || '',
     statusText: data.statusText || '',
+    restReason: data.restReason || '',
     logoUrl: data.logoUrl || '',
   }
   branches.value = data.branches || []
+}
+
+function setStatus(status: string) {
+  form.value.statusText = status
+  if (status === '营业中') {
+    form.value.restReason = ''
+  } else {
+    showRestReason.value = true
+  }
+}
+
+function confirmRestReason() {
+  showRestReason.value = false
 }
 
 async function saveMerchant() {
@@ -398,6 +450,14 @@ onMounted(() => {
 .form-row { display: flex; gap: 12px; }
 .flex-1 { flex: 1; }
 .w-full { width: 100%; }
+.status-toggle { display: flex; gap: 8px; }
+.rest-reason-text { margin: 4px 0 0; font-size: 13px; color: #e74c3c; display: flex; align-items: center; gap: 4px; }
+.reason-list { display: flex; flex-direction: column; gap: 8px; }
+.reason-option { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; border: 1px solid #e0e0e0; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+.reason-option:hover { border-color: #ff6b00; background: #fff8f0; }
+.reason-option-active { border-color: #ff6b00; background: #fff8f0; color: #ff6b00; font-weight: 600; }
+.reason-radio { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #ccc; display: inline-block; transition: all 0.2s; }
+.reason-radio-checked { border-color: #ff6b00; background: #ff6b00; box-shadow: inset 0 0 0 3px #fff; }
 .sn-text { font-family: monospace; font-size: 13px; letter-spacing: 1px; }
 .sn-empty { color: #999; }
 .device-status-cell { display: flex; align-items: center; gap: 4px; }

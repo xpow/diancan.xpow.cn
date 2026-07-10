@@ -635,6 +635,7 @@ router.get('/merchant', async (_req, res) => {
     slogan: merchant.slogan,
     businessHours: merchant.businessHours,
     statusText: merchant.statusText,
+    restReason: merchant.restReason,
     logoUrl: merchant.logoUrl,
     features: JSON.parse(merchant.features),
     branches: await Promise.all(branches.map(async (b) => ({
@@ -655,12 +656,13 @@ router.put('/merchant', async (req, res) => {
   const merchant = await prisma.merchant.findFirst()
   if (!merchant) return res.status(404).json({ message: 'merchant not found' })
 
-  const { name, slogan, businessHours, statusText, logoUrl, features } = req.body ?? {}
+  const { name, slogan, businessHours, statusText, restReason, logoUrl, features } = req.body ?? {}
   const data: any = {}
   if (name !== undefined) data.name = name
   if (slogan !== undefined) data.slogan = slogan
   if (businessHours !== undefined) data.businessHours = businessHours
   if (statusText !== undefined) data.statusText = statusText
+  if (restReason !== undefined) data.restReason = restReason
   if (logoUrl !== undefined) data.logoUrl = logoUrl
   if (features !== undefined) data.features = JSON.stringify(features)
 

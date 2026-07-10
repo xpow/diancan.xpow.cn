@@ -5,9 +5,9 @@
       <h1>{{ title }}</h1>
     </div>
     <div class="top-bar-right">
-      <span class="status-badge">
-        <span class="status-dot"></span>
-        <span>{{ statusText }}</span>
+      <span :class="['status-badge', !isOpen && 'status-badge-rest']">
+        <span :class="['status-dot', !isOpen && 'status-dot-rest']"></span>
+        <span>{{ effectiveStatusText }}</span>
       </span>
       <span class="device-tag">{{ deviceCode }}</span>
       <button class="theme-btn" @click="toggleTheme">
@@ -26,17 +26,40 @@
 
 <script setup lang="ts">
 import logoImage from '@/assets/images/pages/logo.jpg'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { getTheme, setTheme } from '@/utils/theme'
 
-defineProps<{
+const props = defineProps<{
   title: string
   deviceCode?: string
   statusText?: string
+  businessHours?: string
+  restReason?: string
   showTicket?: boolean
   hasActiveOrder?: boolean
   showHomeLink?: boolean
 }>()
+
+function isWithinBusinessHours(hours: string): boolean {
+  const m = hours.match(/^(\d{1,2}):(\d{2})\s*[-–]\s*(\d{1,2}):(\d{2})$/)
+  if (!m) return true
+  const startMin = parseInt(m[1]) * 60 + parseInt(m[2])
+  let endMin = parseInt(m[3]) * 60 + parseInt(m[4])
+  const now = new Date()
+  const nowMin = now.getHours() * 60 + now.getMinutes()
+  if (endMin <= startMin) endMin += 1440
+  const compareMin = nowMin < startMin ? nowMin + 1440 : nowMin
+  return compareMin >= startMin && compareMin < endMin
+}
+
+const effectiveStatusText = computed(() => {
+  if (props.businessHours && !isWithinBusinessHours(props.businessHours)) {
+    return props.restReason ? `休息中（${props.restReason}）` : '休息中'
+  }
+  return props.statusText || '营业中'
+})
+
+const isOpen = computed(() => effectiveStatusText.value === '营业中' || (!effectiveStatusText.value.includes('休息')))
 
 const themeIcon = ref(getThemeIcon())
 function getThemeIcon(): string {
@@ -59,7 +82,9 @@ function toggleTheme() {
 .brand h1 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline); font-weight: 700; color: var(--primary-container); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
 .device-tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 9999px; background: rgba(255,107,0,0.1); color: var(--primary-container); font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; }
 .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 9999px; background: rgba(0,110,28,0.1); color: var(--tertiary); font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; }
+.status-badge-rest { background: rgba(200,40,40,0.1); color: #c62828; }
 .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #00c853; box-shadow: 0 0 6px #00c853; animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+.status-dot-rest { background: #c62828; box-shadow: 0 0 6px #c62828; }
 @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); box-shadow: 0 0 6px #00c853; } 50% { opacity: 0.85; transform: scale(0.95); box-shadow: 0 0 2px #00c853; } }
 .ticket-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; border-radius: 50%; cursor: pointer; color: var(--secondary); text-decoration: none; position: relative; }
 .top-bar-right { display: flex; align-items: center; gap: var(--spacing-sm); flex-shrink: 0; }

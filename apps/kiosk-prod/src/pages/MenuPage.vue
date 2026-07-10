@@ -4,6 +4,8 @@
       :title="displayTitle"
       :device-code="deviceCode"
       :status-text="statusText"
+      :business-hours="businessHours"
+      :rest-reason="restReason"
       :show-ticket="true"
       :has-active-order="hasActiveOrder"
     />
@@ -109,7 +111,7 @@ const {
   deviceId, deviceCode, statusText, displayTitle, heroImage,
   categoryIcons, categories, selectedCategoryId, filteredDishes,
   highlightDishId, navFloating, navSentinel,
-  qtyGroupIndex, onCustomQty, dishes,
+  qtyGroupIndex, onCustomQty, dishes, businessHours, restReason,
 } = useMenu()
 
 const {

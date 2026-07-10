@@ -204,6 +204,7 @@ app.get('/api/system/bootstrap', generalLimiter, async (req, res) => {
     todayLocation: branch?.todayLocation ?? '',
     locationHint: branch?.locationHint ?? '',
     statusText: merchant.statusText,
+    restReason: merchant.restReason,
     features: merchant.features,
     promotions: availablePromotions.map((p: any) => {
       const rules = typeof p.rules === 'string' ? JSON.parse(p.rules) : p.rules

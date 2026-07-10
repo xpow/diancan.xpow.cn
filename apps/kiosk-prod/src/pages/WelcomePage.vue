@@ -1,5 +1,5 @@
 ﻿<template>
-  <KioskTopBar v-if="deviceAuthed" :title="displayTitle" :status-text="bootstrap?.statusText || '营业中'" :device-code="bootstrap?.deviceCode ?? ''" />
+  <KioskTopBar v-if="deviceAuthed" :title="displayTitle" :status-text="bootstrap?.statusText || '营业中'" :business-hours="bootstrap?.businessHours" :rest-reason="bootstrap?.restReason" :device-code="bootstrap?.deviceCode ?? ''" />
   <main class="page">
     <template v-if="deviceAuthed">
     <!-- Hero Carousel -->
@@ -221,6 +221,7 @@ interface BootstrapResponse {
   todayLocation: string
   locationHint: string
   statusText: string
+  restReason?: string
   promotions: BootstrapPromotion[]
   featuredItems: FeaturedItem[]
   devices?: DeviceInfo[]

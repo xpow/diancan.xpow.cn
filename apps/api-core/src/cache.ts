@@ -19,6 +19,7 @@ export interface GlobalCache {
     slogan: string
     businessHours: string
     statusText: string
+    restReason: string
     features: any
   }
   branch: {
@@ -80,6 +81,7 @@ export async function buildGlobalCache(): Promise<GlobalCache> {
       slogan: merchant.slogan ?? '',
       businessHours: merchant.businessHours ?? '',
       statusText: merchant.statusText ?? '',
+      restReason: merchant.restReason ?? '',
       features: JSON.parse(merchant.features),
     },
     branch: branch ? {

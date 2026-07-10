@@ -31,6 +31,8 @@ export function useMenu() {
   const deviceId = ref('')
   const deviceCode = ref('')
   const statusText = ref('')
+  const businessHours = ref('')
+  const restReason = ref('')
   const categories = ref<MenuCategory[]>([])
   const dishes = ref<MenuDish[]>([])
   const selectedCategoryId = ref('')
@@ -84,7 +86,8 @@ export function useMenu() {
       if (!bootstrapResponse.ok) throw new Error('接口返回异常，请检查 api-core 是否已启动')
       const bootstrap = await bootstrapResponse.json() as {
         merchantName?: string; branchName: string; deviceId?: string
-        deviceCode?: string; statusText?: string; deviceActive?: boolean
+        deviceCode?: string; statusText?: string; businessHours?: string; restReason?: string
+        deviceActive?: boolean
       }
 
       if (bootstrap.deviceActive === false) {
@@ -116,6 +119,8 @@ export function useMenu() {
       deviceId.value = bootstrap.deviceId ?? ''
       deviceCode.value = bootstrap.deviceCode ?? ''
       statusText.value = bootstrap.statusText ?? ''
+      businessHours.value = bootstrap.businessHours ?? ''
+      restReason.value = bootstrap.restReason ?? ''
       categories.value = [...menu.categories].sort((a, b) => a.sort - b.sort)
 
       dishes.value = menu.dishes.map((d) => {
@@ -195,7 +200,7 @@ export function useMenu() {
 
   return {
     loading, errorMessage,
-    merchantName, branchName, deviceId, deviceCode, statusText,
+    merchantName, branchName, deviceId, deviceCode, statusText, businessHours, restReason,
     displayTitle, heroImage, categoryIcons,
     categories, dishes, selectedCategoryId, filteredDishes,
     highlightDishId, navFloating, navSentinel,
