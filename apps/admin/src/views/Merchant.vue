@@ -15,12 +15,6 @@
         <label>标语</label>
         <InputText v-model="form.slogan" class="w-full" />
       </div>
-      <div class="form-row">
-        <div class="form-group flex-1">
-          <label>营业时间</label>
-          <InputText v-model="form.businessHours" class="w-full" placeholder="例：17:00-02:00" />
-        </div>
-      </div>
       <div class="form-group">
         <label>Logo URL</label>
         <InputText v-model="form.logoUrl" class="w-full" placeholder="https://..." />
@@ -110,6 +104,10 @@
       <div class="form-group">
         <label>位置提示</label>
         <InputText v-model="branchForm.locationHint" class="w-full" placeholder="如：对着蜜雪冰城" />
+      </div>
+      <div class="form-group">
+        <label>营业时间</label>
+        <InputText v-model="branchForm.businessHours" class="w-full" placeholder="例：17:00-02:00" />
       </div>
       <template #footer>
         <Button label="取消" severity="secondary" @click="showBranch = false" />
@@ -246,7 +244,7 @@ import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import Tag from 'primevue/tag'
 
-const form = ref({ name: '', slogan: '', businessHours: '', statusText: '', logoUrl: '' })
+const form = ref({ name: '', slogan: '', statusText: '', logoUrl: '' })
 const showRestReason = ref(false)
 const restReasons = ['天气原因', '市政管理', '停业休息']
 const restTarget = ref<any>(null)
@@ -255,7 +253,8 @@ const restFormReason = ref('')
 const branches = ref<any[]>([])
 const showBranch = ref(false)
 const editingBranch = ref(false)
-const branchForm = ref({ code: '', name: '', address: '', todayLocation: '', locationHint: '' })
+const branchEditId = ref('')
+const branchForm = ref({ code: '', name: '', address: '', todayLocation: '', locationHint: '', businessHours: '' })
 
 const devices = ref<any[]>([])
 const showDevice = ref(false)
@@ -278,7 +277,6 @@ async function fetchMerchant() {
   form.value = {
     name: data.name || '',
     slogan: data.slogan || '',
-    businessHours: data.businessHours || '',
     statusText: data.statusText || '',
     logoUrl: data.logoUrl || '',
   }
@@ -328,15 +326,16 @@ async function saveMerchant() {
 /* Branch */
 function openBranchDialog(branch?: any) {
   editingBranch.value = !!branch
+  branchEditId.value = branch?.id ?? ''
   branchForm.value = branch
-    ? { code: branch.code || '', name: branch.name, address: branch.address || '', todayLocation: branch.todayLocation || '', locationHint: branch.locationHint || '' }
-    : { code: '', name: '', address: '', todayLocation: '', locationHint: '' }
+    ? { code: branch.code || '', name: branch.name, address: branch.address || '', todayLocation: branch.todayLocation || '', locationHint: branch.locationHint || '', businessHours: branch.businessHours || '' }
+    : { code: '', name: '', address: '', todayLocation: '', locationHint: '', businessHours: '' }
   showBranch.value = true
 }
 
 async function saveBranch() {
   const url = editingBranch.value
-    ? `/api/admin/branches/${(branches.value.find((b) => b.name === branchForm.value.name)?.id)}`
+    ? `/api/admin/branches/${branchEditId.value}`
     : '/api/admin/branches'
   await fetch(url, {
     method: editingBranch.value ? 'PUT' : 'POST',

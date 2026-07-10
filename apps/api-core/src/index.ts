@@ -200,7 +200,7 @@ app.get('/api/system/bootstrap', generalLimiter, async (req, res) => {
     deviceMode: device?.mode ?? 'kiosk',
     deviceActive: device?.status === 'active',
     slogan: merchant.slogan,
-    businessHours: merchant.businessHours,
+    businessHours: branch?.businessHours || merchant.businessHours,
     todayLocation: branch?.todayLocation ?? '',
     locationHint: branch?.locationHint ?? '',
     statusText: merchant.statusText,

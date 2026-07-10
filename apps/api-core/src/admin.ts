@@ -646,6 +646,7 @@ router.get('/merchant', async (_req, res) => {
       todayLocation: b.todayLocation,
       locationHint: b.locationHint,
       status: b.status,
+      businessHours: b.businessHours,
       restReason: b.restReason,
       deviceCount: await prisma.device.count({ where: { branchId: b.id } }),
       orderCount: await prisma.order.count({ where: { branchId: b.id } }),
@@ -657,13 +658,11 @@ router.put('/merchant', async (req, res) => {
   const merchant = await prisma.merchant.findFirst()
   if (!merchant) return res.status(404).json({ message: 'merchant not found' })
 
-  const { name, slogan, businessHours, statusText, restReason, logoUrl, features } = req.body ?? {}
+  const { name, slogan, statusText, logoUrl, features } = req.body ?? {}
   const data: any = {}
   if (name !== undefined) data.name = name
   if (slogan !== undefined) data.slogan = slogan
-  if (businessHours !== undefined) data.businessHours = businessHours
   if (statusText !== undefined) data.statusText = statusText
-  if (restReason !== undefined) data.restReason = restReason
   if (logoUrl !== undefined) data.logoUrl = logoUrl
   if (features !== undefined) data.features = JSON.stringify(features)
 
@@ -696,6 +695,7 @@ router.get('/branches', async (_req, res) => {
       locationHint: b.locationHint,
       bannerUrl: b.bannerUrl,
       status: b.status,
+      businessHours: b.businessHours,
       restReason: b.restReason,
       deviceCount: b._count.devices,
       orderCount: b._count.orders,
@@ -730,7 +730,7 @@ router.post('/branches', async (req, res) => {
 
 router.put('/branches/:id', async (req, res) => {
   const { id } = req.params
-  const { code, name, address, lat, lng, todayLocation, locationHint, bannerUrl, status, restReason } = req.body ?? {}
+  const { code, name, address, lat, lng, todayLocation, locationHint, bannerUrl, status, businessHours, restReason } = req.body ?? {}
 
   const branch = await prisma.branch.findUnique({ where: { id } })
   if (!branch) return res.status(404).json({ message: '分店不存在' })
@@ -745,6 +745,7 @@ router.put('/branches/:id', async (req, res) => {
   if (locationHint !== undefined) data.locationHint = locationHint
   if (bannerUrl !== undefined) data.bannerUrl = bannerUrl
   if (status !== undefined) data.status = status
+  if (businessHours !== undefined) data.businessHours = businessHours
   if (restReason !== undefined) data.restReason = restReason
 
   await prisma.branch.update({ where: { id }, data })

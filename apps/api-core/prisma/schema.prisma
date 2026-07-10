@@ -40,6 +40,7 @@ model Branch {
   locationHint String?
   bannerUrl String?
   status    String   @default("active")
+  businessHours String @default("")
   restReason String  @default("")
 
   merchant Merchant @relation(fields: [merchantId], references: [id])
