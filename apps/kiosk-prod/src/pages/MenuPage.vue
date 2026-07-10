@@ -4,6 +4,7 @@
       :title="displayTitle"
       :device-code="deviceCode"
       :status-text="statusText"
+      :branch-status="branchStatus"
       :business-hours="businessHours"
       :rest-reason="restReason"
       :show-ticket="true"
@@ -108,7 +109,7 @@ import SpecSelector from '@/components/SpecSelector.vue'
 
 const {
   loading, errorMessage, merchantName, branchName,
-  deviceId, deviceCode, statusText, displayTitle, heroImage,
+  deviceId, deviceCode, statusText, branchStatus, displayTitle, heroImage,
   categoryIcons, categories, selectedCategoryId, filteredDishes,
   highlightDishId, navFloating, navSentinel,
   qtyGroupIndex, onCustomQty, dishes, businessHours, restReason,

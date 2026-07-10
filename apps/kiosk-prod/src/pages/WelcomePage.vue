@@ -1,5 +1,5 @@
 ﻿<template>
-  <KioskTopBar v-if="deviceAuthed" :title="displayTitle" :status-text="bootstrap?.statusText || '营业中'" :business-hours="bootstrap?.businessHours" :rest-reason="bootstrap?.restReason" :device-code="bootstrap?.deviceCode ?? ''" />
+  <KioskTopBar v-if="deviceAuthed" :title="displayTitle" :status-text="bootstrap?.statusText || '营业中'" :branch-status="bootstrap?.branchStatus" :business-hours="bootstrap?.businessHours" :rest-reason="bootstrap?.restReason" :device-code="bootstrap?.deviceCode ?? ''" />
   <main class="page">
     <template v-if="deviceAuthed">
     <!-- Hero Carousel -->

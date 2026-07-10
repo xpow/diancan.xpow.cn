@@ -1,7 +1,7 @@
 ﻿<template>
   <main class="page">
     <!-- Top Bar -->
-    <KioskTopBar :title="displayTitle" :device-code="deviceCode" :status-text="statusText" :business-hours="businessHours" :rest-reason="restReason" show-home-link />
+    <KioskTopBar :title="displayTitle" :device-code="deviceCode" :status-text="statusText" :branch-status="branchStatus" :business-hours="businessHours" :rest-reason="restReason" show-home-link />
 
     <!-- Content -->
     <div class="page-content">
@@ -274,6 +274,7 @@ const merchantName = ref('Sizzling Skewers')
 const branchName = ref('')
 const deviceCode = ref('')
 const statusText = ref('')
+const branchStatus = ref('')
 const businessHours = ref('')
 const restReason = ref('')
 const merchantId = ref('')
@@ -326,6 +327,7 @@ async function reloadQuote() {
       branchName?: string
       deviceCode?: string
       statusText?: string
+      branchStatus?: string
       businessHours?: string
       restReason?: string
       deviceActive?: boolean
@@ -367,6 +369,7 @@ async function reloadQuote() {
     if (bootstrap.branchName) branchName.value = bootstrap.branchName
     if (bootstrap.deviceCode) deviceCode.value = bootstrap.deviceCode
     if (bootstrap.statusText) statusText.value = bootstrap.statusText
+    branchStatus.value = bootstrap.branchStatus ?? ''
     if (bootstrap.businessHours) businessHours.value = bootstrap.businessHours
     if (bootstrap.restReason) restReason.value = bootstrap.restReason
     merchantId.value = bootstrap.merchantId

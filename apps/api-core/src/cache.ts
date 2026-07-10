@@ -26,6 +26,7 @@ export interface GlobalCache {
     id: string
     name: string
     code: string
+    status: string
     todayLocation: string
     locationHint: string
     businessHours: string
@@ -90,6 +91,7 @@ export async function buildGlobalCache(): Promise<GlobalCache> {
       id: branch.id,
       name: branch.name,
       code: branch.code,
+      status: branch.status,
       todayLocation: branch.todayLocation ?? '',
       locationHint: branch.locationHint ?? '',
       businessHours: branch.businessHours ?? '',

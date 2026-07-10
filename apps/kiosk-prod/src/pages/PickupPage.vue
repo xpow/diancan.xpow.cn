@@ -1,6 +1,6 @@
 ﻿<template>
   <main class="page">
-    <KioskTopBar :title="displayTitle" :device-code="deviceCode" :status-text="statusText" :business-hours="businessHours" :rest-reason="restReason" show-home-link />
+    <KioskTopBar :title="displayTitle" :device-code="deviceCode" :status-text="statusText" :branch-status="branchStatus" :business-hours="businessHours" :rest-reason="restReason" show-home-link />
 
     <div class="page-content">
       <div class="status-tabs">
@@ -209,6 +209,7 @@ const merchantName = ref('Sizzling Skewers')
 const branchName = ref('')
 const deviceCode = ref('')
 const statusText = ref('')
+const branchStatus = ref('')
 const businessHours = ref('')
 const restReason = ref('')
 const displayTitle = computed(() => {
@@ -352,7 +353,7 @@ async function fetchMerchantName() {
     const savedSN = localStorage.getItem('kiosk-device-sn')
     const res = await fetch(`/api/system/bootstrap${savedSN ? `?sn=${savedSN}` : ''}`)
     if (!res.ok) return
-    const data = await res.json() as { merchantName?: string; branchName?: string; deviceCode?: string; statusText?: string; businessHours?: string; restReason?: string; deviceActive?: boolean; deviceId?: string; commands?: { id: string; command: string }[] }
+    const data = await res.json() as { merchantName?: string; branchName?: string; deviceCode?: string; statusText?: string; branchStatus?: string; businessHours?: string; restReason?: string; deviceActive?: boolean; deviceId?: string; commands?: { id: string; command: string }[] }
 
     // 验证 token 对应的设备与 SN 匹配
     const authId = localStorage.getItem('kiosk-device-auth-id')
@@ -390,6 +391,7 @@ async function fetchMerchantName() {
     if (data.branchName) branchName.value = data.branchName
     if (data.deviceCode) deviceCode.value = data.deviceCode
     if (data.statusText) statusText.value = data.statusText
+    branchStatus.value = data.branchStatus ?? ''
     if (data.businessHours) businessHours.value = data.businessHours
     if (data.restReason) restReason.value = data.restReason
   } catch {}

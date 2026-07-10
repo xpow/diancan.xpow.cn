@@ -35,6 +35,7 @@ const props = defineProps<{
   statusText?: string
   businessHours?: string
   restReason?: string
+  branchStatus?: string
   showTicket?: boolean
   hasActiveOrder?: boolean
   showHomeLink?: boolean
@@ -53,13 +54,16 @@ function isWithinBusinessHours(hours: string): boolean {
 }
 
 const effectiveStatusText = computed(() => {
+  if (props.branchStatus === 'offline') {
+    return props.restReason ? `休息中（${props.restReason}）` : '休息中'
+  }
   if (props.businessHours && !isWithinBusinessHours(props.businessHours)) {
     return props.restReason ? `休息中（${props.restReason}）` : '休息中'
   }
-  return props.statusText || '营业中'
+  return '营业中'
 })
 
-const isOpen = computed(() => effectiveStatusText.value === '营业中' || (!effectiveStatusText.value.includes('休息')))
+const isOpen = computed(() => !effectiveStatusText.value.includes('休息'))
 
 const themeIcon = ref(getThemeIcon())
 function getThemeIcon(): string {

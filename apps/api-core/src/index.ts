@@ -204,6 +204,7 @@ app.get('/api/system/bootstrap', generalLimiter, async (req, res) => {
     todayLocation: branch?.todayLocation ?? '',
     locationHint: branch?.locationHint ?? '',
     statusText: merchant.statusText,
+    branchStatus: branch?.status ?? 'active',
     restReason: branch?.restReason ?? merchant.restReason,
     features: merchant.features,
     promotions: availablePromotions.map((p: any) => {
