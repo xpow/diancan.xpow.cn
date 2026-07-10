@@ -126,7 +126,7 @@
     <Teleport to="body">
       <div v-if="showPickupConfirm" class="payment-overlay" @click.self="showPickupConfirm = false">
         <div class="confirm-dialog">
-          <span class="material-icons confirm-icon">handshake</span>
+          <span class="material-icons confirm-icon">check_circle</span>
           <p class="confirm-text">确认已取餐？</p>
           <div class="confirm-order-info">
             <div class="confirm-info-row">
@@ -542,7 +542,7 @@ onUnmounted(() => {
 .tab { flex-shrink: 0; display: flex; align-items: center; gap: 4px; padding: 10px var(--spacing-md); border-radius: var(--radius-full); border: none; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; background: var(--surface-container-high); color: var(--secondary); cursor: pointer; transition: all var(--transition-fast); }
 .tab-active { background: var(--primary-container); color: var(--on-primary); }
 .tab-icon { font-size: 18px !important; }
-.tab-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 4px; border-radius: var(--radius-full); background: var(--error); color: #fff; font-size: 11px; font-weight: 700; line-height: 1; }
+.tab-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 4px; border-radius: var(--radius-full); background: #c62828; color: #fff; font-size: 11px; font-weight: 700; line-height: 1; }
 
 .order-divider { width: 100%; padding: var(--spacing-sm) 0; display: flex; align-items: center; justify-content: center; }
 .divider-line { width: 40px; height: 4px; border-radius: 2px; background: var(--outline-variant); }
@@ -745,7 +745,7 @@ onUnmounted(() => {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm);
   width: 100%; padding: 12px;
   border: none; border-radius: var(--radius-full);
-  background: var(--tertiary); color: #fff;
+  background: var(--primary-container); color: var(--on-primary);
   font-family: var(--font-display); font-size: 18px; font-weight: 700;
   cursor: pointer; transition: transform var(--transition-fast);
 }
@@ -759,7 +759,7 @@ onUnmounted(() => {
   position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
   z-index: 100;
 }
-.confirm-icon { font-size: 48px; color: var(--tertiary); }
+.confirm-icon { font-size: 48px; color: var(--primary-container); }
 .confirm-text { font-size: 18px; font-weight: 700; margin: var(--spacing-sm) 0 4px; }
 .confirm-hint { font-size: var(--text-body-sm); color: var(--secondary); margin: 0 0 var(--spacing-lg); }
 .confirm-order-info { width: 100%; margin-bottom: var(--spacing-lg); }
@@ -774,6 +774,6 @@ onUnmounted(() => {
   font-family: var(--font-display); font-size: 16px; font-weight: 600; cursor: pointer;
 }
 .confirm-cancel-btn { background: var(--surface-variant); border: none; color: var(--on-surface-variant); }
-.confirm-ok-btn { background: var(--tertiary); border: none; color: #fff; }
+.confirm-ok-btn { background: var(--primary-container); border: none; color: var(--on-primary); }
 .confirm-ok-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 </style>
