@@ -53,6 +53,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
 
 interface DishSales {
   dishId: string
@@ -158,7 +159,9 @@ async function fetchStats() {
   loaded.value = true
 }
 
-setQuick('yesterday')
+const route = useRoute()
+const range = route.query.range as string | undefined
+setQuick(range === 'all' ? 'all' : 'yesterday')
 </script>
 
 <style scoped>

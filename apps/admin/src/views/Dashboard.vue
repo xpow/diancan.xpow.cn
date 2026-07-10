@@ -7,34 +7,42 @@
 
     <div class="stats-grid">
       <router-link to="/orders" class="stat-card">
+        <i class="stat-icon pi pi-receipt"></i>
         <div class="stat-value">{{ stats.todayOrders }}</div>
         <div class="stat-label">今日有效订单</div>
       </router-link>
       <div class="stat-card">
+        <i class="stat-icon pi pi-check-circle"></i>
         <div class="stat-value">¥{{ stats.todayCompletedRevenue.toFixed(2) }}</div>
         <div class="stat-label">今日完成</div>
       </div>
       <div class="stat-card">
+        <i class="stat-icon pi pi-chart-line"></i>
         <div class="stat-value">¥{{ stats.todayEstimatedRevenue.toFixed(2) }}</div>
         <div class="stat-label">今日预估</div>
       </div>
       <router-link to="/orders" class="stat-card">
+        <i class="stat-icon pi pi-shopping-bag"></i>
         <div class="stat-value">{{ stats.totalOrders }}</div>
         <div class="stat-label">总有效订单</div>
       </router-link>
-      <router-link to="/stats" class="stat-card">
+      <router-link to="/stats?range=all" class="stat-card">
+        <i class="stat-icon pi pi-credit-card"></i>
         <div class="stat-value">¥{{ stats.completedRevenue.toFixed(2) }}</div>
         <div class="stat-label">已完成收入</div>
       </router-link>
       <div class="stat-card">
+        <i class="stat-icon pi pi-wallet"></i>
         <div class="stat-value">¥{{ stats.estimatedRevenue.toFixed(2) }}</div>
         <div class="stat-label">预估收入</div>
       </div>
       <router-link to="/orders?status=pending" class="stat-card">
+        <i class="stat-icon pi pi-clock"></i>
         <div class="stat-value">{{ stats.pendingOrders }}</div>
         <div class="stat-label">待处理</div>
       </router-link>
       <router-link to="/orders?status=ready" class="stat-card">
+        <i class="stat-icon pi pi-box"></i>
         <div class="stat-value">{{ stats.readyOrders }}</div>
         <div class="stat-label">待取餐</div>
       </router-link>
@@ -232,7 +240,8 @@ onMounted(fetchData)
 
 <style scoped>
 .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-.stat-card { display: block; background: #fff; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.08); text-decoration: none; transition: box-shadow 0.2s, transform 0.2s; }
+.stat-card { display: flex; flex-direction: column; align-items: center; background: #fff; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.08); text-decoration: none; transition: box-shadow 0.2s, transform 0.2s; }
+.stat-icon { font-size: 24px; color: var(--p-primary-color, #FF6B00); margin-bottom: 8px; }
 .stat-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.12); transform: translateY(-2px); cursor: pointer; }
 .stat-value { font-size: 28px; font-weight: 800; color: var(--p-primary-color, #FF6B00); }
 .stat-label { font-size: 13px; color: #666; margin-top: 4px; }

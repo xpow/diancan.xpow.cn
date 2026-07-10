@@ -46,8 +46,8 @@
     <DataTable :value="branches" striped-rows>
       <Column field="code" header="编号" style="width:80px" />
       <Column field="name" header="名称" />
-      <Column field="address" header="地址" />
-      <Column field="todayLocation" header="今日出摊位置" />
+      <Column field="todayLocation" header="出摊位置" />
+      <Column field="businessHours" header="营业时间" />
       <Column field="deviceCount" header="设备数" />
       <Column field="orderCount" header="订单数" />
       <Column field="status" header="状态">
