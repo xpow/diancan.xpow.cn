@@ -20,28 +20,6 @@
           <label>营业时间</label>
           <InputText v-model="form.businessHours" class="w-full" placeholder="例：17:00-02:00" />
         </div>
-        <div class="form-group flex-1">
-          <label>营业状态</label>
-          <div class="status-toggle">
-            <Button
-              :label="'营业中'"
-              :severity="form.statusText === '营业中' ? 'success' : 'secondary'"
-              :outlined="form.statusText !== '营业中'"
-              size="small"
-              @click="setStatus('营业中')"
-            />
-            <Button
-              :label="'休息中'"
-              :severity="form.statusText === '休息中' ? 'danger' : 'secondary'"
-              :outlined="form.statusText !== '休息中'"
-              size="small"
-              @click="setStatus('休息中')"
-            />
-          </div>
-          <p v-if="form.statusText === '休息中' && form.restReason" class="rest-reason-text">
-            原因：{{ form.restReason }} <Button icon="pi pi-pencil" text size="small" @click="showRestReason = true" />
-          </p>
-        </div>
       </div>
       <div class="form-group">
         <label>Logo URL</label>
@@ -50,14 +28,14 @@
     </div>
 
     <!-- 休息原因弹窗 -->
-    <Dialog v-model:visible="showRestReason" header="选择休息原因" style="width:380px">
+    <Dialog v-model:visible="showRestReason" :header="`休息原因 - ${restTarget?.name || ''}`" style="width:380px">
       <div class="reason-list">
         <div
           v-for="reason in restReasons" :key="reason"
-          :class="['reason-option', form.restReason === reason && 'reason-option-active']"
-          @click="form.restReason = reason"
+          :class="['reason-option', restFormReason === reason && 'reason-option-active']"
+          @click="restFormReason = reason"
         >
-          <span class="reason-radio" :class="{ 'reason-radio-checked': form.restReason === reason }"></span>
+          <span class="reason-radio" :class="{ 'reason-radio-checked': restFormReason === reason }"></span>
           {{ reason }}
         </div>
       </div>
@@ -80,7 +58,25 @@
       <Column field="orderCount" header="订单数" />
       <Column field="status" header="状态">
         <template #body="{ data }">
-          <Tag :value="data.status === 'active' ? '营业中' : '已关闭'" :severity="data.status === 'active' ? 'success' : 'danger'" />
+          <div class="status-toggle">
+            <Button
+              label="营业中"
+              :severity="data.status === 'active' ? 'success' : 'secondary'"
+              :outlined="data.status !== 'active'"
+              size="small"
+              @click="setBranchStatus(data, 'active')"
+            />
+            <Button
+              label="休息中"
+              :severity="data.status !== 'active' ? 'danger' : 'secondary'"
+              :outlined="data.status === 'active'"
+              size="small"
+              @click="setBranchStatus(data, 'offline')"
+            />
+          </div>
+          <p v-if="data.status !== 'active' && data.restReason" class="rest-reason-text" style="margin-top:4px">
+            {{ data.restReason }} <Button icon="pi pi-pencil" text size="small" @click="editBranchRestReason(data)" />
+          </p>
         </template>
       </Column>
       <Column header="操作" style="width:160px">
@@ -250,9 +246,11 @@ import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import Tag from 'primevue/tag'
 
-const form = ref({ name: '', slogan: '', businessHours: '', statusText: '', restReason: '', logoUrl: '' })
+const form = ref({ name: '', slogan: '', businessHours: '', statusText: '', logoUrl: '' })
 const showRestReason = ref(false)
 const restReasons = ['天气原因', '市政管理', '停业休息']
+const restTarget = ref<any>(null)
+const restFormReason = ref('')
 
 const branches = ref<any[]>([])
 const showBranch = ref(false)
@@ -282,23 +280,41 @@ async function fetchMerchant() {
     slogan: data.slogan || '',
     businessHours: data.businessHours || '',
     statusText: data.statusText || '',
-    restReason: data.restReason || '',
     logoUrl: data.logoUrl || '',
   }
   branches.value = data.branches || []
 }
 
-function setStatus(status: string) {
-  form.value.statusText = status
-  if (status === '营业中') {
-    form.value.restReason = ''
+function setBranchStatus(branch: any, status: string) {
+  if (status === 'active') {
+    updateBranch(branch.id, { status: 'active', restReason: '' })
   } else {
+    restTarget.value = branch
+    restFormReason.value = branch.restReason || restReasons[0]
     showRestReason.value = true
   }
 }
 
-function confirmRestReason() {
+function editBranchRestReason(branch: any) {
+  restTarget.value = branch
+  restFormReason.value = branch.restReason || restReasons[0]
+  showRestReason.value = true
+}
+
+async function confirmRestReason() {
+  if (!restTarget.value) return
+  await updateBranch(restTarget.value.id, { status: 'offline', restReason: restFormReason.value })
   showRestReason.value = false
+  restTarget.value = null
+}
+
+async function updateBranch(id: string, data: any) {
+  await fetch(`/api/admin/branches/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  fetchMerchant()
 }
 
 async function saveMerchant() {

@@ -646,6 +646,7 @@ router.get('/merchant', async (_req, res) => {
       todayLocation: b.todayLocation,
       locationHint: b.locationHint,
       status: b.status,
+      restReason: b.restReason,
       deviceCount: await prisma.device.count({ where: { branchId: b.id } }),
       orderCount: await prisma.order.count({ where: { branchId: b.id } }),
     }))),
@@ -695,6 +696,7 @@ router.get('/branches', async (_req, res) => {
       locationHint: b.locationHint,
       bannerUrl: b.bannerUrl,
       status: b.status,
+      restReason: b.restReason,
       deviceCount: b._count.devices,
       orderCount: b._count.orders,
     })),
@@ -728,7 +730,7 @@ router.post('/branches', async (req, res) => {
 
 router.put('/branches/:id', async (req, res) => {
   const { id } = req.params
-  const { code, name, address, lat, lng, todayLocation, locationHint, bannerUrl, status } = req.body ?? {}
+  const { code, name, address, lat, lng, todayLocation, locationHint, bannerUrl, status, restReason } = req.body ?? {}
 
   const branch = await prisma.branch.findUnique({ where: { id } })
   if (!branch) return res.status(404).json({ message: '分店不存在' })
@@ -743,6 +745,7 @@ router.put('/branches/:id', async (req, res) => {
   if (locationHint !== undefined) data.locationHint = locationHint
   if (bannerUrl !== undefined) data.bannerUrl = bannerUrl
   if (status !== undefined) data.status = status
+  if (restReason !== undefined) data.restReason = restReason
 
   await prisma.branch.update({ where: { id }, data })
   invalidateGlobalCache()
