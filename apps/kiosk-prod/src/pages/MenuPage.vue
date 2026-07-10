@@ -192,7 +192,7 @@ onMounted(() => {
   .hero-overlay h2, .dish-name, .cart-sheet-title { font-size: var(--text-headline-lg); }
   .category-pill { flex-shrink: 0; padding: 10px 18px; font-size: var(--text-label-lg); }
   .category-pill .material-icons { font-size: 18px !important; }
-  .dish-card { padding: var(--spacing-sm); }
+  .dish-card { padding: var(--spacing-md); }
   :deep(.dish-image) { height: 176px; }
   .bottom-nav { padding: 4px 8px; border-top-left-radius: var(--radius-lg); border-top-right-radius: var(--radius-lg); }
   .nav-item { padding: 6px 10px; }
