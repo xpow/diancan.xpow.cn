@@ -96,7 +96,7 @@
 
       <!-- Footer -->
       <footer class="footer">
-        <p>© 2024 {{ displayTitle }}</p>
+        <p>© 2026 {{ displayTitle }}</p>
         <p class="footer-tagline">用心做好每一串，传递市井烟火气</p>
         <p class="switch-device" @click="switchDevice">切换设备</p>
       </footer>
