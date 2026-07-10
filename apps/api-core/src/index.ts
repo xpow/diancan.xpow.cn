@@ -814,7 +814,7 @@ app.post('/api/orders/:orderNo/complete', orderLimiter, authMiddleware, async (r
 
   const order = await prisma.order.findUnique({ where: { orderNo }, select: { id: true, status: true } })
   if (!order) return res.status(404).json({ message: '订单不存在' })
-  if (order.status !== 'preparing' && order.status !== 'ready') return res.status(400).json({ message: '订单状态不能取餐' })
+  if (order.status !== 'paid' && order.status !== 'preparing' && order.status !== 'ready') return res.status(400).json({ message: '订单状态不能取餐' })
 
   await prisma.order.update({
     where: { id: order.id },

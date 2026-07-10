@@ -94,7 +94,7 @@
               </button>
             </template>
             <template v-else>
-              <template v-if="order.status === 'preparing' || order.status === 'ready'">
+              <template v-if="order.status === 'paid' || order.status === 'preparing' || order.status === 'ready'">
                 <button class="pickup-btn" @click="confirmPickup(order)">
                   <span class="material-icons">handshake</span>
                   已取餐
