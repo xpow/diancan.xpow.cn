@@ -94,11 +94,19 @@
               </button>
             </template>
             <template v-else>
-              <p class="ticket-thanks">感谢您选择{{ displayTitle }}</p>
-              <p class="ticket-hint">
-                <span class="material-icons hint-icon">photo_camera</span>
-                请拍照保存
-              </p>
+              <template v-if="order.status === 'ready'">
+                <button class="pickup-btn" @click="confirmPickup(order)">
+                  <span class="material-icons">handshake</span>
+                  已取餐
+                </button>
+              </template>
+              <template v-else>
+                <p class="ticket-thanks">感谢您选择{{ displayTitle }}</p>
+                <p class="ticket-hint">
+                  <span class="material-icons hint-icon">photo_camera</span>
+                  请拍照保存
+                </p>
+              </template>
             </template>
           </div>
         </div>
@@ -114,6 +122,25 @@
     <transition name="toast">
       <div v-if="toastVisible" class="toast">{{ toastMessage }}</div>
     </transition>
+
+    <Teleport to="body">
+      <div v-if="showPickupConfirm" class="payment-overlay" @click.self="showPickupConfirm = false">
+        <div class="confirm-dialog">
+          <span class="material-icons confirm-icon">handshake</span>
+          <p class="confirm-text">确认已取餐？</p>
+          <p class="confirm-hint">取餐后订单将标记为已完成</p>
+          <div class="confirm-btns">
+            <button class="confirm-cancel-btn" @click="showPickupConfirm = false">取消</button>
+            <button class="confirm-ok-btn" :disabled="pickupSubmitting" @click="doPickup">
+              <template v-if="pickupSubmitting">
+                <span class="spinner"></span> 处理中...
+              </template>
+              <template v-else>确认取餐</template>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
 
     <!-- Payment Popup -->
     <Teleport to="body">
@@ -228,6 +255,9 @@ const selectedPayOrder = ref<OrderSummary | null>(null)
 const showPayPopup = ref(false)
 const paySubmitting = ref(false)
 const payError = ref('')
+const showPickupConfirm = ref(false)
+const pickupOrder = ref<OrderSummary | null>(null)
+const pickupSubmitting = ref(false)
 const qrModules = import.meta.glob('@/assets/images/payments/*.{jpg,png,webp}', { eager: true, query: '?url', import: 'default' })
 const qrMap: Record<string, string> = {}
 for (const [path, url] of Object.entries(qrModules)) {
@@ -295,6 +325,27 @@ async function confirmPay() {
     payError.value = error instanceof Error ? error.message : '付款失败'
   } finally {
     paySubmitting.value = false
+  }
+}
+
+function confirmPickup(order: OrderSummary) {
+  pickupOrder.value = order
+  showPickupConfirm.value = true
+}
+
+async function doPickup() {
+  if (!pickupOrder.value || pickupSubmitting.value) return
+  pickupSubmitting.value = true
+  try {
+    await apiPost(`/api/orders/${pickupOrder.value.orderNo}/complete`)
+    showPickupConfirm.value = false
+    pickupOrder.value = null
+    showToast('已取餐')
+    await fetchOrders()
+  } catch (error) {
+    showToast(error instanceof Error ? error.message : '操作失败')
+  } finally {
+    pickupSubmitting.value = false
   }
 }
 
@@ -680,4 +731,34 @@ onUnmounted(() => {
     padding: 6px 10px;
   }
 }
+
+.pickup-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm);
+  width: 100%; padding: 12px;
+  border: none; border-radius: var(--radius-full);
+  background: var(--tertiary); color: #fff;
+  font-family: var(--font-display); font-size: 18px; font-weight: 700;
+  cursor: pointer; transition: transform var(--transition-fast);
+}
+.pickup-btn:active { transform: scale(0.98); }
+
+.confirm-dialog {
+  background: var(--surface); border-radius: var(--radius-xl);
+  padding: var(--spacing-xl); width: 320px; max-width: 85vw;
+  text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  border: 1px solid var(--card-border-strong);
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  z-index: 100;
+}
+.confirm-icon { font-size: 48px; color: var(--tertiary); }
+.confirm-text { font-size: 18px; font-weight: 700; margin: var(--spacing-sm) 0 4px; }
+.confirm-hint { font-size: var(--text-body-sm); color: var(--secondary); margin: 0 0 var(--spacing-lg); }
+.confirm-btns { display: flex; gap: var(--spacing-sm); }
+.confirm-cancel-btn, .confirm-ok-btn {
+  flex: 1; padding: 10px; border-radius: var(--radius-full);
+  font-family: var(--font-display); font-size: 16px; font-weight: 600; cursor: pointer;
+}
+.confirm-cancel-btn { background: var(--surface-variant); border: none; color: var(--on-surface-variant); }
+.confirm-ok-btn { background: var(--tertiary); border: none; color: #fff; }
+.confirm-ok-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 </style>

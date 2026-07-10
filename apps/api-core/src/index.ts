@@ -809,6 +809,20 @@ app.post('/api/orders/:orderNo/pay', orderLimiter, authMiddleware, async (req, r
   res.json({ orderNo: updated.orderNo, status: updated.status })
 })
 
+app.post('/api/orders/:orderNo/complete', orderLimiter, authMiddleware, async (req, res) => {
+  const { orderNo } = req.params
+
+  const order = await prisma.order.findUnique({ where: { orderNo }, select: { id: true, status: true } })
+  if (!order) return res.status(404).json({ message: '订单不存在' })
+  if (order.status !== 'ready') return res.status(400).json({ message: '订单状态不是可取餐' })
+
+  await prisma.order.update({
+    where: { id: order.id },
+    data: { status: 'completed' },
+  })
+  res.json({ success: true })
+})
+
 app.get('/api/orders', generalLimiter, authMiddleware, async (req, res) => {
   const deviceId = req.authDevice!.deviceId
   const { scope } = req.query as Record<string, string>
