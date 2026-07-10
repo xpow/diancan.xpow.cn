@@ -128,7 +128,16 @@
         <div class="confirm-dialog">
           <span class="material-icons confirm-icon">handshake</span>
           <p class="confirm-text">确认已取餐？</p>
-          <p class="confirm-hint">取餐后订单将标记为已完成</p>
+          <div class="confirm-order-info">
+            <div class="confirm-info-row">
+              <span class="confirm-info-label">取餐码</span>
+              <span class="confirm-info-value confirm-pickup-code">{{ pickupOrder?.pickupCode }}</span>
+            </div>
+            <div class="confirm-info-row">
+              <span class="confirm-info-label">金额</span>
+              <span class="confirm-info-value">¥{{ (pickupOrder?.totals?.payableAmount ?? 0).toFixed(2) }}</span>
+            </div>
+          </div>
           <div class="confirm-btns">
             <button class="confirm-cancel-btn" @click="showPickupConfirm = false">取消</button>
             <button class="confirm-ok-btn" :disabled="pickupSubmitting" @click="doPickup">
@@ -753,6 +762,12 @@ onUnmounted(() => {
 .confirm-icon { font-size: 48px; color: var(--tertiary); }
 .confirm-text { font-size: 18px; font-weight: 700; margin: var(--spacing-sm) 0 4px; }
 .confirm-hint { font-size: var(--text-body-sm); color: var(--secondary); margin: 0 0 var(--spacing-lg); }
+.confirm-order-info { width: 100%; margin-bottom: var(--spacing-lg); }
+.confirm-info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--surface-variant); }
+.confirm-info-row:last-child { border-bottom: none; }
+.confirm-info-label { font-size: var(--text-body-sm); color: var(--secondary); }
+.confirm-info-value { font-size: 16px; font-weight: 700; }
+.confirm-pickup-code { font-family: monospace; font-size: 20px; color: var(--primary-container); }
 .confirm-btns { display: flex; gap: var(--spacing-sm); }
 .confirm-cancel-btn, .confirm-ok-btn {
   flex: 1; padding: 10px; border-radius: var(--radius-full);
