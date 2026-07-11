@@ -298,7 +298,7 @@ app.get('/api/catalog/menu', generalLimiter, async (req, res) => {
         image: d.image,
         tags: typeof d.tags === 'string' ? JSON.parse(d.tags) : d.tags,
         specsPreset: d.specsPreset,
-        specGroups: JSON.parse(d.specGroups) as any[],
+        specGroups: d.specGroups ? JSON.parse(d.specGroups) : [],
         portionSize: d.portionSize,
         promoPrice: promo?.promoPrice ?? null,
         promotionName: promo?.name ?? null,

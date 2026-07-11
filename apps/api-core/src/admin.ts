@@ -288,7 +288,7 @@ router.get('/dishes', async (_req, res) => {
       image: d.image,
       tags: JSON.parse(d.tags) as string[],
       specsPreset: d.specsPreset,
-      specGroups: JSON.parse(d.specGroups) as any[],
+      specGroups: d.specGroups ? JSON.parse(d.specGroups) : [],
       categoryId: d.categoryId,
       categoryName: d.category.name,
       status: d.status,
