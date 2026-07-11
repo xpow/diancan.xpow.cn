@@ -80,10 +80,10 @@ function toggleTheme() {
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
 .material-icons { font-family: 'Material Symbols Outlined'; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 24px; line-height: 1; }
-.top-bar { height: 52px; position: fixed; top: 0; left: 0; right: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-sm) var(--container-margin); background: var(--frosted-bg); backdrop-filter: blur(12px); }
+.top-bar { height: 52px; position: fixed; top: 0; left: 0; right: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-sm) var(--container-margin); padding-top: calc(var(--spacing-sm) + env(safe-area-inset-top, 0)); background: color-mix(in srgb, var(--surface) 85%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
 .brand { display: flex; align-items: center; gap: var(--spacing-sm); min-width: 0; }
 .brand-logo { height: 32px; width: auto; border-radius: var(--radius-sm); }
-.brand h1 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline); font-weight: 700; color: var(--primary-container); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+.brand h1 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: var(--primary-container); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
 .device-tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 9999px; background: rgba(255,107,0,0.1); color: var(--primary-container); font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; }
 .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 9999px; background: rgba(0,110,28,0.1); color: var(--tertiary); font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; }
 .status-badge-rest { background: rgba(200,40,40,0.1); color: #c62828; }

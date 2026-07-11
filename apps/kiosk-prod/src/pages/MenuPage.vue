@@ -77,14 +77,17 @@
       @close="showCart = false"
     />
 
-    <van-action-sheet v-model:show="showSpecEditor" title="修改辣度" close-on-popup-close>
+    <van-action-sheet v-model:show="showSpecEditor" title="修改规格" close-on-popup-close>
       <div class="spec-editor-content">
-        <SpecSelector
-          v-if="getSpicinessGroup()"
-          :group="getSpicinessGroup()!"
-          :model-value="editingSpiciness"
-          @update:model-value="confirmSpiceChange($event, hydrateCart)"
-        />
+    <template v-for="(group, gi) in editingSpecGroups" :key="gi">
+      <SpecSelector
+        v-if="group.name !== '串数' && group.name !== '份数'"
+        :group="group"
+        :model-value="editingSelections[gi] ?? ''"
+        @update:model-value="editingSelections[gi] = $event"
+      />
+    </template>
+        <button class="btn-primary confirm-spec-btn" @click="confirmSpiceChange(hydrateCart, debouncedFetchQuote)">确认</button>
       </div>
     </van-action-sheet>
 
@@ -123,8 +126,8 @@ const {
 } = useCartQuote(dishes)
 
 const {
-  showSpecEditor, editingSpiciness,
-  getSpicinessGroup, startEditSpice, confirmSpiceChange,
+  showSpecEditor, editingSpecGroups, editingSelections,
+  startEditSpice, confirmSpiceChange,
 } = useSpecEditor(dishes)
 
 const hasActiveOrder = ref(false)
@@ -179,10 +182,14 @@ onMounted(() => {
 @media (min-width: 1200px) {
   .dish-list { grid-template-columns: repeat(4, 1fr); }
 }
-.spec-editor-content { padding: var(--spacing-lg); display: flex; flex-direction: column; align-items: center; }
-.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; display: flex; justify-content: space-around; align-items: center; padding: var(--spacing-xs) var(--gutter); background: var(--frosted-bg-heavy); backdrop-filter: blur(12px); border-top-left-radius: var(--radius-xl); border-top-right-radius: var(--radius-xl); box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.04); }
-.nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--radius-full); color: var(--secondary); text-decoration: none; transition: all var(--transition-fast); }
+.spec-editor-content { padding: var(--spacing-lg); display: flex; flex-direction: column; gap: var(--spacing-md); }
+.spec-editor-content .btn-primary { align-self: center; }
+
+/* Bottom Navigation - 使用 components.css 定义的公共样式 */
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; display: flex; justify-content: space-around; align-items: center; padding: var(--spacing-xs) var(--gutter); padding-bottom: calc(var(--spacing-xs) + env(safe-area-inset-bottom, 0)); background: var(--bottom-nav-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid var(--bottom-nav-border); border-radius: var(--bottom-nav-radius); box-shadow: var(--bottom-nav-shadow); }
+.nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--radius-full); color: var(--secondary); text-decoration: none; transition: all var(--transition-fast); position: relative; }
 .nav-item-active { background: rgba(255, 107, 0, 0.1); color: var(--primary-container); }
+.nav-item-active::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle, rgba(255, 107, 0, 0.15) 0%, transparent 70%); border-radius: inherit; pointer-events: none; }
 .nav-label { font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; }
 @media (max-width: 499px) {
   .page { padding-top: 52px; padding-bottom: 156px; }
@@ -194,7 +201,6 @@ onMounted(() => {
   .category-pill .material-icons { font-size: 18px !important; }
   .dish-card { padding: var(--spacing-md); }
   :deep(.dish-image) { height: 176px; }
-  .bottom-nav { padding: 4px 8px; border-top-left-radius: var(--radius-lg); border-top-right-radius: var(--radius-lg); }
-  .nav-item { padding: 6px 10px; }
+
 }
 </style>

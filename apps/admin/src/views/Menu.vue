@@ -32,9 +32,10 @@
             <template v-else>¥{{ data.price.toFixed(2) }}</template>
           </template>
         </Column>
-        <Column field="specsPreset" header="规格">
+        <Column field="specGroups" header="规格" style="width:120px">
           <template #body="{ data }">
-            <Tag :value="specsLabel(data.specsPreset)" style="font-size:12px" />
+            <span v-if="data.specGroups?.length" style="font-size:13px;color:#666">{{ data.specGroups.length }} 组</span>
+            <span v-else style="font-size:13px;color:#999">无</span>
           </template>
         </Column>
         <Column field="status" header="状态" style="width:100px">
@@ -105,8 +106,31 @@
           <InputText v-model="dishForm.image" class="w-full" placeholder="https://..." />
         </div>
         <div class="form-group flex-1">
-          <label>规格模板</label>
-          <Select v-model="dishForm.specsPreset" :options="specsOptions" optionLabel="label" optionValue="value" class="w-full" />
+          <label>套用预设</label>
+          <Select v-model="selectedPreset" :options="specsOptions" optionLabel="label" optionValue="value" class="w-full" @change="applyPreset" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>规格组 <small style="color:#999;font-weight:400">（选预设后可按需修改）</small></label>
+        <div class="spec-editor">
+          <div v-for="(group, gi) in dishForm.specGroups" :key="gi" class="spec-group-card">
+            <div class="spec-group-header">
+              <div style="flex:1;min-width:0;overflow:hidden;display:flex;align-items:center;gap:6px">
+                <InputText v-model="group.name" placeholder="组名" style="flex:1;min-width:120px;box-sizing:border-box" />
+                <Button icon="pi pi-trash" severity="danger" text size="small" @click="removeSpecGroup(gi)" style="flex-shrink:0" />
+              </div>
+              <Select v-model="group.type" :options="[{label:'单选',value:'single'},{label:'多选',value:'multi'}]" optionLabel="label" optionValue="value" style="width:100px;flex-shrink:0;min-width:0" />
+            </div>
+            <div v-for="(opt, oi) in group.options" :key="oi" class="spec-option-row">
+              <div style="flex:1;min-width:0;overflow:hidden"><InputText v-model="opt.label" placeholder="选项名" style="width:100%;box-sizing:border-box" /></div>
+              <InputNumber v-model="opt.priceDelta" :min="0" placeholder="加价" style="width:90px;flex-shrink:0;min-width:0">
+                <template #prefix>+¥</template>
+              </InputNumber>
+              <Button icon="pi pi-times" severity="danger" text size="small" @click="removeSpecOption(gi, oi)" style="flex-shrink:0" />
+            </div>
+            <Button label="添加选项" icon="pi pi-plus" severity="info" text size="small" @click="addSpecOption(gi)" />
+          </div>
+          <Button label="添加规格组" icon="pi pi-plus" severity="info" outlined size="small" @click="addSpecGroup" class="add-group-btn" />
         </div>
       </div>
       <div class="form-group">
@@ -150,7 +174,6 @@ import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import Select from 'primevue/select'
-import Tag from 'primevue/tag'
 import ToggleSwitch from 'primevue/toggleswitch'
 
 const tab = ref('dishes')
@@ -173,44 +196,108 @@ const filteredDishes = computed(() => {
 /* Dish */
 const showDish = ref(false)
 const editingDish = ref(false)
-const dishForm = ref({ name: '', price: 0, categoryId: '', desc: '', image: '', specsPreset: 'none', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0 })
+const selectedPreset = ref('none')
 
 const specsOptions = [
   { label: '无规格', value: 'none' },
-  { label: '烧烤（辣度+口味+份量）', value: 'bbq' },
-  { label: '素菜（辣度+份量）', value: 'veg' },
+  { label: '烧烤（辣度+口味+串数）', value: 'bbq' },
+  { label: '素菜（辣度+串数）', value: 'veg' },
   { label: '茶饮（甜度+温度+加料）', value: 'tea' },
   { label: '火锅（锅底+蘸料）', value: 'hotpot' },
   { label: '甜品（大小份+加料）', value: 'dessert' },
   { label: '冷饮（温度）', value: 'drink' },
 ]
 
-function specsLabel(v: string) {
-  return specsOptions.find((o) => o.value === v)?.label || v
+const SPECS_PRESETS: Record<string, any[]> = {
+  none: [],
+  bbq: [
+    { name: '辣度', type: 'single', options: [{ label: '不辣' }, { label: '微辣' }, { label: '中辣' }, { label: '特辣' }] },
+    { name: '口味', type: 'multi', options: [{ label: '原味' }, { label: '蒜香' }, { label: '黑胡椒' }] },
+    { name: '串数', type: 'single', options: [{ label: 'x1' }, { label: 'x2' }, { label: 'x3' }, { label: 'x4' }, { label: 'x5' }, { label: 'x6' }, { label: 'x8' }, { label: 'x10' }] },
+  ],
+  veg: [
+    { name: '辣度', type: 'single', options: [{ label: '不辣' }, { label: '微辣' }, { label: '中辣' }, { label: '特辣' }] },
+    { name: '串数', type: 'single', options: [{ label: 'x1' }, { label: 'x2' }, { label: 'x3' }, { label: 'x4' }, { label: 'x5' }, { label: 'x6' }, { label: 'x8' }, { label: 'x10' }] },
+  ],
+  tea: [
+    { name: '甜度', type: 'single', options: [{ label: '全糖' }, { label: '七分糖' }, { label: '三分糖' }, { label: '无糖' }] },
+    { name: '温度', type: 'single', options: [{ label: '冰镇' }, { label: '常温' }] },
+    { name: '加料', type: 'multi', options: [{ label: '不加料' }, { label: '珍珠', priceDelta: 2 }, { label: '椰果', priceDelta: 2 }, { label: '布丁', priceDelta: 3 }, { label: '奶盖', priceDelta: 4 }] },
+  ],
+  hotpot: [
+    { name: '锅底', type: 'single', options: [{ label: '麻辣锅底' }, { label: '番茄锅底' }, { label: '菌菇锅底' }, { label: '清汤锅底' }] },
+    { name: '蘸料', type: 'single', options: [{ label: '油碟' }, { label: '麻酱' }, { label: '干碟' }] },
+  ],
+  dessert: [
+    { name: '大小份', type: 'single', options: [{ label: '小份', priceDelta: 0 }, { label: '大份', priceDelta: 5 }] },
+    { name: '加料', type: 'multi', options: [{ label: '不加料' }, { label: '芒果', priceDelta: 5 }, { label: '草莓', priceDelta: 5 }, { label: '红豆', priceDelta: 3 }, { label: '芋圆', priceDelta: 4 }] },
+  ],
+  drink: [
+    { name: '温度', type: 'single', options: [{ label: '冰镇' }, { label: '常温' }] },
+  ],
+}
+
+function applyPreset() {
+  const preset = SPECS_PRESETS[selectedPreset.value]
+  dishForm.value.specGroups = preset ? JSON.parse(JSON.stringify(preset)) : []
+}
+
+const dishForm = ref({ name: '', price: 0, categoryId: '', desc: '', image: '', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0, specGroups: [] as any[] })
+
+function addSpecGroup() {
+  dishForm.value.specGroups.push({ name: '', type: 'single', options: [{ label: '', priceDelta: 0 }] })
+}
+function addSpecOption(gi: number) {
+  dishForm.value.specGroups[gi].options.push({ label: '', priceDelta: 0 })
+}
+function removeSpecGroup(gi: number) {
+  dishForm.value.specGroups.splice(gi, 1)
+}
+function removeSpecOption(gi: number, oi: number) {
+  dishForm.value.specGroups[gi].options.splice(oi, 1)
 }
 
 const originalName = ref('')
+
+function matchPreset(groups: any[]): string {
+  for (const [key, preset] of Object.entries(SPECS_PRESETS)) {
+    if (key === 'none') continue
+    if (groups.length !== preset.length) continue
+    const match = preset.every((pg: any, i: number) => {
+      const g = groups[i]
+      if (!g) return false
+      if (g.name !== pg.name || g.type !== pg.type) return false
+      if (g.options.length !== pg.options.length) return false
+      return pg.options.every((po: any) => g.options.some((go: any) => go.label === po.label))
+    })
+    if (match) return key
+  }
+  return 'none'
+}
 
 function openDishDialog(dish?: any) {
   if (dish) {
     editingDish.value = true
     originalName.value = dish.name
+    const specGroups = dish.specGroups?.length ? JSON.parse(JSON.stringify(dish.specGroups)) : []
+    selectedPreset.value = matchPreset(specGroups)
     dishForm.value = {
       name: dish.name,
       price: dish.price,
       categoryId: dish.categoryId,
       desc: dish.desc || '',
       image: dish.image || '',
-      specsPreset: dish.specsPreset || 'none',
       tagsText: (dish.tags || []).join(', '),
       status: dish.status || 'active',
       sellByPortion: (dish.portionSize ?? 0) > 0,
       portionSize: dish.portionSize ?? 0,
+      specGroups,
     }
   } else {
     editingDish.value = false
     originalName.value = ''
-    dishForm.value = { name: '', price: 0, categoryId: categories.value[0]?.id || '', desc: '', image: '', specsPreset: 'none', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0 }
+    selectedPreset.value = 'none'
+    dishForm.value = { name: '', price: 0, categoryId: categories.value[0]?.id || '', desc: '', image: '', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0, specGroups: [] }
   }
   showDish.value = true
 }
@@ -222,7 +309,7 @@ async function saveDish() {
     categoryId: dishForm.value.categoryId,
     desc: dishForm.value.desc,
     image: dishForm.value.image || undefined,
-    specsPreset: dishForm.value.specsPreset,
+    specGroups: dishForm.value.specGroups.filter((g) => g.name?.trim()),
     tags: dishForm.value.tagsText ? dishForm.value.tagsText.split(/[，,]\s*/).filter(Boolean) : [],
     status: dishForm.value.status,
     portionSize: dishForm.value.sellByPortion ? dishForm.value.portionSize : 0,
@@ -357,4 +444,13 @@ onMounted(() => {
 .form-row { display: flex; gap: 12px; }
 .flex-1 { flex: 1; }
 .w-full { width: 100%; }
+.spec-editor { display: flex; flex-direction: column; gap: 8px; max-width: 100%; overflow: hidden; }
+.spec-group-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 10px 12px; background: #fafafa; overflow: hidden; max-width: 100%; box-sizing: border-box; }
+.spec-group-header { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; max-width: 100%; }
+.spec-group-header > div:first-child { flex: 1; min-width: 0; max-width: 200px; }
+.spec-group-header .p-inputtext { max-width: 100%; }
+.spec-option-row { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; max-width: 100%; }
+.spec-option-row > div:first-child { flex: 1; min-width: 0; max-width: 200px; }
+.spec-option-row .p-inputtext { max-width: 100%; }
+.add-group-btn { align-self: flex-start; margin-top: 4px; }
 </style>

@@ -651,7 +651,7 @@ onMounted(() => {
 .info-card {
   padding: var(--spacing-lg);
   border-radius: var(--radius-xl);
-  background: var(--surface-container-low);
+  background: var(--surface-container);
 }
 
 .info-icon {
@@ -731,7 +731,7 @@ onMounted(() => {
   .featured-scroll { display: grid; grid-template-columns: 1fr 1fr; }
 }
 
-/* Bottom Navigation */
+/* Bottom Navigation - 使用 components.css 定义的公共样式 */
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -742,12 +742,13 @@ onMounted(() => {
   justify-content: space-around;
   align-items: center;
   padding: var(--spacing-xs) var(--gutter);
-  background: var(--frosted-bg-heavy);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-top-left-radius: var(--radius-xl);
-  border-top-right-radius: var(--radius-xl);
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.04);
+  padding-bottom: calc(var(--spacing-xs) + env(safe-area-inset-bottom, 0));
+  background: var(--bottom-nav-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--bottom-nav-border);
+  border-radius: var(--bottom-nav-radius);
+  box-shadow: var(--bottom-nav-shadow);
 }
 
 .nav-item {
@@ -760,11 +761,21 @@ onMounted(() => {
   color: var(--secondary);
   text-decoration: none;
   transition: all var(--transition-fast);
+  position: relative;
 }
 
 .nav-item-active {
   background: rgba(255, 107, 0, 0.1);
   color: var(--primary-container);
+}
+
+.nav-item-active::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255, 107, 0, 0.15) 0%, transparent 70%);
+  border-radius: inherit;
+  pointer-events: none;
 }
 
 .nav-label {
@@ -801,7 +812,7 @@ onMounted(() => {
 .device-dialog-header h3 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: var(--text-headline-sm);
+  font-size: var(--text-headline-md);
 }
 .device-dialog-header .material-icons {
   font-size: 28px;
@@ -809,7 +820,7 @@ onMounted(() => {
 }
 .device-dialog-hint {
   margin: 0 0 var(--spacing-lg);
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-size: var(--text-body-sm);
 }
 .sn-input-row {
@@ -818,19 +829,19 @@ onMounted(() => {
 .sn-input {
   width: 100%;
   padding: var(--spacing-md);
-  border: 2px solid var(--border);
+  border: 2px solid var(--outline-variant);
   border-radius: var(--radius-lg);
-  background: var(--surface);
+  background: var(--surface-container-lowest);
   font-size: 28px;
   font-family: monospace;
   letter-spacing: 6px;
   text-align: center;
   outline: none;
   transition: border-color var(--transition-fast);
-  color: var(--text);
+  color: var(--on-surface);
 }
 .sn-input:focus { border-color: var(--primary-container); }
-.sn-error { color: var(--danger, #e53935); font-size: var(--text-body-sm); margin: 0 0 var(--spacing-md); text-align: center; }
+.sn-error { color: var(--error); font-size: var(--text-body-sm); margin: 0 0 var(--spacing-md); text-align: center; }
 .device-confirm-btn {
   width: 100%;
   padding: var(--spacing-md);

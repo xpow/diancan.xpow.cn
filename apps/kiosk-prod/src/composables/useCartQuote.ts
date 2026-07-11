@@ -83,12 +83,20 @@ export function useCartQuote(dishes: Ref<MenuDish[]>) {
   function addToCart(dish: MenuDish) {
     const specsParts: string[] = []
     let qty = dish.portionSize || 1
+    let priceDelta = 0
     if (dish.selectedLabels) {
       for (let gi = 0; gi < dish.selectedLabels.length; gi++) {
         const val = dish.selectedLabels[gi]
         if (!val) continue
         if (Array.isArray(val)) {
           specsParts.push(val.join('+'))
+          const group = dish.specGroups?.[gi]
+          if (group) {
+            for (const label of val) {
+              const opt = group.options.find((o) => o.label === label)
+              if (opt?.priceDelta) priceDelta += opt.priceDelta
+            }
+          }
         } else {
           const groups = dish.specGroups
           if (groups && gi === groups.findIndex((g) => g.name === '串数' || g.name === '份数')) {
@@ -100,12 +108,14 @@ export function useCartQuote(dishes: Ref<MenuDish[]>) {
             }
           } else {
             specsParts.push(val)
+            const opt = groups?.[gi]?.options.find((o) => o.label === val)
+            if (opt?.priceDelta) priceDelta += opt.priceDelta
           }
         }
       }
     }
     const specsKey = specsParts.join(' · ')
-    const price = dish.promoPrice ?? dish.price
+    const price = (dish.promoPrice ?? dish.price) + priceDelta
 
     addToCartStorage({
       dishId: `${dish.id}|${specsKey}`,
@@ -156,6 +166,7 @@ export function useCartQuote(dishes: Ref<MenuDish[]>) {
           dishId: i.baseDishId,
           quantity: i.quantity,
           specs: i.specs ?? '',
+          unitPrice: i.price,
         })),
       })
     } catch (error) {

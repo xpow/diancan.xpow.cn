@@ -1,5 +1,5 @@
 <template>
-  <van-action-sheet :show="show" @update:show="$emit('update:show', $event)" close-on-popup-close>
+  <van-action-sheet :show="show" position="bottom" @update:show="$emit('update:show', $event)">
     <div class="cart-sheet">
       <div class="cart-sheet-header">
         <span class="cart-sheet-title">购物车</span>
@@ -40,7 +40,7 @@
           <div class="promo-info">
             <span class="promo-name">{{ promo.name }}</span>
           </div>
-          <span class="promo-saving">- <small class="c-sign">¥</small>{{ promo.discount.toFixed(2) }}</span>
+          <span class="promo-saving">-<small class="c-sign">¥</small>{{ promo.discount.toFixed(2) }}</span>
         </div>
         <div v-for="hint in quote.hints" :key="hint" class="promo-hint">
           <span class="material-icons">lightbulb</span>
@@ -49,7 +49,7 @@
         </div>
         <div v-if="quote.totals.discountAmount > 0" class="promo-summary">
           <span>已优惠</span>
-          <span class="promo-summary-amount">- <small class="c-sign">¥</small>{{ quote.totals.discountAmount.toFixed(2) }}</span>
+          <span class="promo-summary-amount">-<small class="c-sign">¥</small>{{ quote.totals.discountAmount.toFixed(2) }}</span>
         </div>
       </div>
 
@@ -62,7 +62,7 @@
           </template>
           <span class="cart-total-price">&nbsp;<small class="c-sign">¥</small>{{ total.toFixed(2) }}</span>
         </span>
-        <button class="checkout-btn" @click="$emit('checkout')">确认下单</button>
+        <button class="btn-primary checkout-btn" @click="$emit('checkout')">确认下单</button>
       </div>
     </div>
   </van-action-sheet>
@@ -96,18 +96,18 @@ defineEmits<{
 
 <style scoped>
 .cart-sheet { padding: 0 var(--container-margin) var(--container-margin); min-height: 200px; max-width: 600px; margin: 0 auto; }
-.cart-sheet-header { display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-md) 0; border-bottom: 1px solid var(--surface-variant); position: sticky; top: 0; background: var(--surface-container-lowest); z-index: 1; }
+.cart-sheet-header { display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-md) 0; border-bottom: 1px solid var(--outline-variant); position: sticky; top: 0; background: var(--surface); z-index: 1; }
 .cart-sheet-title { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; }
 .clear-btn { display: flex; align-items: center; gap: var(--spacing-xs); border: none; background: transparent; color: var(--secondary); font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; cursor: pointer; padding: var(--spacing-xs) var(--spacing-sm); border-radius: var(--radius-md); }
 .clear-btn:active { background: var(--surface-container-high); }
 .cart-items { display: flex; flex-direction: column; gap: var(--spacing-sm); }
-.cart-item { display: flex; justify-content: space-between; align-items: flex-start; padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--surface-variant); gap: var(--spacing-sm); }
+.cart-item { display: flex; justify-content: space-between; align-items: flex-start; padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--outline-variant); gap: var(--spacing-sm); }
 .cart-item-left { flex: 1; min-width: 0; }
 .cart-item-name-row { display: flex; align-items: center; gap: var(--spacing-xs); flex-wrap: wrap; }
 .cart-item-name { font-family: var(--font-display); font-size: var(--text-body-lg); font-weight: 600; }
 .cart-original-price { text-decoration: line-through; color: var(--secondary); font-size: 11px; font-weight: 400; }
 .cart-final-price { font-size: var(--text-body-md); font-weight: 700; color: var(--primary-container); }
-.cart-item-spec { margin: var(--spacing-xs) 0 0; font-size: var(--text-label-sm); color: var(--secondary); display: flex; align-items: center; gap: 4px; cursor: pointer; }
+.cart-item-spec { margin: var(--spacing-xs) 0 0; font-size: var(--text-label-sm); color: var(--primary-container); display: flex; align-items: center; gap: 4px; cursor: pointer; }
 .spec-edit-icon { font-size: 14px !important; opacity: 0.5; }
 .cart-item-right { display: flex; flex-direction: column; align-items: flex-end; gap: var(--spacing-xs); flex-shrink: 0; }
 .cart-promo-tag { display: inline-block; padding: 1px 8px; border-radius: 4px; background: var(--primary-container); color: var(--on-primary); font-size: 11px; font-weight: 700; }
@@ -119,11 +119,10 @@ defineEmits<{
 .cart-empty { text-align: center; padding: var(--spacing-xl); color: var(--secondary); }
 .cart-sheet-footer { display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-md) 0; }
 .cart-total-label { font-size: var(--text-body-lg); font-weight: 600; }
-.cart-total-price { color: var(--primary-container); font-weight: 800; }
-.checkout-btn { padding: var(--spacing-md) var(--spacing-xl); border-radius: var(--radius-full); border: none; background: var(--primary-container); color: var(--on-primary); font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; cursor: pointer; }
+.cart-total-price { color: var(--primary-container); font-weight: 800; font-family: var(--font-display); }
 .strikethrough-price { text-decoration: line-through; color: var(--secondary); font-weight: 400; font-size: var(--text-label-sm); }
 .c-sign { font-size: 0.85em; padding: 0 1px; }
-.cart-promo-section { margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--surface-container-low); border-radius: var(--radius-lg); display: flex; flex-direction: column; gap: var(--spacing-sm); }
+.cart-promo-section { margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--cart-promo-bg); border-radius: var(--radius-lg); display: flex; flex-direction: column; gap: var(--spacing-sm); }
 .promo-row { display: flex; align-items: center; gap: var(--spacing-sm); font-size: var(--text-label-sm); }
 .promo-icon { font-size: 16px !important; color: var(--primary-container); flex-shrink: 0; }
 .promo-info { flex: 1; display: flex; flex-direction: column; }
@@ -131,10 +130,17 @@ defineEmits<{
 .promo-saving { font-weight: 700; color: var(--error); flex-shrink: 0; }
 .promo-hint { display: flex; align-items: center; gap: var(--spacing-sm); font-size: 11px; color: var(--secondary); }
 .promo-hint .material-icons { font-size: 14px !important; color: var(--primary-container); flex-shrink: 0; }
+.promo-hint .material-icons { font-size: 14px !important; color: var(--primary-container); flex-shrink: 0; }
 .promo-hint .hl-amount { color: var(--primary-container); font-weight: 800; }
 .promo-hint .hl-promo { color: var(--primary-container); font-weight: 700; }
 .promo-hint .continue-order-btn { flex-shrink: 0; padding: 2px 12px; border: 1px dashed var(--primary-container); border-radius: var(--radius-full); background: transparent; color: var(--primary-container); font-family: var(--font-display); font-size: 11px; font-weight: 600; cursor: pointer; }
 .promo-hint .continue-order-btn:active { background: var(--surface-container-high); }
 .promo-summary { display: flex; justify-content: space-between; align-items: center; padding-top: var(--spacing-sm); border-top: 1px dashed var(--outline-variant); font-size: var(--text-label-sm); font-weight: 600; }
 .promo-summary-amount { color: var(--error); font-weight: 700; }
+</style>
+
+<style>
+[data-theme="dark"] .cart-promo-section { color: #fff; }
+[data-theme="dark"] .promo-hint { color: #ccc; }
+[data-theme="dark"] .clear-btn { color: #fff; }
 </style>

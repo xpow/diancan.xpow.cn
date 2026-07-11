@@ -934,6 +934,7 @@ onMounted(() => {
 .cart-total-price {
   color: var(--primary-container);
   font-weight: 800;
+  font-family: var(--font-display);
 }
 
 .checkout-btn {

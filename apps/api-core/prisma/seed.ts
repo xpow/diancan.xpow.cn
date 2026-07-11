@@ -150,6 +150,7 @@ async function main() {
         merchantId: merchant.id,
         tags: JSON.stringify(d.tags),
         image: '',
+        specGroups: JSON.stringify([]),
       },
     })
   }

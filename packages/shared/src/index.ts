@@ -46,6 +46,7 @@ export const SPECS_PRESETS: Record<SpecPreset, SpecGroup[] | null> = {
       name: '加料',
       type: 'multi',
       options: [
+        { label: '不加料' },
         { label: '珍珠', priceDelta: 2 },
         { label: '椰果', priceDelta: 2 },
         { label: '布丁', priceDelta: 3 },
@@ -158,6 +159,7 @@ export const SPECS_PRESETS: Record<SpecPreset, SpecGroup[] | null> = {
       name: '加料',
       type: 'multi',
       options: [
+        { label: '不加料' },
         { label: '芒果', priceDelta: 5 },
         { label: '草莓', priceDelta: 5 },
         { label: '红豆', priceDelta: 3 },

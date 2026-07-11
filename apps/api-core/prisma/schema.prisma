@@ -170,7 +170,8 @@ model Dish {
   desc        String   @default("")
   image       String?
   tags        String   @default("[]") // JSON array
-  specsPreset String   @default("none") // none | bbq | tea | hotpot | dessert
+  specsPreset String   @default("none") // 兼容旧数据
+  specGroups  String   @default("[]") // JSON: SpecGroup[]
   status      String   @default("active")
   sort        Int      @default(0)
   portionSize Int      @default(0)

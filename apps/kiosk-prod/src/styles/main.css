@@ -1,4 +1,5 @@
 @import './variables.css';
+@import './components.css';
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
@@ -7,6 +8,8 @@
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   font-size: 24px;
   line-height: 1;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 /* Global base styles */
@@ -14,15 +17,19 @@
 *::before,
 *::after {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 html {
   -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
 }
+html::-webkit-scrollbar { display: none; }
+body::-webkit-scrollbar { display: none; }
 
 body {
-  margin: 0;
-  padding: 0;
   font-family: var(--font-body);
   font-size: var(--text-body-md);
   line-height: 20px;
@@ -30,17 +37,8 @@ body {
   background: var(--surface);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-/* 隐藏滚动条 */
-html {
-  scrollbar-width: none;
-}
-html::-webkit-scrollbar {
-  display: none;
-}
-body::-webkit-scrollbar {
-  display: none;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 a {
@@ -50,22 +48,45 @@ a {
 
 button {
   font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
 }
 
 img {
   max-width: 100%;
+  height: auto;
   display: block;
+}
+
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Selection */
+::selection {
+  background: rgba(255, 107, 0, 0.2);
+  color: var(--on-surface);
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid var(--primary-container);
+  outline-offset: 2px;
 }
 
 /* Vant component dark mode support */
 .van-action-sheet,
 .van-action-sheet__content,
 .van-action-sheet__header {
-  background: var(--surface-container-lowest) !important;
+  background: var(--surface) !important;
   color: var(--on-surface);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 .van-popup:not(.van-toast) {
-  background: var(--surface-container-lowest) !important;
+  background: var(--surface) !important;
   color: var(--on-surface);
 }
 .van-toast {
@@ -78,7 +99,17 @@ img {
   left: 0 !important;
   right: 0 !important;
   border-radius: var(--radius-xl) var(--radius-xl) 0 0 !important;
+  border-top: 1px solid var(--outline-variant) !important;
 }
 .van-overlay {
   background: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* 通用按钮样式 */
+.btn-primary {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 14px 22px; border-radius: var(--radius-full);
+  background: var(--primary-container); color: var(--on-primary);
+  font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700;
+  white-space: nowrap; line-height: 1; cursor: pointer; border: none;
 }

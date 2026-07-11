@@ -298,6 +298,7 @@ app.get('/api/catalog/menu', generalLimiter, async (req, res) => {
         image: d.image,
         tags: typeof d.tags === 'string' ? JSON.parse(d.tags) : d.tags,
         specsPreset: d.specsPreset,
+        specGroups: JSON.parse(d.specGroups) as any[],
         portionSize: d.portionSize,
         promoPrice: promo?.promoPrice ?? null,
         promotionName: promo?.name ?? null,
@@ -318,6 +319,7 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
       dishId: String(item?.dishId ?? ''),
       quantity: Number(item?.quantity ?? 0),
       specs: String(item?.specs ?? ''),
+      unitPrice: item?.unitPrice ? Number(item.unitPrice) : undefined,
     }))
     .filter((item) => item.dishId && item.quantity > 0)
 
@@ -356,11 +358,12 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
     const dish = dishMap.get(item.dishId)
     if (!dish) continue
 
+    const basePrice = item.unitPrice ?? dish.price
     const portionFactor = dish.portionSize || 1
-    const subtotal = dish.price * item.quantity / portionFactor
+    const subtotal = basePrice * item.quantity / portionFactor
     originalAmount += subtotal
 
-    let finalUnitPrice = dish.price
+    let finalUnitPrice = basePrice
     let finalSubtotal = subtotal
     let promotionLabel: string | undefined
 
@@ -407,11 +410,11 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
         const promoItem = timeDiscountPromo.items.find((pi) => pi.dishId === item.dishId)
         const rules = JSON.parse(timeDiscountPromo.rules)
         const discountRate = rules.discountRate ?? 1
-        const discountedPrice = Math.round(dish.price * discountRate * 100) / 100
+        const discountedPrice = Math.round(basePrice * discountRate * 100) / 100
         if (discountRate < 1) {
           finalUnitPrice = discountedPrice
           finalSubtotal = discountedPrice * item.quantity / portionFactor
-          const perItem = dish.price - discountedPrice
+          const perItem = basePrice - discountedPrice
           const discount = Number((perItem * item.quantity / portionFactor).toFixed(2))
           if (discount > 0) {
             appliedPromotions.push({
@@ -419,7 +422,7 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
               name: timeDiscountPromo.name,
               type: 'time_discount',
               discount,
-              description: `${timeDiscountPromo.name}，${dish.price.toFixed(2)} → ${discountedPrice.toFixed(2)}`,
+              description: `${timeDiscountPromo.name}，${basePrice.toFixed(2)} → ${discountedPrice.toFixed(2)}`,
             })
             promotionLabel = timeDiscountPromo.name
           }
@@ -433,7 +436,7 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
       dishId: dish.id,
       name: dish.name,
       quantity: item.quantity,
-      unitPrice: dish.price,
+      unitPrice: Number(basePrice.toFixed(2)),
       finalUnitPrice: Number(finalUnitPrice.toFixed(2)),
       subtotal: Number(subtotal.toFixed(2)),
       finalSubtotal: Number(finalSubtotal.toFixed(2)),
@@ -679,6 +682,7 @@ app.post('/api/orders', orderLimiter, authMiddleware, async (req, res) => {
       dishId: String(item?.dishId ?? ''),
       quantity: Number(item?.quantity ?? 0),
       specs: String(item?.specs ?? ''),
+      unitPrice: item?.unitPrice ? Number(item.unitPrice) : undefined,
     }))
     .filter((item) => item.dishId && item.quantity > 0)
 

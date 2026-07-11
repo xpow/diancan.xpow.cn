@@ -288,6 +288,7 @@ router.get('/dishes', async (_req, res) => {
       image: d.image,
       tags: JSON.parse(d.tags) as string[],
       specsPreset: d.specsPreset,
+      specGroups: JSON.parse(d.specGroups) as any[],
       categoryId: d.categoryId,
       categoryName: d.category.name,
       status: d.status,
@@ -302,7 +303,7 @@ router.post('/dishes', async (req, res) => {
   const merchant = await prisma.merchant.findFirst()
   if (!merchant) return res.status(404).json({ message: 'merchant not found' })
 
-  const { name, price, categoryId, desc, image, tags, specsPreset, portionSize } = req.body ?? {}
+  const { name, price, categoryId, desc, image, tags, specsPreset, specGroups, portionSize } = req.body ?? {}
   if (!name || price === undefined || !categoryId) {
     return res.status(400).json({ message: 'name, price, categoryId 必填' })
   }
@@ -320,6 +321,7 @@ router.post('/dishes', async (req, res) => {
       image: image ?? null,
       tags: JSON.stringify(tags ?? []),
       specsPreset: specsPreset ?? 'none',
+      specGroups: JSON.stringify(specGroups ?? []),
       portionSize: Number(portionSize) || 0,
     },
   })
@@ -341,7 +343,7 @@ router.put('/dishes/reorder', async (req, res) => {
 
 router.put('/dishes/:id', async (req, res) => {
   const { id } = req.params
-  const { name, price, categoryId, desc, image, tags, specsPreset, status, sort, portionSize } = req.body ?? {}
+  const { name, price, categoryId, desc, image, tags, specsPreset, specGroups, status, sort, portionSize } = req.body ?? {}
 
   const dish = await prisma.dish.findUnique({ where: { id } })
   if (!dish) return res.status(404).json({ message: '菜品不存在' })
@@ -354,6 +356,7 @@ router.put('/dishes/:id', async (req, res) => {
   if (image !== undefined) data.image = image
   if (tags !== undefined) data.tags = JSON.stringify(tags)
   if (specsPreset !== undefined) data.specsPreset = specsPreset
+  if (specGroups !== undefined) data.specGroups = JSON.stringify(specGroups)
   if (status !== undefined) data.status = status
   if (portionSize !== undefined) data.portionSize = Number(portionSize)
   if (sort !== undefined) {

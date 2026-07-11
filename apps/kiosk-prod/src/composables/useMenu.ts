@@ -50,15 +50,15 @@ const restReason = ref('')
 
   const filteredDishes = computed(() => dishes.value.filter(d => d.categoryId === selectedCategoryId.value))
 
-  function initSpecs(preset: SpecPreset): { groups: SpecGroup[]; defaults: (string | string[])[] } | null {
-    const specDefs = SPECS_PRESETS[preset]
-    if (!specDefs || specDefs.length === 0) return null
-    const defaults = specDefs.map((g) => {
+  function initSpecs(specGroups: SpecGroup[] | null, preset?: SpecPreset): { groups: SpecGroup[]; defaults: (string | string[])[] } | null {
+    const defs = specGroups?.length ? specGroups : (preset ? SPECS_PRESETS[preset] : null)
+    if (!defs || defs.length === 0) return null
+    const defaults = defs.map((g) => {
       if (g.type === 'multi') return [g.options[0]?.label ?? ''].filter(Boolean)
       if (g.name === '辣度') return g.options[1]?.label ?? g.options[0]?.label ?? ''
       return g.options[0]?.label ?? ''
     })
-    return { groups: specDefs, defaults }
+    return { groups: defs, defaults }
   }
 
   function qtyGroupIndex(groups: SpecGroup[]) {
@@ -125,8 +125,8 @@ const restReason = ref('')
       restReason.value = bootstrap.restReason ?? ''
       categories.value = [...menu.categories].sort((a, b) => a.sort - b.sort)
 
-      dishes.value = menu.dishes.map((d) => {
-        const specResult = d.specsPreset ? initSpecs(d.specsPreset) : null
+      dishes.value = menu.dishes.map((d: any) => {
+        const specResult = initSpecs(d.specGroups, d.specsPreset as SpecPreset)
         const groups = specResult?.groups ? structuredClone(specResult.groups) : undefined
         if (d.portionSize && groups) {
           const qtyGroup = groups.find((g) => g.name === '串数')

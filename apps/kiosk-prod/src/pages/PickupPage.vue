@@ -15,33 +15,34 @@
         </button>
       </div>
 
-      <template v-for="(order, oi) in filteredOrders" :key="order.orderNo">
-        <div v-if="oi > 0" class="order-divider">
-          <span class="divider-line"></span>
-        </div>
-
-        <div class="ticket-card"
-          @touchstart="onLongPressStart(order.pickupCode)"
-          @touchend="onLongPressEnd"
-          @touchmove="onLongPressMove"
-          @mousedown="onLongPressStart(order.pickupCode)"
-          @mouseup="onLongPressEnd"
-          @mouseleave="onLongPressEnd"
-          :title="'长按复制取餐码'"
-        >
-          <div class="ticket-header" :class="{ 'ticket-header-unpaid': !order.paidAt }">
-            <p class="ticket-label">
-              取餐订单
-              <span v-if="order.orderType === 'takeaway'" class="takeaway-badge">自提</span>
-              <span v-if="!order.paidAt" class="unpaid-badge">未付款</span>
-              <span class="status-badge" :class="'status-' + order.status">{{ statusLabel(order.status) }}</span>
-            </p>
-            <div class="ticket-number">{{ order.pickupCode }}</div>
-            <div class="ticket-hole-left"></div>
-            <div class="ticket-hole-right"></div>
+      <TransitionGroup name="card" tag="div" class="card-list">
+        <div v-for="(order, oi) in filteredOrders" :key="order.orderNo" class="card-item-wrapper" :class="{ 'card-leaving': leavingOrders.has(order.orderNo) }">
+          <div v-if="oi > 0" class="order-divider">
+            <span class="divider-line"></span>
           </div>
 
-          <div class="ticket-body">
+          <div class="ticket-card"
+            @touchstart="onLongPressStart(order.pickupCode)"
+            @touchend="onLongPressEnd"
+            @touchmove="onLongPressMove"
+            @mousedown="onLongPressStart(order.pickupCode)"
+            @mouseup="onLongPressEnd"
+            @mouseleave="onLongPressEnd"
+            :title="'长按复制取餐码'"
+          >
+          <div class="ticket-header" :class="{ 'ticket-header-unpaid': !order.paidAt }">
+              <p class="ticket-label">
+                取餐订单
+                <span v-if="order.orderType === 'takeaway'" class="takeaway-badge">自提</span>
+                <span v-if="!order.paidAt" class="unpaid-badge">未付款</span>
+                <span class="status-badge" :class="'status-' + order.status">{{ statusLabel(order.status) }}</span>
+              </p>
+              <div class="ticket-number">{{ order.pickupCode }}</div>
+              <div class="ticket-hole-left"></div>
+              <div class="ticket-hole-right"></div>
+            </div>
+
+            <div class="ticket-body">
             <div class="ticket-meta">
               <h3 class="ticket-detail-title">订单详情</h3>
               <span class="ticket-time">{{ formatTime(order.createdAt) }}</span>
@@ -78,16 +79,6 @@
                 <span class="material-icons pay-reminder-icon">payment</span>
                 <span class="pay-reminder-text">待支付</span>
               </div>
-              <div class="pay-qr-row">
-                <div class="pay-qr-box" @click="selectedPayOrder = order; showPayPopup = true">
-                  <img :src="qrMap.wechat" alt="微信支付" class="pay-qr-img" />
-                  <span class="pay-qr-label">微信</span>
-                </div>
-                <div class="pay-qr-box" @click="selectedPayOrder = order; showPayPopup = true">
-                  <img :src="qrMap.alipay" alt="支付宝" class="pay-qr-img" />
-                  <span class="pay-qr-label">支付宝</span>
-                </div>
-              </div>
               <button class="pay-now-btn" @click="selectedPayOrder = order; showPayPopup = true">
                 <span class="material-icons">check_circle</span>
                  立即付款
@@ -110,7 +101,8 @@
             </template>
           </div>
         </div>
-      </template>
+        </div>
+      </TransitionGroup>
 
       <div v-if="!filteredOrders.length" class="empty-state">
         <span class="material-icons empty-icon">receipt_long</span>
@@ -267,6 +259,7 @@ const payError = ref('')
 const showPickupConfirm = ref(false)
 const pickupOrder = ref<OrderSummary | null>(null)
 const pickupSubmitting = ref(false)
+const leavingOrders = ref<Set<string>>(new Set())
 const qrModules = import.meta.glob('@/assets/images/payments/*.{jpg,png,webp}', { eager: true, query: '?url', import: 'default' })
 const qrMap: Record<string, string> = {}
 for (const [path, url] of Object.entries(qrModules)) {
@@ -344,14 +337,20 @@ function confirmPickup(order: OrderSummary) {
 
 async function doPickup() {
   if (!pickupOrder.value || pickupSubmitting.value) return
+  const no = pickupOrder.value.orderNo
+  leavingOrders.value = new Set([...leavingOrders.value, no])
   pickupSubmitting.value = true
   try {
-    await apiPost(`/api/orders/${pickupOrder.value.orderNo}/complete`)
+    await apiPost(`/api/orders/${no}/complete`)
     showPickupConfirm.value = false
     pickupOrder.value = null
     showToast('已取餐')
-    await fetchOrders()
+    setTimeout(async () => {
+      await fetchOrders()
+      leavingOrders.value = new Set()
+    }, 900)
   } catch (error) {
+    leavingOrders.value = new Set()
     showToast(error instanceof Error ? error.message : '操作失败')
   } finally {
     pickupSubmitting.value = false
@@ -548,7 +547,22 @@ onUnmounted(() => {
 .divider-line { width: 40px; height: 4px; border-radius: 2px; background: var(--outline-variant); }
 
 /* Ticket Card */
-.ticket-card { width: 100%; background: var(--surface-container-lowest); border-radius: var(--radius-xl); position: relative; margin-bottom: var(--spacing-md); border: 1px solid var(--ticket-card-border); transition: border-color var(--transition-normal); }
+.card-list { position: relative; width: 100%; align-self: stretch; }
+.card-item-wrapper { width: 100%; }
+.card-move { transition: transform 0.45s ease; }
+.card-leave-active { display: none; }
+.card-leaving { animation: card-leave 0.9s ease forwards; overflow: hidden; }
+@keyframes card-leave {
+  0% { opacity: 1; }
+  20% { opacity: 0.2; }
+  35% { opacity: 1; }
+  50% { opacity: 0.2; }
+  65% { opacity: 1; }
+  80% { opacity: 0; }
+  100% { opacity: 0; height: 0; margin-bottom: 0; border-width: 0; padding-top: 0; padding-bottom: 0; }
+}
+
+.ticket-card { width: 100%; background: var(--surface-container-lowest); border-radius: var(--radius-xl); position: relative; margin-bottom: var(--spacing-md); border: 1px solid var(--card-border-light); transition: border-color var(--transition-normal); }
 /* .ticket-card::before, .ticket-card::after { content: ''; position: absolute; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; border-radius: 50%; background: var(--surface); z-index: 1; pointer-events: none; }
 .ticket-card::before { left: -13px; box-shadow: inset 0 0 0 1px var(--ticket-card-border); }
 .ticket-card::after { right: -13px; box-shadow: inset 0 0 0 1px var(--ticket-card-border); } */
@@ -566,7 +580,7 @@ onUnmounted(() => {
 .ticket-number { font-family: var(--font-display); font-size: 64px; font-weight: 800; color: var(--primary-container); letter-spacing: -0.04em; line-height: 1; }
 .ticket-header-unpaid .ticket-number { color: #ef5350; }
 
-.ticket-hole-left, .ticket-hole-right { position: absolute; bottom: -12px; width: 24px; height: 24px; border-radius: 50%; background: var(--surface); }
+.ticket-hole-left, .ticket-hole-right { position: absolute; bottom: -12px; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-hole); }
 .ticket-hole-left { left: -12px; }
 .ticket-hole-right { right: -12px; }
 
@@ -585,7 +599,7 @@ onUnmounted(() => {
 .ticket-item-qty { display: block; font-size: var(--text-body-md); font-weight: 600; color: var(--secondary); margin-bottom: 2px; }
 .ticket-item-price { font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--primary-container); }
 
-.ticket-total { display: flex; justify-content: space-between; align-items: flex-end; margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--surface-variant); }
+.ticket-total { display: flex; justify-content: space-between; align-items: flex-end; margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--outline-variant); }
 .ticket-total-label { font-size: var(--text-body-md); line-height: 20px; color: var(--secondary); }
 .ticket-total-right { text-align: right; }
 .ticket-total-sub { display: block; font-size: var(--text-body-md); font-weight: 600; color: var(--secondary); }
@@ -603,7 +617,7 @@ onUnmounted(() => {
 .empty-cta { display: flex; align-items: center; justify-content: center; padding: var(--spacing-sm) 28px; border-radius: var(--radius-full); background: var(--primary-container); color: var(--on-primary); font-family: var(--font-display); font-size: var(--text-body-lg); font-weight: 700; text-decoration: none; box-shadow: 0 8px 20px rgba(255,107,0,0.15); }
 
 /* Bottom Navigation */
-.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; display: flex; justify-content: space-around; align-items: center; padding: var(--spacing-xs) var(--gutter); background: var(--frosted-bg-heavy); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top-left-radius: var(--radius-xl); border-top-right-radius: var(--radius-xl); box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.04); }
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; display: flex; justify-content: space-around; align-items: center; padding: var(--spacing-xs) var(--gutter); padding-bottom: calc(var(--spacing-xs) + env(safe-area-inset-bottom, 0)); background: var(--bottom-nav-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid var(--bottom-nav-border); border-radius: var(--bottom-nav-radius); box-shadow: var(--bottom-nav-shadow); }
 .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--radius-full); color: var(--secondary); text-decoration: none; transition: all var(--transition-fast); }
 .nav-item-active { background: rgba(255, 107, 0, 0.1); color: var(--primary-container); }
 .nav-label { font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; }
@@ -653,7 +667,7 @@ onUnmounted(() => {
   background: var(--surface); border-radius: var(--radius-xl);
   padding: var(--spacing-xl); width: 380px; max-width: 90vw;
   text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-  border: 1px solid var(--card-border-strong);
+  border: 1px solid var(--card-border-light);
 }
 .popup-header { margin-bottom: var(--spacing-lg); }
 .popup-icon .material-icons { font-size: 40px; color: var(--primary-container); }
@@ -730,23 +744,15 @@ onUnmounted(() => {
     font-size: var(--text-body-md);
   }
 
-  .bottom-nav {
-    padding: 4px 8px;
-    border-top-left-radius: var(--radius-lg);
-    border-top-right-radius: var(--radius-lg);
-  }
 
-  .nav-item {
-    padding: 6px 10px;
-  }
 }
 
 .pickup-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm);
-  width: 100%; padding: 12px;
+  width: 100%; padding: var(--spacing-sm) var(--spacing-xl);
   border: none; border-radius: var(--radius-full);
   background: var(--primary-container); color: var(--on-primary);
-  font-family: var(--font-display); font-size: 18px; font-weight: 700;
+  font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700;
   cursor: pointer; transition: transform var(--transition-fast);
 }
 .pickup-btn:active { transform: scale(0.98); }
@@ -755,7 +761,7 @@ onUnmounted(() => {
   background: var(--surface); border-radius: var(--radius-xl);
   padding: var(--spacing-xl); width: 320px; max-width: 85vw;
   text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-  border: 1px solid var(--card-border-strong);
+  border: 1px solid var(--card-border-light);
   position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
   z-index: 100;
 }
@@ -763,7 +769,7 @@ onUnmounted(() => {
 .confirm-text { font-size: 18px; font-weight: 700; margin: var(--spacing-sm) 0 4px; }
 .confirm-hint { font-size: var(--text-body-sm); color: var(--secondary); margin: 0 0 var(--spacing-lg); }
 .confirm-order-info { width: 100%; margin-bottom: var(--spacing-lg); }
-.confirm-info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--surface-variant); }
+.confirm-info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--outline-variant); }
 .confirm-info-row:last-child { border-bottom: none; }
 .confirm-info-label { font-size: var(--text-body-sm); color: var(--secondary); }
 .confirm-info-value { font-size: 16px; font-weight: 700; }
@@ -776,4 +782,17 @@ onUnmounted(() => {
 .confirm-cancel-btn { background: var(--surface-variant); border: none; color: var(--on-surface-variant); }
 .confirm-ok-btn { background: var(--primary-container); border: none; color: var(--on-primary); }
 .confirm-ok-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+</style>
+
+<style>
+[data-theme="dark"] .status-paid,
+[data-theme="dark"] .status-preparing {
+  background: #3d3d3d;
+  color: #dedede;
+}
+:root .status-paid,
+:root .status-preparing {
+  background: #e8e0dc;
+  color: #3a3a3a;
+}
 </style>
