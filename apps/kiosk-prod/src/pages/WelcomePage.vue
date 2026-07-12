@@ -941,3 +941,23 @@ onMounted(() => {
   }
 }
 </style>
+
+<style>
+[data-theme="dark"] .promo-default {
+  background: var(--surface-container-high);
+  border-color: var(--outline-variant);
+}
+[data-theme="dark"] .promo-primary {
+  background: rgba(255, 107, 0, 0.2);
+  border-color: rgba(255, 107, 0, 0.35);
+}
+[data-theme="dark"] .promo-tag {
+  color: #30b04a;
+}
+[data-theme="dark"] .promo-title {
+  color: #ff8a3d;
+}
+[data-theme="dark"] .promo-subtitle {
+  color: #e8ddd0;
+}
+</style>

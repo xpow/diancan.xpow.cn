@@ -90,10 +90,10 @@
   /* ==================== Spacing ==================== */
   --spacing-xs: 4px;
   --spacing-sm: 8px;
-  --spacing-md: 16px;
+  --spacing-md: 12px;
   --spacing-lg: 24px;
   --spacing-xl: 32px;
-  --container-margin: 16px;
+  --container-margin: 10px;
   --gutter: 12px;
 
   /* ==================== Border Radius ==================== */
