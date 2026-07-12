@@ -73,7 +73,7 @@
   --background: #fcf9f8;
 
   /* 底部导航 */
-  --bottom-nav-bg: color-mix(in srgb, var(--surface) 92%, transparent);
+  --bottom-nav-bg: color-mix(in srgb, var(--surface) 92%, #000000);
   --bottom-nav-border: color-mix(in srgb, var(--outline-variant) 30%, transparent);
   --bottom-nav-shadow: 0 -8px 24px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.6);
   --bottom-nav-radius: var(--radius-lg) var(--radius-lg) 0 0;
@@ -89,7 +89,7 @@
 
   /* ==================== Spacing ==================== */
   --spacing-xs: 4px;
-  --spacing-sm: 8px;
+  --spacing-sm: 6px;
   --spacing-md: 12px;
   --spacing-lg: 24px;
   --spacing-xl: 32px;
@@ -164,7 +164,7 @@
   --secondary-container: #dedede;
 
   /* 底部导航 */
-  --bottom-nav-bg: color-mix(in srgb, var(--surface) 92%, transparent);
+  --bottom-nav-bg: color-mix(in srgb, var(--surface) 92%, #000000);
   --bottom-nav-border: color-mix(in srgb, var(--outline-variant) 20%, transparent);
   --bottom-nav-shadow: 0 -8px 24px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   --on-background: #f3f0ef;

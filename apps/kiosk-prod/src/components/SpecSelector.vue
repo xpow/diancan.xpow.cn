@@ -71,7 +71,7 @@ function getChiliCount(label: string): number {
 .spec-selector-sm { gap: 4px; }
 .selector-label { margin: 0; font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; color: var(--secondary); }
 .selector-options { display: flex; flex-wrap: wrap; gap: var(--spacing-sm); }
-.selector-chip { display: flex; align-items: center; gap: 2px; padding: 4px 10px; border-radius: var(--radius-md); border: 1px solid var(--outline-variant); background: transparent; color: var(--on-surface); font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 800; cursor: pointer; transition: all var(--transition-fast); }
+.selector-chip { display: flex; align-items: center; gap: 1px; padding: 4px 10px; border-radius: var(--radius-md); border: 1px solid var(--outline-variant); background: transparent; color: var(--on-surface); font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 800; cursor: pointer; transition: all var(--transition-fast); }
 .spec-selector-sm .selector-chip { padding: 4px 10px; font-size: 12px; }
 .selector-chip-active { border-color: var(--primary-container); background: rgba(255, 107, 0, 0.08); color: var(--primary-container); }
 .chili-icons { font-size: 14px; display: inline-flex; align-items: center; }

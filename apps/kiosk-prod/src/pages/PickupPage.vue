@@ -181,20 +181,7 @@
       </div>
     </Teleport>
 
-    <nav class="bottom-nav">
-      <router-link to="/" class="nav-item">
-        <span class="material-icons">home</span>
-        <span class="nav-label">首页</span>
-      </router-link>
-      <router-link to="/menu" class="nav-item">
-        <span class="material-icons">outdoor_grill</span>
-        <span class="nav-label">菜单</span>
-      </router-link>
-      <router-link to="/orders" class="nav-item nav-item-active">
-        <span class="material-icons">confirmation_number</span>
-        <span class="nav-label">订单</span>
-      </router-link>
-    </nav>
+    <BottomNav current="orders" />
   </main>
 </template>
 
@@ -203,6 +190,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { getDishImage } from '@/utils/dishImages'
 import { apiGet, apiPost } from '@/utils/api'
 import KioskTopBar from '@/components/KioskTopBar.vue'
+import BottomNav from '@/components/BottomNav.vue'
 
 interface OrderItem {
   dishId: string
@@ -615,12 +603,6 @@ onUnmounted(() => {
 .empty-icon { font-size: 64px !important; color: var(--outline-variant); }
 .empty-text { font-size: var(--text-body-lg); font-weight: 600; color: var(--secondary); margin: 0; }
 .empty-cta { display: flex; align-items: center; justify-content: center; padding: var(--spacing-sm) 28px; border-radius: var(--radius-full); background: var(--primary-container); color: var(--on-primary); font-family: var(--font-display); font-size: var(--text-body-lg); font-weight: 700; text-decoration: none; box-shadow: 0 8px 20px rgba(255,107,0,0.15); }
-
-/* Bottom Navigation */
-.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; display: flex; justify-content: space-around; align-items: center; padding: var(--spacing-xs) var(--gutter); padding-bottom: calc(var(--spacing-xs) + env(safe-area-inset-bottom, 0)); background: var(--bottom-nav-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid var(--bottom-nav-border); border-radius: var(--bottom-nav-radius); box-shadow: var(--bottom-nav-shadow); }
-.nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--radius-full); color: var(--secondary); text-decoration: none; transition: all var(--transition-fast); }
-.nav-item-active { background: rgba(255, 107, 0, 0.1); color: var(--primary-container); }
-.nav-label { font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; }
 
 /* Toast */
 .toast { position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%); z-index: 100; padding: 10px 24px; border-radius: var(--radius-full); background: var(--on-surface); color: var(--surface); font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; white-space: nowrap; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }

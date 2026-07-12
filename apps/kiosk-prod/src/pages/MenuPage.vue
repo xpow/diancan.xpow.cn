@@ -91,11 +91,7 @@
       </div>
     </van-action-sheet>
 
-    <nav class="bottom-nav">
-      <router-link to="/" class="nav-item"><span class="material-icons">home</span><span class="nav-label">首页</span></router-link>
-      <router-link to="/menu" class="nav-item nav-item-active"><span class="material-icons">outdoor_grill</span><span class="nav-label">菜单</span></router-link>
-      <router-link to="/pickup" class="nav-item"><span class="material-icons">confirmation_number</span><span class="nav-label">订单</span></router-link>
-    </nav>
+    <BottomNav current="menu" />
   </main>
 </template>
 
@@ -105,6 +101,7 @@ import { useMenu } from '@/composables/useMenu'
 import { useCartQuote } from '@/composables/useCartQuote'
 import { useSpecEditor } from '@/composables/useSpecEditor'
 import KioskTopBar from '@/components/KioskTopBar.vue'
+import BottomNav from '@/components/BottomNav.vue'
 import DishCard from '@/components/DishCard.vue'
 import CartBar from '@/components/CartBar.vue'
 import CartSheet from '@/components/CartSheet.vue'
@@ -184,13 +181,6 @@ onMounted(() => {
 }
 .spec-editor-content { padding: var(--spacing-lg); display: flex; flex-direction: column; gap: var(--spacing-md); }
 .spec-editor-content .btn-primary { align-self: center; }
-
-/* Bottom Navigation - 使用 components.css 定义的公共样式 */
-.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; display: flex; justify-content: space-around; align-items: center; padding: var(--spacing-xs) var(--gutter); padding-bottom: calc(var(--spacing-xs) + env(safe-area-inset-bottom, 0)); background: var(--bottom-nav-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid var(--bottom-nav-border); border-radius: var(--bottom-nav-radius); box-shadow: var(--bottom-nav-shadow); }
-.nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--radius-full); color: var(--secondary); text-decoration: none; transition: all var(--transition-fast); position: relative; }
-.nav-item-active { background: rgba(255, 107, 0, 0.1); color: var(--primary-container); }
-.nav-item-active::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle, rgba(255, 107, 0, 0.15) 0%, transparent 70%); border-radius: inherit; pointer-events: none; }
-.nav-label { font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; }
 @media (max-width: 499px) {
   .page { padding-top: 52px; padding-bottom: 156px; }
   .hide-mobile { display: none; }
