@@ -99,7 +99,6 @@
         <p>© 2026 {{ displayTitle }}</p>
         <p class="footer-tagline">用心做好每一串，传递市井烟火气</p>
         <p class="switch-device" @click="switchDevice">切换设备</p>
-        <p class="review-link" @click="$router.push('/review')">评价反馈</p>
       </footer>
     </div>
 
@@ -700,8 +699,6 @@ onMounted(() => {
   text-decoration: underline;
 }
 .switch-device:hover { opacity: 0.7; }
-.review-link { margin-top: 12px; display: inline-block; padding: 6px 20px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); font-size: 12px; color: var(--secondary); cursor: pointer; background: var(--surface); }
-.review-link:active { background: var(--surface-container-high); }
 
 @media (min-width: 500px) {
   .hero-section { max-width: none; margin: 56px 0 0; padding: 0; height: 360px; overflow: hidden; }

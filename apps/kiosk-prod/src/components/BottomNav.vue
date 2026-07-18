@@ -12,11 +12,15 @@
       <span class="material-icons">confirmation_number</span>
       <span class="nav-label">订单</span>
     </router-link>
+    <router-link to="/review" class="nav-item" :class="{ 'nav-item-active': current === 'reviews' }">
+      <span class="material-icons">rate_review</span>
+      <span class="nav-label">评价</span>
+    </router-link>
   </nav>
 </template>
 
 <script setup lang="ts">
-defineProps<{ current: 'home' | 'menu' | 'orders' }>()
+defineProps<{ current: 'home' | 'menu' | 'orders' | 'reviews' }>()
 </script>
 
 <style scoped>

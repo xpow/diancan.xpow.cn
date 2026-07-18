@@ -1,127 +1,112 @@
 <template>
   <div class="review-page">
-    <!-- Step 0: 开始页 -->
-    <div v-if="step === 0" class="step-start">
-      <div class="hero">
+    <KioskTopBar :title="merchantName" :deviceCode="deviceCode" :statusText="statusText" :businessHours="businessHours" :branchStatus="branchStatus" showHomeLink />
+    <main class="review-content">
+      <!-- Step 0: 开始页 -->
+      <div v-if="step === 0" class="step-start hero">
         <span class="hero-icon material-icons">rate_review</span>
         <h1>告诉我们你的用餐体验</h1>
         <p class="hero-desc">完成问卷即可免费获得一道菜品<br>下次到店出示兑换码即可享用</p>
         <button class="btn-primary btn-start" @click="startReview">开始评价</button>
       </div>
-    </div>
 
-    <!-- Step 1: 选择菜品 -->
-    <div v-if="step === 1" class="step-select">
-      <div class="top-bar-inline">
-        <span class="step-title">选择你吃过的菜品</span>
-        <span class="step-count">{{ selectedDishIds.size }}/{{ dishes.length }}</span>
-      </div>
-      <div v-if="dishes.length === 0" class="empty-state">
-        <span class="material-icons empty-icon">restaurant_menu</span>
-        <p>还没有点餐记录，先去点些菜品吧</p>
-        <button class="btn-primary" @click="$router.push('/menu')">去点餐</button>
-      </div>
-      <div v-else class="dish-grid">
-        <div v-for="d in dishes" :key="d.dishId" :class="['dish-chip', selectedDishIds.has(d.dishId) && 'dish-chip-active', reviewedDishIds.has(d.dishId) && 'dish-chip-disabled']" @click="toggleDish(d)">
-          <span class="dish-chip-name">{{ d.name }}</span>
-          <span class="dish-chip-count">{{ d.count }}次</span>
+      <!-- Step 1: 选择菜品 -->
+      <div v-if="step === 1" class="step-select">
+        <div class="step-header">
+          <span class="step-title">选择你吃过的菜品</span>
+          <span class="step-count">{{ selectedDishIds.size }}/{{ dishes.length }}</span>
+        </div>
+        <div v-if="dishes.length === 0" class="empty-state">
+          <span class="material-icons empty-icon">restaurant_menu</span>
+          <p>还没有点餐记录，先去点些菜品吧</p>
+          <button class="btn-primary" @click="$router.push('/menu')">去点餐</button>
+        </div>
+        <div v-else class="dish-grid">
+          <div v-for="d in dishes" :key="d.dishId" :class="['dish-chip', selectedDishIds.has(d.dishId) && 'dish-chip-active', reviewedDishIds.has(d.dishId) && 'dish-chip-disabled']" @click="toggleDish(d)">
+            <span class="dish-chip-name">{{ d.name }}</span>
+            <span class="dish-chip-count">{{ d.count }}次</span>
+          </div>
         </div>
       </div>
-      <div class="step-actions">
-        <button :class="['btn-primary', selectedDishIds.size === 0 && 'btn-disabled']" :disabled="selectedDishIds.size === 0" @click="goToRate">下一步</button>
-      </div>
-    </div>
 
-    <!-- Step 2: 逐菜评价 -->
-    <div v-if="step === 2" class="step-rate">
-      <div class="top-bar-inline">
-        <button class="btn-back" @click="step = 1"><span class="material-icons">arrow_back</span></button>
-        <span class="step-title">评价菜品</span>
-        <span class="step-count">{{ rateIndex + 1 }}/{{ rateItems.length }}</span>
-      </div>
-      <div class="rate-card" v-for="(item, idx) in rateItems" :key="item.dishId" v-show="idx === rateIndex">
-        <h2 class="rate-dish-name">{{ item.dishName }}</h2>
-
-        <div class="rate-section">
-          <p class="rate-label">整体评价</p>
-          <div class="overall-group">
-            <button :class="['overall-btn', item.overall === 'good' && 'overall-good']" @click="item.overall = 'good'">😋 好吃</button>
-            <button :class="['overall-btn', item.overall === 'okay' && 'overall-okay']" @click="item.overall = 'okay'">🤔 还行</button>
-            <button :class="['overall-btn', item.overall === 'bad' && 'overall-bad']" @click="item.overall = 'bad'">😞 不好</button>
+      <!-- Step 2: 逐菜评价 -->
+      <div v-if="step === 2" class="step-rate">
+        <div class="step-header">
+          <button class="btn-back" @click="step = 1"><span class="material-icons">arrow_back</span></button>
+          <span class="step-title">评价菜品</span>
+          <span class="step-count">{{ rateIndex + 1 }}/{{ rateItems.length }}</span>
+        </div>
+        <div class="rate-card-wrap">
+          <div class="rate-card" v-for="(item, idx) in rateItems" :key="item.dishId" v-show="idx === rateIndex">
+            <h2 class="rate-dish-name">{{ item.dishName }}</h2>
+            <div class="rate-section">
+              <p class="rate-label">整体评价</p>
+              <div class="overall-group">
+                <button :class="['overall-btn', item.overall === 'good' && 'overall-good']" @click="item.overall = 'good'">😋 好吃</button>
+                <button :class="['overall-btn', item.overall === 'okay' && 'overall-okay']" @click="item.overall = 'okay'">🤔 还行</button>
+                <button :class="['overall-btn', item.overall === 'bad' && 'overall-bad']" @click="item.overall = 'bad'">😞 不好</button>
+              </div>
+            </div>
+            <template v-if="item.overall && item.overall !== 'good'">
+              <div class="rate-section">
+                <p class="rate-label">辣度</p>
+                <div class="taste-group">
+                  <button :class="['taste-btn', item.spiciness === 1 && 'taste-active']" @click="item.spiciness = 1">不够辣</button>
+                  <button :class="['taste-btn', item.spiciness === 2 && 'taste-active']" @click="item.spiciness = 2">刚好</button>
+                  <button :class="['taste-btn', item.spiciness === 3 && 'taste-active']" @click="item.spiciness = 3">太辣</button>
+                </div>
+              </div>
+              <div class="rate-section">
+                <p class="rate-label">咸味</p>
+                <div class="taste-group">
+                  <button :class="['taste-btn', item.saltiness === 1 && 'taste-active']" @click="item.saltiness = 1">太淡</button>
+                  <button :class="['taste-btn', item.saltiness === 2 && 'taste-active']" @click="item.saltiness = 2">刚好</button>
+                  <button :class="['taste-btn', item.saltiness === 3 && 'taste-active']" @click="item.saltiness = 3">太咸</button>
+                </div>
+              </div>
+              <div class="rate-section">
+                <p class="rate-label">口感</p>
+                <div class="taste-group">
+                  <button :class="['taste-btn', item.texture === 1 && 'taste-active']" @click="item.texture = 1">太软</button>
+                  <button :class="['taste-btn', item.texture === 2 && 'taste-active']" @click="item.texture = 2">刚好</button>
+                  <button :class="['taste-btn', item.texture === 3 && 'taste-active']" @click="item.texture = 3">太硬</button>
+                </div>
+              </div>
+              <div class="rate-section">
+                <p class="rate-label">份量</p>
+                <div class="taste-group">
+                  <button :class="['taste-btn', item.portion === 1 && 'taste-active']" @click="item.portion = 1">太少</button>
+                  <button :class="['taste-btn', item.portion === 2 && 'taste-active']" @click="item.portion = 2">刚好</button>
+                  <button :class="['taste-btn', item.portion === 3 && 'taste-active']" @click="item.portion = 3">太多</button>
+                </div>
+              </div>
+            </template>
+            <div class="rate-section">
+              <p class="rate-label">还想说什么？（选填）</p>
+              <textarea v-model="item.comment" class="rate-comment" placeholder="说说你的感受..." maxlength="200" rows="2"></textarea>
+            </div>
           </div>
         </div>
-
-        <template v-if="item.overall && item.overall !== 'good'">
-          <div class="rate-section">
-            <p class="rate-label">辣度</p>
-            <div class="taste-group">
-              <button :class="['taste-btn', item.spiciness === 1 && 'taste-active']" @click="item.spiciness = 1">不够辣</button>
-              <button :class="['taste-btn', item.spiciness === 2 && 'taste-active']" @click="item.spiciness = 2">刚好</button>
-              <button :class="['taste-btn', item.spiciness === 3 && 'taste-active']" @click="item.spiciness = 3">太辣</button>
-            </div>
-          </div>
-          <div class="rate-section">
-            <p class="rate-label">咸味</p>
-            <div class="taste-group">
-              <button :class="['taste-btn', item.saltiness === 1 && 'taste-active']" @click="item.saltiness = 1">太淡</button>
-              <button :class="['taste-btn', item.saltiness === 2 && 'taste-active']" @click="item.saltiness = 2">刚好</button>
-              <button :class="['taste-btn', item.saltiness === 3 && 'taste-active']" @click="item.saltiness = 3">太咸</button>
-            </div>
-          </div>
-          <div class="rate-section">
-            <p class="rate-label">口感</p>
-            <div class="taste-group">
-              <button :class="['taste-btn', item.texture === 1 && 'taste-active']" @click="item.texture = 1">太软</button>
-              <button :class="['taste-btn', item.texture === 2 && 'taste-active']" @click="item.texture = 2">刚好</button>
-              <button :class="['taste-btn', item.texture === 3 && 'taste-active']" @click="item.texture = 3">太硬</button>
-            </div>
-          </div>
-          <div class="rate-section">
-            <p class="rate-label">份量</p>
-            <div class="taste-group">
-              <button :class="['taste-btn', item.portion === 1 && 'taste-active']" @click="item.portion = 1">太少</button>
-              <button :class="['taste-btn', item.portion === 2 && 'taste-active']" @click="item.portion = 2">刚好</button>
-              <button :class="['taste-btn', item.portion === 3 && 'taste-active']" @click="item.portion = 3">太多</button>
-            </div>
-          </div>
-        </template>
-
-        <div class="rate-section">
-          <p class="rate-label">还想说什么？（选填）</p>
-          <textarea v-model="item.comment" class="rate-comment" placeholder="说说你的感受..." maxlength="200" rows="2"></textarea>
-        </div>
       </div>
-      <div class="step-actions">
-        <button class="btn-secondary" @click="prevRate" :disabled="rateIndex === 0">上一道</button>
-        <button v-if="rateIndex < rateItems.length - 1" class="btn-primary" @click="nextRate">下一道</button>
-        <button v-else class="btn-primary" @click="submitReview">提交评价</button>
-      </div>
-    </div>
 
-    <!-- Step 3: 选赠品 -->
-    <div v-if="step === 3" class="step-gift">
-      <div class="hero">
+      <!-- Step 3: 选赠品 -->
+      <div v-if="step === 3" class="step-gift hero">
         <span class="hero-icon material-icons">card_giftcard</span>
         <h1>感谢你的评价！</h1>
         <p class="hero-desc">选一道你喜欢的菜作为赠品<br>下次到店出示兑换码即可享用</p>
-      </div>
-      <div class="gift-grid">
-        <div v-for="d in giftDishes" :key="d.id" :class="['gift-card', selectedGiftId === d.id && 'gift-card-active']" @click="selectedGiftId = d.id">
-          <div class="gift-img" :style="{ backgroundImage: d.image ? 'url(' + d.image + ')' : undefined }">
-            <span v-if="!d.image" class="material-icons">restaurant</span>
+        <div class="gift-grid">
+          <div v-for="d in giftDishes" :key="d.id" :class="['gift-card', selectedGiftId === d.id && 'gift-card-active']" @click="selectedGiftId = d.id">
+            <div class="gift-img" :style="{ backgroundImage: d.image ? 'url(' + d.image + ')' : undefined }">
+              <span v-if="!d.image" class="material-icons">restaurant</span>
+            </div>
+            <span class="gift-name">{{ d.name }}</span>
+            <span class="gift-price">¥{{ d.price.toFixed(2) }}</span>
           </div>
-          <span class="gift-name">{{ d.name }}</span>
-          <span class="gift-price">¥{{ d.price.toFixed(2) }}</span>
         </div>
       </div>
-      <div class="step-actions">
-        <button :class="['btn-primary', !selectedGiftId && 'btn-disabled']" :disabled="!selectedGiftId" @click="claimReward">选好了</button>
-      </div>
-    </div>
 
-    <!-- Step 4: 完成 -->
-    <div v-if="step === 4" class="step-code">
-      <div class="hero">
+      <!-- Step 4: 完成 -->
+      <div v-if="step === 4" class="step-code hero">
         <span v-if="rewardCode" class="hero-icon material-icons code-icon">confirmation_number</span>
         <span v-else class="hero-icon material-icons">check_circle</span>
         <h1>{{ rewardCode ? '兑换码已生成' : '感谢你的评价！' }}</h1>
@@ -131,15 +116,34 @@
           <span class="code-value">{{ rewardCode }}</span>
         </div>
         <p v-if="rewardDishName" class="code-dish">赠品：{{ rewardDishName }}</p>
-        <button class="btn-primary" @click="$router.push('/home')">返回首页</button>
       </div>
+    </main>
+
+    <!-- Bottom actions (inside main scroll area, pinned to bottom of content) -->
+    <div v-if="step === 1" class="bottom-actions">
+      <button :class="['btn-primary', selectedDishIds.size === 0 && 'btn-disabled']" :disabled="selectedDishIds.size === 0" @click="goToRate">下一步</button>
     </div>
+    <div v-if="step === 2" class="bottom-actions">
+      <button class="btn-secondary" @click="prevRate" :disabled="rateIndex === 0">上一道</button>
+      <button v-if="rateIndex < rateItems.length - 1" class="btn-primary" @click="nextRate">下一道</button>
+      <button v-else class="btn-primary" @click="submitReview">提交评价</button>
+    </div>
+    <div v-if="step === 3" class="bottom-actions">
+      <button :class="['btn-primary', !selectedGiftId && 'btn-disabled']" :disabled="!selectedGiftId" @click="claimReward">选好了</button>
+    </div>
+    <div v-if="step === 4" class="bottom-actions">
+      <button class="btn-primary" @click="$router.push('/home')">返回首页</button>
+    </div>
+
+    <BottomNav current="reviews" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { apiGet, apiPost } from '@/utils/api'
+import KioskTopBar from '@/components/KioskTopBar.vue'
+import BottomNav from '@/components/BottomNav.vue'
 
 interface DishItem { dishId: string; name: string; count: number }
 interface RateItem { dishId: string; dishName: string; overall: string; spiciness: number | null; saltiness: number | null; texture: number | null; portion: number | null; comment: string }
@@ -157,12 +161,26 @@ const rewardCode = ref('')
 const rewardDishName = ref('')
 const currentReviewId = ref('')
 
+// TopBar data
+const merchantName = ref('')
+const deviceCode = ref('')
+const statusText = ref('')
+const businessHours = ref('')
+const branchStatus = ref('')
+
 onMounted(async () => {
+  try {
+    const boot = await apiGet<any>('/api/system/bootstrap?sn=' + localStorage.getItem('kiosk-device-sn'))
+    merchantName.value = boot.merchantName || ''
+    deviceCode.value = boot.deviceCode || ''
+    statusText.value = boot.statusText || ''
+    businessHours.value = boot.businessHours || ''
+    branchStatus.value = boot.branchStatus || ''
+  } catch {}
   try {
     const status = await apiGet<{ reviewed: boolean; reviewedDishIds: string[]; current: any }>('/api/reviews/status')
     reviewedDishIds.value = new Set(status.reviewedDishIds)
     if (status.current?.code) {
-      // 已有兑换码 → 直接展示结果
       rewardCode.value = status.current.code.code
       rewardDishName.value = status.current.code.dishName
       step.value = 4
@@ -170,17 +188,11 @@ onMounted(async () => {
     }
     if (status.current) currentReviewId.value = status.current.id
   } catch {}
-  // 加载历史菜品
   const data = await apiGet<{ items: DishItem[] }>('/api/reviews/dishes')
   dishes.value = data.items
   if (dishes.value.length === 0) return
-  // 已评过的默认选中但不可点击，未评的为空
   const newDishes = dishes.value.filter((d) => !reviewedDishIds.value.has(d.dishId))
-  if (newDishes.length === 0) {
-    // 所有都评过了
-    step.value = 4
-    return
-  }
+  if (newDishes.length === 0) { step.value = 4; return }
   step.value = 1
 })
 
@@ -253,9 +265,7 @@ async function submitReview() {
     const gift = await apiGet<{ items: GiftDish[] }>('/api/reviews/gift-dishes')
     giftDishes.value = gift.items
     if (giftDishes.value.length === 0) {
-      rewardCode.value = ''
-      rewardDishName.value = ''
-      step.value = 4
+      rewardCode.value = ''; rewardDishName.value = ''; step.value = 4
     } else {
       step.value = 3
     }
@@ -281,17 +291,19 @@ async function claimReward() {
 
 <style scoped>
 .review-page { min-height: 100vh; background: var(--page-bg); display: flex; flex-direction: column; }
+.review-content { flex: 1; padding-top: 56px; padding-bottom: 72px; overflow-y: auto; display: flex; flex-direction: column; }
 .hero { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 24px; flex: 1; gap: 12px; }
 .hero-icon { font-size: 56px !important; color: var(--primary-container); }
 .hero h1 { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--on-surface); margin: 0; }
 .hero-desc { font-size: 14px; color: var(--secondary); line-height: 1.6; margin: 0; }
 .btn-start { padding: 14px 40px; border-radius: var(--radius-full); font-size: 16px; font-weight: 700; margin-top: 12px; }
 
-.top-bar-inline { display: flex; align-items: center; gap: 12px; padding: 12px 16px; position: sticky; top: 0; z-index: 10; background: var(--page-bg); }
+.step-header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
 .btn-back { background: none; border: none; padding: 4px; color: var(--on-surface); cursor: pointer; }
 .step-title { flex: 1; font-family: var(--font-display); font-size: 18px; font-weight: 700; }
 .step-count { font-size: 14px; color: var(--secondary); }
 
+/* Step 1 */
 .step-select { flex: 1; display: flex; flex-direction: column; }
 .dish-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 16px; flex: 1; align-content: flex-start; }
 .dish-chip { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 16px; border-radius: var(--radius-lg); background: var(--surface-container); border: 2px solid transparent; cursor: pointer; transition: all 0.15s; }
@@ -301,12 +313,15 @@ async function claimReward() {
 .dish-chip-name { font-family: var(--font-display); font-size: 15px; font-weight: 600; }
 .dish-chip-count { font-size: 11px; color: var(--secondary); }
 
-.step-actions { display: flex; gap: 12px; padding: 16px; background: var(--surface); border-top: 1px solid var(--outline-variant); }
-.step-actions .btn-primary, .step-actions .btn-secondary { flex: 1; padding: 14px; border-radius: var(--radius-full); font-size: 16px; font-weight: 700; text-align: center; }
+/* Bottom actions */
+.bottom-actions { position: fixed; bottom: 64px; left: 0; right: 0; display: flex; gap: 12px; padding: 12px 16px; background: var(--surface); border-top: 1px solid var(--outline-variant); z-index: 40; }
+.bottom-actions .btn-primary, .bottom-actions .btn-secondary { flex: 1; padding: 14px; border-radius: var(--radius-full); font-size: 16px; font-weight: 700; text-align: center; }
 .btn-disabled { opacity: 0.4; pointer-events: none; }
 
+/* Step 2 */
 .step-rate { flex: 1; display: flex; flex-direction: column; }
-.rate-card { flex: 1; padding: 16px; overflow-y: auto; }
+.rate-card-wrap { flex: 1; padding: 0 16px; overflow-y: auto; }
+.rate-card { padding: 16px 0; }
 .rate-dish-name { font-family: var(--font-display); font-size: 24px; font-weight: 800; margin: 0 0 20px; text-align: center; }
 .rate-section { margin-bottom: 16px; }
 .rate-label { font-size: 14px; font-weight: 600; margin: 0 0 8px; color: var(--secondary); }
@@ -320,8 +335,9 @@ async function claimReward() {
 .rate-comment { width: 100%; padding: 12px; border-radius: var(--radius-lg); border: 1px solid var(--outline-variant); background: var(--surface); font-family: var(--font-body); font-size: 14px; resize: none; outline: none; }
 .rate-comment:focus { border-color: var(--primary-container); }
 
-.step-gift { flex: 1; display: flex; flex-direction: column; }
-.gift-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; flex: 1; align-content: flex-start; }
+/* Step 3 */
+.step-gift { overflow-y: auto; }
+.gift-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px 0; width: 100%; }
 .gift-card { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px; border-radius: var(--radius-xl); background: var(--surface); border: 2px solid transparent; cursor: pointer; transition: all 0.15s; box-shadow: var(--shadow-sm); }
 .gift-card:active { transform: scale(0.96); }
 .gift-card-active { border-color: var(--primary-container); }
@@ -330,7 +346,8 @@ async function claimReward() {
 .gift-name { font-family: var(--font-display); font-size: 14px; font-weight: 600; text-align: center; }
 .gift-price { font-size: 13px; color: var(--secondary); }
 
-.step-code { flex: 1; }
+/* Step 4 */
+.step-code { overflow-y: auto; }
 .code-icon { color: var(--primary-container) !important; }
 .code-box { background: var(--surface); border: 2px dashed var(--primary-container); border-radius: var(--radius-xl); padding: 20px 32px; margin: 8px 0; }
 .code-value { font-family: monospace; font-size: 32px; font-weight: 800; letter-spacing: 6px; color: var(--primary-container); }
@@ -342,5 +359,5 @@ async function claimReward() {
 [data-theme="dark"] .overall-okay { background: #291b00; color: #fcd34d; }
 [data-theme="dark"] .overall-bad { background: #2d0a0a; color: #fca5a5; }
 [data-theme="dark"] .taste-active { background: color-mix(in srgb, var(--primary-container) 25%, transparent); }
-[data-theme="dark"] .step-actions { border-color: #2a2827; }
+[data-theme="dark"] .bottom-actions { border-color: #2a2827; }
 </style>
