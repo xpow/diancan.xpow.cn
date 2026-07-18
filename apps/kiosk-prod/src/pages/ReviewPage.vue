@@ -25,7 +25,7 @@
           <div v-for="d in dishes" :key="d.dishId" :class="['dish-chip', selectedDishIds.has(d.dishId) && 'dish-chip-active', reviewedDishIds.has(d.dishId) && 'dish-chip-reviewed']" @click="toggleDish(d)">
             <div class="dish-chip-img" :style="{ backgroundImage: d.image ? 'url(' + d.image + ')' : 'url(' + getDishImage(d.dishId) + ')' }"></div>
             <span class="dish-chip-name">{{ d.name }}</span>
-            <span v-if="reviewedDishIds.has(d.dishId)" class="dish-chip-check">check</span>
+            <span v-if="reviewedDishIds.has(d.dishId)" class="dish-chip-check material-icons">check</span>
           </div>
         </div>
       </div>
@@ -315,7 +315,7 @@ async function claimReward() {
 .dish-chip-img { width: 36px; height: 36px; border-radius: 50%; background: var(--surface-container-high); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .dish-chip-img .material-icons { font-size: 18px !important; color: var(--secondary); }
 .dish-chip-name { font-family: var(--font-display); font-size: 14px; font-weight: 600; }
-.dish-chip-check { position: absolute; top: -4px; right: -4px; width: 20px; height: 20px; border-radius: 50%; background: #22c55e; color: #fff; font-family: 'Material Icons'; font-size: 14px !important; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
+.dish-chip-check { position: absolute; top: -4px; right: -4px; width: 20px; height: 20px; border-radius: 50%; background: #22c55e; color: #fff; font-size: 14px !important; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
 
 /* Bottom actions */
 .bottom-actions { position: fixed; bottom: 64px; left: 0; right: 0; display: flex; gap: 12px; padding: 12px 16px; background: var(--surface); border-top: 1px solid var(--outline-variant); z-index: 40; }
