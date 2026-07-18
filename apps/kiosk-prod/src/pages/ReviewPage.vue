@@ -22,9 +22,10 @@
           <button class="btn-primary" @click="$router.push('/menu')">去点餐</button>
         </div>
         <div v-else class="dish-grid">
-          <div v-for="d in dishes" :key="d.dishId" :class="['dish-chip', selectedDishIds.has(d.dishId) && 'dish-chip-active', reviewedDishIds.has(d.dishId) && 'dish-chip-disabled']" @click="toggleDish(d)">
+          <div v-for="d in dishes" :key="d.dishId" :class="['dish-chip', selectedDishIds.has(d.dishId) && 'dish-chip-active', reviewedDishIds.has(d.dishId) && 'dish-chip-reviewed']" @click="toggleDish(d)">
             <div class="dish-chip-img" :style="{ backgroundImage: d.image ? 'url(' + d.image + ')' : 'url(' + getDishImage(d.dishId) + ')' }"></div>
             <span class="dish-chip-name">{{ d.name }}</span>
+            <span v-if="reviewedDishIds.has(d.dishId)" class="dish-chip-check">check</span>
           </div>
         </div>
       </div>
@@ -307,13 +308,14 @@ async function claimReward() {
 /* Step 1 */
 .step-select { flex: 1; display: flex; flex-direction: column; }
 .dish-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 16px; flex: 1; align-content: flex-start; }
-.dish-chip { display: flex; align-items: center; gap: 10px; padding: 8px 16px 8px 8px; border-radius: var(--radius-full); background: var(--surface); border: 2px solid var(--outline-variant); cursor: pointer; transition: all 0.15s; box-shadow: var(--shadow-sm); }
+.dish-chip { position: relative; display: flex; align-items: center; gap: 10px; padding: 8px 16px 8px 8px; border-radius: var(--radius-full); background: var(--surface); border: 2px solid var(--outline-variant); cursor: pointer; transition: all 0.15s; box-shadow: var(--shadow-sm); }
 .dish-chip:active { transform: scale(0.96); }
 .dish-chip-active { border-color: var(--primary-container); background: color-mix(in srgb, var(--primary-container) 15%, var(--surface)); }
-.dish-chip-disabled { opacity: 0.4; cursor: default; pointer-events: none; }
+.dish-chip-reviewed { opacity: 0.45; cursor: default; pointer-events: none; }
 .dish-chip-img { width: 36px; height: 36px; border-radius: 50%; background: var(--surface-container-high); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .dish-chip-img .material-icons { font-size: 18px !important; color: var(--secondary); }
 .dish-chip-name { font-family: var(--font-display); font-size: 14px; font-weight: 600; }
+.dish-chip-check { position: absolute; top: -4px; right: -4px; width: 20px; height: 20px; border-radius: 50%; background: #22c55e; color: #fff; font-family: 'Material Icons'; font-size: 14px !important; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
 
 /* Bottom actions */
 .bottom-actions { position: fixed; bottom: 64px; left: 0; right: 0; display: flex; gap: 12px; padding: 12px 16px; background: var(--surface); border-top: 1px solid var(--outline-variant); z-index: 40; }
