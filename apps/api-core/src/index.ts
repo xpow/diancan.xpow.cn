@@ -989,18 +989,28 @@ function genReviewCode(): string {
   return code
 }
 
-// 检查当前设备是否已评
+// 检查当前设备评价状态
 app.get('/api/reviews/status', generalLimiter, authMiddleware, async (req, res) => {
   const deviceId = req.authDevice!.deviceId
-  const existing = await prisma.review.findUnique({
+  const reviews = await prisma.review.findMany({
     where: { deviceId },
-    include: { code: true },
+    include: { items: true, code: true },
+    orderBy: { createdAt: 'desc' },
   })
-  if (existing) {
-    res.json({ reviewed: true, review: { id: existing.id, rewardDishId: existing.rewardDishId, createdAt: existing.createdAt.toISOString() }, code: existing.code ? { code: existing.code.code, dishName: existing.code.dishName, status: existing.code.status } : null })
-  } else {
-    res.json({ reviewed: false, review: null, code: null })
-  }
+  const latest = reviews[0]
+  const reviewedDishIds = new Set<string>()
+  for (const r of reviews) for (const i of r.items) reviewedDishIds.add(i.dishId)
+  res.json({
+    reviewed: reviews.length > 0,
+    reviewedDishIds: Array.from(reviewedDishIds),
+    current: latest ? {
+      id: latest.id,
+      rewardDishId: latest.rewardDishId,
+      code: latest.code ? { code: latest.code.code, dishName: latest.code.dishName, status: latest.code.status } : null,
+      itemCount: latest.items.length,
+      createdAt: latest.createdAt.toISOString(),
+    } : null,
+  })
 })
 
 // 获取该设备历史点过的菜品
@@ -1033,8 +1043,6 @@ app.post('/api/reviews', generalLimiter, authMiddleware, async (req, res) => {
   if (!branchId || !items || !Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ message: '缺少参数' })
   }
-  const existing = await prisma.review.findUnique({ where: { deviceId } })
-  if (existing) return res.status(409).json({ message: '该设备已评价过' })
 
   const review = await prisma.review.create({
     data: {
@@ -1062,11 +1070,11 @@ app.post('/api/reviews', generalLimiter, authMiddleware, async (req, res) => {
 // 选择赠品并生成兑换码
 app.post('/api/reviews/reward', generalLimiter, authMiddleware, async (req, res) => {
   const deviceId = req.authDevice!.deviceId
-  const { dishId, dishName } = req.body ?? {}
-  if (!dishId || !dishName) return res.status(400).json({ message: '缺少参数' })
+  const { reviewId, dishId, dishName } = req.body ?? {}
+  if (!reviewId || !dishId || !dishName) return res.status(400).json({ message: '缺少参数' })
 
-  const review = await prisma.review.findUnique({ where: { deviceId } })
-  if (!review) return res.status(404).json({ message: '请先提交评价' })
+  const review = await prisma.review.findUnique({ where: { id: reviewId } })
+  if (!review || review.deviceId !== deviceId) return res.status(404).json({ message: '评价不存在' })
   if (review.rewardDishId) return res.status(409).json({ message: '已领取过赠品' })
 
   // 生成唯一兑换码（重试直到不重复）

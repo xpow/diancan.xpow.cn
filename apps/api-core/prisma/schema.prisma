@@ -282,7 +282,7 @@ model OrderPromotion {
 model Review {
   id           String       @id @default(cuid())
   branchId     String
-  deviceId     String       @unique
+  deviceId     String
   comment      String?
   rewardDishId String?
   createdAt    DateTime     @default(now())

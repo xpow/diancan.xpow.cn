@@ -21,8 +21,8 @@
         <p>还没有点餐记录，先去点些菜品吧</p>
         <button class="btn-primary" @click="$router.push('/menu')">去点餐</button>
       </div>
-      <div class="dish-grid">
-        <div v-for="d in dishes" :key="d.dishId" :class="['dish-chip', selectedDishIds.has(d.dishId) && 'dish-chip-active']" @click="toggleDish(d.dishId)">
+      <div v-else class="dish-grid">
+        <div v-for="d in dishes" :key="d.dishId" :class="['dish-chip', selectedDishIds.has(d.dishId) && 'dish-chip-active', reviewedDishIds.has(d.dishId) && 'dish-chip-disabled']" @click="toggleDish(d)">
           <span class="dish-chip-name">{{ d.name }}</span>
           <span class="dish-chip-count">{{ d.count }}次</span>
         </div>
@@ -119,7 +119,7 @@
       </div>
     </div>
 
-    <!-- Step 4: 兑换码 / 完成 -->
+    <!-- Step 4: 完成 -->
     <div v-if="step === 4" class="step-code">
       <div class="hero">
         <span v-if="rewardCode" class="hero-icon material-icons code-icon">confirmation_number</span>
@@ -131,19 +131,6 @@
           <span class="code-value">{{ rewardCode }}</span>
         </div>
         <p v-if="rewardDishName" class="code-dish">赠品：{{ rewardDishName }}</p>
-        <button class="btn-primary" @click="$router.push('/home')">返回首页</button>
-      </div>
-    </div>
-
-    <!-- 已评过 -->
-    <div v-if="alreadyReviewed" class="step-start">
-      <div class="hero">
-        <span class="hero-icon material-icons">check_circle</span>
-        <h1>你已经评价过了</h1>
-        <div v-if="existingCode" class="code-box">
-          <span class="code-value">{{ existingCode.code }}</span>
-        </div>
-        <p v-if="existingCode" class="code-dish">赠品：{{ existingCode.dishName }}</p>
         <button class="btn-primary" @click="$router.push('/home')">返回首页</button>
       </div>
     </div>
@@ -161,37 +148,61 @@ interface GiftDish { id: string; name: string; price: number; image: string | nu
 const step = ref(0)
 const dishes = ref<DishItem[]>([])
 const selectedDishIds = ref(new Set<string>())
+const reviewedDishIds = ref(new Set<string>())
 const rateItems = ref<RateItem[]>([])
 const rateIndex = ref(0)
 const giftDishes = ref<GiftDish[]>([])
 const selectedGiftId = ref('')
 const rewardCode = ref('')
 const rewardDishName = ref('')
-const alreadyReviewed = ref(false)
-const existingCode = ref<{ code: string; dishName: string; status: string } | null>(null)
+const currentReviewId = ref('')
 
-async function startReview() {
+onMounted(async () => {
   try {
-    const status = await apiGet<{ reviewed: boolean; review: any; code: any }>('/api/reviews/status')
-    if (status.reviewed) {
-      alreadyReviewed.value = true
-      existingCode.value = status.code
+    const status = await apiGet<{ reviewed: boolean; reviewedDishIds: string[]; current: any }>('/api/reviews/status')
+    reviewedDishIds.value = new Set(status.reviewedDishIds)
+    if (status.current?.code) {
+      // 已有兑换码 → 直接展示结果
+      rewardCode.value = status.current.code.code
+      rewardDishName.value = status.current.code.dishName
+      step.value = 4
       return
     }
+    if (status.current) currentReviewId.value = status.current.id
   } catch {}
+  // 加载历史菜品
   const data = await apiGet<{ items: DishItem[] }>('/api/reviews/dishes')
   dishes.value = data.items
-  if (dishes.value.length === 0) {
-    // 没有历史菜品，给个默认提示
+  if (dishes.value.length === 0) return
+  // 已评过的默认选中但不可点击，未评的为空
+  const newDishes = dishes.value.filter((d) => !reviewedDishIds.value.has(d.dishId))
+  if (newDishes.length === 0) {
+    // 所有都评过了
+    step.value = 4
     return
   }
   step.value = 1
+})
+
+async function startReview() {
+  const status = await apiGet<{ reviewed: boolean; reviewedDishIds: string[]; current: any }>('/api/reviews/status')
+  reviewedDishIds.value = new Set(status.reviewedDishIds)
+  if (status.current) currentReviewId.value = status.current.id
+  if (!dishes.value.length) {
+    const data = await apiGet<{ items: DishItem[] }>('/api/reviews/dishes')
+    dishes.value = data.items
+  }
+  if (dishes.value.length === 0) return
+  const newDishes = dishes.value.filter((d) => !reviewedDishIds.value.has(d.dishId))
+  if (newDishes.length === 0) { step.value = 4; return }
+  step.value = 1
 }
 
-function toggleDish(id: string) {
+function toggleDish(d: DishItem) {
+  if (reviewedDishIds.value.has(d.dishId)) return
   const s = new Set(selectedDishIds.value)
-  if (s.has(id)) s.delete(id)
-  else s.add(id)
+  if (s.has(d.dishId)) s.delete(d.dishId)
+  else s.add(d.dishId)
   selectedDishIds.value = s
 }
 
@@ -219,14 +230,12 @@ function prevRate() {
 }
 
 async function submitReview() {
-  // 验证每个至少选了整体评价
   const invalid = rateItems.value.find((i) => !i.overall)
   if (invalid) { alert('请给每道菜选择整体评价'); return }
   try {
-    // 通过 bootstrap 获取 branchId
     const boot = await apiGet<any>('/api/system/bootstrap?sn=' + localStorage.getItem('kiosk-device-sn'))
     const branchId = boot.branchId || ''
-    await apiPost('/api/reviews', {
+    const res = await apiPost<{ id: string }>('/api/reviews', {
       branchId,
       items: rateItems.value.map((i) => ({
         dishId: i.dishId,
@@ -240,11 +249,10 @@ async function submitReview() {
       })),
       comment: '',
     })
-    // 加载赠品池
+    currentReviewId.value = res.id
     const gift = await apiGet<{ items: GiftDish[] }>('/api/reviews/gift-dishes')
     giftDishes.value = gift.items
     if (giftDishes.value.length === 0) {
-      // 没有赠品直接展示感谢页
       rewardCode.value = ''
       rewardDishName.value = ''
       step.value = 4
@@ -257,11 +265,11 @@ async function submitReview() {
 }
 
 async function claimReward() {
-  if (!selectedGiftId.value) return
+  if (!selectedGiftId.value || !currentReviewId.value) return
   const dish = giftDishes.value.find((d) => d.id === selectedGiftId.value)
   if (!dish) return
   try {
-    const res = await apiPost<{ code: string; dishName: string }>('/api/reviews/reward', { dishId: dish.id, dishName: dish.name })
+    const res = await apiPost<{ code: string; dishName: string }>('/api/reviews/reward', { reviewId: currentReviewId.value, dishId: dish.id, dishName: dish.name })
     rewardCode.value = res.code
     rewardDishName.value = res.dishName
     step.value = 4
@@ -269,16 +277,6 @@ async function claimReward() {
     alert(e.message || '领取失败')
   }
 }
-
-onMounted(() => {
-  // 自动检查状态
-  apiGet<{ reviewed: boolean; review: any; code: any }>('/api/reviews/status').then((s) => {
-    if (s.reviewed) {
-      alreadyReviewed.value = true
-      existingCode.value = s.code
-    }
-  }).catch(() => {})
-})
 </script>
 
 <style scoped>
@@ -289,27 +287,24 @@ onMounted(() => {
 .hero-desc { font-size: 14px; color: var(--secondary); line-height: 1.6; margin: 0; }
 .btn-start { padding: 14px 40px; border-radius: var(--radius-full); font-size: 16px; font-weight: 700; margin-top: 12px; }
 
-/* Top bar */
 .top-bar-inline { display: flex; align-items: center; gap: 12px; padding: 12px 16px; position: sticky; top: 0; z-index: 10; background: var(--page-bg); }
 .btn-back { background: none; border: none; padding: 4px; color: var(--on-surface); cursor: pointer; }
 .step-title { flex: 1; font-family: var(--font-display); font-size: 18px; font-weight: 700; }
 .step-count { font-size: 14px; color: var(--secondary); }
 
-/* Step 1: Dish selection */
 .step-select { flex: 1; display: flex; flex-direction: column; }
 .dish-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 16px; flex: 1; align-content: flex-start; }
 .dish-chip { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 16px; border-radius: var(--radius-lg); background: var(--surface-container); border: 2px solid transparent; cursor: pointer; transition: all 0.15s; }
 .dish-chip:active { transform: scale(0.96); }
 .dish-chip-active { border-color: var(--primary-container); background: color-mix(in srgb, var(--primary-container) 15%, var(--surface)); }
+.dish-chip-disabled { opacity: 0.4; cursor: default; pointer-events: none; }
 .dish-chip-name { font-family: var(--font-display); font-size: 15px; font-weight: 600; }
 .dish-chip-count { font-size: 11px; color: var(--secondary); }
 
-/* Step actions */
 .step-actions { display: flex; gap: 12px; padding: 16px; background: var(--surface); border-top: 1px solid var(--outline-variant); }
 .step-actions .btn-primary, .step-actions .btn-secondary { flex: 1; padding: 14px; border-radius: var(--radius-full); font-size: 16px; font-weight: 700; text-align: center; }
 .btn-disabled { opacity: 0.4; pointer-events: none; }
 
-/* Step 2: Rate */
 .step-rate { flex: 1; display: flex; flex-direction: column; }
 .rate-card { flex: 1; padding: 16px; overflow-y: auto; }
 .rate-dish-name { font-family: var(--font-display); font-size: 24px; font-weight: 800; margin: 0 0 20px; text-align: center; }
@@ -325,7 +320,6 @@ onMounted(() => {
 .rate-comment { width: 100%; padding: 12px; border-radius: var(--radius-lg); border: 1px solid var(--outline-variant); background: var(--surface); font-family: var(--font-body); font-size: 14px; resize: none; outline: none; }
 .rate-comment:focus { border-color: var(--primary-container); }
 
-/* Step 3: Gift selection */
 .step-gift { flex: 1; display: flex; flex-direction: column; }
 .gift-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; flex: 1; align-content: flex-start; }
 .gift-card { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px; border-radius: var(--radius-xl); background: var(--surface); border: 2px solid transparent; cursor: pointer; transition: all 0.15s; box-shadow: var(--shadow-sm); }
@@ -336,7 +330,6 @@ onMounted(() => {
 .gift-name { font-family: var(--font-display); font-size: 14px; font-weight: 600; text-align: center; }
 .gift-price { font-size: 13px; color: var(--secondary); }
 
-/* Step 4: Code display */
 .step-code { flex: 1; }
 .code-icon { color: var(--primary-container) !important; }
 .code-box { background: var(--surface); border: 2px dashed var(--primary-container); border-radius: var(--radius-xl); padding: 20px 32px; margin: 8px 0; }
@@ -345,7 +338,6 @@ onMounted(() => {
 .empty-state { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 40px 24px; text-align: center; color: var(--secondary); }
 .empty-icon { font-size: 48px !important; opacity: 0.4; }
 
-/* Dark overrides */
 [data-theme="dark"] .overall-good { background: #052e16; color: #86efac; }
 [data-theme="dark"] .overall-okay { background: #291b00; color: #fcd34d; }
 [data-theme="dark"] .overall-bad { background: #2d0a0a; color: #fca5a5; }
