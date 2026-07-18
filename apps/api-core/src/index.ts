@@ -1031,11 +1031,19 @@ app.get('/api/reviews/dishes', generalLimiter, authMiddleware, async (req, res) 
       else dishMap.set(key, { dishId: i.dishId, name: i.name, image: null, count: i.quantity })
     }
   }
-  // 补上菜品图片
+  // 补上菜品图片，过滤饮品
   const dishIds = Array.from(dishMap.keys())
+  const skipCategoryNames = ['饮品']
   if (dishIds.length > 0) {
-    const dishRecords = await prisma.dish.findMany({ where: { id: { in: dishIds } }, select: { id: true, image: true } })
+    const dishRecords = await prisma.dish.findMany({
+      where: { id: { in: dishIds } },
+      select: { id: true, image: true, category: { select: { name: true } } },
+    })
     for (const d of dishRecords) {
+      if (skipCategoryNames.some((n) => d.category?.name.includes(n))) {
+        dishMap.delete(d.id)
+        continue
+      }
       const entry = dishMap.get(d.id)
       if (entry) entry.image = d.image
     }
