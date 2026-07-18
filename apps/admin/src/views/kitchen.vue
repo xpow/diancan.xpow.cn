@@ -26,9 +26,11 @@
     <main>
       <div v-for="group in filtered" :key="group.orderId" class="order-group">
         <div class="group-header">
-          <span class="group-code">{{ group.pickupCode }}</span>
-          <span v-if="group.orderType === 'takeaway'" class="group-tag">自提</span>
-          <span v-if="group.paymentMethod" :class="['group-pay', 'pay-' + group.paymentMethod]">{{ payLabel(group.paymentMethod) }}</span>
+          <span class="group-left">
+            <span class="group-code">{{ group.pickupCode }}</span>
+            <span v-if="group.orderType === 'takeaway'" class="group-tag">自提</span>
+            <span v-if="group.paymentMethod" :class="['group-pay', 'pay-' + group.paymentMethod]">{{ payLabel(group.paymentMethod) }}</span>
+          </span>
           <span class="group-time">{{ group.time }}</span>
         </div>
         <div
@@ -373,6 +375,7 @@ main { padding: 12px 16px; display: flex; flex-direction: column; gap: 16px; }
   display: flex; justify-content: space-between; align-items: center;
   padding: 12px 16px 0;
 }
+.group-left { display: flex; align-items: center; gap: 8px; }
 .group-code { font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--text); }
 .group-tag { font-size: 12px; background: var(--primary); padding: 2px 8px; border-radius: 6px; color: #fff; font-weight: 600; }
 .group-pay { font-size: 12px; background: var(--surface-card); padding: 2px 8px; border-radius: 6px; color: var(--secondary); }
