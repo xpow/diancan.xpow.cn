@@ -114,19 +114,22 @@
 
         <div class="review-summary">
           <div v-for="item in submittedItems" :key="item.dishName" class="summary-card">
-            <div class="summary-dish">{{ item.dishName }}</div>
-            <div class="summary-ratings">
-              <span :class="['summary-badge', 'badge-' + item.overall]">
-                {{ item.overall === 'good' ? '好吃' : item.overall === 'okay' ? '还行' : '不好' }}
-              </span>
-              <template v-if="item.overall !== 'good'">
-                <span v-if="item.spiciness" class="summary-tag">辣度{{ ['','不够辣','刚好','太辣'][item.spiciness] }}</span>
-                <span v-if="item.saltiness" class="summary-tag">咸味{{ ['','太淡','刚好','太咸'][item.saltiness] }}</span>
-                <span v-if="item.texture" class="summary-tag">口感{{ ['','太软','刚好','太硬'][item.texture] }}</span>
-                <span v-if="item.portion" class="summary-tag">份量{{ ['','太少','刚好','太多'][item.portion] }}</span>
-              </template>
+            <div class="summary-card-img" :style="{ backgroundImage: 'url(' + getDishImage(item.dishId) + ')' }"></div>
+            <div class="summary-card-body">
+              <div class="summary-dish">{{ item.dishName }}</div>
+              <div class="summary-ratings">
+                <span :class="['summary-badge', 'badge-' + item.overall]">
+                  {{ item.overall === 'good' ? '好吃' : item.overall === 'okay' ? '还行' : '不好' }}
+                </span>
+                <template v-if="item.overall !== 'good'">
+                  <span v-if="item.spiciness" class="summary-tag">辣度{{ ['','不够辣','刚好','太辣'][item.spiciness] }}</span>
+                  <span v-if="item.saltiness" class="summary-tag">咸味{{ ['','太淡','刚好','太咸'][item.saltiness] }}</span>
+                  <span v-if="item.texture" class="summary-tag">口感{{ ['','太软','刚好','太硬'][item.texture] }}</span>
+                  <span v-if="item.portion" class="summary-tag">份量{{ ['','太少','刚好','太多'][item.portion] }}</span>
+                </template>
+              </div>
+              <div v-if="item.comment" class="summary-comment">"{{ item.comment }}"</div>
             </div>
-            <div v-if="item.comment" class="summary-comment">"{{ item.comment }}"</div>
           </div>
         </div>
 
@@ -219,7 +222,7 @@ const selectedGiftId = ref('')
 const rewardCode = ref('')
 const rewardDishName = ref('')
 const currentReviewId = ref('')
-const submittedItems = ref<{ dishName: string; overall: string; spiciness: number | null; saltiness: number | null; texture: number | null; portion: number | null; comment: string }[]>([])
+const submittedItems = ref<{ dishId: string; dishName: string; overall: string; spiciness: number | null; saltiness: number | null; texture: number | null; portion: number | null; comment: string }[]>([])
 const showHistory = ref(false)
 const historyItems = ref<{ id: string; createdAt: string; items: { dishId: string; dishName: string; overall: string; spiciness: number | null; saltiness: number | null; texture: number | null; portion: number | null; comment: string }[]; code: { code: string; dishName: string } | null }[]>([])
 
@@ -329,7 +332,7 @@ function prevRate() {
 async function submitReview() {
   const invalid = rateItems.value.find((i) => !i.overall)
   if (invalid) { alert('请给每道菜选择整体评价'); return }
-  submittedItems.value = rateItems.value.map((i) => ({ dishName: i.dishName, overall: i.overall, spiciness: i.spiciness, saltiness: i.saltiness, texture: i.texture, portion: i.portion, comment: i.comment }))
+  submittedItems.value = rateItems.value.map((i) => ({ dishId: i.dishId, dishName: i.dishName, overall: i.overall, spiciness: i.spiciness, saltiness: i.saltiness, texture: i.texture, portion: i.portion, comment: i.comment }))
   try {
     const boot = await apiGet<any>('/api/system/bootstrap?sn=' + localStorage.getItem('kiosk-device-sn'))
     const branchId = boot.branchId || ''
@@ -442,7 +445,9 @@ async function claimReward() {
 .code-dish { font-size: 15px; font-weight: 600; color: var(--secondary); margin: 8px 0 20px; }
 .gift-label { font-size: 13px; color: var(--secondary); margin: 12px 0 4px; }
 .review-summary { width: 100%; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 8px 0; min-height: 0; }
-.summary-card { background: var(--surface); border-radius: var(--radius-lg); padding: 12px; border: 1px solid var(--outline-variant); text-align: left; }
+.summary-card { display: flex; gap: 10px; background: var(--surface); border-radius: var(--radius-lg); padding: 12px; border: 1px solid var(--outline-variant); text-align: left; }
+.summary-card-img { width: 40px; height: 40px; border-radius: var(--radius-full); background: var(--surface-container-high); background-size: cover; background-position: center; flex-shrink: 0; }
+.summary-card-body { flex: 1; min-width: 0; }
 .summary-dish { font-family: var(--font-display); font-size: 15px; font-weight: 700; margin-bottom: 6px; }
 .summary-ratings { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .summary-badge { display: inline-block; padding: 2px 10px; border-radius: var(--radius-full); font-size: 12px; font-weight: 700; }
