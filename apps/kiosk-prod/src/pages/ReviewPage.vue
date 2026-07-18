@@ -307,7 +307,7 @@ async function claimReward() {
 /* Step 1 */
 .step-select { flex: 1; display: flex; flex-direction: column; }
 .dish-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 16px; flex: 1; align-content: flex-start; }
-.dish-chip { display: flex; align-items: center; gap: 10px; padding: 8px 16px 8px 8px; border-radius: var(--radius-full); background: var(--surface-container); border: 2px solid transparent; cursor: pointer; transition: all 0.15s; }
+.dish-chip { display: flex; align-items: center; gap: 10px; padding: 8px 16px 8px 8px; border-radius: var(--radius-full); background: var(--surface); border: 2px solid var(--outline-variant); cursor: pointer; transition: all 0.15s; box-shadow: var(--shadow-sm); }
 .dish-chip:active { transform: scale(0.96); }
 .dish-chip-active { border-color: var(--primary-container); background: color-mix(in srgb, var(--primary-container) 15%, var(--surface)); }
 .dish-chip-disabled { opacity: 0.4; cursor: default; pointer-events: none; }
