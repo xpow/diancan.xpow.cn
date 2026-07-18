@@ -223,7 +223,7 @@ async function submitReview() {
   try {
     // 通过 bootstrap 获取 branchId
     const boot = await apiGet<any>('/api/system/bootstrap?sn=' + localStorage.getItem('kiosk-device-sn'))
-    const branchId = boot.branch?.id || ''
+    const branchId = boot.branchId || ''
     await apiPost('/api/reviews', {
       branchId,
       items: rateItems.value.map((i) => ({
