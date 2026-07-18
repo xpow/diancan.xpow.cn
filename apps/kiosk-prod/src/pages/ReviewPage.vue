@@ -23,9 +23,7 @@
         </div>
         <div v-else class="dish-grid">
           <div v-for="d in dishes" :key="d.dishId" :class="['dish-chip', selectedDishIds.has(d.dishId) && 'dish-chip-active', reviewedDishIds.has(d.dishId) && 'dish-chip-disabled']" @click="toggleDish(d)">
-            <div class="dish-chip-img" :style="{ backgroundImage: d.image ? 'url(' + d.image + ')' : undefined }">
-              <span v-if="!d.image" class="material-icons">restaurant</span>
-            </div>
+            <div class="dish-chip-img" :style="{ backgroundImage: d.image ? 'url(' + d.image + ')' : 'url(' + getDishImage(d.dishId) + ')' }"></div>
             <span class="dish-chip-name">{{ d.name }}</span>
           </div>
         </div>
@@ -146,6 +144,7 @@ import { ref, onMounted } from 'vue'
 import { apiGet, apiPost } from '@/utils/api'
 import KioskTopBar from '@/components/KioskTopBar.vue'
 import BottomNav from '@/components/BottomNav.vue'
+import { getDishImage } from '@/utils/dishImages'
 
 interface DishItem { dishId: string; name: string; image: string | null; count: number }
 interface RateItem { dishId: string; dishName: string; overall: string; spiciness: number | null; saltiness: number | null; texture: number | null; portion: number | null; comment: string }
