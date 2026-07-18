@@ -438,7 +438,7 @@ async function claimReward() {
 .code-value { font-family: monospace; font-size: 32px; font-weight: 800; letter-spacing: 6px; color: var(--primary-container); }
 .code-dish { font-size: 15px; font-weight: 600; color: var(--secondary); margin: 8px 0 20px; }
 .gift-label { font-size: 13px; color: var(--secondary); margin: 12px 0 4px; }
-.review-summary { width: 100%; max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 8px 0; }
+.review-summary { width: 100%; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 8px 0; min-height: 0; }
 .summary-card { background: var(--surface); border-radius: var(--radius-lg); padding: 12px; border: 1px solid var(--outline-variant); text-align: left; }
 .summary-dish { font-family: var(--font-display); font-size: 15px; font-weight: 700; margin-bottom: 6px; }
 .summary-ratings { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
