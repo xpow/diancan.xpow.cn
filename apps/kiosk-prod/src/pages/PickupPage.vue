@@ -34,7 +34,7 @@
               <p class="ticket-label">
                 取餐订单
                 <span v-if="order.orderType === 'takeaway'" class="takeaway-badge">自提</span>
-                <span v-if="order.paymentMethod" class="pay-badge">{{ payLabel(order.paymentMethod) }}</span>
+                <span v-if="order.paymentMethod" class="pay-badge" :class="'pay-' + order.paymentMethod">{{ payLabel(order.paymentMethod) }}</span>
                 <span v-if="!order.paidAt" class="unpaid-badge">未付款</span>
                 <span class="status-badge" :class="'status-' + order.status">{{ statusLabel(order.status) }}</span>
               </p>
@@ -567,6 +567,8 @@ onUnmounted(() => {
 .takeaway-badge, .pay-badge, .unpaid-badge, .status-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--radius-full); font-size: 11px; font-weight: 700; text-transform: none; letter-spacing: normal; }
 .takeaway-badge { background: var(--primary-container); color: var(--on-primary); }
 .pay-badge { background: var(--surface-variant); color: var(--on-surface-variant); }
+.pay-wechat { background: #07c160; color: #fff; }
+.pay-alipay { background: #1677ff; color: #fff; }
 .unpaid-badge { background: var(--error-container); color: var(--on-error-container); }
 .status-badge { background: var(--surface-container-high); color: var(--on-surface); }
 .status-unpaid { background: var(--error-container); color: var(--on-error-container); }

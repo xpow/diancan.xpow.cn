@@ -28,7 +28,7 @@
         <div class="group-header">
           <span class="group-code">{{ group.pickupCode }}</span>
           <span v-if="group.orderType === 'takeaway'" class="group-tag">自提</span>
-          <span v-if="group.paymentMethod" class="group-pay">{{ payLabel(group.paymentMethod) }}</span>
+          <span v-if="group.paymentMethod" :class="['group-pay', 'pay-' + group.paymentMethod]">{{ payLabel(group.paymentMethod) }}</span>
           <span class="group-time">{{ group.time }}</span>
         </div>
         <div
@@ -376,6 +376,8 @@ main { padding: 12px 16px; display: flex; flex-direction: column; gap: 16px; }
 .group-code { font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--text); }
 .group-tag { font-size: 12px; background: var(--primary); padding: 2px 8px; border-radius: 6px; color: #fff; font-weight: 600; }
 .group-pay { font-size: 12px; background: var(--surface-card); padding: 2px 8px; border-radius: 6px; color: var(--secondary); }
+.group-pay.pay-wechat { background: #07c160; color: #fff; }
+.group-pay.pay-alipay { background: #1677ff; color: #fff; }
 .group-time { font-size: 11px; color: var(--secondary); }
 
 .item-card {
