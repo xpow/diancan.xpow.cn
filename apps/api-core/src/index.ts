@@ -1122,12 +1122,13 @@ app.get('/api/reviews/gift-dishes', generalLimiter, authMiddleware, async (req, 
   const device = await prisma.device.findUnique({ where: { id: deviceId }, include: { branch: true } })
   if (!device) return res.status(404).json({ message: 'device not found' })
   const merchantId = device.branch.merchantId
-  const giftDishIds = new Set((await prisma.reviewGiftDish.findMany({ where: { merchantId } })).map((g) => g.dishId))
+  const giftEntries = await prisma.reviewGiftDish.findMany({ where: { merchantId } })
+  const dishQuantityMap = new Map(giftEntries.map((g) => [g.dishId, g.quantity]))
   const dishes = await prisma.dish.findMany({
-    where: { merchantId, id: { in: Array.from(giftDishIds) }, status: 'active' },
+    where: { merchantId, id: { in: Array.from(dishQuantityMap.keys()) }, status: 'active' },
     orderBy: { sort: 'asc' },
   })
-  res.json({ items: dishes.map((d) => ({ id: d.id, name: d.name, price: d.price, image: d.image })) })
+  res.json({ items: dishes.map((d) => ({ id: d.id, name: d.name, price: d.price, image: d.image, quantity: dishQuantityMap.get(d.id) ?? 1 })) })
 })
 
 // 获取该设备的历史评价

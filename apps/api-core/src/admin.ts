@@ -1068,29 +1068,36 @@ router.get('/reviews/settings', async (req, res) => {
   const dishMap = new Map(dishes.map((d) => [d.id, d]))
   res.json({
     enabled: settings.enabled ?? false,
-    giftDishes: giftDishes.map((g) => ({ dishId: g.dishId, name: dishMap.get(g.dishId)?.name || '', price: dishMap.get(g.dishId)?.price || 0 })),
+    giftDishes: giftDishes.map((g) => ({ dishId: g.dishId, name: dishMap.get(g.dishId)?.name || '', price: dishMap.get(g.dishId)?.price || 0, quantity: g.quantity })),
   })
 })
 
-// 更新评价设置
-router.post('/reviews/settings', async (req, res) => {
-  const { merchantId, enabled } = req.body ?? {}
-  if (!merchantId) return res.status(400).json({ message: 'merchantId required' })
-  const merchant = await prisma.merchant.findUnique({ where: { id: merchantId } })
-  if (!merchant) return res.status(404).json({ message: 'merchant not found' })
-  const settings = JSON.parse(merchant.reviewSettings || '{}')
-  if (typeof enabled === 'boolean') settings.enabled = enabled
-  await prisma.merchant.update({ where: { id: merchantId }, data: { reviewSettings: JSON.stringify(settings) } })
+// 批量添加菜品到赠品池
+router.post('/reviews/gift-dishes', async (req, res) => {
+  const { merchantId, items } = req.body ?? {}
+  if (!merchantId || !items || !Array.isArray(items) || items.length === 0) return res.status(400).json({ message: '参数不完整' })
+  for (const it of items) {
+    const { dishId, quantity = 1 } = it
+    if (!dishId) continue
+    await prisma.reviewGiftDish.upsert({
+      where: { merchantId_dishId: { merchantId, dishId } },
+      update: { quantity },
+      create: { merchantId, dishId, quantity },
+    })
+  }
   res.json({ success: true })
 })
 
-// 添加菜品到赠品池
-router.post('/reviews/gift-dishes', async (req, res) => {
-  const { merchantId, dishId } = req.body ?? {}
-  if (!merchantId || !dishId) return res.status(400).json({ message: '参数不完整' })
-  const existing = await prisma.reviewGiftDish.findUnique({ where: { merchantId_dishId: { merchantId, dishId } } })
-  if (existing) return res.json({ success: true })
-  await prisma.reviewGiftDish.create({ data: { merchantId, dishId } })
+// 更新赠品池菜品数量
+router.put('/reviews/gift-dishes/:dishId', async (req, res) => {
+  const { dishId } = req.params
+  const { merchantId, quantity } = req.body ?? {}
+  if (!merchantId || quantity == null) return res.status(400).json({ message: '参数不完整' })
+  await prisma.reviewGiftDish.upsert({
+    where: { merchantId_dishId: { merchantId, dishId } },
+    update: { quantity },
+    create: { merchantId, dishId, quantity },
+  })
   res.json({ success: true })
 })
 

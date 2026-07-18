@@ -23,13 +23,19 @@
       <h2>赠品菜品池</h2>
       <p class="section-desc">选择顾客评价后可选的赠品菜品</p>
       <div class="gift-controls">
-        <Select v-model="selectedDishId" :options="availableDishes" optionLabel="name" optionValue="id" placeholder="选择菜品添加" class="dish-select" />
-        <Button label="添加" @click="addGiftDish" :disabled="!selectedDishId" />
+        <Select v-model="selectedDishIds" :options="availableDishes" optionLabel="name" optionValue="id" placeholder="选择菜品多选" class="dish-select" multiple />
+        <InputNumber v-model="giftQuantity" :min="1" :max="99" class="qty-input" placeholder="数量" />
+        <Button label="批量添加" @click="addGiftDishes" :disabled="selectedDishIds.length === 0" />
       </div>
       <DataTable :value="settings.giftDishes" stripedRows class="gift-table">
         <Column field="name" header="菜品名" />
         <Column field="price" header="价格">
           <template #body="{ data }">¥{{ data.price.toFixed(2) }}</template>
+        </Column>
+        <Column header="数量">
+          <template #body="{ data }">
+            <InputNumber v-model="data.quantity" :min="1" :max="99" class="qty-inline" @blur="updateQuantity(data)" />
+          </template>
         </Column>
         <Column header="操作">
           <template #body="{ data }">
@@ -74,12 +80,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 
-interface GiftDish { dishId: string; name: string; price: number }
+interface GiftDish { dishId: string; name: string; price: number; quantity: number }
 interface Settings { enabled: boolean; giftDishes: GiftDish[] }
 
 const settings = ref<Settings>({ enabled: false, giftDishes: [] })
 const availableDishes = ref<{ id: string; name: string; price: number }[]>([])
-const selectedDishId = ref('')
+const selectedDishIds = ref<string[]>([])
+const giftQuantity = ref(1)
 const redeemCode = ref('')
 const redeemMsg = ref('')
 const redeemOk = ref(false)
@@ -116,17 +123,28 @@ async function toggleEnabled() {
   settings.value.enabled = !settings.value.enabled
 }
 
-async function addGiftDish() {
-  if (!selectedDishId.value) return
+async function addGiftDishes() {
+  if (selectedDishIds.value.length === 0) return
   const res = await fetch('/api/admin/merchant')
   const m = await res.json()
   await fetch('/api/admin/reviews/gift-dishes', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ merchantId: m.id, dishId: selectedDishId.value }),
+    body: JSON.stringify({ merchantId: m.id, items: selectedDishIds.value.map((id) => ({ dishId: id, quantity: giftQuantity.value })) }),
   })
-  selectedDishId.value = ''
+  selectedDishIds.value = []
+  giftQuantity.value = 1
   await loadSettings()
+}
+
+async function updateQuantity(dish: GiftDish) {
+  const res = await fetch('/api/admin/merchant')
+  const m = await res.json()
+  await fetch('/api/admin/reviews/gift-dishes/' + dish.dishId, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ merchantId: m.id, quantity: dish.quantity }),
+  })
 }
 
 async function removeGiftDish(dishId: string) {
@@ -197,8 +215,10 @@ onMounted(() => { loadSettings(); loadReviews() })
 .toggle-on { background: #22c55e; }
 .toggle-knob { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
 .toggle-on .toggle-knob { transform: translateX(20px); }
-.gift-controls { display: flex; gap: 8px; margin-bottom: 12px; }
-.dish-select { flex: 1; }
+.gift-controls { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.dish-select { flex: 1; min-width: 200px; }
+.qty-input { width: 80px; }
+.qty-inline { width: 70px; }
 .gift-table { margin-top: 8px; }
 .redeem-row { display: flex; gap: 8px; }
 .code-input { width: 180px; text-transform: uppercase; }

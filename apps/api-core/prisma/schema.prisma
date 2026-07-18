@@ -323,6 +323,7 @@ model ReviewGiftDish {
   id         String   @id @default(cuid())
   merchantId String
   dishId     String
+  quantity   Int      @default(1)
   createdAt  DateTime @default(now())
 
   @@unique([merchantId, dishId])
