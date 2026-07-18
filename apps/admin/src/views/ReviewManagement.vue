@@ -4,6 +4,9 @@
       <h1 class="page-title">评价管理</h1>
     </div>
 
+    <p v-if="error" class="error-msg">{{ error }}</p>
+    <p v-if="loading" class="loading-msg">加载中...</p>
+
     <!-- 设置 -->
     <section class="section">
       <h2>基本设置</h2>
@@ -83,16 +86,23 @@ const redeemOk = ref(false)
 const reviews = ref<any[]>([])
 const total = ref(0)
 const page = ref(1)
+const loading = ref(false)
+const error = ref('')
 
 async function loadSettings() {
-  const res = await fetch('/api/admin/merchant')
-  const m = await res.json()
-  const r = await fetch(`/api/admin/reviews/settings?merchantId=${m.id}`)
-  settings.value = await r.json()
-  // 加载全部菜品用于选择
-  const d = await fetch('/api/admin/dishes')
-  const dishes = await d.json()
-  availableDishes.value = dishes.items || []
+  loading.value = true; error.value = ''
+  try {
+    const res = await fetch('/api/admin/merchant')
+    if (!res.ok) { error.value = '获取商家信息失败'; return }
+    const m = await res.json()
+    const r = await fetch(`/api/admin/reviews/settings?merchantId=${m.id}`)
+    if (!r.ok) { error.value = '获取评价设置失败'; return }
+    settings.value = await r.json()
+    const d = await fetch('/api/admin/dishes')
+    if (!d.ok) { error.value = '获取菜品列表失败'; return }
+    const dishes = await d.json()
+    availableDishes.value = Array.isArray(dishes) ? dishes : (dishes.items || [])
+  } catch { error.value = '网络错误' } finally { loading.value = false }
 }
 
 async function toggleEnabled() {
@@ -127,10 +137,13 @@ async function removeGiftDish(dishId: string) {
 }
 
 async function loadReviews() {
-  const r = await fetch(`/api/admin/reviews?page=${page.value}&limit=20`)
-  const data = await r.json()
-  reviews.value = data.items || []
-  total.value = data.total || 0
+  try {
+    const r = await fetch(`/api/admin/reviews?page=${page.value}&limit=20`)
+    if (!r.ok) return
+    const data = await r.json()
+    reviews.value = data.items || []
+    total.value = data.total || 0
+  } catch {}
 }
 
 function onPage(e: any) {
@@ -193,4 +206,6 @@ onMounted(() => { loadSettings(); loadReviews() })
 .redeem-ok { color: #16a34a; }
 .p-datatable .p-datatable-tbody > tr > td,
 .p-datatable .p-datatable-thead > tr > th { white-space: nowrap; }
+.error-msg { color: #dc2626; font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+.loading-msg { color: #666; font-size: 14px; margin-bottom: 16px; }
 </style>
