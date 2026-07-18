@@ -376,8 +376,8 @@ async function claimReward() {
 </script>
 
 <style scoped>
-.review-page { min-height: 100vh; background: var(--page-bg); display: flex; flex-direction: column; }
-.review-content { flex: 1; padding-top: 56px; padding-bottom: 72px; overflow-y: auto; display: flex; flex-direction: column; }
+.review-page { height: 100dvh; background: var(--page-bg); display: flex; flex-direction: column; overflow: hidden; }
+.review-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; padding: 52px 0 140px; }
 .hero { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 24px; flex: 1; gap: 12px; }
 .hero-icon { font-size: 56px !important; color: var(--primary-container); }
 .hero h1 { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--on-surface); margin: 0; }
