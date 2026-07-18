@@ -376,10 +376,10 @@ async function claimReward() {
 </script>
 
 <style scoped>
-.review-page { height: 100dvh; background: var(--page-bg); display: flex; flex-direction: column; overflow: hidden; }
-.review-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; padding: 52px 0 140px; }
-.hero { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 24px; flex: 1; gap: 12px; }
-.hero-icon { font-size: 56px !important; color: var(--primary-container); }
+.review-page { min-height: 100dvh; background: var(--page-bg); display: flex; flex-direction: column; overflow: hidden; }
+.review-content { flex: 1; padding: 52px 0 130px; display: flex; flex-direction: column; overflow-y: auto; }
+.review-content > * { flex: 1; }
+.hero { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 24px; gap: 12px; }
 .hero h1 { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--on-surface); margin: 0; }
 .hero-desc { font-size: 14px; color: var(--secondary); line-height: 1.6; margin: 0; }
 .btn-start { padding: 14px 40px; border-radius: var(--radius-full); font-size: 16px; font-weight: 700; margin-top: 12px; }
@@ -390,7 +390,7 @@ async function claimReward() {
 .step-count { font-size: 14px; color: var(--secondary); }
 
 /* Step 1 */
-.step-select { flex: 1; display: flex; flex-direction: column; }
+.step-select { display: flex; flex-direction: column; }
 .dish-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 16px; flex: 1; align-content: flex-start; }
 .dish-chip { position: relative; display: flex; align-items: center; gap: 10px; padding: 8px 16px 8px 8px; border-radius: var(--radius-full); background: var(--surface); border: 2px solid var(--outline-variant); cursor: pointer; transition: all 0.15s; box-shadow: var(--shadow-sm); }
 .dish-chip:active { transform: scale(0.96); }
@@ -407,7 +407,7 @@ async function claimReward() {
 .btn-disabled { opacity: 0.4; pointer-events: none; }
 
 /* Step 2 */
-.step-rate { flex: 1; display: flex; flex-direction: column; }
+.step-rate { display: flex; flex-direction: column; }
 .rate-card-wrap { flex: 1; padding: 0 16px; overflow-y: auto; }
 .rate-card { padding: 16px 0; }
 .rate-dish-name { font-family: var(--font-display); font-size: 24px; font-weight: 800; margin: 0 0 20px; text-align: center; }
