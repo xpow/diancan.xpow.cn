@@ -34,7 +34,7 @@
         </div>
       </div>
 
-      <div v-if="quote" class="cart-promo-section">
+      <div v-if="quote && (quote.appliedPromotions.length > 0 || quote.hints.length > 0 || quote.totals.discountAmount > 0)" class="cart-promo-section">
         <div v-for="promo in quote.appliedPromotions" :key="promo.id" class="promo-row">
           <span class="promo-icon material-icons">sell</span>
           <div class="promo-info">
