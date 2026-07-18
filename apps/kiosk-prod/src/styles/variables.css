@@ -17,7 +17,7 @@
   --on-primary-fixed-variant: #7a3000;
 
   /* Secondary - Clotted Cream */
-  --secondary: #6d6d6a;
+  --secondary: #414141;
   --secondary-container: #313130;
   --on-secondary: #ffffff;
   --on-secondary-container: #636360;
@@ -164,6 +164,7 @@
   --background: #1c1b1b;
   --page-bg: #131211;
   --secondary-container: #dedede;
+  --secondary: #bcb1a3;
 
   /* 底部导航 */
   --bottom-nav-bg: color-mix(in srgb, var(--surface) 92%, #000000);
@@ -174,7 +175,7 @@
   --outline-variant: #4d4540;
 
   /* 卡片暖色边框 */
-  --card-border-light: #5a4720;
+  --card-border-light: #a06119bd;
 
   /* 购物车 */
   --cart-promo-bg: #1d1815;
