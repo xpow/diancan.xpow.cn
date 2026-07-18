@@ -23,8 +23,10 @@
         </div>
         <div v-else class="dish-grid">
           <div v-for="d in dishes" :key="d.dishId" :class="['dish-chip', selectedDishIds.has(d.dishId) && 'dish-chip-active', reviewedDishIds.has(d.dishId) && 'dish-chip-disabled']" @click="toggleDish(d)">
+            <div class="dish-chip-img" :style="{ backgroundImage: d.image ? 'url(' + d.image + ')' : undefined }">
+              <span v-if="!d.image" class="material-icons">restaurant</span>
+            </div>
             <span class="dish-chip-name">{{ d.name }}</span>
-            <span class="dish-chip-count">{{ d.count }}次</span>
           </div>
         </div>
       </div>
@@ -145,7 +147,7 @@ import { apiGet, apiPost } from '@/utils/api'
 import KioskTopBar from '@/components/KioskTopBar.vue'
 import BottomNav from '@/components/BottomNav.vue'
 
-interface DishItem { dishId: string; name: string; count: number }
+interface DishItem { dishId: string; name: string; image: string | null; count: number }
 interface RateItem { dishId: string; dishName: string; overall: string; spiciness: number | null; saltiness: number | null; texture: number | null; portion: number | null; comment: string }
 interface GiftDish { id: string; name: string; price: number; image: string | null }
 
@@ -306,12 +308,13 @@ async function claimReward() {
 /* Step 1 */
 .step-select { flex: 1; display: flex; flex-direction: column; }
 .dish-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 16px; flex: 1; align-content: flex-start; }
-.dish-chip { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 16px; border-radius: var(--radius-lg); background: var(--surface-container); border: 2px solid transparent; cursor: pointer; transition: all 0.15s; }
+.dish-chip { display: flex; align-items: center; gap: 10px; padding: 8px 16px 8px 8px; border-radius: var(--radius-full); background: var(--surface-container); border: 2px solid transparent; cursor: pointer; transition: all 0.15s; }
 .dish-chip:active { transform: scale(0.96); }
 .dish-chip-active { border-color: var(--primary-container); background: color-mix(in srgb, var(--primary-container) 15%, var(--surface)); }
 .dish-chip-disabled { opacity: 0.4; cursor: default; pointer-events: none; }
-.dish-chip-name { font-family: var(--font-display); font-size: 15px; font-weight: 600; }
-.dish-chip-count { font-size: 11px; color: var(--secondary); }
+.dish-chip-img { width: 36px; height: 36px; border-radius: 50%; background: var(--surface-container-high); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.dish-chip-img .material-icons { font-size: 18px !important; color: var(--secondary); }
+.dish-chip-name { font-family: var(--font-display); font-size: 14px; font-weight: 600; }
 
 /* Bottom actions */
 .bottom-actions { position: fixed; bottom: 64px; left: 0; right: 0; display: flex; gap: 12px; padding: 12px 16px; background: var(--surface); border-top: 1px solid var(--outline-variant); z-index: 40; }

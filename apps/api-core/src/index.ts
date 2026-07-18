@@ -1023,12 +1023,21 @@ app.get('/api/reviews/dishes', generalLimiter, authMiddleware, async (req, res) 
     take: 50,
   })
   // 去重合并
-  const dishMap = new Map<string, { dishId: string; name: string; count: number }>()
+  const dishMap = new Map<string, { dishId: string; name: string; image: string | null; count: number }>()
   for (const o of orders) {
     for (const i of o.items) {
       const key = i.dishId
       if (dishMap.has(key)) dishMap.get(key)!.count += i.quantity
-      else dishMap.set(key, { dishId: i.dishId, name: i.name, count: i.quantity })
+      else dishMap.set(key, { dishId: i.dishId, name: i.name, image: null, count: i.quantity })
+    }
+  }
+  // 补上菜品图片
+  const dishIds = Array.from(dishMap.keys())
+  if (dishIds.length > 0) {
+    const dishRecords = await prisma.dish.findMany({ where: { id: { in: dishIds } }, select: { id: true, image: true } })
+    for (const d of dishRecords) {
+      const entry = dishMap.get(d.id)
+      if (entry) entry.image = d.image
     }
   }
   // 按点单次数排序
