@@ -189,9 +189,6 @@
     <div v-if="step === 3" class="bottom-actions">
       <button :class="['btn-primary', !selectedGiftId && 'btn-disabled']" :disabled="!selectedGiftId" @click="claimReward">选好了</button>
     </div>
-    <div v-if="step === 4" class="bottom-actions">
-      <button class="btn-primary" @click="$router.push('/home')">返回首页</button>
-    </div>
 
     <BottomNav current="reviews" />
   </div>
