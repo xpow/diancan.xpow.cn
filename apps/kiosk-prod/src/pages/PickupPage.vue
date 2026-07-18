@@ -33,13 +33,12 @@
           <div class="ticket-header" :class="{ 'ticket-header-unpaid': !order.paidAt }">
               <p class="ticket-label">
                 取餐订单
+                <span v-if="order.orderType === 'takeaway'" class="takeaway-badge">自提</span>
+                <span v-if="order.paymentMethod" class="pay-badge">{{ payLabel(order.paymentMethod) }}</span>
                 <span v-if="!order.paidAt" class="unpaid-badge">未付款</span>
                 <span class="status-badge" :class="'status-' + order.status">{{ statusLabel(order.status) }}</span>
               </p>
-              <div class="ticket-number">
-                {{ order.pickupCode }}
-                <span v-if="order.orderType === 'takeaway'" class="ticket-support">自提</span>
-              </div>
+              <div class="ticket-number">{{ order.pickupCode }}</div>
               <div class="ticket-hole-left"></div>
               <div class="ticket-hole-right"></div>
             </div>
@@ -215,6 +214,7 @@ interface OrderSummary {
   pickupCode: string
   status: string
   orderType?: string
+  paymentMethod?: string
   items: OrderItem[]
   totals: OrderTotals
   createdAt: string
@@ -301,6 +301,11 @@ function formatTime(ts: string) {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+function payLabel(m: string) {
+  const map: Record<string, string> = { wechat: '微信', alipay: '支付宝', cash: '现金' }
+  return map[m] || m
 }
 
 async function confirmPay() {
@@ -559,17 +564,17 @@ onUnmounted(() => {
 
 .ticket-header { position: relative; text-align: center; padding: var(--spacing-lg); border-bottom: 1px dashed var(--outline-variant); }
 .ticket-label { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; color: var(--secondary); margin: 0 0 var(--spacing-sm); text-transform: uppercase; letter-spacing: 0.08em; }
-.unpaid-badge, .status-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--radius-full); font-size: 11px; font-weight: 700; text-transform: none; letter-spacing: normal; }
+.takeaway-badge, .pay-badge, .unpaid-badge, .status-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--radius-full); font-size: 11px; font-weight: 700; text-transform: none; letter-spacing: normal; }
+.takeaway-badge { background: var(--primary-container); color: var(--on-primary); }
+.pay-badge { background: var(--secondary-container); color: var(--on-secondary-container); }
 .unpaid-badge { background: var(--error-container); color: var(--on-error-container); }
 .status-badge { background: var(--surface-container-high); color: var(--on-surface); }
 .status-unpaid { background: var(--error-container); color: var(--on-error-container); }
 .status-paid, .status-preparing { background: var(--secondary-container); color: var(--on-secondary-container); }
 .status-ready { background: var(--tertiary-container); color: var(--on-tertiary-container); }
 .status-completed { background: var(--surface-variant); color: var(--on-surface-variant); }
-.ticket-number { font-family: var(--font-display); font-size: 64px; font-weight: 800; color: var(--primary-container); letter-spacing: -0.04em; line-height: 1; display: flex; align-items: center; justify-content: center; gap: var(--spacing-sm); }
-.ticket-support { font-size: 18px; font-weight: 700; color: var(--on-primary); background: var(--primary-container); padding: 2px 12px; border-radius: var(--radius-full); letter-spacing: normal; line-height: 1.4; }
+.ticket-number { font-family: var(--font-display); font-size: 64px; font-weight: 800; color: var(--primary-container); letter-spacing: -0.04em; line-height: 1; }
 .ticket-header-unpaid .ticket-number { color: #ef5350; }
-.ticket-header-unpaid .ticket-number .ticket-support { background: #ef5350; }
 
 .ticket-hole-left, .ticket-hole-right { position: absolute; bottom: -12px; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-hole); }
 .ticket-hole-left { left: -12px; }
