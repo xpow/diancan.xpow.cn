@@ -108,13 +108,33 @@
 
       <!-- Step 4: 完成 -->
       <div v-if="step === 4" class="step-code hero">
-        <span v-if="rewardCode" class="hero-icon material-icons code-icon">confirmation_number</span>
-        <span v-else class="hero-icon material-icons">check_circle</span>
-        <h1>{{ rewardCode ? '兑换码已生成' : '感谢你的评价！' }}</h1>
-        <p v-if="rewardCode" class="hero-desc">到店出示此兑换码给店员即可享用</p>
-        <p v-else class="hero-desc">你的反馈对我们非常重要，我们会不断改进</p>
-        <div v-if="rewardCode" class="code-box">
-          <span class="code-value">{{ rewardCode }}</span>
+        <span class="hero-icon material-icons code-icon">rate_review</span>
+        <h1>感谢你的评价！</h1>
+        <p class="hero-desc">已收到你的反馈，我们会不断改进</p>
+
+        <div class="review-summary">
+          <div v-for="item in submittedItems" :key="item.dishName" class="summary-card">
+            <div class="summary-dish">{{ item.dishName }}</div>
+            <div class="summary-ratings">
+              <span :class="['summary-badge', 'badge-' + item.overall]">
+                {{ item.overall === 'good' ? '好吃' : item.overall === 'okay' ? '还行' : '不好' }}
+              </span>
+              <template v-if="item.overall !== 'good'">
+                <span v-if="item.spiciness" class="summary-tag">辣度{{ ['','不够辣','刚好','太辣'][item.spiciness] }}</span>
+                <span v-if="item.saltiness" class="summary-tag">咸味{{ ['','太淡','刚好','太咸'][item.saltiness] }}</span>
+                <span v-if="item.texture" class="summary-tag">口感{{ ['','太软','刚好','太硬'][item.texture] }}</span>
+                <span v-if="item.portion" class="summary-tag">份量{{ ['','太少','刚好','太多'][item.portion] }}</span>
+              </template>
+            </div>
+            <div v-if="item.comment" class="summary-comment">"{{ item.comment }}"</div>
+          </div>
+        </div>
+
+        <div v-if="rewardCode" class="gift-section">
+          <p class="gift-label">赠品兑换码</p>
+          <div class="code-box">
+            <span class="code-value">{{ rewardCode }}</span>
+          </div>
         </div>
         <p v-if="rewardDishName" class="code-dish">赠品：{{ rewardDishName }}</p>
       </div>
@@ -162,6 +182,7 @@ const selectedGiftId = ref('')
 const rewardCode = ref('')
 const rewardDishName = ref('')
 const currentReviewId = ref('')
+const submittedItems = ref<{ dishName: string; overall: string; spiciness: number | null; saltiness: number | null; texture: number | null; portion: number | null; comment: string }[]>([])
 
 // TopBar data
 const merchantName = ref('')
@@ -246,6 +267,7 @@ function prevRate() {
 async function submitReview() {
   const invalid = rateItems.value.find((i) => !i.overall)
   if (invalid) { alert('请给每道菜选择整体评价'); return }
+  submittedItems.value = rateItems.value.map((i) => ({ dishName: i.dishName, overall: i.overall, spiciness: i.spiciness, saltiness: i.saltiness, texture: i.texture, portion: i.portion, comment: i.comment }))
   try {
     const boot = await apiGet<any>('/api/system/bootstrap?sn=' + localStorage.getItem('kiosk-device-sn'))
     const branchId = boot.branchId || ''
@@ -356,6 +378,18 @@ async function claimReward() {
 .code-box { background: var(--surface); border: 2px dashed var(--primary-container); border-radius: var(--radius-xl); padding: 20px 32px; margin: 8px 0; }
 .code-value { font-family: monospace; font-size: 32px; font-weight: 800; letter-spacing: 6px; color: var(--primary-container); }
 .code-dish { font-size: 15px; font-weight: 600; color: var(--secondary); margin: 8px 0 20px; }
+.gift-label { font-size: 13px; color: var(--secondary); margin: 12px 0 4px; }
+.review-summary { width: 100%; max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 8px 0; }
+.summary-card { background: var(--surface); border-radius: var(--radius-lg); padding: 12px; border: 1px solid var(--outline-variant); text-align: left; }
+.summary-dish { font-family: var(--font-display); font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.summary-ratings { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.summary-badge { display: inline-block; padding: 2px 10px; border-radius: var(--radius-full); font-size: 12px; font-weight: 700; }
+.badge-good { background: #f0fdf4; color: #15803d; }
+.badge-okay { background: #fffbeb; color: #92400e; }
+.badge-bad { background: #fef2f2; color: #b91c1c; }
+.summary-tag { display: inline-block; padding: 2px 8px; border-radius: var(--radius-full); background: var(--surface-container); font-size: 11px; color: var(--secondary); }
+.summary-comment { font-size: 13px; color: var(--secondary); font-style: italic; margin-top: 6px; }
+.step-code.hero { overflow-y: auto; justify-content: flex-start; }
 .empty-state { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 40px 24px; text-align: center; color: var(--secondary); }
 .empty-icon { font-size: 48px !important; opacity: 0.4; }
 
@@ -364,4 +398,7 @@ async function claimReward() {
 [data-theme="dark"] .overall-bad { background: #2d0a0a; color: #fca5a5; }
 [data-theme="dark"] .taste-active { background: color-mix(in srgb, var(--primary-container) 25%, transparent); }
 [data-theme="dark"] .bottom-actions { border-color: #2a2827; }
+[data-theme="dark"] .badge-good { background: #052e16; color: #86efac; }
+[data-theme="dark"] .badge-okay { background: #291b00; color: #fcd34d; }
+[data-theme="dark"] .badge-bad { background: #2d0a0a; color: #fca5a5; }
 </style>
