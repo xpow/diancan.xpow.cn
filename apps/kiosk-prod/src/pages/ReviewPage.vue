@@ -264,7 +264,7 @@ onMounted(async () => {
   }
   const newDishes = dishes.value.filter((d) => !reviewedDishIds.value.has(d.dishId))
   if (newDishes.length === 0) {
-    if (historyItems.value.length) submittedItems.value = historyItems.value[0].items
+    if (historyItems.value.length) submittedItems.value = historyItems.value.flatMap((r) => r.items).filter((item, idx, arr) => arr.findIndex((i) => i.dishName === item.dishName) === idx)
     step.value = 4; return
   }
   step.value = 1
@@ -288,7 +288,7 @@ async function startReview() {
   if (newDishes.length === 0) {
     try {
       const h = await apiGet<{ items: any[] }>('/api/reviews/history')
-      if (h.items.length) submittedItems.value = h.items[0].items
+      if (h.items.length) submittedItems.value = h.items.flatMap((r: any) => r.items).filter((item: any, idx: number, arr: any[]) => arr.findIndex((i: any) => i.dishName === item.dishName) === idx)
     } catch {}
     step.value = 4; return
   }
