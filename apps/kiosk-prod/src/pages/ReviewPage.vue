@@ -119,16 +119,18 @@
       </div>
     </div>
 
-    <!-- Step 4: 兑换码 -->
+    <!-- Step 4: 兑换码 / 完成 -->
     <div v-if="step === 4" class="step-code">
       <div class="hero">
-        <span class="hero-icon material-icons code-icon">confirmation_number</span>
-        <h1>兑换码已生成</h1>
-        <p class="hero-desc">到店出示此兑换码给店员即可享用</p>
-        <div class="code-box">
+        <span v-if="rewardCode" class="hero-icon material-icons code-icon">confirmation_number</span>
+        <span v-else class="hero-icon material-icons">check_circle</span>
+        <h1>{{ rewardCode ? '兑换码已生成' : '感谢你的评价！' }}</h1>
+        <p v-if="rewardCode" class="hero-desc">到店出示此兑换码给店员即可享用</p>
+        <p v-else class="hero-desc">你的反馈对我们非常重要，我们会不断改进</p>
+        <div v-if="rewardCode" class="code-box">
           <span class="code-value">{{ rewardCode }}</span>
         </div>
-        <p class="code-dish">赠品：{{ rewardDishName }}</p>
+        <p v-if="rewardDishName" class="code-dish">赠品：{{ rewardDishName }}</p>
         <button class="btn-primary" @click="$router.push('/home')">返回首页</button>
       </div>
     </div>

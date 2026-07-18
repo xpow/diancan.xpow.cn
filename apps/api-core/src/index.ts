@@ -1073,14 +1073,13 @@ app.post('/api/reviews/reward', generalLimiter, authMiddleware, async (req, res)
   let code = genReviewCode()
   while (await prisma.reviewCode.findUnique({ where: { code } })) code = genReviewCode()
 
-  const branch = await prisma.branch.findFirst({
-    where: { merchant: { dishes: { some: { id: dishId } } } },
-  })
+  // 通过设备所属门店获取 branchId
+  const device = await prisma.device.findUnique({ where: { id: deviceId }, select: { branchId: true } })
 
   const reviewCode = await prisma.reviewCode.create({
     data: {
       reviewId: review.id,
-      branchId: branch?.id || '',
+      branchId: device?.branchId || '',
       dishId,
       dishName,
       code,
