@@ -1144,6 +1144,7 @@ app.get('/api/reviews/history', generalLimiter, authMiddleware, async (req, res)
       id: r.id,
       createdAt: r.createdAt.toISOString(),
       items: r.items.map((i) => ({
+        dishId: i.dishId,
         dishName: i.dishName,
         overall: i.overall,
         spiciness: i.spiciness,

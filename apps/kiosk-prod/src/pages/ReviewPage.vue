@@ -151,19 +151,22 @@
             <div v-for="review in historyItems" :key="review.id" class="history-group">
               <div class="history-date">{{ review.createdAt.slice(0, 10) }}</div>
               <div v-for="item in review.items" :key="item.dishName" class="history-card">
-                <div class="history-dish">{{ item.dishName }}</div>
-                <div class="summary-ratings">
-                  <span :class="['summary-badge', 'badge-' + item.overall]">
-                    {{ item.overall === 'good' ? '好吃' : item.overall === 'okay' ? '还行' : '不好' }}
-                  </span>
-                  <template v-if="item.overall !== 'good'">
-                    <span v-if="item.spiciness" class="summary-tag">辣度{{ ['','不够辣','刚好','太辣'][item.spiciness] }}</span>
-                    <span v-if="item.saltiness" class="summary-tag">咸味{{ ['','太淡','刚好','太咸'][item.saltiness] }}</span>
-                    <span v-if="item.texture" class="summary-tag">口感{{ ['','太软','刚好','太硬'][item.texture] }}</span>
-                    <span v-if="item.portion" class="summary-tag">份量{{ ['','太少','刚好','太多'][item.portion] }}</span>
-                  </template>
+                <div class="history-card-img" :style="{ backgroundImage: 'url(' + getDishImage(item.dishId) + ')' }"></div>
+                <div class="history-card-body">
+                  <div class="history-dish">{{ item.dishName }}</div>
+                  <div class="summary-ratings">
+                    <span :class="['summary-badge', 'badge-' + item.overall]">
+                      {{ item.overall === 'good' ? '好吃' : item.overall === 'okay' ? '还行' : '不好' }}
+                    </span>
+                    <template v-if="item.overall !== 'good'">
+                      <span v-if="item.spiciness" class="summary-tag">辣度{{ ['','不够辣','刚好','太辣'][item.spiciness] }}</span>
+                      <span v-if="item.saltiness" class="summary-tag">咸味{{ ['','太淡','刚好','太咸'][item.saltiness] }}</span>
+                      <span v-if="item.texture" class="summary-tag">口感{{ ['','太软','刚好','太硬'][item.texture] }}</span>
+                      <span v-if="item.portion" class="summary-tag">份量{{ ['','太少','刚好','太多'][item.portion] }}</span>
+                    </template>
+                  </div>
+                  <div v-if="item.comment" class="summary-comment">"{{ item.comment }}"</div>
                 </div>
-                <div v-if="item.comment" class="summary-comment">"{{ item.comment }}"</div>
               </div>
               <div v-if="review.code" class="history-code">赠品：{{ review.code.dishName }}（{{ review.code.code }}）</div>
             </div>
@@ -218,7 +221,7 @@ const rewardDishName = ref('')
 const currentReviewId = ref('')
 const submittedItems = ref<{ dishName: string; overall: string; spiciness: number | null; saltiness: number | null; texture: number | null; portion: number | null; comment: string }[]>([])
 const showHistory = ref(false)
-const historyItems = ref<{ id: string; createdAt: string; items: { dishName: string; overall: string; spiciness: number | null; saltiness: number | null; texture: number | null; portion: number | null; comment: string }[]; code: { code: string; dishName: string } | null }[]>([])
+const historyItems = ref<{ id: string; createdAt: string; items: { dishId: string; dishName: string; overall: string; spiciness: number | null; saltiness: number | null; texture: number | null; portion: number | null; comment: string }[]; code: { code: string; dishName: string } | null }[]>([])
 
 // TopBar data
 const merchantName = ref('')
@@ -458,7 +461,9 @@ async function claimReward() {
 .history-body { flex: 1; overflow-y: auto; padding: 12px 16px; }
 .history-group { margin-bottom: 16px; }
 .history-date { font-size: 12px; font-weight: 600; color: var(--secondary); margin-bottom: 8px; }
-.history-card { background: var(--surface); border-radius: var(--radius-lg); padding: 10px 12px; margin-bottom: 6px; border: 1px solid var(--outline-variant); }
+.history-card { display: flex; gap: 10px; background: var(--surface); border-radius: var(--radius-lg); padding: 10px 12px; margin-bottom: 6px; border: 1px solid var(--outline-variant); }
+.history-card-img { width: 40px; height: 40px; border-radius: var(--radius-full); background: var(--surface-container-high); background-size: cover; background-position: center; flex-shrink: 0; }
+.history-card-body { flex: 1; min-width: 0; }
 .history-dish { font-family: var(--font-display); font-size: 14px; font-weight: 700; margin-bottom: 4px; }
 .history-code { font-size: 12px; color: var(--primary-container); font-weight: 600; margin-top: 4px; }
 
