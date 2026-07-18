@@ -853,6 +853,7 @@ app.get('/api/orders', generalLimiter, authMiddleware, async (req, res) => {
       pickupCode: o.pickupCode,
       status: o.status,
       orderType: o.orderType,
+      paymentMethod: o.paymentMethod || undefined,
       deviceId: o.deviceId,
       totals: {
         originalAmount: o.originalAmount,
