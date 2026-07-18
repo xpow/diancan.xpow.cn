@@ -566,7 +566,7 @@ onUnmounted(() => {
 .ticket-label { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; color: var(--secondary); margin: 0 0 var(--spacing-sm); text-transform: uppercase; letter-spacing: 0.08em; }
 .takeaway-badge, .pay-badge, .unpaid-badge, .status-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--radius-full); font-size: 11px; font-weight: 700; text-transform: none; letter-spacing: normal; }
 .takeaway-badge { background: var(--primary-container); color: var(--on-primary); }
-.pay-badge { background: var(--secondary-container); color: var(--on-secondary-container); }
+.pay-badge { background: var(--surface-variant); color: var(--on-surface-variant); }
 .unpaid-badge { background: var(--error-container); color: var(--on-error-container); }
 .status-badge { background: var(--surface-container-high); color: var(--on-surface); }
 .status-unpaid { background: var(--error-container); color: var(--on-error-container); }
