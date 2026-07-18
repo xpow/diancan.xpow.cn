@@ -174,6 +174,10 @@ app.get('/api/system/bootstrap', generalLimiter, async (req, res) => {
 
   const { merchant, branch, promotions: activePromotions, featuredItems, devices: allDevices } = cache
 
+  // 实时查询评价设置（不入缓存）
+  const merchantDb = await prisma.merchant.findUnique({ where: { id: merchant.id }, select: { reviewSettings: true } })
+  const reviewSettings = merchantDb ? JSON.parse(merchantDb.reviewSettings || '{}') : {}
+
   let device: any = null
   const deviceSn = req.query.sn as string | undefined
   if (deviceSn) {
@@ -207,6 +211,7 @@ app.get('/api/system/bootstrap', generalLimiter, async (req, res) => {
     branchStatus: branch?.status ?? 'active',
     restReason: branch?.restReason ?? merchant.restReason,
     features: merchant.features,
+    reviewEnabled: reviewSettings?.enabled ?? false,
     promotions: availablePromotions.map((p: any) => {
       const rules = typeof p.rules === 'string' ? JSON.parse(p.rules) : p.rules
       let subtitle = ''
@@ -998,18 +1003,19 @@ app.get('/api/reviews/status', generalLimiter, authMiddleware, async (req, res) 
     orderBy: { createdAt: 'desc' },
   })
   const latest = reviews[0]
-  const reviewedDishIds = new Set<string>()
-  for (const r of reviews) for (const i of r.items) reviewedDishIds.add(i.dishId)
+  const now = new Date()
+  // 只返回没有 code 且在 30 分钟内的 current（未完成兑换流程的续接用）
+  const current = latest && !latest.code && (now.getTime() - latest.createdAt.getTime()) < 30 * 60 * 1000 ? {
+    id: latest.id,
+    rewardDishId: latest.rewardDishId,
+    code: null,
+    itemCount: latest.items.length,
+    createdAt: latest.createdAt.toISOString(),
+  } : null
   res.json({
-    reviewed: reviews.length > 0,
-    reviewedDishIds: Array.from(reviewedDishIds),
-    current: latest ? {
-      id: latest.id,
-      rewardDishId: latest.rewardDishId,
-      code: latest.code ? { code: latest.code.code, dishName: latest.code.dishName, status: latest.code.status } : null,
-      itemCount: latest.items.length,
-      createdAt: latest.createdAt.toISOString(),
-    } : null,
+    reviewed: false,
+    reviewedDishIds: [],
+    current,
   })
 })
 
@@ -1061,6 +1067,13 @@ app.post('/api/reviews', generalLimiter, authMiddleware, async (req, res) => {
     return res.status(400).json({ message: '缺少参数' })
   }
 
+  // 检查评价是否已关闭
+  const m = await prisma.merchant.findFirst({ select: { reviewSettings: true } })
+  if (m) {
+    const settings = JSON.parse(m.reviewSettings || '{}')
+    if (!settings.enabled) return res.status(403).json({ message: '评价功能已关闭' })
+  }
+
   const review = await prisma.review.create({
     data: {
       branchId,
@@ -1072,9 +1085,9 @@ app.post('/api/reviews', generalLimiter, authMiddleware, async (req, res) => {
           dishName: it.dishName,
           overall: it.overall,
           spiciness: it.spiciness ?? null,
-          saltiness: it.saltiness ?? null,
           texture: it.texture ?? null,
           portion: it.portion ?? null,
+          price: it.price ?? null,
           comment: it.comment || null,
         })),
       },
@@ -1122,6 +1135,15 @@ app.get('/api/reviews/gift-dishes', generalLimiter, authMiddleware, async (req, 
   const device = await prisma.device.findUnique({ where: { id: deviceId }, include: { branch: true } })
   if (!device) return res.status(404).json({ message: 'device not found' })
   const merchantId = device.branch.merchantId
+
+  // 今日已领过赠品 → 返回空列表，前端自动跳过选赠品步骤
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  const todayCode = await prisma.reviewCode.findFirst({
+    where: { review: { deviceId }, createdAt: { gte: todayStart } },
+  })
+  if (todayCode) return res.json({ items: [] })
+
   const giftEntries = await prisma.reviewGiftDish.findMany({ where: { merchantId } })
   const dishQuantityMap = new Map(giftEntries.map((g) => [g.dishId, g.quantity]))
   const dishes = await prisma.dish.findMany({
@@ -1149,9 +1171,9 @@ app.get('/api/reviews/history', generalLimiter, authMiddleware, async (req, res)
         dishName: i.dishName,
         overall: i.overall,
         spiciness: i.spiciness,
-        saltiness: i.saltiness,
         texture: i.texture,
         portion: i.portion,
+        price: i.price,
         comment: i.comment,
       })),
       code: r.code ? { code: r.code.code, dishName: r.code.dishName, status: r.code.status } : null,

@@ -23,7 +23,7 @@
       <h2>赠品菜品池</h2>
       <p class="section-desc">选择顾客评价后可选的赠品菜品</p>
       <div class="gift-controls">
-        <Select v-model="selectedDishIds" :options="availableDishes" optionLabel="name" optionValue="id" placeholder="选择菜品多选" class="dish-select" multiple />
+        <MultiSelect v-model="selectedDishIds" :options="availableDishes" optionLabel="name" optionValue="id" placeholder="选择菜品" filter class="dish-select" />
         <InputNumber v-model="giftQuantity" :min="1" :max="99" class="qty-input" placeholder="数量" />
         <Button label="批量添加" @click="addGiftDishes" :disabled="selectedDishIds.length === 0" />
       </div>
@@ -65,9 +65,22 @@
         <Column header="总体评价">
           <template #body="{ data }">{{ data.overallStats.good }}好 / {{ data.overallStats.okay }}中 / {{ data.overallStats.bad }}差</template>
         </Column>
-        <Column field="itemCount" header="评价菜品数" />
-        <Column field="comment" header="留言">
-          <template #body="{ data }">{{ data.comment || '-' }}</template>
+        <Column header="评价明细">
+          <template #body="{ data }">
+            <div v-for="item in data.items" :key="item.dishName" class="review-detail-item">
+              <span class="detail-dish">{{ item.dishName }}</span>
+              <span :class="['detail-badge', 'badge-' + item.overall]">
+                {{ item.overall === 'good' ? '好吃' : item.overall === 'okay' ? '还行' : '不好' }}
+              </span>
+              <span v-if="item.overall !== 'good'">
+                <span v-if="item.spiciness" class="detail-tag">辣{{ ['','不够','刚好','太辣'][item.spiciness] }}</span>
+                <span v-if="item.texture" class="detail-tag">口感{{ ['','太老','刚好','不好吃'][item.texture] }}</span>
+                <span v-if="item.portion" class="detail-tag">份量{{ ['','太少','刚好','太多'][item.portion] }}</span>
+              </span>
+              <span v-if="item.price" class="detail-tag">价格{{ ['','太贵','适中','便宜'][item.price] }}</span>
+              <span v-if="item.comment" class="detail-comment">"{{ item.comment }}"</span>
+            </div>
+          </template>
         </Column>
         <Column header="赠品">
           <template #body="{ data }">{{ data.code ? data.code.dishName + (data.code.status === 'redeemed' ? '(已核销)' : '') : '未领取' }}</template>
@@ -79,6 +92,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import MultiSelect from 'primevue/multiselect'
 
 interface GiftDish { dishId: string; name: string; price: number; quantity: number }
 interface Settings { enabled: boolean; giftDishes: GiftDish[] }
@@ -228,4 +242,12 @@ onMounted(() => { loadSettings(); loadReviews() })
 .p-datatable .p-datatable-thead > tr > th { white-space: nowrap; }
 .error-msg { color: #dc2626; font-size: 14px; font-weight: 600; margin-bottom: 16px; }
 .loading-msg { color: #666; font-size: 14px; margin-bottom: 16px; }
+.review-detail-item { margin-bottom: 6px; line-height: 1.6; }
+.detail-dish { font-weight: 600; margin-right: 6px; }
+.detail-badge { display: inline-block; padding: 0 6px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-right: 4px; }
+.badge-good { background: #f0fdf4; color: #15803d; }
+.badge-okay { background: #fffbeb; color: #92400e; }
+.badge-bad { background: #fef2f2; color: #b91c1c; }
+.detail-tag { display: inline-block; padding: 0 6px; border-radius: 4px; background: #f5f5f5; font-size: 11px; color: #666; margin-right: 4px; }
+.detail-comment { display: block; font-size: 12px; color: #999; font-style: italic; margin-top: 2px; }
 </style>

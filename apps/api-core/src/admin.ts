@@ -1072,6 +1072,21 @@ router.get('/reviews/settings', async (req, res) => {
   })
 })
 
+// 保存评价设置
+router.post('/reviews/settings', async (req, res) => {
+  const { merchantId, enabled } = req.body ?? {}
+  if (!merchantId) return res.status(400).json({ message: 'merchantId required' })
+  const merchant = await prisma.merchant.findUnique({ where: { id: merchantId } })
+  if (!merchant) return res.status(404).json({ message: 'merchant not found' })
+  const settings = JSON.parse(merchant.reviewSettings || '{}')
+  settings.enabled = !!enabled
+  await prisma.merchant.update({
+    where: { id: merchantId },
+    data: { reviewSettings: JSON.stringify(settings) },
+  })
+  res.json({ success: true })
+})
+
 // 批量添加菜品到赠品池
 router.post('/reviews/gift-dishes', async (req, res) => {
   const { merchantId, items } = req.body ?? {}
@@ -1132,6 +1147,15 @@ router.get('/reviews', async (req, res) => {
       rewardDishId: r.rewardDishId || undefined,
       code: r.code ? { code: r.code.code, dishName: r.code.dishName, status: r.code.status } : null,
       itemCount: r.items.length,
+      items: r.items.map((i) => ({
+        dishName: i.dishName,
+        overall: i.overall,
+        spiciness: i.spiciness,
+        texture: i.texture,
+        portion: i.portion,
+        price: i.price,
+        comment: i.comment,
+      })),
       overallStats: {
         good: r.items.filter((i) => i.overall === 'good').length,
         okay: r.items.filter((i) => i.overall === 'okay').length,
@@ -1149,7 +1173,7 @@ router.get('/reviews', async (req, res) => {
 router.post('/reviews/redeem', async (req, res) => {
   const { code } = req.body ?? {}
   if (!code) return res.status(400).json({ message: 'code required' })
-  const reviewCode = await prisma.reviewCode.findUnique({ where: { code } })
+  const reviewCode = await prisma.reviewCode.findUnique({ where: { code: (code as string).toUpperCase() } })
   if (!reviewCode) return res.status(404).json({ message: '兑换码无效' })
   if (reviewCode.status === 'redeemed') return res.status(409).json({ message: '已核销' })
   await prisma.reviewCode.update({

@@ -297,9 +297,9 @@ model ReviewItem {
   dishName   String
   overall    String  // good | okay | bad
   spiciness  Int?    // 1=不够 2=刚好 3=太辣
-  saltiness  Int?    // 1=太淡 2=刚好 3=太咸
   texture    Int?    // 1=太软 2=刚好 3=太硬
   portion    Int?    // 1=太少 2=刚好 3=太多
+  price      Int?    // 1=太贵 2=适中 3=便宜
   comment    String?
 
   review Review @relation(fields: [reviewId], references: [id])
