@@ -1122,6 +1122,33 @@ app.get('/api/reviews/gift-dishes', generalLimiter, authMiddleware, async (req, 
   res.json({ items: dishes.map((d) => ({ id: d.id, name: d.name, price: d.price, image: d.image })) })
 })
 
+// 获取该设备的历史评价
+app.get('/api/reviews/history', generalLimiter, authMiddleware, async (req, res) => {
+  const deviceId = req.authDevice!.deviceId
+  const reviews = await prisma.review.findMany({
+    where: { deviceId },
+    include: { items: true, code: true },
+    orderBy: { createdAt: 'desc' },
+    take: 20,
+  })
+  res.json({
+    items: reviews.map((r) => ({
+      id: r.id,
+      createdAt: r.createdAt.toISOString(),
+      items: r.items.map((i) => ({
+        dishName: i.dishName,
+        overall: i.overall,
+        spiciness: i.spiciness,
+        saltiness: i.saltiness,
+        texture: i.texture,
+        portion: i.portion,
+        comment: i.comment,
+      })),
+      code: r.code ? { code: r.code.code, dishName: r.code.dishName, status: r.code.status } : null,
+    })),
+  })
+})
+
 app.listen(port, () => {
   console.log(`API Core server running on http://localhost:${port}`)
 })

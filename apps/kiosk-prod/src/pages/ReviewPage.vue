@@ -130,18 +130,55 @@
           </div>
         </div>
 
-        <div v-if="rewardCode" class="gift-section">
+      <div v-if="rewardCode" class="gift-section">
           <p class="gift-label">赠品兑换码</p>
           <div class="code-box">
             <span class="code-value">{{ rewardCode }}</span>
           </div>
         </div>
-        <p v-if="rewardDishName" class="code-dish">赠品：{{ rewardDishName }}</p>
       </div>
     </main>
 
+    <!-- 历史评价弹窗 -->
+    <Teleport to="body">
+      <div v-if="showHistory" class="overlay" @click.self="showHistory = false">
+        <div class="history-dialog">
+          <div class="history-header">
+            <span class="step-title">历史评价</span>
+            <button class="btn-close" @click="showHistory = false"><span class="material-icons">close</span></button>
+          </div>
+          <div class="history-body">
+            <div v-for="review in historyItems" :key="review.id" class="history-group">
+              <div class="history-date">{{ review.createdAt.slice(0, 10) }}</div>
+              <div v-for="item in review.items" :key="item.dishName" class="history-card">
+                <div class="history-dish">{{ item.dishName }}</div>
+                <div class="summary-ratings">
+                  <span :class="['summary-badge', 'badge-' + item.overall]">
+                    {{ item.overall === 'good' ? '好吃' : item.overall === 'okay' ? '还行' : '不好' }}
+                  </span>
+                  <template v-if="item.overall !== 'good'">
+                    <span v-if="item.spiciness" class="summary-tag">辣度{{ ['','不够辣','刚好','太辣'][item.spiciness] }}</span>
+                    <span v-if="item.saltiness" class="summary-tag">咸味{{ ['','太淡','刚好','太咸'][item.saltiness] }}</span>
+                    <span v-if="item.texture" class="summary-tag">口感{{ ['','太软','刚好','太硬'][item.texture] }}</span>
+                    <span v-if="item.portion" class="summary-tag">份量{{ ['','太少','刚好','太多'][item.portion] }}</span>
+                  </template>
+                </div>
+                <div v-if="item.comment" class="summary-comment">"{{ item.comment }}"</div>
+              </div>
+              <div v-if="review.code" class="history-code">赠品：{{ review.code.dishName }}（{{ review.code.code }}）</div>
+            </div>
+            <div v-if="historyItems.length === 0" class="empty-state">
+              <span class="material-icons empty-icon">rate_review</span>
+              <p>暂无评价记录</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
     <!-- Bottom actions (inside main scroll area, pinned to bottom of content) -->
     <div v-if="step === 1" class="bottom-actions">
+      <button class="btn-secondary" @click="showHistory = true" :disabled="historyItems.length === 0">查看评价</button>
       <button :class="['btn-primary', selectedDishIds.size === 0 && 'btn-disabled']" :disabled="selectedDishIds.size === 0" @click="goToRate">下一步</button>
     </div>
     <div v-if="step === 2" class="bottom-actions">
@@ -183,6 +220,8 @@ const rewardCode = ref('')
 const rewardDishName = ref('')
 const currentReviewId = ref('')
 const submittedItems = ref<{ dishName: string; overall: string; spiciness: number | null; saltiness: number | null; texture: number | null; portion: number | null; comment: string }[]>([])
+const showHistory = ref(false)
+const historyItems = ref<{ id: string; createdAt: string; items: { dishName: string; overall: string; spiciness: number | null; saltiness: number | null; texture: number | null; portion: number | null; comment: string }[]; code: { code: string; dishName: string } | null }[]>([])
 
 // TopBar data
 const merchantName = ref('')
@@ -210,6 +249,10 @@ onMounted(async () => {
       return
     }
     if (status.current) currentReviewId.value = status.current.id
+  } catch {}
+  try {
+    const h = await apiGet<{ items: any[] }>('/api/reviews/history')
+    historyItems.value = h.items
   } catch {}
   const data = await apiGet<{ items: DishItem[] }>('/api/reviews/dishes')
   dishes.value = data.items
@@ -390,6 +433,19 @@ async function claimReward() {
 .summary-tag { display: inline-block; padding: 2px 8px; border-radius: var(--radius-full); background: var(--surface-container); font-size: 11px; color: var(--secondary); }
 .summary-comment { font-size: 13px; color: var(--secondary); font-style: italic; margin-top: 6px; }
 .step-code.hero { overflow-y: auto; justify-content: flex-start; }
+
+/* History dialog */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.history-dialog { width: 100%; max-width: 400px; max-height: 80vh; background: var(--page-bg); border-radius: var(--radius-xl); display: flex; flex-direction: column; overflow: hidden; }
+.history-header { display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid var(--outline-variant); }
+.btn-close { background: none; border: none; color: var(--secondary); cursor: pointer; padding: 4px; }
+.history-body { flex: 1; overflow-y: auto; padding: 12px 16px; }
+.history-group { margin-bottom: 16px; }
+.history-date { font-size: 12px; font-weight: 600; color: var(--secondary); margin-bottom: 8px; }
+.history-card { background: var(--surface); border-radius: var(--radius-lg); padding: 10px 12px; margin-bottom: 6px; border: 1px solid var(--outline-variant); }
+.history-dish { font-family: var(--font-display); font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.history-code { font-size: 12px; color: var(--primary-container); font-weight: 600; margin-top: 4px; }
+
 .empty-state { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 40px 24px; text-align: center; color: var(--secondary); }
 .empty-icon { font-size: 48px !important; opacity: 0.4; }
 
