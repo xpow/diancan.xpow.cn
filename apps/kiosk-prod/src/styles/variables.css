@@ -43,8 +43,8 @@
   --on-error-container: #93000a;
 
   /* Surface */
-  --surface: #efe8e5;
-  --surface-hole: #efe8e5;
+  --surface: #fcf9f8;
+  --surface-hole: #fcf9f8;
   --surface-dim: #dcd9d9;
   --surface-bright: #fcf9f8;
   --surface-container-lowest: #ffffff00;
@@ -71,6 +71,7 @@
 
   /* Background */
   --background: #fcf9f8;
+  --page-bg: #f0eae6;
 
   /* 底部导航 */
   --bottom-nav-bg: color-mix(in srgb, var(--surface) 92%, #000000);
@@ -161,6 +162,7 @@
   --on-surface-variant: #d4c4b8;
   --surface-variant: #3a3532;
   --background: #1c1b1b;
+  --page-bg: #131211;
   --secondary-container: #dedede;
 
   /* 底部导航 */

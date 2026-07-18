@@ -34,7 +34,7 @@ body {
   font-size: var(--text-body-md);
   line-height: 20px;
   color: var(--on-surface);
-  background: var(--surface);
+  background: var(--page-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
