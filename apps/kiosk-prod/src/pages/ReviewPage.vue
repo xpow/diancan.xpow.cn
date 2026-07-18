@@ -256,15 +256,28 @@ onMounted(async () => {
   } catch {}
   const data = await apiGet<{ items: DishItem[] }>('/api/reviews/dishes')
   dishes.value = data.items
-  if (dishes.value.length === 0) return
+  if (dishes.value.length === 0) {
+    if (reviewedDishIds.value.size > 0) {
+      step.value = 4
+    }
+    return
+  }
   const newDishes = dishes.value.filter((d) => !reviewedDishIds.value.has(d.dishId))
-  if (newDishes.length === 0) { step.value = 4; return }
+  if (newDishes.length === 0) {
+    if (historyItems.value.length) submittedItems.value = historyItems.value[0].items
+    step.value = 4; return
+  }
   step.value = 1
 })
 
 async function startReview() {
   const status = await apiGet<{ reviewed: boolean; reviewedDishIds: string[]; current: any }>('/api/reviews/status')
   reviewedDishIds.value = new Set(status.reviewedDishIds)
+  if (status.current?.code) {
+    rewardCode.value = status.current.code.code
+    rewardDishName.value = status.current.code.dishName
+    step.value = 4; return
+  }
   if (status.current) currentReviewId.value = status.current.id
   if (!dishes.value.length) {
     const data = await apiGet<{ items: DishItem[] }>('/api/reviews/dishes')
@@ -272,7 +285,13 @@ async function startReview() {
   }
   if (dishes.value.length === 0) return
   const newDishes = dishes.value.filter((d) => !reviewedDishIds.value.has(d.dishId))
-  if (newDishes.length === 0) { step.value = 4; return }
+  if (newDishes.length === 0) {
+    try {
+      const h = await apiGet<{ items: any[] }>('/api/reviews/history')
+      if (h.items.length) submittedItems.value = h.items[0].items
+    } catch {}
+    step.value = 4; return
+  }
   step.value = 1
 }
 
