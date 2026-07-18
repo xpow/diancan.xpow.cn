@@ -1052,4 +1052,104 @@ router.get('/stats/dish-sales', async (req, res) => {
   res.json(result)
 })
 
+/* ===== Review Management ===== */
+
+// 获取评价设置
+router.get('/reviews/settings', async (req, res) => {
+  const merchantId = req.query.merchantId as string
+  if (!merchantId) return res.status(400).json({ message: 'merchantId required' })
+  const merchant = await prisma.merchant.findUnique({ where: { id: merchantId } })
+  if (!merchant) return res.status(404).json({ message: 'merchant not found' })
+  const settings = JSON.parse(merchant.reviewSettings || '{}')
+  // 获取赠品池
+  const giftDishes = await prisma.reviewGiftDish.findMany({ where: { merchantId } })
+  const dishIds = giftDishes.map((g) => g.dishId)
+  const dishes = dishIds.length > 0 ? await prisma.dish.findMany({ where: { id: { in: dishIds } }, select: { id: true, name: true, price: true } }) : []
+  const dishMap = new Map(dishes.map((d) => [d.id, d]))
+  res.json({
+    enabled: settings.enabled ?? false,
+    giftDishes: giftDishes.map((g) => ({ dishId: g.dishId, name: dishMap.get(g.dishId)?.name || '', price: dishMap.get(g.dishId)?.price || 0 })),
+  })
+})
+
+// 更新评价设置
+router.post('/reviews/settings', async (req, res) => {
+  const { merchantId, enabled } = req.body ?? {}
+  if (!merchantId) return res.status(400).json({ message: 'merchantId required' })
+  const merchant = await prisma.merchant.findUnique({ where: { id: merchantId } })
+  if (!merchant) return res.status(404).json({ message: 'merchant not found' })
+  const settings = JSON.parse(merchant.reviewSettings || '{}')
+  if (typeof enabled === 'boolean') settings.enabled = enabled
+  await prisma.merchant.update({ where: { id: merchantId }, data: { reviewSettings: JSON.stringify(settings) } })
+  res.json({ success: true })
+})
+
+// 添加菜品到赠品池
+router.post('/reviews/gift-dishes', async (req, res) => {
+  const { merchantId, dishId } = req.body ?? {}
+  if (!merchantId || !dishId) return res.status(400).json({ message: '参数不完整' })
+  const existing = await prisma.reviewGiftDish.findUnique({ where: { merchantId_dishId: { merchantId, dishId } } })
+  if (existing) return res.json({ success: true })
+  await prisma.reviewGiftDish.create({ data: { merchantId, dishId } })
+  res.json({ success: true })
+})
+
+// 从赠品池移除
+router.delete('/reviews/gift-dishes/:dishId', async (req, res) => {
+  const { dishId } = req.params
+  const merchantId = req.query.merchantId as string
+  if (!merchantId) return res.status(400).json({ message: 'merchantId required' })
+  await prisma.reviewGiftDish.deleteMany({ where: { merchantId, dishId } })
+  res.json({ success: true })
+})
+
+// 评价列表
+router.get('/reviews', async (req, res) => {
+  const { page = '1', limit = '20' } = req.query as Record<string, string>
+  const skip = (Math.max(1, Number(page)) - 1) * Number(limit)
+  const take = Math.min(100, Math.max(1, Number(limit)))
+  const [items, total] = await Promise.all([
+    prisma.review.findMany({
+      skip,
+      take,
+      orderBy: { createdAt: 'desc' },
+      include: { items: true, code: true },
+    }),
+    prisma.review.count(),
+  ])
+  res.json({
+    items: items.map((r) => ({
+      id: r.id,
+      deviceId: r.deviceId,
+      comment: r.comment || undefined,
+      rewardDishId: r.rewardDishId || undefined,
+      code: r.code ? { code: r.code.code, dishName: r.code.dishName, status: r.code.status } : null,
+      itemCount: r.items.length,
+      overallStats: {
+        good: r.items.filter((i) => i.overall === 'good').length,
+        okay: r.items.filter((i) => i.overall === 'okay').length,
+        bad: r.items.filter((i) => i.overall === 'bad').length,
+      },
+      createdAt: r.createdAt.toISOString(),
+    })),
+    total,
+    page: Number(page),
+    limit: take,
+  })
+})
+
+// 核销兑换码
+router.post('/reviews/redeem', async (req, res) => {
+  const { code } = req.body ?? {}
+  if (!code) return res.status(400).json({ message: 'code required' })
+  const reviewCode = await prisma.reviewCode.findUnique({ where: { code } })
+  if (!reviewCode) return res.status(404).json({ message: '兑换码无效' })
+  if (reviewCode.status === 'redeemed') return res.status(409).json({ message: '已核销' })
+  await prisma.reviewCode.update({
+    where: { id: reviewCode.id },
+    data: { status: 'redeemed', redeemedAt: new Date() },
+  })
+  res.json({ success: true, dishName: reviewCode.dishName })
+})
+
 export default router

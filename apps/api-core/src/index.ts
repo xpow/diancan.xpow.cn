@@ -911,7 +911,7 @@ app.get('/api/orders/:orderNo', generalLimiter, authMiddleware, async (req, res)
   })
 })
 
-// 设备认证：通过8位SN匹配点餐机
+// 设备认证
 app.post('/api/system/device-auth', authLimiter, async (req, res) => {
   const { sn, uuid, userAgent } = req.body ?? {}
   if (!sn || typeof sn !== 'string' || sn.length !== 8) {
@@ -978,6 +978,132 @@ app.post('/api/system/device-auth', authLimiter, async (req, res) => {
     deviceName: device.name,
     branchId: device.branchId,
   })
+})
+
+/* ===== Reviews ===== */
+
+function genReviewCode(): string {
+  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'
+  let code = ''
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)]
+  return code
+}
+
+// 检查当前设备是否已评
+app.get('/api/reviews/status', generalLimiter, authMiddleware, async (req, res) => {
+  const deviceId = req.authDevice!.deviceId
+  const existing = await prisma.review.findUnique({
+    where: { deviceId },
+    include: { code: true },
+  })
+  if (existing) {
+    res.json({ reviewed: true, review: { id: existing.id, rewardDishId: existing.rewardDishId, createdAt: existing.createdAt.toISOString() }, code: existing.code ? { code: existing.code.code, dishName: existing.code.dishName, status: existing.code.status } : null })
+  } else {
+    res.json({ reviewed: false, review: null, code: null })
+  }
+})
+
+// 获取该设备历史点过的菜品
+app.get('/api/reviews/dishes', generalLimiter, authMiddleware, async (req, res) => {
+  const deviceId = req.authDevice!.deviceId
+  const orders = await prisma.order.findMany({
+    where: { deviceId, status: { in: ['paid', 'preparing', 'ready', 'completed'] } },
+    include: { items: true },
+    orderBy: { createdAt: 'desc' },
+    take: 50,
+  })
+  // 去重合并
+  const dishMap = new Map<string, { dishId: string; name: string; count: number }>()
+  for (const o of orders) {
+    for (const i of o.items) {
+      const key = i.dishId
+      if (dishMap.has(key)) dishMap.get(key)!.count += i.quantity
+      else dishMap.set(key, { dishId: i.dishId, name: i.name, count: i.quantity })
+    }
+  }
+  // 按点单次数排序
+  const dishes = Array.from(dishMap.values()).sort((a, b) => b.count - a.count)
+  res.json({ items: dishes })
+})
+
+// 提交评价
+app.post('/api/reviews', generalLimiter, authMiddleware, async (req, res) => {
+  const deviceId = req.authDevice!.deviceId
+  const { branchId, items, comment } = req.body ?? {}
+  if (!branchId || !items || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ message: '缺少参数' })
+  }
+  const existing = await prisma.review.findUnique({ where: { deviceId } })
+  if (existing) return res.status(409).json({ message: '该设备已评价过' })
+
+  const review = await prisma.review.create({
+    data: {
+      branchId,
+      deviceId,
+      comment: comment || null,
+      items: {
+        create: items.map((it: any) => ({
+          dishId: it.dishId,
+          dishName: it.dishName,
+          overall: it.overall,
+          spiciness: it.spiciness ?? null,
+          saltiness: it.saltiness ?? null,
+          texture: it.texture ?? null,
+          portion: it.portion ?? null,
+          comment: it.comment || null,
+        })),
+      },
+    },
+    include: { items: true },
+  })
+  res.json({ id: review.id, itemCount: review.items.length })
+})
+
+// 选择赠品并生成兑换码
+app.post('/api/reviews/reward', generalLimiter, authMiddleware, async (req, res) => {
+  const deviceId = req.authDevice!.deviceId
+  const { dishId, dishName } = req.body ?? {}
+  if (!dishId || !dishName) return res.status(400).json({ message: '缺少参数' })
+
+  const review = await prisma.review.findUnique({ where: { deviceId } })
+  if (!review) return res.status(404).json({ message: '请先提交评价' })
+  if (review.rewardDishId) return res.status(409).json({ message: '已领取过赠品' })
+
+  // 生成唯一兑换码（重试直到不重复）
+  let code = genReviewCode()
+  while (await prisma.reviewCode.findUnique({ where: { code } })) code = genReviewCode()
+
+  const branch = await prisma.branch.findFirst({
+    where: { merchant: { dishes: { some: { id: dishId } } } },
+  })
+
+  const reviewCode = await prisma.reviewCode.create({
+    data: {
+      reviewId: review.id,
+      branchId: branch?.id || '',
+      dishId,
+      dishName,
+      code,
+    },
+  })
+  // 更新 review 的 rewardDishId
+  await prisma.review.update({ where: { id: review.id }, data: { rewardDishId: dishId } })
+
+  res.json({ code: reviewCode.code, dishName })
+})
+
+// 获取商家赠品池
+app.get('/api/reviews/gift-dishes', generalLimiter, authMiddleware, async (req, res) => {
+  const deviceId = req.authDevice!.deviceId
+  const device = await prisma.device.findUnique({ where: { id: deviceId }, include: { branch: true } })
+  if (!device) return res.status(404).json({ message: 'device not found' })
+  const merchantId = device.branch.merchantId
+  const giftDishIds = new Set((await prisma.reviewGiftDish.findMany({ where: { merchantId } })).map((g) => g.dishId))
+  const dishes = await prisma.dish.findMany({
+    where: { merchantId, id: { in: Array.from(giftDishIds) }, status: 'active' },
+    orderBy: { sort: 'asc' },
+  })
+  res.json({ items: dishes.map((d) => ({ id: d.id, name: d.name, price: d.price, image: d.image })) })
 })
 
 app.listen(port, () => {

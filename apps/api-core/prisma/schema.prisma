@@ -23,6 +23,7 @@ model Merchant {
   promotionBanners PromotionBanner[]
   featuredItems   FeaturedItem[]
   orders    Order[]
+  reviewSettings String? @default("{}") // JSON: { enabled: bool }
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -276,4 +277,53 @@ model OrderPromotion {
   promotion Promotion @relation(fields: [promotionId], references: [id])
 
   createdAt DateTime @default(now())
+}
+
+model Review {
+  id           String       @id @default(cuid())
+  branchId     String
+  deviceId     String       @unique
+  comment      String?
+  rewardDishId String?
+  createdAt    DateTime     @default(now())
+  items        ReviewItem[]
+  code         ReviewCode?
+}
+
+model ReviewItem {
+  id         String  @id @default(cuid())
+  reviewId   String
+  dishId     String
+  dishName   String
+  overall    String  // good | okay | bad
+  spiciness  Int?    // 1=不够 2=刚好 3=太辣
+  saltiness  Int?    // 1=太淡 2=刚好 3=太咸
+  texture    Int?    // 1=太软 2=刚好 3=太硬
+  portion    Int?    // 1=太少 2=刚好 3=太多
+  comment    String?
+
+  review Review @relation(fields: [reviewId], references: [id])
+}
+
+model ReviewCode {
+  id         String    @id @default(cuid())
+  reviewId   String    @unique
+  branchId   String
+  dishId     String
+  dishName   String
+  code       String    @unique
+  status     String    @default("pending") // pending | redeemed | expired
+  createdAt  DateTime  @default(now())
+  redeemedAt DateTime?
+
+  review Review @relation(fields: [reviewId], references: [id])
+}
+
+model ReviewGiftDish {
+  id         String   @id @default(cuid())
+  merchantId String
+  dishId     String
+  createdAt  DateTime @default(now())
+
+  @@unique([merchantId, dishId])
 }

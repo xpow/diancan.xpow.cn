@@ -14,6 +14,7 @@ const router = createRouter({
     { path: '/users', name: 'users', component: () => import('./views/Users.vue') },
     { path: '/kitchen', name: 'kitchen', meta: { hideLayout: true }, component: () => import('./views/kitchen.vue') },
     { path: '/stats', name: 'stats', component: () => import('./views/Stats.vue') },
+    { path: '/reviews', name: 'reviews', component: () => import('./views/ReviewManagement.vue') },
   ],
 })
 
