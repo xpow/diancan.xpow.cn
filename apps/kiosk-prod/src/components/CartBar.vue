@@ -1,5 +1,5 @@
 <template>
-  <div :class="['cart-bar', hidden && 'cart-bar-hidden']" @click="$emit('open')">
+  <div class="cart-bar" @click="$emit('open')">
     <div class="cart-left">
       <div class="cart-icon-wrap">
         <span class="material-icons">shopping_basket</span>
@@ -18,23 +18,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-
 defineProps<{ count: number; total: number }>()
 defineEmits<{ open: []; checkout: [] }>()
-
-const hidden = ref(false)
-let lastScrollY = 0
-
-function onScroll() {
-  const sy = window.scrollY
-  if (sy > lastScrollY && sy > 100) hidden.value = true
-  else hidden.value = false
-  lastScrollY = sy
-}
-
-onMounted(() => window.addEventListener('scroll', onScroll, { passive: true }))
-onUnmounted(() => window.removeEventListener('scroll', onScroll))
 </script>
 
 <style scoped>
@@ -49,7 +34,6 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
   cursor: pointer; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .cart-bar:active { transform: translateX(-50%) scale(0.98); }
-.cart-bar-hidden { transform: translateX(-50%) translateY(150%); }
 
 .cart-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
 
