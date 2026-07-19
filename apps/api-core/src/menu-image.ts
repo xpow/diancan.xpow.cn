@@ -1,4 +1,8 @@
 import sharp from 'sharp'
+import { readFileSync } from 'node:fs'
+import { join, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import QRCode from 'qrcode'
 
 interface DishItem {
   categoryName: string
@@ -10,6 +14,29 @@ interface MenuData {
   merchantName: string
   date: string
   dishes: DishItem[]
+}
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
+function logoDataUri(): string {
+  try {
+    const buf = readFileSync(join(__dirname, '..', 'logo.jpg'))
+    const b64 = buf.toString('base64')
+    return `data:image/jpeg;base64,${b64}`
+  } catch {
+    return ''
+  }
+}
+
+let _qrcodeSvg: string | null = null
+async function getQrSvg(): Promise<string> {
+  if (_qrcodeSvg) return _qrcodeSvg
+  try {
+    _qrcodeSvg = await QRCode.toString('https://diancan.xpow.cn', { type: 'svg', margin: 0, width: 120, color: { dark: '#ffffff', light: 'transparent' } })
+    return _qrcodeSvg
+  } catch {
+    return ''
+  }
 }
 
 export async function generateMenuImage(data: MenuData): Promise<Buffer> {
@@ -26,9 +53,9 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
   const catTitleH = 60
   const dishH = 60
   const catGap = 28
-  const footerH = 100
+  const footerH = 140
   const cardPad = 60
-  const cardTop = headerH - 20
+  const cardTop = headerH + 20
 
   let bodyH = 0
   for (const [, items] of groups) {
@@ -48,7 +75,6 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
 
   for (const [catName, items] of groups) {
     const accent = colors[ci % colors.length]
-    // 分类左侧色条
     parts.push(`<rect x="80" y="${y + 4}" width="4" height="24" rx="2" fill="${accent}"/>`)
     parts.push(`<text x="96" y="${y + 24}" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="22" font-weight="700" fill="${accent}">${esc(catName)}</text>`)
     y += catTitleH
@@ -65,9 +91,11 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
 
   const cardBottom = cardTop + cardH
   const footTop = cardBottom + 80
+  const logoUri = logoDataUri()
+  const qrSvg = await getQrSvg()
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${totalH}" viewBox="0 0 ${w} ${totalH}">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${totalH}" viewBox="0 0 ${w} ${totalH}">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#fdf8f5"/>
@@ -88,7 +116,9 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
   <circle cx="100" cy="180" r="140" fill="rgba(255,255,255,0.05)"/>
   <circle cx="980" cy="60" r="100" fill="rgba(255,255,255,0.05)"/>
   <circle cx="540" cy="220" r="180" fill="rgba(255,255,255,0.04)"/>
-  <text x="540" y="110" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="36" font-weight="800" fill="#ffffff" letter-spacing="4">${esc(data.merchantName)}</text>
+  <!-- logo + 餐厅名 -->
+  ${logoUri ? `<image x="380" y="46" width="48" height="48" href="${logoUri}" clip-path="inset(0 round 8px)"/>` : ''}
+  <text x="${logoUri ? 438 : 540}" y="80" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="36" font-weight="800" fill="#ffffff" letter-spacing="4">${esc(data.merchantName)}</text>
   <text x="540" y="168" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="48" font-weight="800" fill="#ffffff" letter-spacing="8">每日菜单</text>
   <text x="540" y="208" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="20" fill="rgba(255,255,255,0.75)">${esc(data.date)}</text>
   <!-- 白色卡片 -->
@@ -96,9 +126,10 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
   <!-- 菜品内容 -->
   ${parts.join('\n  ')}
   <!-- footer -->
-  <rect x="0" y="${footTop}" width="${w}" height="100" fill="#2c2420"/>
-  <text x="540" y="${footTop + 40}" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="20" fill="rgba(255,255,255,0.5)">扫码点餐 · 无需排队</text>
-  <text x="540" y="${footTop + 70}" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="16" fill="rgba(255,255,255,0.3)">本菜单仅供参考，以店内实际菜单为准</text>
+  <rect x="0" y="${footTop}" width="${w}" height="${footerH}" fill="#2c2420"/>
+  <!-- 二维码 -->
+  <g transform="translate(480, ${footTop + 12})">${qrSvg.replace('<?xml version="1.0" encoding="utf-8"?>', '').replace('<svg', '<svg width="80" height="80"')}</g>
+  <text x="540" y="${footTop + 112}" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="20" fill="rgba(255,255,255,0.5)">扫码点餐 · 无需排队</text>
 </svg>`
 
   return sharp(Buffer.from(svg)).png().toBuffer()
