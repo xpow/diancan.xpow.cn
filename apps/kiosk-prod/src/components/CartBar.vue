@@ -28,9 +28,9 @@ defineEmits<{ open: []; checkout: [] }>()
   z-index: 80; display: flex; align-items: center; justify-content: space-between;
   width: calc(100% - var(--container-margin) * 2); max-width: 600px;
   padding: 10px 10px 10px 16px;
-  background: rgba(255,255,255,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: var(--radius-full);
-  border: 1px solid rgba(0,0,0,0.06);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  background: rgba(255, 255, 255, 0); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border-radius: var(--radius-full);
+  border: 1px solid rgba(178, 126, 30, 0.447);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
   cursor: pointer; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .cart-bar:active { transform: translateX(-50%) scale(0.98); }
@@ -62,7 +62,7 @@ defineEmits<{ open: []; checkout: [] }>()
 .cart-btn:active { transform: scale(0.95); }
 .cart-btn .material-icons { font-size: 18px !important; }
 
-[data-theme="dark"] .cart-bar { background: rgba(49,48,48,0.85); border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .cart-bar { background: rgba(49, 48, 48, 0);  }
 [data-theme="dark"] .cart-icon-wrap .material-icons { color: rgba(255,255,255,0.85); }
 [data-theme="dark"] .cart-total { color: #fff; }
 [data-theme="dark"] .cart-wait { color: rgba(255,255,255,0.45); }

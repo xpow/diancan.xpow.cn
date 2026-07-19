@@ -14,8 +14,7 @@
     <div class="page-content">
       <section class="hero-context">
         <img :src="heroImage" alt="菜单横幅" class="hero-img" />
-        <div class="hero-overlay"></div>
-        <div class="hero-glass">
+        <div class="hero-overlay">
           <h2>精选食材，炭火现烤</h2>
           <p>{{ displayTitle }}</p>
         </div>
@@ -152,10 +151,9 @@ onMounted(() => {
 .page-content { padding: 0 var(--container-margin) var(--spacing-lg); max-width: 600px; margin: 0 auto; }
 .hero-context { position: relative; width: auto; height: 228px; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); overflow: hidden; margin-bottom: var(--spacing-lg); }
 .hero-img { width: 100%; height: 100%; display: block; object-fit: cover; filter: brightness(0.72); }
-.hero-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.48) 100%); }
-.hero-glass { position: absolute; bottom: var(--spacing-md); left: var(--container-margin); right: var(--container-margin); background: rgba(255,255,255,0.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: var(--radius-xl); padding: var(--spacing-md); border: 1px solid rgba(255,255,255,0.3); }
-.hero-glass h2 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 800; line-height: 1.2; color: var(--on-surface); }
-.hero-glass p { margin: var(--spacing-xs) 0 0; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; color: var(--on-surface-variant); }
+.hero-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: var(--spacing-md) max(var(--container-margin), calc(50vw - 300px + var(--container-margin))); background: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.48) 100%); }
+.hero-overlay h2 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 800; line-height: 1.2; color: #fff; }
+.hero-overlay p { margin: var(--spacing-xs) 0 0; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; color: rgba(255, 255, 255, 0.92); }
 .category-nav { display: flex; justify-content: center; gap: 10px; width: auto; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: var(--spacing-md) var(--container-margin) 14px; position: sticky; top: 52px; z-index: 40; overflow-x: auto; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: box-shadow var(--transition-fast); }
 .category-nav.floating { box-shadow: 0 6px 18px rgba(87, 32, 0, 0.05); }
 .nav-sentinel { width: 1px; height: 1px; pointer-events: none; }
@@ -188,8 +186,7 @@ onMounted(() => {
   .hide-mobile { display: none; }
   .category-nav { top: 52px; overflow-x: auto; padding: 10px var(--container-margin) 12px; }
   .hero-context { margin-bottom: var(--spacing-md); }
-  .hero-glass h2 { font-size: var(--text-headline-lg); }
-  .dish-name, .cart-sheet-title { font-size: var(--text-headline-lg); }
+  .hero-overlay h2, .dish-name, .cart-sheet-title { font-size: var(--text-headline-lg); }
   .category-pill { flex-shrink: 0; padding: 8px 16px; font-size: var(--text-label-sm); }
   .category-pill .material-icons { font-size: 16px !important; }
   .dish-card { padding: var(--spacing-md); }
