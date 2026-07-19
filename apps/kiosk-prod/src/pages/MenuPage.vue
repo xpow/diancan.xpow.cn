@@ -14,7 +14,8 @@
     <div class="page-content">
       <section class="hero-context">
         <img :src="heroImage" alt="菜单横幅" class="hero-img" />
-        <div class="hero-overlay">
+        <div class="hero-overlay"></div>
+        <div class="hero-glass">
           <h2>精选食材，炭火现烤</h2>
           <p>{{ displayTitle }}</p>
         </div>
@@ -150,16 +151,17 @@ onMounted(() => {
 .page { min-height: 100vh; background: var(--surface); padding-top: 56px; padding-bottom: 180px; }
 .page-content { padding: 0 var(--container-margin) var(--spacing-lg); max-width: 600px; margin: 0 auto; }
 .hero-context { position: relative; width: auto; height: 228px; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); overflow: hidden; margin-bottom: var(--spacing-lg); }
-.hero-img { width: 100%; height: auto; display: block; object-fit: cover; filter: brightness(0.72); }
-.hero-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: var(--spacing-md) max(var(--container-margin), calc(50vw - 300px + var(--container-margin))); background: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.48) 100%); }
-.hero-overlay h2 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 800; line-height: 1.2; color: #fff; }
-.hero-overlay p { margin: var(--spacing-xs) 0 0; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; color: rgba(255, 255, 255, 0.92); }
-.category-nav { display: flex; justify-content: center; gap: var(--spacing-sm); width: auto; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: var(--spacing-md) var(--container-margin) 14px; position: sticky; top: 52px; z-index: 40; overflow-x: auto; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: box-shadow var(--transition-fast); }
+.hero-img { width: 100%; height: 100%; display: block; object-fit: cover; filter: brightness(0.72); }
+.hero-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.48) 100%); }
+.hero-glass { position: absolute; bottom: var(--spacing-md); left: var(--container-margin); right: var(--container-margin); background: rgba(255,255,255,0.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: var(--radius-xl); padding: var(--spacing-md); border: 1px solid rgba(255,255,255,0.3); }
+.hero-glass h2 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 800; line-height: 1.2; color: var(--on-surface); }
+.hero-glass p { margin: var(--spacing-xs) 0 0; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; color: var(--on-surface-variant); }
+.category-nav { display: flex; justify-content: center; gap: 10px; width: auto; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: var(--spacing-md) var(--container-margin) 14px; position: sticky; top: 52px; z-index: 40; overflow-x: auto; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: box-shadow var(--transition-fast); }
 .category-nav.floating { box-shadow: 0 6px 18px rgba(87, 32, 0, 0.05); }
 .nav-sentinel { width: 1px; height: 1px; pointer-events: none; }
-.category-pill { display: flex; align-items: center; gap: 10px; padding: 12px 22px; border: 1px solid rgba(0,0,0,0.06); border-radius: var(--radius-full); background: var(--surface-container-high); color: var(--on-surface-variant); font-family: var(--font-display); font-size: var(--text-body-lg); font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
-.category-pill .material-icons { font-size: 20px !important; }
-.category-pill-active { background: var(--primary-container); color: var(--on-primary); box-shadow: 0 8px 20px rgba(255, 107, 0, 0.18); }
+.category-pill { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: var(--surface); color: var(--on-surface-variant); font-family: var(--font-display); font-size: var(--text-body-md); font-weight: 600; cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; }
+.category-pill .material-icons { font-size: 18px !important; }
+.category-pill-active { background: var(--primary-container); border-color: var(--primary-container); color: var(--on-primary); box-shadow: 0 4px 12px rgba(255, 107, 0, 0.18); }
 .status-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-md); padding: var(--spacing-xl); margin-top: var(--spacing-lg); border-radius: var(--radius-xl); background: var(--surface-container-low); }
 .status-card .material-icons { font-size: 48px !important; }
 .error-card { color: var(--error); }
@@ -172,9 +174,9 @@ onMounted(() => {
   .dish-list { display: grid; grid-template-columns: 1fr 1fr; }
   .page-content { max-width: none; }
   .hero-overlay { padding-bottom: var(--spacing-lg); }
-  .category-nav { gap: 14px; padding-bottom: 18px; }
-  .category-pill { padding: 14px 26px; font-size: var(--text-label-lg); }
-  .category-pill .material-icons { font-size: 22px !important; }
+  .category-nav { gap: 12px; padding-bottom: 18px; }
+  .category-pill { padding: 12px 24px; font-size: var(--text-label-lg); }
+  .category-pill .material-icons { font-size: 20px !important; }
 }
 @media (min-width: 1200px) {
   .dish-list { grid-template-columns: repeat(4, 1fr); }
@@ -186,9 +188,10 @@ onMounted(() => {
   .hide-mobile { display: none; }
   .category-nav { top: 52px; overflow-x: auto; padding: 10px var(--container-margin) 12px; }
   .hero-context { margin-bottom: var(--spacing-md); }
-  .hero-overlay h2, .dish-name, .cart-sheet-title { font-size: var(--text-headline-lg); }
-  .category-pill { flex-shrink: 0; padding: 10px 18px; font-size: var(--text-label-lg); }
-  .category-pill .material-icons { font-size: 18px !important; }
+  .hero-glass h2 { font-size: var(--text-headline-lg); }
+  .dish-name, .cart-sheet-title { font-size: var(--text-headline-lg); }
+  .category-pill { flex-shrink: 0; padding: 8px 16px; font-size: var(--text-label-sm); }
+  .category-pill .material-icons { font-size: 16px !important; }
   .dish-card { padding: var(--spacing-md); }
   :deep(.dish-image) { height: 176px; }
 

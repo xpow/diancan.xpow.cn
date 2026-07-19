@@ -1,34 +1,82 @@
 <template>
-  <div class="cart-bar" @click="$emit('open')">
+  <div :class="['cart-bar', hidden && 'cart-bar-hidden']" @click="$emit('open')">
     <div class="cart-left">
       <div class="cart-icon-wrap">
         <span class="material-icons">shopping_basket</span>
         <span class="cart-badge">{{ count }}</span>
       </div>
       <div class="cart-info">
-        <span class="cart-label">合计金额</span>
-        <span class="cart-total"><small class="c-sign">¥</small>{{ total.toFixed(2) }}</span>
+        <span class="cart-total">¥{{ total.toFixed(2) }}</span>
+        <span class="cart-wait">预计等候 15 分钟</span>
       </div>
     </div>
-    <button class="btn-primary cart-btn" @click.stop="$emit('checkout')">去结算</button>
+    <button class="cart-btn" @click.stop="$emit('checkout')">
+      <span>去结算</span>
+      <span class="material-icons">chevron_right</span>
+    </button>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue'
+
 defineProps<{ count: number; total: number }>()
 defineEmits<{ open: []; checkout: [] }>()
+
+const hidden = ref(false)
+let lastScrollY = 0
+
+function onScroll() {
+  const sy = window.scrollY
+  if (sy > lastScrollY && sy > 100) hidden.value = true
+  else hidden.value = false
+  lastScrollY = sy
+}
+
+onMounted(() => window.addEventListener('scroll', onScroll, { passive: true }))
+onUnmounted(() => window.removeEventListener('scroll', onScroll))
 </script>
 
 <style scoped>
-.cart-bar { position: fixed; bottom: calc(72px + env(safe-area-inset-bottom, 0)); left: 50%; transform: translateX(-50%); z-index: 80; display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-md); width: calc(100% - var(--container-margin) * 2); max-width: 600px; background: var(--cart-bar-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: var(--radius-xl); border: 1px solid color-mix(in srgb, var(--outline-variant) 40%, transparent); box-shadow: var(--shadow-glass); cursor: pointer; }
-.cart-bar:active { transform: translateX(-50%) scale(0.99); }
-.cart-left { display: flex; align-items: center; gap: var(--spacing-md); }
-.cart-icon-wrap { position: relative; display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: var(--radius-lg); background: var(--primary-container); box-shadow: var(--shadow-primary); }
-.cart-icon-wrap .material-icons { font-size: 30px !important; color: var(--on-primary); }
-.cart-badge { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--radius-full); background: var(--error); color: var(--on-error); font-family: var(--font-display); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid var(--surface); }
-.cart-info { display: flex; flex-direction: column; }
-.cart-label { font-family: var(--font-display); font-size: var(--text-body-md); font-weight: 600; text-transform: uppercase; color: var(--secondary); }
-[data-theme="dark"] .cart-label { color: #fff; }
-.cart-total { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: var(--primary-container); }
-.cart-btn { box-shadow: var(--shadow-primary); }
+.cart-bar {
+  position: fixed; bottom: calc(84px + env(safe-area-inset-bottom, 0)); left: 50%; transform: translateX(-50%);
+  z-index: 80; display: flex; align-items: center; justify-content: space-between;
+  width: calc(100% - var(--container-margin) * 2); max-width: 600px;
+  padding: 10px 10px 10px 16px;
+  background: var(--inverse-surface); border-radius: var(--radius-full);
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  cursor: pointer; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.cart-bar:active { transform: translateX(-50%) scale(0.98); }
+.cart-bar-hidden { transform: translateX(-50%) translateY(150%); }
+
+.cart-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+
+.cart-icon-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
+.cart-icon-wrap .material-icons { font-size: 28px !important; color: rgba(255,255,255,0.85); }
+.cart-badge {
+  position: absolute; top: -6px; right: -10px; min-width: 20px; height: 20px; padding: 0 6px;
+  border-radius: var(--radius-full); background: var(--primary-container);
+  color: var(--on-primary); font-family: var(--font-display); font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--inverse-surface);
+}
+
+.cart-info { display: flex; flex-direction: column; gap: 1px; }
+.cart-total { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: #fff; line-height: 1.2; }
+.cart-wait { font-size: 11px; color: rgba(255,255,255,0.5); line-height: 1.2; }
+
+.cart-btn {
+  display: flex; align-items: center; gap: 2px; flex-shrink: 0;
+  padding: 8px 18px; border: none; border-radius: var(--radius-full);
+  background: var(--primary-container); color: var(--on-primary);
+  font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700;
+  cursor: pointer; transition: background 0.15s, transform 0.15s;
+  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.35);
+}
+.cart-btn:active { transform: scale(0.95); }
+.cart-btn .material-icons { font-size: 18px !important; }
+
+[data-theme="dark"] .cart-bar { border-color: rgba(255,255,255,0.08); }
 </style>
