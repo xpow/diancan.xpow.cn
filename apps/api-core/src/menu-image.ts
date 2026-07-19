@@ -120,8 +120,7 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
   <circle cx="980" cy="60" r="100" fill="rgba(255,255,255,0.05)"/>
   <circle cx="540" cy="220" r="180" fill="rgba(255,255,255,0.04)"/>
   <!-- logo + 餐厅名 -->
-  ${logoUri ? `<image x="510" y="40" width="60" height="60" href="${logoUri}" clip-path="inset(0 round 10px)"/>` : ''}
-  <text x="540" y="${logoUri ? 118 : 80}" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="36" font-weight="800" fill="#ffffff" letter-spacing="4">${esc(data.merchantName)}</text>
+  ${logoUri ? (() => { const tw = estimateTextWidth(data.merchantName, 36); const gap = 12; const total = 60 + gap + tw; const left = 540 - total / 2; return `<image x="${left}" y="42" width="60" height="60" href="${logoUri}" clip-path="inset(0 round 10px)"/><text x="${left + 60 + gap}" y="82" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="36" font-weight="800" fill="#ffffff" letter-spacing="4">${esc(data.merchantName)}</text>` })() : `<text x="540" y="80" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="36" font-weight="800" fill="#ffffff" letter-spacing="4">${esc(data.merchantName)}</text>`}
   <text x="540" y="168" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="48" font-weight="800" fill="#ffffff" letter-spacing="8">每日菜单</text>
   <text x="540" y="208" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="20" fill="rgba(255,255,255,0.75)">${esc(data.date)}</text>
   <!-- 白色卡片 -->
@@ -140,4 +139,15 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
 
 function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
+function estimateTextWidth(text: string, fontSize: number): number {
+  let w = 0
+  for (const ch of text) {
+    if (ch >= '\u4e00' && ch <= '\u9fff') w += fontSize
+    else w += fontSize * 0.55
+  }
+  // letter-spacing 4px
+  w += (text.length - 1) * 4
+  return w
 }
