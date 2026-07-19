@@ -28,7 +28,7 @@ defineEmits<{ open: []; checkout: [] }>()
   z-index: 80; display: flex; align-items: center; justify-content: space-between;
   width: calc(100% - var(--container-margin) * 2); max-width: 600px;
   padding: 10px 10px 10px 16px;
-  background: var(--inverse-surface); border-radius: var(--radius-full);
+  background: rgba(49, 48, 48, 0.82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: var(--radius-full);
   border: 1px solid rgba(255,255,255,0.1);
   box-shadow: 0 8px 24px rgba(0,0,0,0.25);
   cursor: pointer; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
