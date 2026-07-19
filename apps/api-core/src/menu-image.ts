@@ -32,7 +32,10 @@ let _qrcodeSvg: string | null = null
 async function getQrSvg(): Promise<string> {
   if (_qrcodeSvg) return _qrcodeSvg
   try {
-    _qrcodeSvg = await QRCode.toString('https://diancan.xpow.cn', { type: 'svg', margin: 0, width: 120, color: { dark: '#ffffff', light: 'transparent' } })
+    // 用白色绘制二维码模块，背景留空（透明）
+    _qrcodeSvg = await QRCode.toString('https://diancan.xpow.cn', { type: 'svg', margin: 0, width: 120, color: { dark: '#ffffff' } })
+    // 去掉默认的白色背景 fill
+    _qrcodeSvg = _qrcodeSvg.replace('<path fill="#ffffff"', '<path fill="none"')
     return _qrcodeSvg
   } catch {
     return ''
@@ -117,8 +120,8 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
   <circle cx="980" cy="60" r="100" fill="rgba(255,255,255,0.05)"/>
   <circle cx="540" cy="220" r="180" fill="rgba(255,255,255,0.04)"/>
   <!-- logo + 餐厅名 -->
-  ${logoUri ? `<image x="380" y="46" width="48" height="48" href="${logoUri}" clip-path="inset(0 round 8px)"/>` : ''}
-  <text x="${logoUri ? 438 : 540}" y="80" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="36" font-weight="800" fill="#ffffff" letter-spacing="4">${esc(data.merchantName)}</text>
+  ${logoUri ? `<image x="510" y="40" width="60" height="60" href="${logoUri}" clip-path="inset(0 round 10px)"/>` : ''}
+  <text x="540" y="${logoUri ? 118 : 80}" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="36" font-weight="800" fill="#ffffff" letter-spacing="4">${esc(data.merchantName)}</text>
   <text x="540" y="168" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="48" font-weight="800" fill="#ffffff" letter-spacing="8">每日菜单</text>
   <text x="540" y="208" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="20" fill="rgba(255,255,255,0.75)">${esc(data.date)}</text>
   <!-- 白色卡片 -->
@@ -128,8 +131,8 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
   <!-- footer -->
   <rect x="0" y="${footTop}" width="${w}" height="${footerH}" fill="#2c2420"/>
   <!-- 二维码 -->
-  <g transform="translate(480, ${footTop + 12})">${qrSvg.replace('<?xml version="1.0" encoding="utf-8"?>', '').replace('<svg', '<svg width="80" height="80"')}</g>
-  <text x="540" y="${footTop + 112}" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="20" fill="rgba(255,255,255,0.5)">扫码点餐 · 无需排队</text>
+  <g transform="translate(500, ${footTop + 12})">${qrSvg.replace('<?xml version="1.0" encoding="utf-8"?>', '').replace('<svg', '<svg width="80" height="80"')}</g>
+  <text x="540" y="${footTop + 118}" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="20" fill="rgba(255,255,255,0.5)">扫码点餐 · 无需排队</text>
 </svg>`
 
   return sharp(Buffer.from(svg)).png().toBuffer()
