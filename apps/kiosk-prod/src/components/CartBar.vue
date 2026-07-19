@@ -7,11 +7,10 @@
       </div>
       <div class="cart-info">
         <span class="cart-total">¥{{ total.toFixed(2) }}</span>
-        <span class="cart-wait">预计等候 15 分钟</span>
       </div>
     </div>
     <button class="cart-btn" @click.stop="$emit('checkout')">
-      <span>去结算</span>
+      <span>确认下单</span>
       <span class="material-icons">chevron_right</span>
     </button>
   </div>
@@ -38,7 +37,7 @@ defineEmits<{ open: []; checkout: [] }>()
 .cart-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
 
 .cart-icon-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
-.cart-icon-wrap .material-icons { font-size: 28px !important; color: var(--on-surface-variant); }
+.cart-icon-wrap .material-icons { font-size: 28px !important; color: var(--primary-container); }
 .cart-badge {
   position: absolute; top: -6px; right: -10px; min-width: 20px; height: 20px; padding: 0 6px;
   border-radius: var(--radius-full); background: var(--primary-container);
@@ -48,8 +47,7 @@ defineEmits<{ open: []; checkout: [] }>()
 }
 
 .cart-info { display: flex; flex-direction: column; gap: 1px; }
-.cart-total { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: var(--on-surface); line-height: 1.2; }
-.cart-wait { font-size: 11px; color: var(--secondary); line-height: 1.2; }
+.cart-total { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: var(--primary-container); line-height: 1.2; }
 
 .cart-btn {
   display: flex; align-items: center; gap: 2px; flex-shrink: 0;
@@ -63,8 +61,7 @@ defineEmits<{ open: []; checkout: [] }>()
 .cart-btn .material-icons { font-size: 18px !important; }
 
 [data-theme="dark"] .cart-bar { background: rgba(49, 48, 48, 0);  }
-[data-theme="dark"] .cart-icon-wrap .material-icons { color: rgba(255,255,255,0.85); }
-[data-theme="dark"] .cart-total { color: #fff; }
-[data-theme="dark"] .cart-wait { color: rgba(255,255,255,0.45); }
+[data-theme="dark"] .cart-icon-wrap .material-icons { color: var(--primary-container); }
+[data-theme="dark"] .cart-total { color: var(--primary-container); }
 [data-theme="dark"] .cart-badge { border-color: var(--inverse-surface); }
 </style>

@@ -107,8 +107,8 @@
   --radius-full: 9999px;
 
   /* ==================== Typography ==================== */
-  --font-display: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: Plus Jakarta Sans, system-ui, -apple-system, sans-serif;
+  --font-body: Inter, system-ui, -apple-system, sans-serif;
 
   /* Font Sizes */
   --text-display-lg: 32px;

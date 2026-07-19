@@ -12,6 +12,7 @@ const router = createRouter({
     { path: '/pickup', name: 'pickup', component: () => import('./pages/PickupPage.vue') },
     { path: '/orders', redirect: '/pickup' },
     { path: '/review', name: 'review', component: () => import('./pages/ReviewPage.vue') },
+    { path: '/share', name: 'share', component: () => import('./pages/SharePage.vue') },
   ],
 })
 

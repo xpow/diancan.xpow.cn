@@ -431,10 +431,14 @@ router.get('/generate-menu-image', async (_req, res) => {
     const buf = await generateMenuImage({
       merchantName: merchant.name,
       date: `${dateStr} ${dayLabel}`,
+      todayLocation: branch.todayLocation ?? '',
+      businessHours: branch.businessHours ?? '',
       dishes: dishes.map((d) => ({
         categoryName: d.category.name,
         name: d.name,
         price: d.price,
+        tags: typeof d.tags === 'string' ? JSON.parse(d.tags) : d.tags,
+        portionSize: d.portionSize,
       })),
     })
 

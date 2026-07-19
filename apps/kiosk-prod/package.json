@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@diancan/shared": "workspace:*",
+    "qrcode": "^1.5.4",
     "vant": "^4.9.0",
     "vue": "^3.5.0",
     "vue-router": "^4.5.0"

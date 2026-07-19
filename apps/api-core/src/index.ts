@@ -288,9 +288,11 @@ app.get('/api/catalog/menu', generalLimiter, async (req, res) => {
     }
   }
 
+  const cacheBranch = cache.branch
+
   res.json({
     merchant: { id: merchant.id, name: merchant.name },
-    branch: { id: '', name: '' },
+    branch: { id: cacheBranch?.id ?? '', name: cacheBranch?.name ?? '', todayLocation: cacheBranch?.todayLocation ?? '', businessHours: cacheBranch?.businessHours ?? '' },
     categories,
     dishes: activeDishes.map((d: any) => {
       const promo = promoDishMap.get(d.id)
