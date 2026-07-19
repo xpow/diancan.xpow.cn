@@ -406,6 +406,47 @@ router.delete('/dishes/:id', async (req, res) => {
   res.json({ success: true })
 })
 
+/* ===== Menu Image ===== */
+
+router.get('/generate-menu-image', async (_req, res) => {
+  try {
+    const merchant = await prisma.merchant.findFirst()
+    if (!merchant) return res.status(404).json({ message: 'merchant not found' })
+
+    const branch = await prisma.branch.findFirst({ where: { merchantId: merchant.id } })
+    if (!branch) return res.status(404).json({ message: 'branch not found' })
+
+    const dishes = await prisma.dish.findMany({
+      where: { merchantId: merchant.id, status: 'active' },
+      include: { category: { select: { name: true } } },
+      orderBy: [{ sort: 'asc' }, { createdAt: 'desc' }],
+    })
+
+    const now = new Date()
+    const dateStr = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`
+    const weekDays = ['日', '一', '二', '三', '四', '五', '六']
+    const dayLabel = `星期${weekDays[now.getDay()]}`
+
+    const { generateMenuImage } = await import('./menu-image.js')
+    const buf = await generateMenuImage({
+      merchantName: merchant.name,
+      date: `${dateStr} ${dayLabel}`,
+      dishes: dishes.map((d) => ({
+        categoryName: d.category.name,
+        name: d.name,
+        price: d.price,
+      })),
+    })
+
+    res.set('Content-Type', 'image/png')
+    res.set('Content-Disposition', `attachment; filename="menu-${now.toISOString().slice(0, 10)}.png"`)
+    res.send(buf)
+  } catch (err: any) {
+    console.error('[generate-menu-image]', err)
+    res.status(500).json({ message: err.message || '生成失败' })
+  }
+})
+
 /* ===== Categories ===== */
 
 router.get('/categories', async (_req, res) => {

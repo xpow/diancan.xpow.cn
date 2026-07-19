@@ -14,6 +14,7 @@
         <span class="section-count">共 {{ filteredDishes.length }} 个菜品</span>
         <div class="section-actions">
           <Select v-model="selectedCategoryId" :options="categoryOptions" optionLabel="label" optionValue="value" class="category-filter" placeholder="全部分类" />
+          <Button label="生成菜单图片" icon="pi pi-image" severity="warning" @click="generateMenuImage" :loading="generating" />
           <Button label="新增菜品" icon="pi pi-plus" @click="openDishDialog()" />
         </div>
       </div>
@@ -330,6 +331,26 @@ async function deleteDish(id: string) {
   if (!confirm('确认删除该菜品？')) return
   await fetch(`/api/admin/dishes/${id}`, { method: 'DELETE' })
   fetchDishes()
+}
+
+const generating = ref(false)
+async function generateMenuImage() {
+  generating.value = true
+  try {
+    const res = await fetch('/api/admin/generate-menu-image')
+    if (!res.ok) { const err = await res.json(); alert(err.message || '生成失败'); return }
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `menu-${new Date().toISOString().slice(0, 10)}.png`
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch (e: any) {
+    alert(e.message || '生成失败')
+  } finally {
+    generating.value = false
+  }
 }
 
 /* Category */
