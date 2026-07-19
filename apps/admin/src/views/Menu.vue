@@ -163,6 +163,18 @@
         <Button label="保存" @click="saveCategory" />
       </template>
     </Dialog>
+
+    <!-- Menu Preview Dialog -->
+    <Dialog v-model:visible="showMenuPreview" header="菜单预览" :style="{ width: '500px' }" :modal="true">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <img v-if="menuPreviewUrl" :src="menuPreviewUrl" style="width:100%;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.1)" alt="菜单预览" />
+        <div style="font-size:13px;color:#999">生成时间：{{ menuPreviewTime }}</div>
+      </div>
+      <template #footer>
+        <Button label="关闭" severity="secondary" @click="showMenuPreview = false" />
+        <Button label="下载图片" icon="pi pi-download" @click="downloadMenuImage" />
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -334,6 +346,10 @@ async function deleteDish(id: string) {
 }
 
 const generating = ref(false)
+const showMenuPreview = ref(false)
+const menuPreviewUrl = ref('')
+const menuPreviewBlob = ref<Blob | null>(null)
+const menuPreviewTime = ref('')
 async function generateMenuImage() {
   generating.value = true
   try {
@@ -341,16 +357,24 @@ async function generateMenuImage() {
     if (!res.ok) { const err = await res.json(); alert(err.message || '生成失败'); return }
     const blob = await res.blob()
     const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `menu-${new Date().toISOString().slice(0, 10)}.png`
-    a.click()
-    URL.revokeObjectURL(url)
+    menuPreviewBlob.value = blob
+    menuPreviewUrl.value = url
+    menuPreviewTime.value = new Date().toLocaleString()
+    showMenuPreview.value = true
   } catch (e: any) {
     alert(e.message || '生成失败')
   } finally {
     generating.value = false
   }
+}
+function downloadMenuImage() {
+  if (!menuPreviewBlob.value) return
+  const url = URL.createObjectURL(menuPreviewBlob.value)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `menu-${new Date().toISOString().slice(0, 10)}.png`
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 /* Category */
