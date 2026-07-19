@@ -131,7 +131,7 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
   <!-- footer -->
   <rect x="0" y="${footTop}" width="${w}" height="${footerH}" fill="#2c2420"/>
   <!-- 二维码 -->
-  <g transform="translate(500, ${footTop + 12})">${qrSvg.replace('<?xml version="1.0" encoding="utf-8"?>', '').replace('<svg', '<svg width="80" height="80"')}</g>
+  <g transform="translate(500, ${footTop + 12})">${qrSvg.replace('<?xml version="1.0" encoding="utf-8"?>', '').replace(/ width="\d+" height="\d+"/, ' width="80" height="80"')}</g>
   <text x="540" y="${footTop + 118}" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="20" fill="rgba(255,255,255,0.5)">扫码点餐 · 无需排队</text>
 </svg>`
 
