@@ -141,7 +141,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { getDishImage } from '@/utils/dishImages'
 import { apiPost, setDeviceToken, getDeviceUUID } from '@/utils/api'
 import KioskTopBar from '@/components/KioskTopBar.vue'
@@ -154,6 +154,7 @@ import lb3 from '@/assets/images/pages/lb-3.jpg'
 import lb4 from '@/assets/images/pages/lb-4.jpg'
 
 const router = useRouter()
+const route = useRoute()
 
 function promoIcon(type: string): string {
   const map: Record<string, string> = {
@@ -265,6 +266,29 @@ async function submitSN() {
   }
 }
 
+// 二维码扫码自动认证
+async function autoAuth(code: string): Promise<boolean> {
+  try {
+    const decodeRes = await fetch(`/api/system/decode-device?code=${encodeURIComponent(code)}`)
+    if (!decodeRes.ok) return false
+    const { sn } = await decodeRes.json()
+    const authData = await apiPost<{ token: string; deviceId: string }>('/api/system/device-auth', {
+      sn, uuid: getDeviceUUID(), userAgent: navigator.userAgent,
+    })
+    setDeviceToken(authData.token)
+    localStorage.setItem('kiosk-device-sn', sn)
+    localStorage.setItem('kiosk-device-auth-id', authData.deviceId)
+    const bootstrapRes = await fetch(`/api/system/bootstrap?sn=${sn}`)
+    if (bootstrapRes.ok) {
+      bootstrap.value = await bootstrapRes.json()
+    }
+    deviceAuthed.value = true
+    return true
+  } catch {
+    return false
+  }
+}
+
 async function loadBootstrap() {
   // 先检查本地缓存的设备码，跳过认证弹窗
   let savedDeviceSN = localStorage.getItem('kiosk-device-sn')
@@ -312,8 +336,20 @@ async function loadBootstrap() {
   }
 }
 
-onMounted(() => {
-  void loadBootstrap()
+onMounted(async () => {
+  // 已绑定设备码则忽略 URL 上的扫码参数（防止覆盖已有绑定）
+  if (!localStorage.getItem('kiosk-device-sn')) {
+    const codeParam = route.query.code as string | undefined
+    if (codeParam) {
+      const ok = await autoAuth(codeParam)
+      if (ok) {
+        router.replace('/home').catch(() => {})
+        return
+      }
+    }
+  }
+
+  await loadBootstrap()
 })
 </script>
 

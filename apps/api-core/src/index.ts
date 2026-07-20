@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken'
 import { PrismaClient } from '@prisma/client'
 import adminRouter from './admin.js'
 import { loadGlobalCache, buildGlobalCache } from './cache.js'
+import { decryptDeviceToken, encryptDeviceSN } from './crypto.js'
 
 const app = express()
 app.set('trust proxy', 1)
@@ -985,6 +986,33 @@ app.post('/api/system/device-auth', authLimiter, async (req, res) => {
     deviceName: device.name,
     branchId: device.branchId,
   })
+})
+
+// 二维码加密参数解密
+app.get('/api/system/decode-device', async (req, res) => {
+  const code = req.query.code as string
+  if (!code) return res.status(400).json({ message: '缺少参数' })
+  const sn = decryptDeviceToken(code)
+  if (!sn) return res.status(400).json({ message: '无效的扫码参数' })
+  const device = await prisma.device.findUnique({
+    where: { sn },
+    select: { id: true, status: true },
+  })
+  if (!device || device.status !== 'active') {
+    return res.status(400).json({ message: '设备不存在或已下线' })
+  }
+  res.json({ sn })
+})
+
+// 获取分享设备的加密 token（前端拼完整 URL）
+app.get('/api/system/shared-device-qr', async (req, res) => {
+  const device = await prisma.device.findFirst({
+    where: { shared: true, status: 'active' },
+    select: { sn: true },
+  })
+  if (!device || !device.sn) return res.status(404).json({ message: '未设置分享设备' })
+  const token = encryptDeviceSN(device.sn)
+  res.json({ token })
 })
 
 /* ===== Reviews ===== */

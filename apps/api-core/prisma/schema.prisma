@@ -63,6 +63,7 @@ model Device {
   mode      String   @default("kiosk") // kiosk | h5
   role      String   @default("user") // user | admin
   status    String   @default("active")
+  shared    Boolean  @default(false)
 
   branch    Branch          @relation(fields: [branchId], references: [id])
   commands    DeviceCommand[]

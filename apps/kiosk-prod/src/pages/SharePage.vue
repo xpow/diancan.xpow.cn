@@ -22,7 +22,7 @@
     <div class="share-container">
       <section v-for="cat in sortedCategories" :key="cat.id" class="cat-section">
         <h3><span class="cat-bar" :style="{ background: catBarColor(cat.name) }"></span>{{ cat.name }}</h3>
-        <div v-if="featuredDish(cat)" class="featured-card">
+        <a v-if="featuredDish(cat)" :href="kioskUrl" class="featured-card clickable">
           <div class="featured-img">
             <img :src="dishImage(featuredDish(cat)!)" :alt="featuredDish(cat)!.name" @error="onImgError" />
           </div>
@@ -36,9 +36,9 @@
               <span class="featured-price"><small class="c-sign">¥</small>{{ featuredDish(cat)!.price.toFixed(2) }}<span v-if="featuredDish(cat)!.portionSize" class="dish-h-portion"> / {{ featuredDish(cat)!.portionSize }}串</span></span>
             </div>
           </div>
-        </div>
+        </a>
         <div v-if="normalDishes(cat).length" class="grid-2col">
-          <div v-for="d in normalDishes(cat)" :key="d.id" class="grid-card">
+          <a v-for="d in normalDishes(cat)" :key="d.id" :href="kioskUrl" class="grid-card clickable">
             <div class="grid-card-top">
               <div class="grid-card-img">
                 <img :src="dishImage(d)" :alt="d.name" @error="onImgError" />
@@ -49,7 +49,7 @@
                 <p v-if="d.portionSize" class="grid-portion">{{ d.portionSize }}串/份</p>
               </div>
             </div>
-          </div>
+          </a>
         </div>
       </section>
     </div>
@@ -59,10 +59,10 @@
       <div class="footer-content">
         <h4>Ready to Order?</h4>
         <p>扫码下单，即刻享用。</p>
-        <div class="qr-box">
+        <a :href="kioskUrl" class="qr-box">
           <img :src="qrDataUrl" alt="QR Code" v-if="qrDataUrl" />
           <div v-else class="qr-placeholder">QR</div>
-        </div>
+        </a>
         <div class="footer-info">
           <span v-if="menu.branch.todayLocation">📍 {{ menu.branch.todayLocation }}</span>
           <span v-if="menu.branch.businessHours">🕐 {{ menu.branch.businessHours }}</span>
@@ -98,6 +98,7 @@ interface MenuData {
 
 const menu = ref<MenuData | null>(null)
 const qrDataUrl = ref('')
+const kioskUrl = ref('')
 
 const sortedCategories = computed(() => {
   if (!menu.value) return []
@@ -136,12 +137,14 @@ function catBarColor(catName: string) {
 
 onMounted(async () => {
   try {
-    const res = await fetch('/api/catalog/menu')
-    const data = await res.json()
-    menu.value = data
+    const [menuRes, qrRes] = await Promise.all([
+      fetch('/api/catalog/menu'),
+      fetch('/api/system/shared-device-qr').then((r) => r.ok ? r.json() : null),
+    ])
+    menu.value = await menuRes.json()
 
-    const shareUrl = `${location.origin}${location.pathname}${location.search}`
-    qrDataUrl.value = await QRCode.toDataURL(shareUrl, { width: 160, margin: 2 })
+    kioskUrl.value = qrRes?.token ? `${location.origin}/#/home?code=${encodeURIComponent(qrRes.token)}` : `${location.origin}/#/home`
+    qrDataUrl.value = await QRCode.toDataURL(kioskUrl.value, { width: 160, margin: 2 })
   } catch (err) {
     console.error('share menu error:', err)
   }
@@ -171,6 +174,8 @@ onMounted(async () => {
 .cat-section h3 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 700; color: #1c1b1b; margin: 0 0 16px; display: flex; align-items: center; gap: 10px; }
 .cat-bar { width: 4px; height: 20px; border-radius: 2px; flex-shrink: 0; }
 .featured-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 12px; display: flex; gap: 12px; margin-bottom: 8px; }
+.clickable { text-decoration: none; color: inherit; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
+.clickable:active { transform: scale(0.97); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
 .featured-img { width: 72px; height: 72px; border-radius: 10px; overflow: hidden; flex-shrink: 0; background: #f0eded; }
 .featured-img img { width: 100%; height: 100%; object-fit: cover; }
 .featured-body { flex: 1; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; }
@@ -181,7 +186,7 @@ onMounted(async () => {
 .featured-price { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 800; color: #ff6b00; }
 .featured-price .c-sign, .grid-price .c-sign { font-size: 0.7em; font-weight: 700; }
 .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.grid-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding:8px 10px; }
+.grid-card { display: block; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding:8px 10px; }
 .grid-card-top { display: flex; gap: 10px; }
 .grid-card-img { width: 64px; height: 64px; border-radius: 8px; overflow: hidden; background: #f0eded; flex-shrink: 0; }
 .grid-card-img img { width: 100%; height: 100%; object-fit: cover; }

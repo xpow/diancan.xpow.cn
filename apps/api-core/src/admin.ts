@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express'
 import { PrismaClient } from '@prisma/client'
 import crypto from 'node:crypto'
 import { invalidateGlobalCache } from './cache.js'
+import { encryptDeviceSN } from './crypto.js'
 
 const router: ReturnType<typeof Router> = Router()
 const prisma = new PrismaClient()
@@ -861,6 +862,7 @@ router.get('/devices', async (_req, res) => {
       mode: d.mode,
       role: d.role,
       status: d.status,
+      shared: d.shared,
       branchId: d.branchId,
       branchName: branchMap.get(d.branchId) ?? '',
       authCount: deviceAuthCount.get(d.id) ?? 0,
@@ -930,6 +932,29 @@ router.post('/devices/:id/regenerate-sn', async (req, res) => {
   await prisma.device.update({ where: { id }, data: { sn } })
   invalidateGlobalCache()
   res.json({ sn })
+})
+
+router.get('/devices/:id/qr-url', async (req, res) => {
+  const device = await prisma.device.findUnique({ where: { id: req.params.id } })
+  if (!device || !device.sn) return res.status(404).json({ message: '设备不存在或无设备码' })
+  const token = encryptDeviceSN(device.sn)
+  res.json({ token })
+})
+
+router.post('/devices/:id/toggle-share', async (req, res) => {
+  const { id } = req.params
+  const device = await prisma.device.findUnique({ where: { id } })
+  if (!device) return res.status(404).json({ message: '设备不存在' })
+  if (device.shared) {
+    await prisma.device.update({ where: { id }, data: { shared: false } })
+    invalidateGlobalCache()
+    return res.json({ shared: false })
+  }
+  // 取消其他设备的分享，启用当前设备
+  await prisma.device.updateMany({ where: { shared: true }, data: { shared: false } })
+  await prisma.device.update({ where: { id }, data: { shared: true } })
+  invalidateGlobalCache()
+  res.json({ shared: true })
 })
 
 router.delete('/devices/:id', async (req, res) => {

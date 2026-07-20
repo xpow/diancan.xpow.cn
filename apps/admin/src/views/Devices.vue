@@ -65,9 +65,22 @@
           </div>
         </template>
       </Column>
+      <Column header="分享" style="width:100px">
+        <template #body="{ data }">
+          <Button
+            :label="data.shared ? '已分享' : '启用分享'"
+            :severity="data.shared ? 'success' : 'contrast'"
+            :icon="data.shared ? 'pi pi-check-circle' : 'pi pi-share-alt'"
+            text
+            size="small"
+            @click="toggleShare(data)"
+          />
+        </template>
+      </Column>
       <Column header="操作" style="width:360px">
         <template #body="{ data }">
           <Button v-if="data.sn" icon="pi pi-copy" label="复制" severity="info" text size="small" @click="copySN(data.sn)" />
+          <Button v-if="data.sn" icon="pi pi-qrcode" label="扫码链接" severity="info" text size="small" @click="copyQRUrl(data.id)" />
           <Button icon="pi pi-refresh" label="重置" severity="info" text size="small" @click="regenerateSN(data.id)" />
           <Button icon="pi pi-pencil" label="编辑" severity="info" text size="small" @click="openDeviceDialog(data)" />
           <Button icon="pi pi-trash" label="删除" severity="danger" size="small" @click="deleteDevice(data.id)" />
@@ -197,6 +210,12 @@ async function saveDevice() {
   fetchDevices()
 }
 
+async function toggleShare(device: any) {
+  if (!device.shared && !confirm(`确认将「${device.name}」设为分享设备？\n\n分享页面（菜单分享页）的二维码将指向此设备，顾客扫码可直接点餐。`)) return
+  await fetch(`/api/admin/devices/${device.id}/toggle-share`, { method: 'POST' })
+  fetchDevices()
+}
+
 async function deleteDevice(id: string) {
   if (!confirm('确认删除？')) return
   await fetch(`/api/admin/devices/${id}`, { method: 'DELETE' })
@@ -218,6 +237,19 @@ async function regenerateSN(id: string) {
   const data = await res.json()
   alert('新设备码：' + data.sn)
   fetchDevices()
+}
+
+async function copyQRUrl(id: string) {
+  const res = await fetch(`/api/admin/devices/${id}/qr-url`)
+  if (!res.ok) return alert('获取失败')
+  const data = await res.json()
+  const fullUrl = `${location.origin}/#/home?code=${encodeURIComponent(data.token)}`
+  try {
+    await navigator.clipboard.writeText(fullUrl)
+    alert('已复制扫码链接：' + fullUrl)
+  } catch {
+    alert('扫码链接：' + fullUrl)
+  }
 }
 
 async function offlineDevice(device: any) {
