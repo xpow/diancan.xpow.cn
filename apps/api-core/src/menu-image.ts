@@ -1,8 +1,8 @@
-import sharp from 'sharp'
 import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import QRCode from 'qrcode'
+import { Resvg } from '@resvg/resvg-js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -28,24 +28,6 @@ async function getQrSvg(): Promise<string> {
   }
 }
 
-let _fontDataUri: string | null = null
-let _fontCharset: string = ''
-async function getFontDataUri(chars: string): Promise<string> {
-  if (_fontDataUri && _fontCharset === chars) return _fontDataUri
-  try {
-    const url = `https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;600;700;800&text=${encodeURIComponent(chars)}&display=swap`
-    const css = await (await fetch(url)).text()
-    const m = css.match(/src:\s*url\(([^)]+)\)/)
-    if (!m) throw new Error('no font url')
-    const buf = Buffer.from(await (await fetch(m[1])).arrayBuffer())
-    _fontDataUri = `data:font/woff2;base64,${buf.toString('base64')}`
-    _fontCharset = chars
-    return _fontDataUri
-  } catch {
-    return ''
-  }
-}
-
 interface DishItem {
   categoryName: string
   name: string
@@ -62,19 +44,24 @@ interface MenuData {
   dishes: DishItem[]
 }
 
+const FONT = "'Noto Sans SC',sans-serif"
+
+const fontPaths = [
+  join(__dirname, '..', 'assets', 'NotoSansSC-Regular.ttf'),
+  join(__dirname, '..', 'assets', 'NotoSansSC-Bold.ttf'),
+]
+let _fontLoaded = false
+function ensureFonts() {
+  if (_fontLoaded) return
+  for (const p of fontPaths) {
+    if (!readFileSync(p)) throw new Error(`font not found: ${p}`)
+  }
+  _fontLoaded = true
+}
+
 export async function generateMenuImage(data: MenuData): Promise<Buffer> {
   const w = 1080
-
-  // collect all Chinese chars from data for font subsetting
-  const allChars: string[] = []
-  function add(s: string) { for (const c of s) allChars.push(c) }
-  add(data.merchantName + data.date + data.todayLocation + data.businessHours)
-  for (const d of data.dishes) {
-    add(d.categoryName + d.name)
-    if (d.tags) for (const t of d.tags) add(t)
-  }
-  const fontChars = [...new Set(allChars)].join('')
-  const fontDataUri = await getFontDataUri(fontChars)
+  ensureFonts()
 
   const groups = new Map<string, DishItem[]>()
   for (const d of data.dishes) {
@@ -143,7 +130,6 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${totalH}" viewBox="0 0 ${w} ${totalH}">
   <defs>
-    <style type="text/css">${fontDataUri ? `@font-face{font-family:'Noto Sans SC';font-style:normal;font-weight:400 800;src:url(${fontDataUri}) format('woff2')}` : ''}</style>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#fdf8f5"/>
       <stop offset="100%" stop-color="#f5ece5"/>
@@ -180,14 +166,16 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
   <text x="${Math.round((w + 100 + 24 - 220) / 2)}" y="${footTop + 117}" font-family="${FONT}" font-size="18" fill="rgba(255,255,255,0.4)">扫码点餐 · 无需排队</text>
 </svg>`
 
-  return sharp(Buffer.from(svg)).png().toBuffer()
+  const resvg = new Resvg(svg, {
+    fitTo: { mode: 'original' },
+    font: { fontFiles: fontPaths, loadSystemFonts: false },
+  })
+  return resvg.render().asPng()
 }
 
 function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
-
-const FONT = "'Noto Sans SC',sans-serif"
 
 function estimateTextWidth(text: string, fontSize: number, withLetterSpacing = true): number {
   let w = 0

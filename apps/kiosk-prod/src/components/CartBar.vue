@@ -23,9 +23,9 @@ defineEmits<{ open: []; checkout: [] }>()
 
 <style scoped>
 .cart-bar {
-  position: fixed; bottom: calc(84px + env(safe-area-inset-bottom, 0)); left: 50%; transform: translateX(-50%);
+  position: fixed; bottom: calc(64px + env(safe-area-inset-bottom, 0)); left: 50%; transform: translateX(-50%);
   z-index: 80; display: flex; align-items: center; justify-content: space-between;
-  width: calc(100% - var(--container-margin) * 2); max-width: 600px;
+  width: calc(100% - var(--container-margin) * 1); max-width: 600px;
   padding: 10px 10px 10px 16px;
   background: rgba(255, 255, 255, 0); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border-radius: var(--radius-full);
   border: 1px solid rgba(178, 126, 30, 0.447);
