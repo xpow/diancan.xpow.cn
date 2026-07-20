@@ -2,7 +2,7 @@
   <main class="share-page" v-if="menu">
     <header class="share-header">
       <img :src="logoImg" alt="logo" class="share-logo" />
-      <h1 style="display: none;">{{ menu.merchant.name }}</h1>
+      <h1 style="display: block;">{{ menu.merchant.name }}</h1>
     </header>
 
     <div class="share-hero">
@@ -11,7 +11,7 @@
       <div class="badge"><span class="badge-en">Master of the Flame</span></div>
     </div>
 
-    <div class="promo-img-wrap">
+    <div class="promo-img-wrap" style="display: none;">
       <img src="../assets/images/pages/unnamed.jpg" width="398" alt="" class="promo-img" />
       <div class="promo-overlay">
         <span class="promo-badge">人气推荐</span>
@@ -101,7 +101,9 @@ const qrDataUrl = ref('')
 
 const sortedCategories = computed(() => {
   if (!menu.value) return []
-  return [...menu.value.categories].sort((a, b) => a.sort - b.sort)
+  return [...menu.value.categories]
+    .filter(c => menu.value!.dishes.some(d => d.categoryId === c.id && !d.tags?.includes('辅助')))
+    .sort((a, b) => a.sort - b.sort)
 })
 
 function dishesByCat(catId: string) {
@@ -150,12 +152,12 @@ onMounted(async () => {
 .share-page { background: #fcf9f8; color: #1c1b1b; min-height: 100vh; padding-bottom: 32px; font-family: Inter, sans-serif; }
 .loading-state { display: flex; align-items: center; justify-content: center; }
 .share-header { padding: 32px 16px 20px; text-align: center; }
-.share-logo { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+.share-logo { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
 .share-header h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 800; color: #a04100; text-transform: uppercase; letter-spacing: -0.02em; margin: 0; }
 .share-hero { text-align: center; padding: 0 16px 24px; }
 .share-hero .badge { display: inline-block; padding: 4px 16px; background: #ffdbcc; border-radius: 999px; margin-bottom: 16px; }
 .share-hero .badge span { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 600; color: #7a3000; text-transform: uppercase; letter-spacing: 0.1em; }
-.share-hero .badge .badge-en { font-size: 10px; font-weight: 400; opacity: 0.7; }
+.share-hero .badge .badge-en { font-size: 10px; font-weight: 800; opacity: 0.7; }
 .share-hero h2 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 28px; font-weight: 800; color: #1c1b1b; margin: 0 0 2px; line-height: 1.2; }
 .share-hero .hero-sub-en { width: 100%; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 600; color: #8e7164; margin: 0 auto 12px; letter-spacing: 0.02em; text-transform: uppercase; text-align: center; }
 .share-hero p { font-family: Inter, sans-serif; font-size: 16px; color: #5e5e5c; line-height: 1.5; max-width: 360px; margin: 0 auto; }
