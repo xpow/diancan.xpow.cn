@@ -181,9 +181,9 @@ onMounted(async () => {
 .featured-price { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 800; color: #ff6b00; }
 .featured-price .c-sign, .grid-price .c-sign { font-size: 0.7em; font-weight: 700; }
 .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.grid-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding:8px 12px; }
+.grid-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding:8px 10px; }
 .grid-card-top { display: flex; gap: 10px; }
-.grid-card-img { width: 64px; height: 64px; border-radius: 10px; overflow: hidden; background: #f0eded; flex-shrink: 0; }
+.grid-card-img { width: 64px; height: 64px; border-radius: 8px; overflow: hidden; background: #f0eded; flex-shrink: 0; }
 .grid-card-img img { width: 100%; height: 100%; object-fit: cover; }
 .grid-card-right { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; min-width: 0; }
 .grid-price { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 800; color: #ff6b00; line-height: 1.2; }
@@ -194,7 +194,7 @@ onMounted(async () => {
 .grid-portion { margin: 2px 0 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 600; color: #5e5e5c; }
 .dish-h-portion { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 600; color: #5e5e5c; }
 .dish-tag { padding: 2px 8px; border-radius: 999px; background: rgba(255, 107, 0, 0.1); color: #ff6b00; font-size: 12px; font-weight: 600; }
-.footer-section { background: #313030; border-radius: 16px; padding: 32px 24px; text-align: center; margin: 24px 16px 0; position: relative; overflow: hidden; }
+.footer-section { background: #17130d; border-radius: 16px; padding: 32px 24px; text-align: center; margin: 24px 16px 0; position: relative; overflow: hidden; }
 .footer-section .glow { position: absolute; top: -48px; right: -48px; width: 128px; height: 128px; background: rgba(255, 107, 0, 0.2); border-radius: 50%; filter: blur(64px); }
 .footer-content { position: relative; z-index: 1; }
 .footer-content h4 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 700; color: #fff; margin: 0 0 8px; }
