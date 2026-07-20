@@ -4,22 +4,6 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import QRCode from 'qrcode'
 
-interface DishItem {
-  categoryName: string
-  name: string
-  price: number
-  tags?: string[]
-  portionSize?: number
-}
-
-interface MenuData {
-  merchantName: string
-  date: string
-  todayLocation: string
-  businessHours: string
-  dishes: DishItem[]
-}
-
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 function logoDataUri(): string {
@@ -36,9 +20,7 @@ let _qrcodeSvg: string | null = null
 async function getQrSvg(): Promise<string> {
   if (_qrcodeSvg) return _qrcodeSvg
   try {
-    // 用白色绘制二维码模块，背景留空（透明）
     _qrcodeSvg = await QRCode.toString('https://diancan.xpow.cn', { type: 'svg', margin: 0, width: 120, color: { dark: '#ffffff' } })
-    // 去掉默认的白色背景 fill
     _qrcodeSvg = _qrcodeSvg.replace('<path fill="#ffffff"', '<path fill="none"')
     return _qrcodeSvg
   } catch {
@@ -46,8 +28,53 @@ async function getQrSvg(): Promise<string> {
   }
 }
 
+let _fontDataUri: string | null = null
+let _fontCharset: string = ''
+async function getFontDataUri(chars: string): Promise<string> {
+  if (_fontDataUri && _fontCharset === chars) return _fontDataUri
+  try {
+    const url = `https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;600;700;800&text=${encodeURIComponent(chars)}&display=swap`
+    const css = await (await fetch(url)).text()
+    const m = css.match(/src:\s*url\(([^)]+)\)/)
+    if (!m) throw new Error('no font url')
+    const buf = Buffer.from(await (await fetch(m[1])).arrayBuffer())
+    _fontDataUri = `data:font/woff2;base64,${buf.toString('base64')}`
+    _fontCharset = chars
+    return _fontDataUri
+  } catch {
+    return ''
+  }
+}
+
+interface DishItem {
+  categoryName: string
+  name: string
+  price: number
+  tags?: string[]
+  portionSize?: number
+}
+
+interface MenuData {
+  merchantName: string
+  date: string
+  todayLocation: string
+  businessHours: string
+  dishes: DishItem[]
+}
+
 export async function generateMenuImage(data: MenuData): Promise<Buffer> {
   const w = 1080
+
+  // collect all Chinese chars from data for font subsetting
+  const allChars: string[] = []
+  function add(s: string) { for (const c of s) allChars.push(c) }
+  add(data.merchantName + data.date + data.todayLocation + data.businessHours)
+  for (const d of data.dishes) {
+    add(d.categoryName + d.name)
+    if (d.tags) for (const t of d.tags) add(t)
+  }
+  const fontChars = [...new Set(allChars)].join('')
+  const fontDataUri = await getFontDataUri(fontChars)
 
   const groups = new Map<string, DishItem[]>()
   for (const d of data.dishes) {
@@ -73,7 +100,6 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
   const cardH = Math.max(bodyH, 200) + cardPad * 2
   const totalH = cardTop + cardH + 80 + footerH
 
-  // 按分类生成内容
   const parts: string[] = []
   let y = cardTop + cardPad
 
@@ -83,7 +109,7 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
   for (const [catName, items] of groups) {
     const accent = colors[ci % colors.length]
     parts.push(`<rect x="80" y="${y + 4}" width="4" height="24" rx="2" fill="${accent}"/>`)
-    parts.push(`<text x="96" y="${y + 24}" font-family="'PingFang SC','Microsoft YaHei','Noto Sans SC','WenQuanYi Micro Hei',sans-serif" font-size="22" font-weight="700" fill="${accent}">${esc(catName)}</text>`)
+    parts.push(`<text x="96" y="${y + 24}" font-family="${FONT}" font-size="22" font-weight="700" fill="${accent}">${esc(catName)}</text>`)
     y += catTitleH
     for (const item of items) {
       const priceStr = `¥${item.price.toFixed(2).replace(/\.?0+$/, '')}`
@@ -95,13 +121,13 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
         for (const t of item.tags) {
           const tw = estimateTextWidth(t, 18, false) + 28
           if (tx + tw > w - 280) break
-          tagParts.push(`<rect x="${tx}" y="${y + 10}" width="${tw}" height="28" rx="14" fill="rgba(192,57,43,0.12)"/><text x="${tx + tw / 2}" y="${y + 29}" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei','Noto Sans SC','WenQuanYi Micro Hei',sans-serif" font-size="18" font-weight="600" fill="#c0392b">${esc(t)}</text>`)
+          tagParts.push(`<rect x="${tx}" y="${y + 10}" width="${tw}" height="28" rx="14" fill="rgba(192,57,43,0.12)"/><text x="${tx + tw / 2}" y="${y + 29}" text-anchor="middle" font-family="${FONT}" font-size="18" font-weight="600" fill="#c0392b">${esc(t)}</text>`)
           tx += tw + 8
         }
       }
-      parts.push(`<text x="96" y="${y + 28}" font-family="'PingFang SC','Microsoft YaHei','Noto Sans SC','WenQuanYi Micro Hei',sans-serif" font-size="28" fill="#2c2420">${esc(item.name)}</text>`)
+      parts.push(`<text x="96" y="${y + 28}" font-family="${FONT}" font-size="28" fill="#2c2420">${esc(item.name)}</text>`)
       if (tagParts.length) parts.push(tagParts.join(''))
-      parts.push(`<text x="${w - 80}" y="${y + 28}" text-anchor="end" font-family="'PingFang SC','Microsoft YaHei','Noto Sans SC','WenQuanYi Micro Hei',sans-serif" font-size="26" font-weight="700" fill="#c0392b">${priceStr}<tspan font-size="16" font-weight="600" fill="#8e7164">${esc(portionStr)}</tspan></text>`)
+      parts.push(`<text x="${w - 80}" y="${y + 28}" text-anchor="end" font-family="${FONT}" font-size="26" font-weight="700" fill="#c0392b">${priceStr}<tspan font-size="16" font-weight="600" fill="#8e7164">${esc(portionStr)}</tspan></text>`)
       parts.push(`<line x1="80" y1="${y + 44}" x2="${w - 80}" y2="${y + 44}" stroke="#f0e8e2" stroke-width="1"/>`)
       y += dishH
     }
@@ -117,6 +143,7 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${totalH}" viewBox="0 0 ${w} ${totalH}">
   <defs>
+    <style type="text/css">${fontDataUri ? `@font-face{font-family:'Noto Sans SC';font-style:normal;font-weight:400 800;src:url(${fontDataUri}) format('woff2')}` : ''}</style>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#fdf8f5"/>
       <stop offset="100%" stop-color="#f5ece5"/>
@@ -137,9 +164,9 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
   <circle cx="980" cy="60" r="100" fill="rgba(255,255,255,0.05)"/>
   <circle cx="540" cy="220" r="180" fill="rgba(255,255,255,0.04)"/>
   <!-- logo + 餐厅名 -->
-  ${logoUri ? (() => { const tw = estimateTextWidth(data.merchantName, 36); const gap = 12; const total = 60 + gap + tw; const left = 540 - total / 2; return `<image x="${left}" y="42" width="60" height="60" href="${logoUri}" clip-path="inset(0 round 10px)"/><text x="${left + 60 + gap}" y="82" font-family="'PingFang SC','Microsoft YaHei','Noto Sans SC','WenQuanYi Micro Hei',sans-serif" font-size="36" font-weight="800" fill="#ffffff" letter-spacing="4">${esc(data.merchantName)}</text>` })() : `<text x="540" y="80" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei','Noto Sans SC','WenQuanYi Micro Hei',sans-serif" font-size="36" font-weight="800" fill="#ffffff" letter-spacing="4">${esc(data.merchantName)}</text>`}
-  <text x="540" y="168" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei','Noto Sans SC','WenQuanYi Micro Hei',sans-serif" font-size="48" font-weight="800" fill="#ffffff" letter-spacing="8">每日菜单</text>
-  <text x="540" y="208" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei','Noto Sans SC','WenQuanYi Micro Hei',sans-serif" font-size="20" fill="rgba(255,255,255,0.75)">${esc(data.date)}</text>
+  ${logoUri ? (() => { const tw = estimateTextWidth(data.merchantName, 36); const gap = 12; const total = 60 + gap + tw; const left = 540 - total / 2; return `<image x="${left}" y="42" width="60" height="60" href="${logoUri}" clip-path="inset(0 round 10px)"/><text x="${left + 60 + gap}" y="82" font-family="${FONT}" font-size="36" font-weight="800" fill="#ffffff" letter-spacing="4">${esc(data.merchantName)}</text>` })() : `<text x="540" y="80" text-anchor="middle" font-family="${FONT}" font-size="36" font-weight="800" fill="#ffffff" letter-spacing="4">${esc(data.merchantName)}</text>`}
+  <text x="540" y="168" text-anchor="middle" font-family="${FONT}" font-size="48" font-weight="800" fill="#ffffff" letter-spacing="8">每日菜单</text>
+  <text x="540" y="208" text-anchor="middle" font-family="${FONT}" font-size="20" fill="rgba(255,255,255,0.75)">${esc(data.date)}</text>
   <!-- 白色卡片 -->
   <rect x="40" y="${cardTop}" width="${w - 80}" height="${cardH}" rx="16" fill="#ffffff" filter="url(#shadow)"/>
   <!-- 菜品内容 -->
@@ -148,9 +175,9 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
   <rect x="0" y="${footTop}" width="${w}" height="${footerH}" fill="#2c2420"/>
   <!-- 二维码 + 文字（整体居中） -->
   <g transform="translate(${Math.round((w - 100 - 24 - 220) / 2)}, ${footTop + 35})">${qrSvg.replace('<?xml version="1.0" encoding="utf-8"?>', '').replace(/ width="\d+" height="\d+"/, ' width="100" height="100"')}</g>
-  <text x="${Math.round((w + 100 + 24 - 220) / 2)}" y="${footTop + 55}" font-family="'PingFang SC','Microsoft YaHei','Noto Sans SC','WenQuanYi Micro Hei',sans-serif" font-size="20" fill="rgba(255,255,255,0.85)">📍 ${esc(data.todayLocation || '今日出摊')}</text>
-  <text x="${Math.round((w + 100 + 24 - 220) / 2)}" y="${footTop + 83}" font-family="'PingFang SC','Microsoft YaHei','Noto Sans SC','WenQuanYi Micro Hei',sans-serif" font-size="20" fill="rgba(255,255,255,0.85)">🕐 ${esc(data.businessHours || '营业中')}</text>
-  <text x="${Math.round((w + 100 + 24 - 220) / 2)}" y="${footTop + 117}" font-family="'PingFang SC','Microsoft YaHei','Noto Sans SC','WenQuanYi Micro Hei',sans-serif" font-size="18" fill="rgba(255,255,255,0.4)">扫码点餐 · 无需排队</text>
+  <text x="${Math.round((w + 100 + 24 - 220) / 2)}" y="${footTop + 55}" font-family="${FONT}" font-size="20" fill="rgba(255,255,255,0.85)">📍 ${esc(data.todayLocation || '今日出摊')}</text>
+  <text x="${Math.round((w + 100 + 24 - 220) / 2)}" y="${footTop + 83}" font-family="${FONT}" font-size="20" fill="rgba(255,255,255,0.85)">🕐 ${esc(data.businessHours || '营业中')}</text>
+  <text x="${Math.round((w + 100 + 24 - 220) / 2)}" y="${footTop + 117}" font-family="${FONT}" font-size="18" fill="rgba(255,255,255,0.4)">扫码点餐 · 无需排队</text>
 </svg>`
 
   return sharp(Buffer.from(svg)).png().toBuffer()
@@ -159,6 +186,8 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
 function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
+
+const FONT = "'Noto Sans SC',sans-serif"
 
 function estimateTextWidth(text: string, fontSize: number, withLetterSpacing = true): number {
   let w = 0
