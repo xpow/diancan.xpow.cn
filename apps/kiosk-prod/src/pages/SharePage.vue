@@ -105,7 +105,7 @@ const sortedCategories = computed(() => {
 })
 
 function dishesByCat(catId: string) {
-  return menu.value?.dishes.filter(d => d.categoryId === catId) || []
+  return menu.value?.dishes.filter(d => d.categoryId === catId && !d.tags?.includes('辅助')) || []
 }
 
 function featuredDish(cat: Category) {
