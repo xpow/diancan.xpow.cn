@@ -80,7 +80,7 @@ import { ref, computed, onMounted } from 'vue'
 // @ts-ignore
 import QRCode from 'qrcode'
 import logoImg from '@/assets/images/pages/logo.jpg'
-import { getDishImage } from '@/utils/dishImages'
+import { getDishThumbnail } from '@/utils/dishImages'
 
 interface Dish {
   id: string; categoryId: string; name: string; price: number
@@ -120,7 +120,7 @@ function normalDishes(cat: Category) {
 }
 
 function dishImage(d: Dish) {
-  return d.image || getDishImage(d.id) || ''
+  return d.image || getDishThumbnail(d.id) || ''
 }
 
 function onImgError(e: Event) {
