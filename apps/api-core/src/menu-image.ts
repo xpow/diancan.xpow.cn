@@ -83,7 +83,7 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
   for (const [catName, items] of groups) {
     const accent = colors[ci % colors.length]
     parts.push(`<rect x="80" y="${y + 4}" width="4" height="24" rx="2" fill="${accent}"/>`)
-    parts.push(`<text x="96" y="${y + 24}" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="22" font-weight="700" fill="${accent}">${esc(catName)}</text>`)
+    parts.push(`<text x="96" y="${y + 24}" font-family="'PingFang SC','Microsoft YaHei','Noto Sans SC','WenQuanYi Micro Hei',sans-serif" font-size="22" font-weight="700" fill="${accent}">${esc(catName)}</text>`)
     y += catTitleH
     for (const item of items) {
       const priceStr = `¥${item.price.toFixed(2).replace(/\.?0+$/, '')}`
@@ -95,13 +95,13 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
         for (const t of item.tags) {
           const tw = estimateTextWidth(t, 18, false) + 28
           if (tx + tw > w - 280) break
-          tagParts.push(`<rect x="${tx}" y="${y + 10}" width="${tw}" height="28" rx="14" fill="rgba(192,57,43,0.12)"/><text x="${tx + tw / 2}" y="${y + 29}" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="18" font-weight="600" fill="#c0392b">${esc(t)}</text>`)
+          tagParts.push(`<rect x="${tx}" y="${y + 10}" width="${tw}" height="28" rx="14" fill="rgba(192,57,43,0.12)"/><text x="${tx + tw / 2}" y="${y + 29}" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei','Noto Sans SC','WenQuanYi Micro Hei',sans-serif" font-size="18" font-weight="600" fill="#c0392b">${esc(t)}</text>`)
           tx += tw + 8
         }
       }
-      parts.push(`<text x="96" y="${y + 28}" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="28" fill="#2c2420">${esc(item.name)}</text>`)
+      parts.push(`<text x="96" y="${y + 28}" font-family="'PingFang SC','Microsoft YaHei','Noto Sans SC','WenQuanYi Micro Hei',sans-serif" font-size="28" fill="#2c2420">${esc(item.name)}</text>`)
       if (tagParts.length) parts.push(tagParts.join(''))
-      parts.push(`<text x="${w - 80}" y="${y + 28}" text-anchor="end" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="26" font-weight="700" fill="#c0392b">${priceStr}<tspan font-size="16" font-weight="600" fill="#8e7164">${esc(portionStr)}</tspan></text>`)
+      parts.push(`<text x="${w - 80}" y="${y + 28}" text-anchor="end" font-family="'PingFang SC','Microsoft YaHei','Noto Sans SC','WenQuanYi Micro Hei',sans-serif" font-size="26" font-weight="700" fill="#c0392b">${priceStr}<tspan font-size="16" font-weight="600" fill="#8e7164">${esc(portionStr)}</tspan></text>`)
       parts.push(`<line x1="80" y1="${y + 44}" x2="${w - 80}" y2="${y + 44}" stroke="#f0e8e2" stroke-width="1"/>`)
       y += dishH
     }
@@ -137,9 +137,9 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
   <circle cx="980" cy="60" r="100" fill="rgba(255,255,255,0.05)"/>
   <circle cx="540" cy="220" r="180" fill="rgba(255,255,255,0.04)"/>
   <!-- logo + 餐厅名 -->
-  ${logoUri ? (() => { const tw = estimateTextWidth(data.merchantName, 36); const gap = 12; const total = 60 + gap + tw; const left = 540 - total / 2; return `<image x="${left}" y="42" width="60" height="60" href="${logoUri}" clip-path="inset(0 round 10px)"/><text x="${left + 60 + gap}" y="82" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="36" font-weight="800" fill="#ffffff" letter-spacing="4">${esc(data.merchantName)}</text>` })() : `<text x="540" y="80" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="36" font-weight="800" fill="#ffffff" letter-spacing="4">${esc(data.merchantName)}</text>`}
-  <text x="540" y="168" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="48" font-weight="800" fill="#ffffff" letter-spacing="8">每日菜单</text>
-  <text x="540" y="208" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="20" fill="rgba(255,255,255,0.75)">${esc(data.date)}</text>
+  ${logoUri ? (() => { const tw = estimateTextWidth(data.merchantName, 36); const gap = 12; const total = 60 + gap + tw; const left = 540 - total / 2; return `<image x="${left}" y="42" width="60" height="60" href="${logoUri}" clip-path="inset(0 round 10px)"/><text x="${left + 60 + gap}" y="82" font-family="'PingFang SC','Microsoft YaHei','Noto Sans SC','WenQuanYi Micro Hei',sans-serif" font-size="36" font-weight="800" fill="#ffffff" letter-spacing="4">${esc(data.merchantName)}</text>` })() : `<text x="540" y="80" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei','Noto Sans SC','WenQuanYi Micro Hei',sans-serif" font-size="36" font-weight="800" fill="#ffffff" letter-spacing="4">${esc(data.merchantName)}</text>`}
+  <text x="540" y="168" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei','Noto Sans SC','WenQuanYi Micro Hei',sans-serif" font-size="48" font-weight="800" fill="#ffffff" letter-spacing="8">每日菜单</text>
+  <text x="540" y="208" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei','Noto Sans SC','WenQuanYi Micro Hei',sans-serif" font-size="20" fill="rgba(255,255,255,0.75)">${esc(data.date)}</text>
   <!-- 白色卡片 -->
   <rect x="40" y="${cardTop}" width="${w - 80}" height="${cardH}" rx="16" fill="#ffffff" filter="url(#shadow)"/>
   <!-- 菜品内容 -->
@@ -148,9 +148,9 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
   <rect x="0" y="${footTop}" width="${w}" height="${footerH}" fill="#2c2420"/>
   <!-- 二维码 + 文字（整体居中） -->
   <g transform="translate(${Math.round((w - 100 - 24 - 220) / 2)}, ${footTop + 35})">${qrSvg.replace('<?xml version="1.0" encoding="utf-8"?>', '').replace(/ width="\d+" height="\d+"/, ' width="100" height="100"')}</g>
-  <text x="${Math.round((w + 100 + 24 - 220) / 2)}" y="${footTop + 55}" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="20" fill="rgba(255,255,255,0.85)">📍 ${esc(data.todayLocation || '今日出摊')}</text>
-  <text x="${Math.round((w + 100 + 24 - 220) / 2)}" y="${footTop + 83}" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="20" fill="rgba(255,255,255,0.85)">🕐 ${esc(data.businessHours || '营业中')}</text>
-  <text x="${Math.round((w + 100 + 24 - 220) / 2)}" y="${footTop + 117}" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="18" fill="rgba(255,255,255,0.4)">扫码点餐 · 无需排队</text>
+  <text x="${Math.round((w + 100 + 24 - 220) / 2)}" y="${footTop + 55}" font-family="'PingFang SC','Microsoft YaHei','Noto Sans SC','WenQuanYi Micro Hei',sans-serif" font-size="20" fill="rgba(255,255,255,0.85)">📍 ${esc(data.todayLocation || '今日出摊')}</text>
+  <text x="${Math.round((w + 100 + 24 - 220) / 2)}" y="${footTop + 83}" font-family="'PingFang SC','Microsoft YaHei','Noto Sans SC','WenQuanYi Micro Hei',sans-serif" font-size="20" fill="rgba(255,255,255,0.85)">🕐 ${esc(data.businessHours || '营业中')}</text>
+  <text x="${Math.round((w + 100 + 24 - 220) / 2)}" y="${footTop + 117}" font-family="'PingFang SC','Microsoft YaHei','Noto Sans SC','WenQuanYi Micro Hei',sans-serif" font-size="18" fill="rgba(255,255,255,0.4)">扫码点餐 · 无需排队</text>
 </svg>`
 
   return sharp(Buffer.from(svg)).png().toBuffer()
