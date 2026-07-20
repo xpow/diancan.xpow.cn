@@ -59,7 +59,7 @@ export async function ensureToken(): Promise<void> {
         body: JSON.stringify({ sn, uuid: getOrCreateUUID(), userAgent: navigator.userAgent }),
       })
       if (!res.ok) {
-        localStorage.removeItem('kiosk-device-sn')
+        clearDeviceToken()
         throw new Error('设备码已失效')
       }
       const data = await res.json()
@@ -82,16 +82,25 @@ async function apiFetch(url: string, options: RequestInit = {}): Promise<Respons
   if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json')
   }
-  const res = await fetch(url, { ...options, headers })
-  // 401 → token 失效，不清除 SN 以便 ensureToken 自动续期
+  let res = await fetch(url, { ...options, headers })
+  // 401 → 清除过期 token，如有 SN 则重试一次
   if (res.status === 401) {
     const data = await res.json().catch(() => ({}))
-    if (data.message === '认证令牌无效或已过期') {
-      clearDeviceToken()
-    }
     if (data.message?.includes('设备已下线')) {
       clearDeviceToken()
       localStorage.removeItem('kiosk-device-sn')
+      return res
+    }
+    clearDeviceToken()
+    // 还有 SN 则重试（重新换取 token）
+    if (localStorage.getItem('kiosk-device-sn')) {
+      tokenPromise = null
+      await ensureToken().catch(() => {})
+      const newToken = getDeviceToken()
+      if (newToken) {
+        headers.set('Authorization', `Bearer ${newToken}`)
+        res = await fetch(url, { ...options, headers })
+      }
     }
   }
   return res

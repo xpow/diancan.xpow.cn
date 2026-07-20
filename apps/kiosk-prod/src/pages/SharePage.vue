@@ -24,7 +24,7 @@
         <h3><span class="cat-bar" :style="{ background: catBarColor(cat.name) }"></span>{{ cat.name }}</h3>
         <a v-if="featuredDish(cat)" :href="kioskUrl" class="featured-card clickable">
           <div class="featured-img">
-            <img :src="dishImage(featuredDish(cat)!)" :alt="featuredDish(cat)!.name" @error="onImgError" />
+            <img :src="dishImage(featuredDish(cat)!)" width="72" height="72" :alt="featuredDish(cat)!.name" @error="onImgError" />
           </div>
           <div class="featured-body">
             <div class="featured-header">
@@ -41,7 +41,7 @@
           <a v-for="d in normalDishes(cat)" :key="d.id" :href="kioskUrl" class="grid-card clickable">
             <div class="grid-card-top">
               <div class="grid-card-img">
-                <img :src="dishImage(d)" :alt="d.name" @error="onImgError" />
+                <img :src="dishImage(d)" width="64" height="64" :alt="d.name" @error="onImgError" />
               </div>
               <div class="grid-card-right">
                 <span class="grid-price"><small class="c-sign">¥</small>{{ d.price.toFixed(2) }}</span>
@@ -60,7 +60,7 @@
         <h4>Ready to Order?</h4>
         <p>扫码下单，即刻享用。</p>
         <a :href="kioskUrl" class="qr-box">
-          <img :src="qrDataUrl" alt="QR Code" v-if="qrDataUrl" />
+          <img :src="qrDataUrl" width="128" height="128" alt="QR Code" v-if="qrDataUrl" />
           <div v-else class="qr-placeholder">QR</div>
         </a>
         <div class="footer-info">
@@ -99,7 +99,6 @@ interface MenuData {
 const menu = ref<MenuData | null>(null)
 const qrDataUrl = ref('')
 const kioskUrl = ref('')
-
 const sortedCategories = computed(() => {
   if (!menu.value) return []
   return [...menu.value.categories]
@@ -204,7 +203,7 @@ onMounted(async () => {
 .footer-content { position: relative; z-index: 1; }
 .footer-content h4 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 700; color: #fff; margin: 0 0 8px; }
 .footer-content p { font-family: Inter, sans-serif; font-size: 14px; color: #e5e2e1; margin: 0 0 24px; }
-.qr-box { background: #fff; padding: 16px; border-radius: 16px; display: inline-block; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); margin-bottom: 24px; }
+.qr-box { background: #fff; padding: 16px; border-radius: 16px; display: inline-block; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); margin-bottom: 24px; text-decoration: none; }
 .qr-box img { display: block; width: 128px; height: 128px; }
 .qr-placeholder { width: 128px; height: 128px; background: #f0eded; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #8e7164; font-size: 12px; }
 .scan-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 24px; font-weight: 800; color: #ffb693; text-transform: uppercase; margin: 0 0 16px; letter-spacing: -0.02em; }

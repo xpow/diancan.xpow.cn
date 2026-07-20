@@ -309,12 +309,17 @@ async function reloadQuote() {
     return
   }
 
+  const savedSN = localStorage.getItem('kiosk-device-sn')
+  if (!savedSN) {
+    router.push('/home')
+    return
+  }
+
   loading.value = true
   errorMessage.value = ''
 
   try {
-    const savedSN = localStorage.getItem('kiosk-device-sn')
-    const bootstrapResponse = await fetch(`/api/system/bootstrap${savedSN ? `?sn=${savedSN}` : ''}`)
+    const bootstrapResponse = await fetch(`/api/system/bootstrap?sn=${savedSN}`)
     if (!bootstrapResponse.ok) {
       throw new Error('点菜机启动配置获取失败')
     }
@@ -387,6 +392,10 @@ async function reloadQuote() {
   } catch (error) {
     const msg = error instanceof Error ? error.message : '试算失败'
     if (msg.includes('已下线') || msg.includes('已失效') || msg.includes('未认证')) {
+      router.push('/home')
+      return
+    }
+    if (msg.includes('令牌')) {
       router.push('/home')
       return
     }
