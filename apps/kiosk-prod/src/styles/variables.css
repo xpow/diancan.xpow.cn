@@ -77,7 +77,7 @@
   --page-bg: #f0eae6;
 
   /* 底部导航 */
-  --bottom-nav-bg: color-mix(in srgb, var(--surface) 92%, #000000);
+  --bottom-nav-bg: color-mix(in srgb, #ffffff8a 92%, #ffcc75e2);
   --bottom-nav-border: color-mix(in srgb, var(--outline-variant) 30%, transparent);
   --bottom-nav-shadow: 0 -8px 24px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.6);
   --bottom-nav-radius: var(--radius-lg) var(--radius-lg) 0 0;

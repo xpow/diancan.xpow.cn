@@ -27,7 +27,7 @@ defineEmits<{ open: []; checkout: [] }>()
   z-index: 80; display: flex; align-items: center; justify-content: space-between;
   width: calc(100% - var(--container-margin) * 1); max-width: 600px;
   padding: 10px 10px 10px 16px;
-  background: rgba(255, 255, 255, 0); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border-radius: var(--radius-full);
+  background: rgb(190 155 100 / 12%); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border-radius: var(--radius-full);
   border: 1px solid rgba(221, 174, 87, 0.183);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
   cursor: pointer; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
@@ -60,7 +60,7 @@ defineEmits<{ open: []; checkout: [] }>()
 .cart-btn:active { transform: scale(0.95); }
 .cart-btn .material-icons { font-size: 18px !important; }
 
-[data-theme="dark"] .cart-bar { background: rgba(49, 48, 48, 0);  }
+[data-theme="dark"] .cart-bar { background: rgb(190 155 100 / 12%);  }
 [data-theme="dark"] .cart-icon-wrap .material-icons { color: var(--primary-container); }
 [data-theme="dark"] .cart-total { color: var(--primary-container); }
 [data-theme="dark"] .cart-badge { border-color: var(--inverse-surface); }
