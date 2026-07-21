@@ -143,16 +143,14 @@
 
           <section class="payment-card" :class="{ 'payment-active': paymentMethod === 'wechat' }" @click="paymentMethod = 'wechat'">
             <div class="payment-item">
-              <span class="payment-icon-wechat">
-                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M8.5 11a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm7 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zM12 2C6.48 2 2 5.48 2 9.5c0 2.18 1.08 4.17 2.9 5.7L4 19l3.9-2.03c1.3.38 2.69.53 4.1.53 5.52 0 10-3.48 10-7.5S17.52 2 12 2z"/></svg>
-              </span>
+              <img :src="wechatpayIcon" class="payment-icon-img" alt="微信支付" />
               <span class="payment-name">微信支付</span>
             </div>
           </section>
 
           <section class="payment-card" :class="{ 'payment-active': paymentMethod === 'alipay' }" @click="paymentMethod = 'alipay'">
             <div class="payment-item">
-              <span class="material-icons payment-icon">account_balance_wallet</span>
+              <img :src="alipayIcon" class="payment-icon-img" alt="支付宝" />
               <span class="payment-name">支付宝</span>
             </div>
           </section>
@@ -224,6 +222,8 @@ import { clearCart, readCart } from '@/utils/cart'
 import { getDishImage } from '@/utils/dishImages'
 import { apiPost, getDeviceToken, setDeviceToken } from '@/utils/api'
 import KioskTopBar from '@/components/KioskTopBar.vue'
+import wechatpayIcon from '@/assets/images/pages/wechatpay.png?url'
+import alipayIcon from '@/assets/images/pages/alipay.png?url'
 
 interface QuoteLineItem {
   dishId: string
@@ -870,7 +870,7 @@ onMounted(() => {
 }
 
 .payment-icon {
-  color: var(--primary-container);
+  /* color: var(--primary-container); */
 }
 
 .payment-name {
@@ -878,11 +878,11 @@ onMounted(() => {
   font-family: var(--font-display);
   font-size: var(--text-label-lg);
   font-weight: 600;
-  color: var(--on-surface);
+  /* color: var(--on-surface); */
 }
 
 .payment-arrow {
-  color: var(--secondary);
+  /* color: var(--secondary); */
 }
 
 /* Bottom Action Bar */
@@ -994,17 +994,17 @@ onMounted(() => {
 
 /* Continue Ordering - dark frosted glass */
 .continue-ordering {
-  background: var(--surface-container-lowest) !important;
-  border: 1px solid var(--outline-variant);
+  background: var(--surface-container) !important;
+  /* border: 1px solid var(--outline-variant); */
 }
 
 .continue-ordering .payment-icon,
 .continue-ordering .payment-name {
-  color: var(--primary) !important;
+  /* color: var(--primary) !important; */
 }
 
 .continue-ordering .payment-arrow {
-  color: var(--primary) !important;
+  /* color: var(--primary) !important; */
 }
 
 .back-menu-link {
@@ -1036,7 +1036,7 @@ onMounted(() => {
 /* Payment method toggle */
 .payment-card { cursor: pointer; transition: all var(--transition-fast); }
 .payment-card.payment-active { outline: 2px solid var(--primary-container); outline-offset: -2px; }
-.payment-icon-wechat { width: 24px; height: 24px; color: var(--primary-container); display: flex; align-items: center; }
+.payment-icon-img { width: 28px; height: 28px; object-fit: contain; flex-shrink: 0; }
 
 /* Payment Popup */
 .payment-overlay {
