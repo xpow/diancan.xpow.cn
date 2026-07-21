@@ -23,7 +23,7 @@ defineEmits<{ open: []; checkout: [] }>()
 
 <style scoped>
 .cart-bar {
-  position: fixed; bottom: calc(88px + env(safe-area-inset-bottom, 0)); left: 50%; transform: translateX(-50%);
+  position: fixed; bottom: calc(65px + env(safe-area-inset-bottom, 0)); left: 50%; transform: translateX(-50%);
   z-index: 80; display: flex; align-items: center; justify-content: space-between;
   width: calc(100% - var(--container-margin) * 1); max-width: 600px;
   padding: 10px 10px 10px 16px;
