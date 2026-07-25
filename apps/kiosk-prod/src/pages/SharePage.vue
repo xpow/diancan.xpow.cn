@@ -42,6 +42,7 @@
             <div class="grid-card-top">
               <div class="grid-card-img">
                 <img :src="dishImage(d)" width="64" height="64" :alt="d.name" @error="onImgError" />
+                <span v-if="d.tags?.length" class="img-tag-badge">{{ d.tags[0] }}</span>
               </div>
               <div class="grid-card-right">
                 <span class="grid-price"><small class="c-sign">¥</small>{{ d.price.toFixed(2) }}</span>
@@ -187,8 +188,9 @@ onMounted(async () => {
 .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .grid-card { display: block; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding:8px 10px; }
 .grid-card-top { display: flex; gap: 10px; }
-.grid-card-img { width: 64px; height: 64px; border-radius: 8px; overflow: hidden; background: #f0eded; flex-shrink: 0; }
+.grid-card-img { width: 64px; height: 64px; border-radius: 8px; overflow: hidden; background: #f0eded; flex-shrink: 0; position: relative; }
 .grid-card-img img { width: 100%; height: 100%; object-fit: cover; }
+.img-tag-badge { position: absolute; top: 2px; left: 2px; padding: 2px 6px; background: rgba(255, 107, 0, 0.88); color: #fff; font-size: 10px; font-weight: 700; border-radius: 4px; line-height: 1.3; pointer-events: none; }
 .grid-card-right { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; min-width: 0; }
 .grid-price { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 800; color: #ff6b00; line-height: 1.2; }
 .grid-price .c-sign { font-size: 0.7em; font-weight: 700; }
