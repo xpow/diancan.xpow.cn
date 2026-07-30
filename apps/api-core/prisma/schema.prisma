@@ -181,7 +181,28 @@ model Dish {
   merchant   Merchant       @relation(fields: [merchantId], references: [id])
   category   Category       @relation(fields: [categoryId], references: [id])
   promotions PromotionItem[]
+  costEntries DishCostEntry[]
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DishCostEntry {
+  id          String   @id @default(cuid())
+  dishId      String
+  date        DateTime
+  weight        Float
+  skewerCount   Int
+  unitCost      Float   // ¥/kg 单价
+  totalCost     Float   // weight * unitCost / 1000 自动计算
+  wasteExpired  Int     @default(0)
+  wasteStaff    Int     @default(0)
+  wasteGiveaway Int     @default(0)
+  notes         String  @default("")
+
+  dish Dish @relation(fields: [dishId], references: [id])
+
+  @@unique([dishId, date])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

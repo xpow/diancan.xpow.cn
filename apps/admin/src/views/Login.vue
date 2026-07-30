@@ -3,20 +3,21 @@
     <div class="login-card">
       <h1 class="login-title">商家后台</h1>
       <p class="login-subtitle">请验证管理员身份</p>
-      <div class="field">
-        <label>密码</label>
-        <input
-          v-model="password"
-          type="password"
-          class="login-input"
-          placeholder="输入管理密码"
-          @keyup.enter="login"
-        />
-      </div>
-      <p v-if="error" class="login-error">{{ error }}</p>
-      <button class="login-btn" :disabled="loading || !password" @click="login">
-        {{ loading ? '验证中...' : '进入后台' }}
-      </button>
+      <form @submit.prevent="login">
+        <div class="field">
+          <label>密码</label>
+          <input
+            v-model="password"
+            type="password"
+            class="login-input"
+            placeholder="输入管理密码"
+          />
+        </div>
+        <p v-if="error" class="login-error">{{ error }}</p>
+        <button type="submit" class="login-btn" :disabled="loading || !password">
+          {{ loading ? '验证中...' : '进入后台' }}
+        </button>
+      </form>
     </div>
   </div>
 </template>

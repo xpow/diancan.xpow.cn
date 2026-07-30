@@ -60,6 +60,7 @@ export async function ensureToken(): Promise<void> {
       })
       if (!res.ok) {
         clearDeviceToken()
+        localStorage.removeItem('kiosk-device-sn')
         throw new Error('设备码已失效')
       }
       const data = await res.json()

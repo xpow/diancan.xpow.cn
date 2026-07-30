@@ -74,6 +74,49 @@ router.post('/auth/logout', (req, res) => {
   res.json({ success: true })
 })
 
+/* ===== Merchant（不需要登录） ===== */
+
+router.get('/merchant', async (_req, res) => {
+  let merchant = await prisma.merchant.findFirst()
+  if (!merchant) {
+    merchant = await prisma.merchant.create({
+      data: {
+        name: '典韦烤串',
+        slogan: '地道炭火 · 鲜嫩多汁 · 现烤现卖',
+        businessHours: '17:00 - 02:00',
+        statusText: '营业中',
+        features: JSON.stringify({ quote: true, payment: false, pickup: false }),
+      },
+    })
+  }
+
+  const branches = await prisma.branch.findMany({ where: { merchantId: merchant.id } })
+
+  res.json({
+    id: merchant.id,
+    name: merchant.name,
+    slogan: merchant.slogan,
+    businessHours: merchant.businessHours,
+    statusText: merchant.statusText,
+    restReason: merchant.restReason,
+    logoUrl: merchant.logoUrl,
+    features: JSON.parse(merchant.features),
+    branches: await Promise.all(branches.map(async (b) => ({
+      id: b.id,
+      code: b.code,
+      name: b.name,
+      address: b.address,
+      todayLocation: b.todayLocation,
+      locationHint: b.locationHint,
+      status: b.status,
+      businessHours: b.businessHours,
+      restReason: b.restReason,
+      deviceCount: await prisma.device.count({ where: { branchId: b.id } }),
+      orderCount: await prisma.order.count({ where: { branchId: b.id } }),
+    }))),
+  })
+})
+
 /* ===== All routes below require auth ===== */
 router.use(requireAuth)
 
@@ -670,39 +713,6 @@ router.delete('/promotions/:id', async (req, res) => {
   res.json({ success: true })
 })
 
-/* ===== Merchant ===== */
-
-router.get('/merchant', async (_req, res) => {
-  const merchant = await prisma.merchant.findFirst()
-  if (!merchant) return res.status(404).json({ message: 'merchant not found' })
-
-  const branches = await prisma.branch.findMany({ where: { merchantId: merchant.id } })
-
-  res.json({
-    id: merchant.id,
-    name: merchant.name,
-    slogan: merchant.slogan,
-    businessHours: merchant.businessHours,
-    statusText: merchant.statusText,
-    restReason: merchant.restReason,
-    logoUrl: merchant.logoUrl,
-    features: JSON.parse(merchant.features),
-    branches: await Promise.all(branches.map(async (b) => ({
-      id: b.id,
-      code: b.code,
-      name: b.name,
-      address: b.address,
-      todayLocation: b.todayLocation,
-      locationHint: b.locationHint,
-      status: b.status,
-      businessHours: b.businessHours,
-      restReason: b.restReason,
-      deviceCount: await prisma.device.count({ where: { branchId: b.id } }),
-      orderCount: await prisma.order.count({ where: { branchId: b.id } }),
-    }))),
-  })
-})
-
 router.put('/merchant', async (req, res) => {
   const merchant = await prisma.merchant.findFirst()
   if (!merchant) return res.status(404).json({ message: 'merchant not found' })
@@ -1251,6 +1261,204 @@ router.post('/reviews/redeem', async (req, res) => {
     data: { status: 'redeemed', redeemedAt: new Date() },
   })
   res.json({ success: true, dishName: reviewCode.dishName })
+})
+
+/* ===== 成本利润核算 ===== */
+
+// 获取某天所有菜品的成本录入
+router.get('/cost-entries', requireAuth, async (req, res) => {
+  const { date, merchantId } = req.query
+  if (!date || !merchantId) return res.status(400).json({ message: 'date and merchantId required' })
+
+  const dayStart = new Date(date as string)
+  const dayEnd = new Date(dayStart)
+  dayEnd.setDate(dayEnd.getDate() + 1)
+
+  const dishes = await prisma.dish.findMany({
+    where: { merchantId: merchantId as string, status: 'active' },
+    orderBy: { sort: 'asc' },
+  })
+
+  const entries = await prisma.dishCostEntry.findMany({
+    where: {
+      date: { gte: dayStart, lt: dayEnd },
+      dishId: { in: dishes.map((d) => d.id) },
+    },
+  })
+
+  // 查当天实际销售数据
+  const orders = await prisma.order.findMany({
+    where: { createdAt: { gte: dayStart, lt: dayEnd }, status: { not: 'cancelled' } },
+    select: { items: { select: { dishId: true, quantity: true, finalSubtotal: true } } },
+  })
+  const salesMap = new Map<string, { qty: number; rev: number }>()
+  for (const order of orders) {
+    for (const item of order.items) {
+      const cur = salesMap.get(item.dishId) ?? { qty: 0, rev: 0 }
+      cur.qty += item.quantity
+      cur.rev += item.finalSubtotal
+      salesMap.set(item.dishId, cur)
+    }
+  }
+
+  const entryMap = new Map(entries.map((e) => [e.dishId, e]))
+
+  const result = dishes.map((d) => {
+    const entry = entryMap.get(d.id)
+    const sales = salesMap.get(d.id)
+    const actualAvgPrice = sales && sales.qty > 0 ? Math.round((sales.rev / sales.qty) * 100) / 100 : 0
+    return {
+      dishId: d.id,
+      name: d.name,
+      price: d.price,
+      actualAvgPrice,
+      totalQuantity: sales?.qty ?? 0,
+      totalRevenue: sales ? Math.round(sales.rev * 100) / 100 : 0,
+      weight: entry?.weight ?? null,
+      skewerCount: entry?.skewerCount ?? null,
+      unitCost: entry?.unitCost ?? null,
+      totalCost: entry?.totalCost ?? null,
+      costPerSkewer: entry?.skewerCount && entry?.totalCost ? Math.round((entry.totalCost / entry.skewerCount) * 100) / 100 : 0,
+      wasteExpired: entry?.wasteExpired ?? 0,
+      wasteStaff: entry?.wasteStaff ?? 0,
+      wasteGiveaway: entry?.wasteGiveaway ?? 0,
+      notes: entry?.notes ?? '',
+    }
+  })
+
+  res.json(result)
+})
+
+// 批量保存成本录入
+router.post('/cost-entries', requireAuth, async (req, res) => {
+  const { date, entries } = req.body
+  if (!date || !Array.isArray(entries)) return res.status(400).json({ message: 'date and entries required' })
+
+  const dayStart = new Date(date as string)
+  const dayEnd = new Date(dayStart)
+  dayEnd.setDate(dayEnd.getDate() + 1)
+
+  await prisma.$transaction(
+    entries
+      .filter((e: any) => e.weight != null && e.unitCost != null)
+      .map((e: any) => {
+        const totalCost = Math.round((e.weight * e.unitCost / 1000) * 100) / 100
+        const skewerCount = e.skewerCount ?? 0
+        return prisma.dishCostEntry.upsert({
+          where: { dishId_date: { dishId: e.dishId, date: dayStart } },
+          update: {
+            weight: e.weight, skewerCount, unitCost: e.unitCost, totalCost,
+            wasteExpired: e.wasteExpired ?? 0,
+            wasteStaff: e.wasteStaff ?? 0,
+            wasteGiveaway: e.wasteGiveaway ?? 0,
+            notes: e.notes ?? '',
+          },
+          create: {
+            dishId: e.dishId, date: dayStart, weight: e.weight, skewerCount, unitCost: e.unitCost, totalCost,
+            wasteExpired: e.wasteExpired ?? 0,
+            wasteStaff: e.wasteStaff ?? 0,
+            wasteGiveaway: e.wasteGiveaway ?? 0,
+            notes: e.notes ?? '',
+          },
+        })
+      }),
+  )
+
+  res.json({ success: true })
+})
+
+// 毛利报表
+router.get('/cost-profit-report', requireAuth, async (req, res) => {
+  const { from, to, merchantId } = req.query
+  if (!from || !to || !merchantId) return res.status(400).json({ message: 'from, to and merchantId required' })
+
+  const fromDate = new Date(from as string)
+  const toDate = new Date(to as string)
+  toDate.setDate(toDate.getDate() + 1) // 包含结束日
+
+  const dishes = await prisma.dish.findMany({
+    where: { merchantId: merchantId as string, status: 'active' },
+    orderBy: { sort: 'asc' },
+  })
+
+  // 成本汇总
+  const costEntries = await prisma.dishCostEntry.findMany({
+    where: { date: { gte: fromDate, lt: toDate }, dishId: { in: dishes.map((d) => d.id) } },
+  })
+
+  const costMap = new Map<string, { totalCost: number; entries: typeof costEntries }>()
+  for (const entry of costEntries) {
+    const current = costMap.get(entry.dishId) ?? { totalCost: 0, entries: [] }
+    current.totalCost += entry.totalCost
+    current.entries.push(entry)
+    costMap.set(entry.dishId, current)
+  }
+
+  // 销量汇总
+  const orders = await prisma.order.findMany({
+    where: { createdAt: { gte: fromDate, lt: toDate }, status: { not: 'cancelled' } },
+    select: { items: { select: { dishId: true, quantity: true, finalSubtotal: true } } },
+  })
+
+  const salesMap = new Map<string, { totalQuantity: number; totalRevenue: number }>()
+  for (const order of orders) {
+    for (const item of order.items) {
+      const current = salesMap.get(item.dishId) ?? { totalQuantity: 0, totalRevenue: 0 }
+      current.totalQuantity += item.quantity
+      current.totalRevenue += item.finalSubtotal
+      salesMap.set(item.dishId, current)
+    }
+  }
+
+  const dishResults = dishes.map((d) => {
+    const sales = salesMap.get(d.id) ?? { totalQuantity: 0, totalRevenue: 0 }
+    const cost = costMap.get(d.id)
+    const rawTotalCost = cost?.totalCost ?? 0
+    const totalWeight = cost?.entries.reduce((s, e) => s + e.weight, 0) ?? 0
+    const totalSkewers = cost?.entries.reduce((s, e) => s + e.skewerCount, 0) ?? 0
+    const wasteExpired = cost?.entries.reduce((s, e) => s + e.wasteExpired, 0) ?? 0
+    const wasteStaff = cost?.entries.reduce((s, e) => s + e.wasteStaff, 0) ?? 0
+    const wasteGiveaway = cost?.entries.reduce((s, e) => s + e.wasteGiveaway, 0) ?? 0
+    const totalWaste = wasteExpired + wasteStaff + wasteGiveaway
+    const avgUnitCost = totalWeight > 0 ? Math.round((rawTotalCost / totalWeight * 1000) * 100) / 100 : 0
+    const costPerSkewer = totalSkewers > 0 ? Math.round((rawTotalCost / totalSkewers) * 100) / 100 : 0
+    // 总消耗 = 销量 + 过期 + 自吃 + 赠品，成本按总消耗分摊
+    const totalConsumption = sales.totalQuantity + totalWaste
+    const totalCost = costPerSkewer * totalConsumption
+    const grossProfit = sales.totalRevenue - totalCost
+    const grossMargin = sales.totalRevenue > 0 ? Math.round((grossProfit / sales.totalRevenue) * 100 * 10) / 10 : 0
+    const actualAvgPrice = sales.totalQuantity > 0 ? Math.round((sales.totalRevenue / sales.totalQuantity) * 100) / 100 : 0
+    return {
+      dishId: d.id,
+      name: d.name,
+      price: d.price,
+      actualAvgPrice,
+      totalQuantity: sales.totalQuantity,
+      totalConsumption,
+      totalRevenue: Math.round(sales.totalRevenue * 100) / 100,
+      totalCost: Math.round(totalCost * 100) / 100,
+      avgUnitCost,
+      costPerSkewer,
+      wasteExpired,
+      wasteStaff,
+      wasteGiveaway,
+      totalWaste,
+      wasteRate: totalConsumption > 0 ? Math.round((totalWaste / totalConsumption) * 100 * 10) / 10 : 0,
+      grossProfit: Math.round(grossProfit * 100) / 100,
+      grossMargin,
+    }
+  })
+
+  const totalRevenue = Math.round(dishResults.reduce((s, d) => s + d.totalRevenue, 0) * 100) / 100
+  const totalCost = Math.round(dishResults.reduce((s, d) => s + d.totalCost, 0) * 100) / 100
+  const grossProfit = Math.round(dishResults.reduce((s, d) => s + d.grossProfit, 0) * 100) / 100
+  const grossMargin = totalRevenue > 0 ? Math.round((grossProfit / totalRevenue) * 100 * 10) / 10 : 0
+  const totalWaste = dishResults.reduce((s, d) => s + d.totalWaste, 0)
+  const totalConsumption = dishResults.reduce((s, d) => s + d.totalConsumption, 0)
+  const wasteRate = totalConsumption > 0 ? Math.round((totalWaste / totalConsumption) * 100 * 10) / 10 : 0
+  const summary = { totalRevenue, totalCost, grossProfit, grossMargin, totalWaste, wasteRate }
+
+  res.json({ dishes: dishResults, summary, dateRange: { from: from as string, to: to as string } })
 })
 
 export default router
