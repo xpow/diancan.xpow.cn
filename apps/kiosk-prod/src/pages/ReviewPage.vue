@@ -390,7 +390,7 @@ function formatTime(ts: string) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-function backToReview() {
+async function backToReview() {
   selectedDishIds.value = new Set()
   rateItems.value = []
   submittedItems.value = []
@@ -398,6 +398,11 @@ function backToReview() {
   selectedGiftId.value = ''
   rewardCode.value = ''
   rewardDishName.value = ''
+  // 重新加载历史评价，让刚提交的也能显示
+  try {
+    const h = await apiGet<{ items: any[] }>('/api/reviews/history')
+    historyItems.value = h.items
+  } catch {}
   step.value = 1
 }
 </script>

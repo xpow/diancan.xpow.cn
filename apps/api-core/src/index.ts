@@ -25,13 +25,14 @@ const FINGERPRINT_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000
 interface JwtPayload {
   deviceId: string
   sn: string
+  uuid?: string
   iat: number
   exp: number
 }
 declare global {
   namespace Express {
     interface Request {
-      authDevice?: { deviceId: string; sn: string }
+      authDevice?: { deviceId: string; sn: string; uuid: string }
     }
   }
 }
@@ -41,6 +42,7 @@ function authMiddleware(req: Request, res: Response, next: NextFunction) {
     req.authDevice = {
       deviceId: (req.body?.deviceId as string) || (req.query?.deviceId as string) || '',
       sn: 'internal',
+      uuid: '',
     }
     return next()
   }
@@ -59,7 +61,7 @@ function authMiddleware(req: Request, res: Response, next: NextFunction) {
       if (device.sn !== payload.sn) {
         return res.status(401).json({ message: '设备信息已变更，请重新认证' })
       }
-      req.authDevice = { deviceId: payload.deviceId, sn: payload.sn }
+      req.authDevice = { deviceId: payload.deviceId, sn: payload.sn, uuid: (payload.uuid as string) || '' }
       next()
     }).catch((err) => {
       console.error('[auth] DB check failed', err)
@@ -974,8 +976,13 @@ app.post('/api/system/device-auth', authLimiter, async (req, res) => {
       }).catch((e) => console.error('[device-auth] fingerprint upsert failed', e))
     }
   }
+  // 绑定该设备当前活跃的 uuid
+  if (authUuid) {
+    prisma.device.update({ where: { id: device.id }, data: { uuid: authUuid } })
+      .catch((e) => console.error('[device-auth] update uuid failed', e))
+  }
   const token = jwt.sign(
-    { deviceId: device.id, sn: device.sn },
+    { deviceId: device.id, sn: device.sn, uuid: authUuid },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN },
   )
@@ -1108,6 +1115,7 @@ app.post('/api/reviews', generalLimiter, authMiddleware, async (req, res) => {
     data: {
       branchId,
       deviceId,
+      uuid: req.authDevice!.uuid,
       comment: comment || null,
       items: {
         create: items.map((it: any) => ({
@@ -1129,12 +1137,12 @@ app.post('/api/reviews', generalLimiter, authMiddleware, async (req, res) => {
 
 // 选择赠品并生成兑换码
 app.post('/api/reviews/reward', generalLimiter, authMiddleware, async (req, res) => {
-  const deviceId = req.authDevice!.deviceId
+  const { deviceId, uuid } = req.authDevice!
   const { reviewId, dishId, dishName } = req.body ?? {}
   if (!reviewId || !dishId || !dishName) return res.status(400).json({ message: '缺少参数' })
 
   const review = await prisma.review.findUnique({ where: { id: reviewId } })
-  if (!review || review.deviceId !== deviceId) return res.status(404).json({ message: '评价不存在' })
+  if (!review || review.deviceId !== deviceId || review.uuid !== uuid) return res.status(404).json({ message: '评价不存在' })
   if (review.rewardDishId) return res.status(409).json({ message: '已领取过赠品' })
 
   // 生成唯一兑换码（重试直到不重复）
@@ -1161,16 +1169,16 @@ app.post('/api/reviews/reward', generalLimiter, authMiddleware, async (req, res)
 
 // 获取商家赠品池
 app.get('/api/reviews/gift-dishes', generalLimiter, authMiddleware, async (req, res) => {
-  const deviceId = req.authDevice!.deviceId
+  const { deviceId, uuid } = req.authDevice!
   const device = await prisma.device.findUnique({ where: { id: deviceId }, include: { branch: true } })
   if (!device) return res.status(404).json({ message: 'device not found' })
   const merchantId = device.branch.merchantId
 
-  // 今日已领过赠品 → 返回空列表，前端自动跳过选赠品步骤
+  // 今日该 uuid 已领过赠品 → 返回空列表，前端自动跳过选赠品步骤
   const todayStart = new Date()
   todayStart.setHours(0, 0, 0, 0)
   const todayCode = await prisma.reviewCode.findFirst({
-    where: { review: { deviceId }, createdAt: { gte: todayStart } },
+    where: { review: { deviceId, uuid }, createdAt: { gte: todayStart } },
   })
   if (todayCode) return res.json({ items: [] })
 
@@ -1185,9 +1193,9 @@ app.get('/api/reviews/gift-dishes', generalLimiter, authMiddleware, async (req, 
 
 // 获取该设备的历史评价
 app.get('/api/reviews/history', generalLimiter, authMiddleware, async (req, res) => {
-  const deviceId = req.authDevice!.deviceId
+  const { deviceId, uuid } = req.authDevice!
   const reviews = await prisma.review.findMany({
-    where: { deviceId },
+    where: { deviceId, uuid },
     include: { items: true, code: true },
     orderBy: { createdAt: 'desc' },
     take: 20,

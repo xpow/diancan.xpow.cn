@@ -9,7 +9,7 @@
         <button :class="['toggle-btn', viewMode === 'daily' && 'active']" @click="viewMode = 'daily'; loadData()">按天</button>
         <button :class="['toggle-btn', viewMode === 'weekly' && 'active']" @click="viewMode = 'weekly'; loadData()">按周</button>
       </div>
-      <DatePicker v-model="selectedDate" :view="viewMode" dateFormat="yy-mm-dd" :manualInput="false" showIcon class="date-picker" @update:modelValue="loadData" />
+      <DatePicker v-model="selectedDate" dateFormat="yy-mm-dd" :manualInput="false" showIcon class="date-picker" @update:modelValue="loadData" />
       <button class="refresh-btn" @click="loadData">查询</button>
     </div>
 

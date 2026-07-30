@@ -305,11 +305,15 @@ model Review {
   id           String       @id @default(cuid())
   branchId     String
   deviceId     String
+  uuid         String       @default("")
   comment      String?
   rewardDishId String?
   createdAt    DateTime     @default(now())
   items        ReviewItem[]
   code         ReviewCode?
+
+  @@index([deviceId])
+  @@index([uuid])
 }
 
 model ReviewItem {
