@@ -1274,8 +1274,31 @@ router.get('/cost-entries', requireAuth, async (req, res) => {
   const dayEnd = new Date(dayStart)
   dayEnd.setDate(dayEnd.getDate() + 1)
 
-  const dishes = await prisma.dish.findMany({
+  // 以实际销售为原则：包含有销量/成本记录的已下架菜品
+  const [soldDishes, costDishIds] = await Promise.all([
+    prisma.orderItem.findMany({
+      where: { order: { createdAt: { gte: dayStart, lt: dayEnd }, status: { not: 'cancelled' } } },
+      select: { dishId: true },
+      distinct: ['dishId'],
+    }),
+    prisma.dishCostEntry.findMany({
+      where: { date: { gte: dayStart, lt: dayEnd } },
+      select: { dishId: true },
+      distinct: ['dishId'],
+    }),
+  ])
+  const activeDishIds = await prisma.dish.findMany({
     where: { merchantId: merchantId as string, status: 'active' },
+    select: { id: true },
+  })
+  const allDishIds = Array.from(new Set([
+    ...activeDishIds.map((d) => d.id),
+    ...soldDishes.map((d) => d.dishId),
+    ...costDishIds.map((d) => d.dishId),
+  ]))
+
+  const dishes = await prisma.dish.findMany({
+    where: { merchantId: merchantId as string, id: { in: allDishIds } },
     orderBy: { sort: 'asc' },
   })
 
@@ -1376,8 +1399,31 @@ router.get('/cost-profit-report', requireAuth, async (req, res) => {
   const toDate = new Date(to as string)
   toDate.setDate(toDate.getDate() + 1) // 包含结束日
 
-  const dishes = await prisma.dish.findMany({
+  // 以实际销售为原则：包含有销量/成本记录的已下架菜品
+  const [soldDishes, costDishIds] = await Promise.all([
+    prisma.orderItem.findMany({
+      where: { order: { createdAt: { gte: fromDate, lt: toDate }, status: { not: 'cancelled' } } },
+      select: { dishId: true },
+      distinct: ['dishId'],
+    }),
+    prisma.dishCostEntry.findMany({
+      where: { date: { gte: fromDate, lt: toDate } },
+      select: { dishId: true },
+      distinct: ['dishId'],
+    }),
+  ])
+  const activeDishIds = await prisma.dish.findMany({
     where: { merchantId: merchantId as string, status: 'active' },
+    select: { id: true },
+  })
+  const allDishIds = Array.from(new Set([
+    ...activeDishIds.map((d) => d.id),
+    ...soldDishes.map((d) => d.dishId),
+    ...costDishIds.map((d) => d.dishId),
+  ]))
+
+  const dishes = await prisma.dish.findMany({
+    where: { merchantId: merchantId as string, id: { in: allDishIds } },
     orderBy: { sort: 'asc' },
   })
 
