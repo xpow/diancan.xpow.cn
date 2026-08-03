@@ -870,6 +870,9 @@ app.get('/api/orders', generalLimiter, authMiddleware, async (req, res) => {
         discountAmount: o.discountAmount,
         payableAmount: o.payableAmount,
       },
+      fullReduction: o.promotions
+        .filter((p) => p.type === 'full_reduction')
+        .reduce((s, p) => s + p.discount, 0),
       items: o.items.map((i) => ({
         id: i.id,
         dishId: i.dishId,
@@ -906,6 +909,9 @@ app.get('/api/orders/:orderNo', generalLimiter, authMiddleware, async (req, res)
       discountAmount: order.discountAmount,
       payableAmount: order.payableAmount,
     },
+    fullReduction: order.promotions
+      .filter((p) => p.type === 'full_reduction')
+      .reduce((s, p) => s + p.discount, 0),
     items: order.items.map((i) => ({
       dishId: i.dishId,
       name: i.name,

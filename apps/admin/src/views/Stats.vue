@@ -35,6 +35,13 @@
             <td class="col-qty">{{ item.totalQuantity }}</td>
             <td class="col-revenue">¥{{ item.totalRevenue.toFixed(2) }}</td>
           </tr>
+          <tr class="fr-row">
+            <td class="col-check"></td>
+            <td class="col-rank"></td>
+            <td class="col-name">满减</td>
+            <td class="col-qty">—</td>
+            <td class="col-revenue">-¥{{ summary.totalFullReduction.toFixed(2) }}</td>
+          </tr>
         </tbody>
         <tfoot v-if="selected.size > 0">
           <tr>
@@ -42,7 +49,7 @@
             <td class="col-rank"></td>
             <td class="col-name">小计（{{ selected.size }}项）</td>
             <td class="col-qty">{{ subtotal.qty }}</td>
-            <td class="col-revenue">¥{{ subtotal.rev.toFixed(2) }}</td>
+            <td class="col-revenue">¥{{ subtotal.net.toFixed(2) }}</td>
           </tr>
         </tfoot>
       </table>
@@ -62,7 +69,12 @@ interface DishSales {
   totalRevenue: number
 }
 
+interface StatsSummary {
+  totalFullReduction: number
+}
+
 const items = ref<DishSales[]>([])
+const summary = ref<StatsSummary>({ totalFullReduction: 0 })
 const loaded = ref(false)
 const quickRange = ref('yesterday')
 const dateRange = ref<[Date | null, Date | null] | undefined>()
@@ -77,7 +89,8 @@ const subtotal = computed(() => {
       rev += item.totalRevenue
     }
   }
-  return { qty, rev }
+  // 净收入 = 菜品收入 - 满减金额
+  return { qty, rev, net: rev - summary.value.totalFullReduction }
 })
 
 function toggleAll() {
@@ -153,7 +166,8 @@ async function fetchStats() {
     const qs = params.toString()
     const res = await fetch(`/api/admin/stats/dish-sales${qs ? '?' + qs : ''}`)
     const data = await res.json()
-    items.value = data ?? []
+    items.value = data.items ?? []
+    summary.value = data.summary ?? { totalFullReduction: 0 }
     selected.value = new Set(items.value.map(i => i.dishId))
   } catch {}
   loaded.value = true
@@ -187,5 +201,8 @@ setQuick(range === 'all' ? 'all' : 'yesterday')
 .col-rank { width: 48px; color: #999; }
 .col-qty { width: 80px; font-weight: 700; color: var(--p-primary-color, #FF6B00); }
 .col-revenue { width: 120px; font-weight: 600; }
+.fr-row td { color: #e53935; background: #fff7f7; }
+.fr-row .col-name { font-weight: 600; }
+.fr-row .col-qty { color: #999; font-weight: 400; }
 .empty { text-align: center; padding: 40px; color: #999; }
 </style>

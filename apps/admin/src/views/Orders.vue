@@ -35,6 +35,12 @@
           <span style="font-weight:700">¥{{ data.totals.payableAmount?.toFixed(2) }}</span>
         </template>
       </Column>
+      <Column field="fullReduction" header="满减" style="width:90px">
+        <template #body="{ data }">
+          <span v-if="data.fullReduction > 0" class="fr-amount">-¥{{ data.fullReduction.toFixed(2) }}</span>
+          <span v-else class="text-muted">-</span>
+        </template>
+      </Column>
       <Column header="商品" style="min-width:200px">
         <template #body="{ data }">
           <div v-for="item in data.items" :key="item.id" class="order-item-line">
@@ -113,6 +119,7 @@ interface Order {
   orderType: string
   paymentMethod?: string
   totals: { originalAmount: number; discountAmount: number; payableAmount: number }
+  fullReduction?: number
   items: OrderItem[]
   createdAt: string
   cancelReason?: string
@@ -201,6 +208,8 @@ async function confirmCancel() {
 .item-meta { color: var(--text-color-secondary); font-size: 13px; }
 .item-spec { color: var(--text-color-secondary); font-size: 12px; margin-left: 4px; }
 .item-promo { background: #fff3e0; color: #e65100; font-size: 11px; padding: 1px 6px; border-radius: 4px; }
+.fr-amount { font-weight: 700; color: #e53935; }
+.text-muted { color: var(--text-color-secondary); }
 .empty { text-align: center; padding: 40px; color: var(--text-color-secondary); }
 .cancel-reason { font-size: 11px; color: var(--text-color-secondary); margin-top: 2px; }
 </style>

@@ -220,6 +220,9 @@ router.get('/orders', async (_req, res) => {
         discountAmount: o.discountAmount,
         payableAmount: o.payableAmount,
       },
+      fullReduction: o.promotions
+        .filter((p) => p.type === 'full_reduction')
+        .reduce((s, p) => s + p.discount, 0),
       items: o.items.map((i) => ({
         id: i.id,
         dishId: i.dishId,
@@ -1103,6 +1106,12 @@ router.get('/stats/dish-sales', async (req, res) => {
           finalSubtotal: true,
         },
       },
+      promotions: {
+        select: {
+          type: true,
+          discount: true,
+        },
+      },
     },
   })
 
@@ -1113,7 +1122,12 @@ router.get('/stats/dish-sales', async (req, res) => {
     totalRevenue: number
   }>()
 
+  let totalFullReduction = 0
   for (const order of orders) {
+    const fullReduction = order.promotions
+      .filter((p) => p.type === 'full_reduction')
+      .reduce((s, p) => s + p.discount, 0)
+    totalFullReduction += fullReduction
     for (const item of order.items) {
       const key = item.dishId || item.name
       const current = salesMap.get(key) ?? {
@@ -1129,7 +1143,10 @@ router.get('/stats/dish-sales', async (req, res) => {
   }
 
   const result = Array.from(salesMap.values()).sort((a, b) => b.totalQuantity - a.totalQuantity)
-  res.json(result)
+  res.json({
+    items: result,
+    summary: { totalFullReduction: Number(totalFullReduction.toFixed(2)) },
+  })
 })
 
 /* ===== Review Management ===== */

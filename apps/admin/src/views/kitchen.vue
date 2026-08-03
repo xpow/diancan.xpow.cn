@@ -30,6 +30,7 @@
             <span class="group-code">{{ group.pickupCode }}</span>
             <span v-if="group.orderType === 'takeaway'" class="group-tag">自提</span>
             <span v-if="group.paymentMethod" :class="['group-pay', 'pay-' + group.paymentMethod]">{{ payLabel(group.paymentMethod) }}</span>
+            <span v-if="group.fullReduction > 0" class="group-fr">满减-¥{{ group.fullReduction.toFixed(2) }}</span>
           </span>
           <span class="group-time">{{ group.time }}</span>
         </div>
@@ -125,6 +126,7 @@ interface Order {
   orderType?: string
   paymentMethod?: string
   status: string
+  fullReduction?: number
   items: OrderItem[]
   createdAt: string
 }
@@ -178,7 +180,7 @@ const payLabels: Record<string, string> = { wechat: '微信', alipay: '支付宝
 function payLabel(m: string): string { return payLabels[m] || m }
 
 const filtered = computed(() => {
-  const groups: Record<string, { orderNo: string; pickupCode: string; orderType?: string; paymentMethod?: string; orderId: string; time: string; items: OrderItem[] }> = {}
+  const groups: Record<string, { orderNo: string; pickupCode: string; orderType?: string; paymentMethod?: string; fullReduction?: number; orderId: string; time: string; items: OrderItem[] }> = {}
   for (const order of orders.value) {
     const filteredItems = order.items.filter((item) => item.status === tab.value)
     if (!filteredItems.length) continue
@@ -187,6 +189,7 @@ const filtered = computed(() => {
       pickupCode: order.pickupCode,
       orderType: order.orderType,
       paymentMethod: order.paymentMethod,
+      fullReduction: order.fullReduction,
       orderId: order.id,
       time: new Date(order.createdAt).toLocaleString('zh-CN'),
       items: filteredItems,
@@ -381,6 +384,7 @@ main { padding: 12px 16px; display: flex; flex-direction: column; gap: 16px; }
 .group-pay { font-size: 12px; background: var(--surface-card); padding: 2px 8px; border-radius: 6px; color: var(--secondary); }
 .group-pay.pay-wechat { background: #07c160; color: #fff; }
 .group-pay.pay-alipay { background: #1677ff; color: #fff; }
+.group-fr { font-size: 12px; background: #fff1f0; color: #e53935; padding: 2px 8px; border-radius: 6px; font-weight: 700; }
 .group-time { font-size: 11px; color: var(--secondary); }
 
 .item-card {

@@ -68,6 +68,7 @@
             <div class="ticket-total">
               <span class="ticket-total-label">合计 {{ (order.items || []).length }} 项商品</span>
               <div class="ticket-total-right">
+                <span v-if="order.fullReduction > 0" class="ticket-total-fr">满减 -¥{{ order.fullReduction.toFixed(2) }}</span>
                 <span class="ticket-total-sub">{{ !order.paidAt ? '待付金额' : '实付金额' }}</span>
                 <span class="ticket-total-price"><small class="c-sign">¥</small>{{ (order.totals?.payableAmount || 0).toFixed(2) }}</span>
               </div>
@@ -215,6 +216,7 @@ interface OrderSummary {
   status: string
   orderType?: string
   paymentMethod?: string
+  fullReduction?: number
   items: OrderItem[]
   totals: OrderTotals
   createdAt: string
@@ -601,6 +603,7 @@ onUnmounted(() => {
 .ticket-total-label { font-size: var(--text-body-md); line-height: 20px; color: var(--secondary); }
 .ticket-total-right { text-align: right; }
 .ticket-total-sub { display: block; font-size: var(--text-body-md); font-weight: 600; color: var(--secondary); }
+.ticket-total-fr { display: block; font-size: var(--text-body-sm); font-weight: 700; color: #e53935; margin-bottom: 2px; }
 .ticket-total-price { font-family: var(--font-display); font-size: 32px; font-weight: 800; color: var(--on-surface); line-height: 1; }
 
 .ticket-footer { background: var(--surface-container-low); padding: var(--spacing-md); text-align: center; border-radius: 0 0 var(--radius-xl) var(--radius-xl); }
