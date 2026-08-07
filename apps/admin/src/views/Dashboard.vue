@@ -14,7 +14,7 @@
       <div class="stat-card">
         <i class="stat-icon pi pi-check-circle"></i>
         <div class="stat-value">¥{{ stats.todayCompletedRevenue.toFixed(2) }}</div>
-        <div class="stat-label">今日完成</div>
+        <div class="stat-label">已完成收入（今日）</div>
       </div>
       <div class="stat-card">
         <i class="stat-icon pi pi-chart-line"></i>
@@ -28,14 +28,14 @@
       </router-link>
       <router-link to="/stats?range=all" class="stat-card">
         <i class="stat-icon pi pi-credit-card"></i>
-        <div class="stat-value">¥{{ stats.completedRevenue.toFixed(2) }}</div>
-        <div class="stat-label">已完成收入</div>
-      </router-link>
-      <div class="stat-card">
-        <i class="stat-icon pi pi-wallet"></i>
         <div class="stat-value">¥{{ stats.estimatedRevenue.toFixed(2) }}</div>
         <div class="stat-label">预估收入</div>
-      </div>
+      </router-link>
+      <router-link to="/orders?status=unpaid" class="stat-card">
+        <i class="stat-icon pi pi-money-bill"></i>
+        <div class="stat-value">{{ stats.unpaidOrders }}</div>
+        <div class="stat-label">未付款</div>
+      </router-link>
       <router-link to="/orders?status=pending" class="stat-card">
         <i class="stat-icon pi pi-clock"></i>
         <div class="stat-value">{{ stats.pendingOrders }}</div>
@@ -141,11 +141,7 @@ import Column from 'primevue/column'
 import Dialog from 'primevue/dialog'
 import Tag from 'primevue/tag'
 
-const VALID_STATUSES = ['pending', 'paid', 'preparing', 'ready', 'completed']
-
-const ESTIMATE_STATUSES = ['pending', 'paid', 'preparing', 'ready']
-
-const stats = ref({ todayOrders: 0, todayCompletedRevenue: 0, todayEstimatedRevenue: 0, totalOrders: 0, completedRevenue: 0, estimatedRevenue: 0, pendingOrders: 0, readyOrders: 0 })
+const stats = ref({ todayOrders: 0, todayCompletedRevenue: 0, todayEstimatedRevenue: 0, totalOrders: 0, completedRevenue: 0, estimatedRevenue: 0, pendingOrders: 0, readyOrders: 0, unpaidOrders: 0 })
 const recentOrders = ref<any[]>([])
 const showCancel = ref(false)
 const cancelOrderId = ref('')
@@ -177,26 +173,20 @@ async function fetchData() {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 20)
 
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const allRes = await fetch('/api/admin/orders?limit=200')
-  const allOrders = (allRes.ok ? (await allRes.json()).items ?? [] : [])
-  const valid = allOrders.filter((o: any) => VALID_STATUSES.includes(o.status))
-  const completed = valid.filter((o: any) => o.status === 'completed')
-  const estimated = valid.filter((o: any) => ESTIMATE_STATUSES.includes(o.status))
-  const todayValid = valid.filter((o: any) => new Date(o.createdAt) >= today)
-  const todayCompleted = todayValid.filter((o: any) => o.status === 'completed')
-  const todayEstimated = todayValid.filter((o: any) => ESTIMATE_STATUSES.includes(o.status))
-
-  stats.value = {
-    totalOrders: valid.length,
-    completedRevenue: completed.reduce((s: number, o: any) => s + (o.totals?.payableAmount ?? 0), 0),
-    estimatedRevenue: estimated.reduce((s: number, o: any) => s + (o.totals?.payableAmount ?? 0), 0),
-    todayOrders: todayValid.length,
-    todayCompletedRevenue: todayCompleted.reduce((s: number, o: any) => s + (o.totals?.payableAmount ?? 0), 0),
-    todayEstimatedRevenue: todayEstimated.reduce((s: number, o: any) => s + (o.totals?.payableAmount ?? 0), 0),
-    pendingOrders: allOrders.filter((o: any) => o.status === 'pending' || o.status === 'paid').length,
-    readyOrders: allOrders.filter((o: any) => o.status === 'ready').length,
+  const overviewRes = await fetch('/api/admin/stats/overview')
+  if (overviewRes.ok) {
+    const s = await overviewRes.json()
+    stats.value = {
+      todayOrders: s.todayOrders ?? 0,
+      todayCompletedRevenue: s.todayCompletedRevenue ?? 0,
+      todayEstimatedRevenue: s.todayEstimatedRevenue ?? 0,
+      totalOrders: s.totalOrders ?? 0,
+      completedRevenue: s.completedRevenue ?? 0,
+      estimatedRevenue: s.estimatedRevenue ?? 0,
+      pendingOrders: s.pendingOrders ?? 0,
+      readyOrders: s.readyOrders ?? 0,
+      unpaidOrders: s.unpaidOrders ?? 0,
+    }
   }
 }
 

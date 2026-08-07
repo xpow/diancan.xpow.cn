@@ -3,7 +3,7 @@
     <div class="page-header">
       <h2 class="page-title">订单管理</h2>
       <div class="header-actions">
-        <SelectButton v-model="statusFilter" :options="statusOptions" optionLabel="label" optionValue="value" @change="fetchOrders" />
+        <SelectButton v-model="statusFilter" :options="statusOptions" optionLabel="label" optionValue="value" @change="onStatusChange" />
       </div>
     </div>
 
@@ -69,6 +69,8 @@
       </Column>
     </DataTable>
 
+    <Paginator :rows="pageSize" :totalRecords="total" :first="(page - 1) * pageSize" @page="onPage" />
+
     <Dialog v-model:visible="showCancel" header="取消订单" style="width:400px">
       <p class="cancel-hint">请选择取消原因：</p>
       <div class="cancel-options">
@@ -100,6 +102,7 @@ import Column from 'primevue/column'
 import Tag from 'primevue/tag'
 import SelectButton from 'primevue/selectbutton'
 import Dialog from 'primevue/dialog'
+import Paginator from 'primevue/paginator'
 
 interface OrderItem {
   id: string
@@ -131,6 +134,10 @@ function payLabel(m: string): string { return payLabels[m] || m }
 
 const orders = ref<Order[]>([])
 const statusFilter = ref<string>(new URLSearchParams(location.search).get('status') || 'all')
+// 每页最多 30 条
+const pageSize = 30
+const page = ref(1)
+const total = ref(0)
 const statusOptions = [
   { label: '全部', value: 'all' },
   { label: '待处理', value: 'pending' },
@@ -150,23 +157,30 @@ function statusSeverity(s: string): string {
   return map[s] || 'info'
 }
 
+function onStatusChange() {
+  page.value = 1
+  fetchOrders()
+}
+
+function onPage(ev: { page?: number }) {
+  page.value = (ev.page ?? 0) + 1
+  fetchOrders()
+}
+
 async function fetchOrders() {
   const params = new URLSearchParams()
   if (statusFilter.value === 'pending') {
-    params.set('status', 'pending')
+    // 待处理 = 未制作（pending + paid），后端已支持逗号分隔状态
+    params.set('status', 'pending,paid')
   } else if (statusFilter.value && statusFilter.value !== 'all') {
     params.set('status', statusFilter.value)
   }
+  params.set('page', String(page.value))
+  params.set('limit', String(pageSize))
   const res = await fetch(`/api/admin/orders?${params}`)
   const data = await res.json()
   orders.value = data.items ?? []
-  // 当筛选"待处理"时，在前端合并 pending 和 paid
-  if (statusFilter.value === 'pending') {
-    const allRes = await fetch('/api/admin/orders?status=paid')
-    const allData = await allRes.json()
-    orders.value = [...orders.value, ...(allData.items ?? [])]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-  }
+  total.value = data.total ?? 0
 }
 
 async function updateStatus(id: string, status: string, cancelReason?: string) {

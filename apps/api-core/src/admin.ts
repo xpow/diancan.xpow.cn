@@ -1149,6 +1149,41 @@ router.get('/stats/dish-sales', async (req, res) => {
   })
 })
 
+// 总览统计（全局聚合，不依赖前端分页拉取）
+router.get('/stats/overview', async (_req, res) => {
+  const orders = await prisma.order.findMany({
+    where: { status: { not: 'cancelled' } },
+    select: { status: true, paidAt: true, payableAmount: true, createdAt: true },
+  })
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const VALID = ['pending', 'paid', 'preparing', 'ready', 'completed']
+  const ESTIMATE = ['pending', 'paid', 'preparing', 'ready']
+
+  const valid = orders.filter((o) => VALID.includes(o.status))
+  const completed = valid.filter((o) => o.status === 'completed')
+  const estimated = valid.filter((o) => ESTIMATE.includes(o.status))
+  const todayValid = valid.filter((o) => o.createdAt >= today)
+  const todayCompleted = todayValid.filter((o) => o.status === 'completed')
+  const todayEstimated = todayValid.filter((o) => ESTIMATE.includes(o.status))
+
+  const sum = (list: typeof orders) => Number(list.reduce((s, o) => s + (o.payableAmount || 0), 0).toFixed(2))
+
+  res.json({
+    totalOrders: valid.length,
+    completedRevenue: sum(completed),
+    estimatedRevenue: sum(estimated),
+    todayOrders: todayValid.length,
+    todayCompletedRevenue: sum(todayCompleted),
+    todayEstimatedRevenue: sum(todayEstimated),
+    pendingOrders: valid.filter((o) => o.status === 'pending' || o.status === 'paid').length,
+    readyOrders: valid.filter((o) => o.status === 'ready').length,
+    unpaidOrders: orders.filter((o) => !o.paidAt).length,
+  })
+})
+
 /* ===== Review Management ===== */
 
 // 获取评价设置

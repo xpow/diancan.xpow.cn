@@ -30,7 +30,6 @@
             <span class="group-code">{{ group.pickupCode }}</span>
             <span v-if="group.orderType === 'takeaway'" class="group-tag">自提</span>
             <span v-if="group.paymentMethod" :class="['group-pay', 'pay-' + group.paymentMethod]">{{ payLabel(group.paymentMethod) }}</span>
-            <span v-if="group.fullReduction > 0" class="group-fr">满减-¥{{ group.fullReduction.toFixed(2) }}</span>
           </span>
           <span class="group-time">{{ group.time }}</span>
         </div>
@@ -41,7 +40,7 @@
           :class="`card-${item.status}`"
         >
           <div class="item-info">
-            <div class="item-name">{{ item.name }}<template v-if="item.portionSize"> <span class="tag-portion">（¥{{ item.finalUnitPrice.toFixed(2) }}/{{ item.portionSize }}串）</span></template></div>
+            <div class="item-name">{{ item.name }}</div>
             <div class="item-tags">
               <span class="tag-qty">x{{ item.quantity }}</span>
               <span v-if="item.specs" class="tag-specs">{{ item.specs }}</span>
