@@ -12,12 +12,15 @@
     />
 
     <div class="page-content">
-      <section class="hero-context">
+      <section v-if="heroVisible" class="hero-context" @dblclick="heroVisible = false">
         <img :src="heroImage" alt="菜单横幅" class="hero-img" />
         <div class="hero-overlay">
           <h2>精选食材，炭火现烤</h2>
           <p>{{ displayTitle }}</p>
         </div>
+        <button class="hero-close" @click.stop="heroVisible = false" aria-label="关闭横幅" title="双击也可关闭">
+          <span class="material-icons">close</span>
+        </button>
       </section>
 
       <div ref="navSentinel" class="nav-sentinel"></div>
@@ -128,6 +131,7 @@ const {
 } = useSpecEditor(dishes)
 
 const hasActiveOrder = ref(false)
+const heroVisible = ref(true)
 
 function checkActiveOrder() {
   try {
@@ -154,6 +158,9 @@ onMounted(() => {
 .hero-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: var(--spacing-md) max(var(--container-margin), calc(50vw - 300px + var(--container-margin))); background: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.48) 100%); }
 .hero-overlay h2 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 800; line-height: 1.2; color: #fff; }
 .hero-overlay p { margin: var(--spacing-xs) 0 0; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; color: rgba(255, 255, 255, 0.92); }
+.hero-close { position: absolute; top: 12px; right: 12px; z-index: 2; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: none; border-radius: 50%; background: rgba(0, 0, 0, 0.35); color: #fff; cursor: pointer; transition: background var(--transition-fast); }
+.hero-close .material-icons { font-size: 20px; }
+.hero-close:active { background: rgba(0, 0, 0, 0.55); }
 .category-nav { display: flex; justify-content: center; gap: 10px; width: auto; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: var(--spacing-md) var(--container-margin) 14px; position: sticky; top: 52px; z-index: 40; overflow-x: auto; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: box-shadow var(--transition-fast); }
 .category-nav.floating { box-shadow: 0 6px 18px rgba(87, 32, 0, 0.05); }
 .nav-sentinel { width: 1px; height: 1px; pointer-events: none; }

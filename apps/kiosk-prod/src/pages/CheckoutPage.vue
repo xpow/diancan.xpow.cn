@@ -204,13 +204,24 @@
           <span class="amount">{{ quote?.totals.payableAmount.toFixed(2) || '0.00' }}</span>
         </div>
       </div>
-      <button
-        class="action-btn"
-        :disabled="submitting || !quote"
-        @click="showPaymentPopup = true"
-      >
-        确认支付
-      </button>
+      <div class="action-btns">
+        <button
+          class="action-btn action-btn-secondary"
+          :disabled="submitting || !quote"
+          @click="submitOrder(true)"
+        >
+          <span class="material-icons">schedule</span>
+          <span>暂不付款</span>
+        </button>
+        <button
+          class="action-btn"
+          :disabled="submitting || !quote"
+          @click="showPaymentPopup = true"
+        >
+          <span class="material-icons">qr_code_scanner</span>
+          <span>确认支付</span>
+        </button>
+      </div>
     </footer>
   </main>
 </template>
@@ -220,7 +231,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { clearCart, readCart } from '@/utils/cart'
 import { getDishImage } from '@/utils/dishImages'
-import { apiPost, getDeviceToken, setDeviceToken } from '@/utils/api'
+import { apiPost, getDeviceToken, setDeviceToken, clearDeviceToken } from '@/utils/api'
 import KioskTopBar from '@/components/KioskTopBar.vue'
 import wechatpayIcon from '@/assets/images/pages/wechatpay.png?url'
 import alipayIcon from '@/assets/images/pages/alipay.png?url'
@@ -937,28 +948,51 @@ onMounted(() => {
   line-height: 1;
 }
 
+.action-btns {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex: 1;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
 .action-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-sm);
+  gap: 6px;
   flex: 1;
   max-width: 150px;
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-md);
+  min-height: 42px;
   border: none;
   border-radius: var(--radius-full);
   background: var(--primary-container);
   color: var(--on-primary);
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
   box-shadow: 0 8px 20px rgba(255, 107, 0, 0.15);
   transition: transform var(--transition-fast);
 }
 
+.action-btn .material-icons {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
 .action-btn:active {
   transform: scale(0.98);
+}
+
+.action-btn-secondary {
+  background: var(--surface-container-high);
+  color: var(--on-surface);
+  box-shadow: none;
+  border: 1px solid var(--outline-variant);
 }
 
 .action-btn:disabled {
@@ -1200,11 +1234,21 @@ onMounted(() => {
     justify-content: center;
   }
 
+  .action-btns {
+    flex: 1.4;
+    min-width: 0;
+  }
+
   .action-btn {
-    flex: 0 0 auto;
-    padding: 12px 14px;
-    font-size: 18px;
+    flex: 1 1 0;
+    padding: 10px 10px;
+    font-size: 16px;
     max-width: none;
+    gap: 4px;
+  }
+
+  .action-btn .material-icons {
+    font-size: 18px;
   }
 
   .payment-popup {
