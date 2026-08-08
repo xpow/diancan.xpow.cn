@@ -49,19 +49,25 @@
               <span class="ticket-time">{{ formatTime(order.createdAt) }}</span>
             </div>
 
-            <div v-for="item in (order.items || [])" :key="item.dishId" class="ticket-item">
-              <div class="ticket-item-left">
-                <div class="ticket-item-img">
-                  <img :src="dishImage(item)" :alt="item.name" class="ticket-item-img-el" />
-                </div>
-                <div>
-                  <p class="ticket-item-name">{{ item.name }}<template v-if="item.portionSize && (item.finalUnitPrice ?? item.unitPrice) > 0"> <span class="ticket-item-unit">（¥{{ (item.finalUnitPrice ?? item.unitPrice).toFixed(2) }}/{{ item.portionSize }}串）</span></template><template v-else-if="(item.finalUnitPrice ?? item.unitPrice) === 0"> <span class="ticket-item-unit tag-gift">赠品</span></template></p>
-                  <p v-if="item.specs" class="ticket-item-spec">{{ item.specs }}</p>
-                </div>
+            <div v-for="group in groupOrderItems(order)" :key="group.key" class="ticket-group">
+              <div class="ticket-group-header">
+                <span class="ticket-group-title">{{ group.label }}</span>
+                <span class="ticket-group-count">{{ group.count }} 项</span>
               </div>
-              <div class="ticket-item-right">
-                <span class="ticket-item-price"><small class="c-sign">¥</small>{{ (item.finalSubtotal ?? item.finalUnitPrice * item.quantity).toFixed(2) }}</span>
-                <span class="ticket-item-qty">x{{ item.quantity }}</span>
+              <div v-for="(item, idx) in group.items" :key="idx" class="ticket-item">
+                <div class="ticket-item-left">
+                  <div class="ticket-item-img">
+                    <img :src="dishImage(item)" :alt="item.name" class="ticket-item-img-el" />
+                  </div>
+                  <div>
+                    <p class="ticket-item-name">{{ item.name }}<template v-if="item.portionSize && (item.finalUnitPrice ?? item.unitPrice) > 0"> <span class="ticket-item-unit">（¥{{ (item.finalUnitPrice ?? item.unitPrice).toFixed(2) }}/{{ item.portionSize }}串）</span></template><template v-else-if="(item.finalUnitPrice ?? item.unitPrice) === 0"> <span class="ticket-item-unit tag-gift">赠品</span></template></p>
+                    <p v-if="item.specs" class="ticket-item-spec">{{ item.specs }}</p>
+                  </div>
+                </div>
+                <div class="ticket-item-right">
+                  <span class="ticket-item-price"><small class="c-sign">¥</small>{{ (item.finalSubtotal ?? item.finalUnitPrice * item.quantity).toFixed(2) }}</span>
+                  <span class="ticket-item-qty">x{{ item.quantity }}</span>
+                </div>
               </div>
             </div>
 
@@ -261,6 +267,37 @@ for (const [path, url] of Object.entries(qrModules)) {
 
 function dishImage(item: OrderItem): string {
   return getDishImage(item.dishId)
+}
+
+interface ItemGroup {
+  key: string
+  label: string
+  items: OrderItem[]
+  count: number
+}
+
+// 订单菜品分组：赠品 / 辣 / 不辣
+function groupOrderItems(order: OrderSummary): ItemGroup[] {
+  const spicy: OrderItem[] = []
+  const mild: OrderItem[] = []
+  const gift: OrderItem[] = []
+
+  for (const item of order.items ?? []) {
+    const isGift = item.finalUnitPrice === 0 || (item.promotionLabel || '').includes('赠品')
+    if (isGift) {
+      gift.push(item)
+      continue
+    }
+    const spice = String(item.specs || '').split('·')[0].trim()
+    if (/辣/.test(spice)) spicy.push(item)
+    else mild.push(item)
+  }
+
+  const groups: ItemGroup[] = []
+  if (spicy.length) groups.push({ key: 'spicy', label: '辣', items: spicy, count: spicy.length })
+  if (mild.length) groups.push({ key: 'mild', label: '不辣', items: mild, count: mild.length })
+  if (gift.length) groups.push({ key: 'gift', label: '赠品', items: gift, count: gift.length })
+  return groups
 }
 
 const tabs = [
@@ -587,6 +624,11 @@ onUnmounted(() => {
 .ticket-body { padding: var(--spacing-lg); }
 .ticket-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md); }
 .ticket-detail-title { font-family: var(--font-display); font-weight: 700; margin: 0; color: var(--on-surface); }
+.ticket-group { padding-top: var(--spacing-xs); }
+.ticket-group + .ticket-group { margin-top: var(--spacing-xs); border-top: 1px dashed var(--outline-variant); }
+.ticket-group-header { display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-sm) 0 4px; }
+.ticket-group-title { display: inline-flex; align-items: center; font-family: var(--font-display); font-size: var(--text-label-md); font-weight: 800; color: var(--primary-container); }
+.ticket-group-count { font-size: var(--text-label-sm); font-weight: 600; color: var(--secondary); }
 .ticket-time { font-size: var(--text-label-sm); font-weight: 600; color: var(--secondary); background: var(--surface-container); padding: 4px 8px; border-radius: var(--radius-default); letter-spacing: 0.02em; }
 
 .ticket-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 0; }
