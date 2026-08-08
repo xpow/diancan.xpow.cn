@@ -2,6 +2,7 @@
   <article :id="`dish-${dish.id}`" :class="['dish-card', highlight && 'dish-highlight']">
     <div class="dish-image-wrap">
       <img :src="dish.image" :alt="dish.name" class="dish-image" />
+      <span class="dish-image-disclaimer">*手工制作，实物与图片可能存在差异</span>
     </div>
     <div class="dish-body">
       <div class="dish-header">
@@ -78,6 +79,7 @@ defineEmits<{ add: [dish: MenuDish] }>()
 
 .dish-image-wrap { position: relative; border-radius: var(--radius-lg); overflow: hidden; background: var(--surface-container); margin-bottom: var(--spacing-md); }
 .dish-image { width: 100%; height: 200px; display: block; object-fit: cover; }
+.dish-image-disclaimer { position: absolute; bottom: 4px; right: 4px; font-size: 10px; color: rgba(255, 255, 255, 0.85); background: rgba(0, 0, 0, 0.55); padding: 1px 6px; border-radius: 4px; line-height: 1.4; pointer-events: none; }
 
 .dish-specs { margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--card-border-subtle); display: flex; flex-direction: column; gap: var(--spacing-md); }
 .spec-group { display: flex; flex-direction: column; gap: var(--spacing-sm); }
