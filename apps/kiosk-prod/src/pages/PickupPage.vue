@@ -289,7 +289,8 @@ function groupOrderItems(order: OrderSummary): ItemGroup[] {
       continue
     }
     const spice = String(item.specs || '').split('·')[0].trim()
-    if (/辣/.test(spice)) spicy.push(item)
+    if (spice === '不辣') mild.push(item)
+    else if (/辣/.test(spice)) spicy.push(item)
     else mild.push(item)
   }
 
