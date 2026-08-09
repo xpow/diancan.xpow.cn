@@ -262,6 +262,28 @@ router.put('/orders/:id/status', async (req, res) => {
   if (status === 'cancelled') {
     data.cancelledAt = new Date()
     if (cancelReason) data.cancelReason = cancelReason
+
+    // 回补库存（仅启用库存的菜品，仅首次取消时回补）
+    if (order.status !== 'cancelled') {
+      const items = await prisma.orderItem.findMany({ where: { orderId: id } })
+      if (items.length) {
+        const dishIds = [...new Set(items.map((i) => i.dishId))]
+        const stockDishes = await prisma.dish.findMany({ where: { id: { in: dishIds }, stockEnabled: true }, select: { id: true } })
+        if (stockDishes.length) {
+          const stockSet = new Set(stockDishes.map((d) => d.id))
+          const demand = new Map<string, number>()
+          for (const i of items) {
+            if (!stockSet.has(i.dishId)) continue
+            demand.set(i.dishId, (demand.get(i.dishId) ?? 0) + i.quantity)
+          }
+          await Promise.all(
+            [...demand.entries()].map(([dishId, qty]) =>
+              prisma.dish.update({ where: { id: dishId }, data: { stock: { increment: qty } } }),
+            ),
+          )
+        }
+      }
+    }
   }
   if (status === 'paid' && typeof paymentMethod === 'string' && paymentMethod) {
     data.paymentMethod = paymentMethod
@@ -341,6 +363,8 @@ router.get('/dishes', async (_req, res) => {
       status: d.status,
       sort: d.sort,
       portionSize: d.portionSize,
+      stock: d.stock,
+      stockEnabled: d.stockEnabled,
       createdAt: d.createdAt.toISOString(),
     })),
   )
@@ -350,7 +374,7 @@ router.post('/dishes', async (req, res) => {
   const merchant = await prisma.merchant.findFirst()
   if (!merchant) return res.status(404).json({ message: 'merchant not found' })
 
-  const { name, price, categoryId, desc, image, tags, specsPreset, specGroups, portionSize } = req.body ?? {}
+  const { name, price, categoryId, desc, image, tags, specsPreset, specGroups, portionSize, stock, stockEnabled } = req.body ?? {}
   if (!name || price === undefined || !categoryId) {
     return res.status(400).json({ message: 'name, price, categoryId 必填' })
   }
@@ -370,6 +394,8 @@ router.post('/dishes', async (req, res) => {
       specsPreset: specsPreset ?? 'none',
       specGroups: JSON.stringify(specGroups ?? []),
       portionSize: Number(portionSize) || 0,
+      stock: Number(stock) || 0,
+      stockEnabled: Boolean(stockEnabled),
     },
   })
 
@@ -390,7 +416,7 @@ router.put('/dishes/reorder', async (req, res) => {
 
 router.put('/dishes/:id', async (req, res) => {
   const { id } = req.params
-  const { name, price, categoryId, desc, image, tags, specsPreset, specGroups, status, sort, portionSize } = req.body ?? {}
+  const { name, price, categoryId, desc, image, tags, specsPreset, specGroups, status, sort, portionSize, stock, stockEnabled } = req.body ?? {}
 
   const dish = await prisma.dish.findUnique({ where: { id } })
   if (!dish) return res.status(404).json({ message: '菜品不存在' })
@@ -406,6 +432,8 @@ router.put('/dishes/:id', async (req, res) => {
   if (specGroups !== undefined) data.specGroups = JSON.stringify(specGroups)
   if (status !== undefined) data.status = status
   if (portionSize !== undefined) data.portionSize = Number(portionSize)
+  if (stock !== undefined) data.stock = Number(stock)
+  if (stockEnabled !== undefined) data.stockEnabled = Boolean(stockEnabled)
   if (sort !== undefined) {
     const newSort = Number(sort)
     if (newSort !== dish.sort) {

@@ -177,6 +177,8 @@ model Dish {
   status      String   @default("active")
   sort        Int      @default(0)
   portionSize Int      @default(0)
+  stock       Int      @default(0)
+  stockEnabled Boolean @default(false)
 
   merchant   Merchant       @relation(fields: [merchantId], references: [id])
   category   Category       @relation(fields: [categoryId], references: [id])

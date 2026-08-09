@@ -310,6 +310,8 @@ app.get('/api/catalog/menu', generalLimiter, async (req, res) => {
         specsPreset: d.specsPreset,
         specGroups: d.specGroups ? JSON.parse(d.specGroups) : [],
         portionSize: d.portionSize,
+        stock: d.stock ?? 0,
+        stockEnabled: d.stockEnabled ?? false,
         promoPrice: promo?.promoPrice ?? null,
         promotionName: promo?.name ?? null,
       }
@@ -735,46 +737,91 @@ app.post('/api/orders', orderLimiter, authMiddleware, async (req, res) => {
   const rand = Math.random().toString(36).substring(2, 6).toUpperCase()
   const orderNo = `DC${dateStr}${dailySeq}${devCode}${rand}`
 
-  const order = await prisma.order.create({
-    data: {
-      orderNo,
-      pickupCode,
-      status: payLater ? 'unpaid' : 'paid',
-      paidAt: payLater ? undefined : new Date(),
-      paymentMethod: typeof paymentMethod === 'string' ? paymentMethod : '',
-      orderType: type,
-      merchantId,
-      branchId,
-      deviceId,
-      originalAmount: quote.totals.originalAmount,
-      discountAmount: quote.totals.discountAmount,
-      payableAmount: quote.totals.payableAmount,
-      items: {
-        create: quote.itemDetails.map((item: any) => ({
-          dishId: item.dishId,
-          name: item.name,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          finalUnitPrice: item.finalUnitPrice,
-          subtotal: item.subtotal,
-          finalSubtotal: item.finalSubtotal,
-          specs: item.specs || null,
-          promotionLabel: item.promotionLabel,
-          portionSize: item.portionSize || 0,
-        })),
-      },
-      promotions: {
-        create: quote.appliedPromotions.map((p: any) => ({
-          promotionId: p.id,
-          name: p.name,
-          type: p.type,
-          discount: p.discount,
-          description: p.description,
-        })),
-      },
-    },
-    include: { items: true, promotions: true },
+  // 库存校验与扣减：仅对启用库存的菜品（stockEnabled），事务内条件扣减防超卖
+  const stockDishIds = [...new Set(normalizedItems.map((i: any) => i.dishId))]
+  const stockDishes = await prisma.dish.findMany({
+    where: { id: { in: stockDishIds }, stockEnabled: true },
+    select: { id: true, name: true, stock: true },
   })
+  const stockDishSet = new Set(stockDishes.map((d) => d.id))
+  const stockDemand = new Map<string, number>()
+  for (const item of normalizedItems) {
+    if (!stockDishSet.has(item.dishId)) continue
+    stockDemand.set(item.dishId, (stockDemand.get(item.dishId) ?? 0) + item.quantity)
+  }
+  const stockNameMap = new Map(stockDishes.map((d) => [d.id, d.name]))
+  const insufficient = [...stockDemand.entries()].filter(([dishId, qty]) => {
+    const dish = stockDishes.find((d) => d.id === dishId)
+    return !dish || dish.stock < qty
+  })
+  if (insufficient.length) {
+    return res.status(409).json({
+      message: insufficient.map(([dishId]) => `「${stockNameMap.get(dishId)}」库存不足`).join('；'),
+      insufficientDishes: insufficient.map(([dishId, qty]) => ({ dishId, name: stockNameMap.get(dishId), required: qty })),
+    })
+  }
+
+  let order: any
+  try {
+    order = await prisma.$transaction(async (tx) => {
+      // 条件扣减：库存不足则回滚
+      for (const [dishId, qty] of stockDemand) {
+        const r = await tx.dish.updateMany({
+          where: { id: dishId, stockEnabled: true, stock: { gte: qty } },
+          data: { stock: { decrement: qty } },
+        })
+        if (r.count === 0) {
+          throw { isStockShort: true, dishId }
+        }
+      }
+
+      return tx.order.create({
+        data: {
+          orderNo,
+          pickupCode,
+          status: payLater ? 'unpaid' : 'paid',
+          paidAt: payLater ? undefined : new Date(),
+          paymentMethod: typeof paymentMethod === 'string' ? paymentMethod : '',
+          orderType: type,
+          merchantId,
+          branchId,
+          deviceId,
+          originalAmount: quote.totals.originalAmount,
+          discountAmount: quote.totals.discountAmount,
+          payableAmount: quote.totals.payableAmount,
+          items: {
+            create: quote.itemDetails.map((item: any) => ({
+              dishId: item.dishId,
+              name: item.name,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              finalUnitPrice: item.finalUnitPrice,
+              subtotal: item.subtotal,
+              finalSubtotal: item.finalSubtotal,
+              specs: item.specs || null,
+              promotionLabel: item.promotionLabel,
+              portionSize: item.portionSize || 0,
+            })),
+          },
+          promotions: {
+            create: quote.appliedPromotions.map((p: any) => ({
+              promotionId: p.id,
+              name: p.name,
+              type: p.type,
+              discount: p.discount,
+              description: p.description,
+            })),
+          },
+        },
+        include: { items: true, promotions: true },
+      })
+    })
+  } catch (err: any) {
+    if (err?.isStockShort) {
+      return res.status(409).json({ message: `「${stockNameMap.get(err.dishId)}」库存不足，请刷新菜单后重试` })
+    }
+    throw err
+  }
 
   res.status(201).json({
     orderNo: order.orderNo,
@@ -789,7 +836,7 @@ app.post('/api/orders', orderLimiter, authMiddleware, async (req, res) => {
       discountAmount: order.discountAmount,
       payableAmount: order.payableAmount,
     },
-    items: order.items.map((i) => ({
+    items: order.items.map((i: any) => ({
       dishId: i.dishId,
       name: i.name,
       quantity: i.quantity,

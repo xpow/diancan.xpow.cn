@@ -39,6 +39,12 @@
             <span v-else style="font-size:13px;color:#999">无</span>
           </template>
         </Column>
+        <Column field="stock" header="库存" style="width:110px">
+          <template #body="{ data }">
+            <span v-if="data.stockEnabled" :style="{ fontWeight: 600, color: data.stock <= 0 ? '#e02424' : 'inherit' }">{{ data.stock }}</span>
+            <span v-else style="color:#999">不限</span>
+          </template>
+        </Column>
         <Column field="status" header="状态" style="width:100px">
           <template #body="{ data }">
             <Button :label="data.status === 'active' ? '下架' : '上架'" :severity="data.status === 'active' ? 'success' : 'danger'" size="small" @click="toggleStatus(data)" />
@@ -95,6 +101,14 @@
         <div class="form-group flex-1" v-if="dishForm.sellByPortion">
           <label>每份数量（串）</label>
           <InputNumber v-model="dishForm.portionSize" :min="2" class="w-full" placeholder="例：3" />
+        </div>
+        <div class="form-group" style="width: 150px">
+          <label>启用库存</label>
+          <ToggleSwitch v-model="dishForm.stockEnabled" />
+        </div>
+        <div class="form-group flex-1" v-if="dishForm.stockEnabled">
+          <label>库存数量</label>
+          <InputNumber v-model="dishForm.stock" :min="0" class="w-full" placeholder="例：100" />
         </div>
       </div>
       <div class="form-group">
@@ -255,7 +269,7 @@ function applyPreset() {
   dishForm.value.specGroups = preset ? JSON.parse(JSON.stringify(preset)) : []
 }
 
-const dishForm = ref({ name: '', price: 0, categoryId: '', desc: '', image: '', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0, specGroups: [] as any[] })
+const dishForm = ref({ name: '', price: 0, categoryId: '', desc: '', image: '', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0, stockEnabled: false, stock: 0, specGroups: [] as any[] })
 
 function addSpecGroup() {
   dishForm.value.specGroups.push({ name: '', type: 'single', options: [{ label: '', priceDelta: 0 }] })
@@ -304,13 +318,15 @@ function openDishDialog(dish?: any) {
       status: dish.status || 'active',
       sellByPortion: (dish.portionSize ?? 0) > 0,
       portionSize: dish.portionSize ?? 0,
+      stockEnabled: !!dish.stockEnabled,
+      stock: dish.stock ?? 0,
       specGroups,
     }
   } else {
     editingDish.value = false
     originalName.value = ''
     selectedPreset.value = 'none'
-    dishForm.value = { name: '', price: 0, categoryId: categories.value[0]?.id || '', desc: '', image: '', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0, specGroups: [] }
+    dishForm.value = { name: '', price: 0, categoryId: categories.value[0]?.id || '', desc: '', image: '', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0, stockEnabled: false, stock: 0, specGroups: [] }
   }
   showDish.value = true
 }
@@ -326,6 +342,8 @@ async function saveDish() {
     tags: dishForm.value.tagsText ? dishForm.value.tagsText.split(/[，,]\s*/).filter(Boolean) : [],
     status: dishForm.value.status,
     portionSize: dishForm.value.sellByPortion ? dishForm.value.portionSize : 0,
+    stockEnabled: dishForm.value.stockEnabled,
+    stock: dishForm.value.stockEnabled ? dishForm.value.stock : 0,
   }
 
   const dishId = editingDish.value ? (dishes.value.find((d) => d.name === originalName.value)?.id) : null

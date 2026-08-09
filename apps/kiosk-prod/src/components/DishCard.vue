@@ -3,6 +3,10 @@
     <div class="dish-image-wrap">
       <img :src="dish.image" :alt="dish.name" class="dish-image" />
       <span class="dish-image-disclaimer">*手工制作，实物与图片可能存在差异</span>
+      <div v-if="soldOut" class="dish-sold-out">
+        <span class="material-icons">inventory_2</span>
+        <span>已售罄</span>
+      </div>
     </div>
     <div class="dish-body">
       <div class="dish-header">
@@ -32,17 +36,18 @@
       </div>
     </div>
 
-    <button class="add-card-btn" :class="{ 'in-cart': inCart }" @click="$emit('add', dish)">
+    <button class="add-card-btn" :class="{ 'in-cart': inCart, 'sold-out': soldOut }" :disabled="soldOut" @click="soldOut ? null : $emit('add', dish)">
       <span class="material-icons">{{ inCart ? 'check_circle' : 'add' }}</span>
     </button>
   </article>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import SpecSelector from './SpecSelector.vue'
 import type { MenuDish } from '@/composables/useMenu'
 
-defineProps<{
+const props = defineProps<{
   dish: MenuDish
   highlight: boolean
   inCart: boolean
@@ -51,10 +56,12 @@ defineProps<{
 }>()
 
 defineEmits<{ add: [dish: MenuDish] }>()
+
+const soldOut = computed(() => !!props.dish.stockEnabled && (props.dish.stock ?? 0) <= 0)
 </script>
 
 <style scoped>
-.dish-card { position: relative; padding: var(--spacing-md); background: var(--surface-container-lowest); border-radius: var(--radius-xl); border: 1px solid var(--outline-variant); transition: border-color 0.3s, box-shadow 0.3s; }
+.dish-card { box-shadow: var(--shadow-md); position: relative; padding: var(--spacing-md); background: var(--surface-container-highest); border-radius: var(--radius-xl); border: 1px solid var(--outline-variant); transition: border-color 0.3s, box-shadow 0.3s; }
 .dish-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
 @keyframes dish-blink {
   0%, 100% { border-color: var(--primary-container); }
@@ -80,6 +87,8 @@ defineEmits<{ add: [dish: MenuDish] }>()
 .dish-image-wrap { position: relative; border-radius: var(--radius-lg); overflow: hidden; background: var(--surface-container); margin-bottom: var(--spacing-md); }
 .dish-image { width: 100%; height: 200px; display: block; object-fit: cover; }
 .dish-image-disclaimer { position: absolute; bottom: 4px; right: 4px; font-size: 10px; color: rgba(255, 255, 255, 0.85); background: rgba(0, 0, 0, 0.55); padding: 1px 6px; border-radius: 4px; line-height: 1.4; pointer-events: none; }
+.dish-sold-out { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: rgba(0, 0, 0, 0.5); color: #fff; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; letter-spacing: 0.05em; }
+.dish-sold-out .material-icons { font-size: 34px !important; opacity: 0.9; }
 
 .dish-specs { margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--card-border-subtle); display: flex; flex-direction: column; gap: var(--spacing-md); }
 .spec-group { display: flex; flex-direction: column; gap: var(--spacing-sm); }
@@ -91,6 +100,7 @@ defineEmits<{ add: [dish: MenuDish] }>()
 .add-card-btn .material-icons { font-size: 20px !important; }
 .add-card-btn:active { transform: scale(0.9); }
 .add-card-btn.in-cart { background: #4caf50; box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3); }
+.add-card-btn.sold-out { background: var(--outline); box-shadow: none; cursor: not-allowed; }
 
 [data-theme="dark"] .dish-card { border-color: var(--outline-variant); }
 </style>

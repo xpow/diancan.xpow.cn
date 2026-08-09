@@ -14,6 +14,8 @@ export interface MenuDish {
   selectedLabels?: (string | string[])[]
   promotionId?: string; promoPrice?: number; promotionName?: string
   portionSize?: number
+  stock?: number
+  stockEnabled?: boolean
 }
 
 const categoryIcons: Record<string, string> = {
