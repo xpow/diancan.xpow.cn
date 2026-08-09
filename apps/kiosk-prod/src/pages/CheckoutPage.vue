@@ -171,7 +171,6 @@
                 <img :src="paymentQrImage" :alt="paymentMethod === 'wechat' ? '微信支付' : '支付宝支付'" class="qr-img" />
               </div>
               <p class="popup-hint">打开{{ paymentMethod === 'wechat' ? '微信' : '支付宝' }}扫一扫付款</p>
-              <p v-if="orderError" class="popup-error">{{ orderError }}</p>
               <div class="popup-btn-row">
                 <button class="popup-paylater-btn" :disabled="submitting" @click="submitOrder(true)">
                   <span class="material-icons">schedule</span>
@@ -196,8 +195,7 @@
     </div>
 
     <!-- Bottom Action Bar -->
-    <footer v-if="cartItems.length && !createdOrder" class="action-bar">
-      <div class="action-left">
+    <footer v-if="cartItems.length && !createdOrder" class="action-bar">      <div class="action-left">
         <span class="action-label">待支付金额</span>
         <div class="action-amount">
           <span class="currency"><small class="c-sign">¥</small></span>
@@ -223,6 +221,14 @@
         </button>
       </div>
     </footer>
+
+    <Teleport to="body">
+      <div v-if="orderError" class="submit-error">
+        <span class="material-icons submit-error-icon">error_outline</span>
+        <span class="submit-error-text">{{ orderError }}</span>
+        <button class="submit-error-close" @click="orderError = ''">知道了</button>
+      </div>
+    </Teleport>
   </main>
 </template>
 
@@ -1097,6 +1103,10 @@ onMounted(() => {
 .qr-img { width: 100%; height: 100%; object-fit: contain; }
 .popup-hint { font-size: var(--text-body-sm); line-height: 1.5; color: var(--secondary); margin-bottom: var(--spacing-lg); }
 .popup-error { color: var(--error); font-size: var(--text-body-sm); line-height: 1.5; margin-bottom: var(--spacing-md); padding: 8px; background: var(--error-container); border-radius: var(--radius-md); }
+.submit-error { position: fixed; top: 68px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; align-items: center; gap: var(--spacing-sm); max-width: calc(100vw - 48px); padding: 12px 16px; border-radius: var(--radius-lg); background: var(--error-container); color: var(--on-error-container); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14); }
+.submit-error-icon { font-size: 22px !important; flex-shrink: 0; }
+.submit-error-text { font-family: var(--font-display); font-size: var(--text-body-md); font-weight: 600; line-height: 1.4; }
+.submit-error-close { flex-shrink: 0; padding: 6px 14px; border: none; border-radius: var(--radius-full); background: var(--error); color: #fff; font-family: var(--font-display); font-size: var(--text-label-md); font-weight: 700; cursor: pointer; }
 .popup-btn-row {
   display: flex; gap: var(--spacing-sm);
 }
