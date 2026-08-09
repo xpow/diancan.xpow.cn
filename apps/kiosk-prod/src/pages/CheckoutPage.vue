@@ -157,8 +157,7 @@
         </div>
 
         <!-- Payment Popup -->
-        <Teleport to="body">
-          <div v-if="showPaymentPopup" class="payment-overlay" @click.self="showPaymentPopup = false">
+        <AppOverlay :show="showPaymentPopup" @click-mask="showPaymentPopup = false">
             <div class="payment-popup">
               <div class="popup-header">
                 <span class="popup-icon">
@@ -189,8 +188,7 @@
               </div>
               <button class="popup-cancel-btn" @click="showPaymentPopup = false">取消支付</button>
             </div>
-          </div>
-        </Teleport>
+        </AppOverlay>
       </template>
     </div>
 
@@ -222,13 +220,13 @@
       </div>
     </footer>
 
-    <Teleport to="body">
-      <div v-if="orderError" class="submit-error">
+    <AppOverlay :show="!!orderError" :z-index="200" @click-mask="orderError = ''">
+      <div class="submit-error">
         <span class="material-icons submit-error-icon">error_outline</span>
         <span class="submit-error-text">{{ orderError }}</span>
         <button class="submit-error-close" @click="orderError = ''">知道了</button>
       </div>
-    </Teleport>
+    </AppOverlay>
   </main>
 </template>
 
@@ -239,6 +237,7 @@ import { clearCart, readCart } from '@/utils/cart'
 import { getDishImage } from '@/utils/dishImages'
 import { apiPost, getDeviceToken, setDeviceToken, clearDeviceToken } from '@/utils/api'
 import KioskTopBar from '@/components/KioskTopBar.vue'
+import AppOverlay from '@/components/AppOverlay.vue'
 import wechatpayIcon from '@/assets/images/pages/wechatpay.png?url'
 import alipayIcon from '@/assets/images/pages/alipay.png?url'
 

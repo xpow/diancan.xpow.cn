@@ -123,8 +123,7 @@
       <div v-if="toastVisible" class="toast">{{ toastMessage }}</div>
     </transition>
 
-    <Teleport to="body">
-      <div v-if="showPickupConfirm" class="payment-overlay" @click.self="showPickupConfirm = false">
+    <AppOverlay :show="showPickupConfirm" @click-mask="showPickupConfirm = false">
         <div class="confirm-dialog">
           <span class="material-icons confirm-icon">check_circle</span>
           <p class="confirm-text">确认已取餐？</p>
@@ -148,12 +147,10 @@
             </button>
           </div>
         </div>
-      </div>
-    </Teleport>
+    </AppOverlay>
 
     <!-- Payment Popup -->
-    <Teleport to="body">
-      <div v-if="showPayPopup && selectedPayOrder" class="payment-overlay" @click.self="showPayPopup = false">
+    <AppOverlay :show="showPayPopup && !!selectedPayOrder" @click-mask="showPayPopup = false">
         <div class="payment-popup">
           <div class="popup-header">
             <span class="popup-icon">
@@ -186,8 +183,7 @@
           </button>
           <button class="popup-cancel-btn" @click="showPayPopup = false">关闭</button>
         </div>
-      </div>
-    </Teleport>
+    </AppOverlay>
 
     <BottomNav current="orders" />
   </main>
@@ -199,6 +195,7 @@ import { getDishImage } from '@/utils/dishImages'
 import { apiGet, apiPost } from '@/utils/api'
 import KioskTopBar from '@/components/KioskTopBar.vue'
 import BottomNav from '@/components/BottomNav.vue'
+import AppOverlay from '@/components/AppOverlay.vue'
 
 interface OrderItem {
   dishId: string

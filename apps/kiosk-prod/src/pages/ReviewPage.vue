@@ -170,8 +170,7 @@
     </main>
 
     <!-- 历史评价弹窗 -->
-    <Teleport to="body">
-      <div v-if="showHistory" class="overlay" @click.self="showHistory = false">
+    <AppOverlay :show="showHistory" @click-mask="showHistory = false">
         <div class="history-dialog">
           <div class="history-header">
             <span class="step-title">历史评价</span>
@@ -206,8 +205,7 @@
             </div>
           </div>
         </div>
-      </div>
-    </Teleport>
+    </AppOverlay>
 
     <!-- Bottom actions (inside main scroll area, pinned to bottom of content) -->
     <div v-if="step === 1" class="bottom-actions">
@@ -232,6 +230,7 @@ import { ref, onMounted } from 'vue'
 import { apiGet, apiPost } from '@/utils/api'
 import KioskTopBar from '@/components/KioskTopBar.vue'
 import BottomNav from '@/components/BottomNav.vue'
+import AppOverlay from '@/components/AppOverlay.vue'
 import { getDishImage } from '@/utils/dishImages'
 import heroImg from '@/assets/images/pages/hero.jpg'
 
