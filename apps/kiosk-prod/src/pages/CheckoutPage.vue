@@ -222,9 +222,14 @@
 
     <AppOverlay :show="!!orderError" :z-index="200" @click-mask="orderError = ''">
       <div class="submit-error">
-        <span class="material-icons submit-error-icon">error_outline</span>
-        <span class="submit-error-text">{{ orderError }}</span>
-        <button class="submit-error-close" @click="orderError = ''">知道了</button>
+        <div class="submit-error-content">
+          <span class="material-icons submit-error-icon">error_outline</span>
+          <span class="submit-error-text">{{ orderError }}</span>
+        </div>
+        <div class="submit-error-actions">
+          <button class="submit-error-close" @click="orderError = ''">知道了</button>
+          <button class="submit-error-continue" @click="continueOrdering">继续下单</button>
+        </div>
       </div>
     </AppOverlay>
   </main>
@@ -306,6 +311,7 @@ const displayTitle = computed(() => {
 const orderType = ref<'dine-in' | 'takeaway'>('dine-in')
 const paymentMethod = ref<'wechat' | 'alipay'>('wechat')
 const showPaymentPopup = ref(false)
+const forceStock = ref(false)
 
 const qrModules = import.meta.glob('@/assets/images/payments/*.{jpg,png,webp}', { eager: true, query: '?url', import: 'default' })
 const qrMap: Record<string, string> = {}
@@ -426,6 +432,12 @@ async function reloadQuote() {
 async function openPaymentPopup() {
   if (!quote.value || !cartItems.value.length || submitting.value) return
 
+  // 已选择继续下单（忽略库存）则直接弹付款码
+  if (forceStock.value) {
+    showPaymentPopup.value = true
+    return
+  }
+
   // 依据试算接口返回的实时库存校验，不足则不弹付款码
   const stockCheck = new Map<string, { name: string; need: number; stock: number }>()
   for (const item of quote.value.itemDetails) {
@@ -445,6 +457,15 @@ async function openPaymentPopup() {
   }
 
   showPaymentPopup.value = true
+}
+
+// 继续下单：忽略库存限制（现场人为换菜场景），重新进入付款流程
+function continueOrdering() {
+  forceStock.value = true
+  orderError.value = ''
+  if (!showPaymentPopup.value) {
+    showPaymentPopup.value = true
+  }
 }
 
 async function submitOrder(payLater = false) {
@@ -470,6 +491,7 @@ async function submitOrder(payLater = false) {
       orderType: orderType.value,
       paymentMethod: paymentMethod.value,
       payLater,
+      force: forceStock.value,
       items: cartItems.value.map((item) => ({
         dishId: item.baseDishId,
         quantity: item.quantity,
@@ -1128,10 +1150,13 @@ onMounted(() => {
 .qr-img { width: 100%; height: 100%; object-fit: contain; }
 .popup-hint { font-size: var(--text-body-sm); line-height: 1.5; color: var(--secondary); margin-bottom: var(--spacing-lg); }
 .popup-error { color: var(--error); font-size: var(--text-body-sm); line-height: 1.5; margin-bottom: var(--spacing-md); padding: 8px; background: var(--error-container); border-radius: var(--radius-md); }
-.submit-error { position: fixed; top: 68px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; align-items: center; gap: var(--spacing-sm); max-width: calc(100vw - 48px); padding: 12px 16px; border-radius: var(--radius-lg); background: var(--error-container); color: var(--on-error-container); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14); }
+.submit-error { position: fixed; top: 68px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; flex-direction: column; align-items: stretch; gap: var(--spacing-sm); max-width: calc(100vw - 48px); padding: 12px 16px; border-radius: var(--radius-lg); background: var(--error-container); color: var(--on-error-container); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14); }
+.submit-error-content { display: flex; align-items: center; gap: var(--spacing-sm); }
 .submit-error-icon { font-size: 22px !important; flex-shrink: 0; }
 .submit-error-text { font-family: var(--font-display); font-size: var(--text-body-md); font-weight: 600; line-height: 1.4; }
-.submit-error-close { flex-shrink: 0; padding: 6px 14px; border: none; border-radius: var(--radius-full); background: var(--error); color: #fff; font-family: var(--font-display); font-size: var(--text-label-md); font-weight: 700; cursor: pointer; }
+.submit-error-close { flex-shrink: 0; padding: 6px 14px; border: none; border-radius: var(--radius-full); background: var(--outline); color: #fff; font-family: var(--font-display); font-size: var(--text-label-md); font-weight: 700; cursor: pointer; }
+.submit-error-actions { display: flex; flex-direction: column; align-items: stretch; gap: var(--spacing-sm); flex-shrink: 0; }
+.submit-error-continue { flex-shrink: 0; padding: 6px 14px; border: none; border-radius: var(--radius-full); background: var(--error); color: #fff; font-family: var(--font-display); font-size: var(--text-label-md); font-weight: 700; cursor: pointer; }
 .popup-btn-row {
   display: flex; gap: var(--spacing-sm);
 }

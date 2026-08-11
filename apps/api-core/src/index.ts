@@ -678,8 +678,10 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
 })
 
 app.post('/api/orders', orderLimiter, authMiddleware, async (req, res) => {
-  const { merchantId, branchId, deviceId: reqDeviceId, items, orderType, paymentMethod, payLater } = req.body ?? {}
+  const { merchantId, branchId, deviceId: reqDeviceId, items, orderType, paymentMethod, payLater, force } = req.body ?? {}
   const deviceId = req.authDevice!.deviceId
+  // force 为 true 时跳过库存校验与扣减（现场人为换菜等场景）
+  const forceStock = force === true
 
   // 校验 deviceId 与令牌一致
   if (reqDeviceId && reqDeviceId !== deviceId) {
@@ -755,28 +757,32 @@ app.post('/api/orders', orderLimiter, authMiddleware, async (req, res) => {
     stockDemand.set(item.dishId, (stockDemand.get(item.dishId) ?? 0) + item.quantity)
   }
   const stockNameMap = new Map(stockDishes.map((d) => [d.id, d.name]))
-  const insufficient = [...stockDemand.entries()].filter(([dishId, qty]) => {
-    const dish = stockDishes.find((d) => d.id === dishId)
-    return !dish || dish.stock < qty
-  })
-  if (insufficient.length) {
-    return res.status(409).json({
-      message: insufficient.map(([dishId]) => `「${stockNameMap.get(dishId)}」库存不足`).join('；'),
-      insufficientDishes: insufficient.map(([dishId, qty]) => ({ dishId, name: stockNameMap.get(dishId), required: qty })),
+  if (!forceStock) {
+    const insufficient = [...stockDemand.entries()].filter(([dishId, qty]) => {
+      const dish = stockDishes.find((d) => d.id === dishId)
+      return !dish || dish.stock < qty
     })
+    if (insufficient.length) {
+      return res.status(409).json({
+        message: insufficient.map(([dishId]) => `「${stockNameMap.get(dishId)}」库存不足`).join('；'),
+        insufficientDishes: insufficient.map(([dishId, qty]) => ({ dishId, name: stockNameMap.get(dishId), required: qty })),
+      })
+    }
   }
 
   let order: any
   try {
     order = await prisma.$transaction(async (tx) => {
-      // 条件扣减：库存不足则回滚
-      for (const [dishId, qty] of stockDemand) {
-        const r = await tx.dish.updateMany({
-          where: { id: dishId, stockEnabled: true, stock: { gte: qty } },
-          data: { stock: { decrement: qty } },
-        })
-        if (r.count === 0) {
-          throw { isStockShort: true, dishId }
+      // 条件扣减：库存不足则回滚（force 下单跳过扣减）
+      if (!forceStock) {
+        for (const [dishId, qty] of stockDemand) {
+          const r = await tx.dish.updateMany({
+            where: { id: dishId, stockEnabled: true, stock: { gte: qty } },
+            data: { stock: { decrement: qty } },
+          })
+          if (r.count === 0) {
+            throw { isStockShort: true, dishId }
+          }
         }
       }
 
