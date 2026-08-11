@@ -39,10 +39,21 @@
             <span v-else style="font-size:13px;color:#999">无</span>
           </template>
         </Column>
-        <Column field="stock" header="库存" style="width:110px">
+        <Column field="stock" header="库存（快捷录入）" style="width:170px">
           <template #body="{ data }">
-            <span v-if="data.stockEnabled" :style="{ fontWeight: 600, color: data.stock <= 0 ? '#e02424' : 'inherit' }">{{ data.stock }}</span>
-            <span v-else style="color:#999">不限</span>
+            <div class="stock-quick-edit">
+              <InputNumber
+                v-if="data.stockEnabled"
+                v-model="data.stock"
+                :min="0"
+                class="stock-input"
+                @value-change="quickSaveStock(data, $event)"
+              />
+              <template v-else>
+                <span style="color:#999;margin-right:6px">不限</span>
+                <Button label="启用" severity="success" size="small" @click="enableStock(data)" />
+              </template>
+            </div>
           </template>
         </Column>
         <Column field="status" header="状态" style="width:100px">
@@ -472,6 +483,37 @@ async function fetchDishes() {
   dishes.value = await res.json()
 }
 
+// 快捷录入库存：值提交（回车/失焦）即保存，仅更新库存字段
+async function quickSaveStock(dish: any, newValue: number | null) {
+  const newStock = Math.max(0, Number(newValue) || 0)
+  if (dish.__lastSavedStock === newStock) return
+  dish.__lastSavedStock = newStock
+  dish.stock = newStock
+  const res = await fetch(`/api/admin/dishes/${dish.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ stockEnabled: true, stock: newStock }),
+  })
+  if (!res.ok) {
+    console.error('stock save failed', await res.text())
+    alert('库存保存失败')
+  }
+}
+
+async function enableStock(dish: any) {
+  dish.stockEnabled = true
+  dish.stock = dish.stock ?? 0
+  const res = await fetch(`/api/admin/dishes/${dish.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ stockEnabled: true, stock: dish.stock }),
+  })
+  if (!res.ok) {
+    console.error('enable stock failed', await res.text())
+    alert('启用库存失败')
+  }
+}
+
 async function updateSort(dish: any) {
   const res = await fetch(`/api/admin/dishes/${dish.id}`, {
     method: 'PUT',
@@ -516,4 +558,7 @@ onMounted(() => {
 .spec-option-row > div:first-child { flex: 1; min-width: 0; max-width: 200px; }
 .spec-option-row .p-inputtext { max-width: 100%; }
 .add-group-btn { align-self: flex-start; margin-top: 4px; }
+.stock-quick-edit { display: flex; align-items: center; gap: 6px; }
+.stock-input { width: 64px; }
+.stock-input .p-inputtext { text-align: center; font-weight: 600; padding: 4px 4px; }
 </style>
