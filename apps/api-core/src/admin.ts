@@ -281,6 +281,8 @@ router.put('/orders/:id/status', async (req, res) => {
               prisma.dish.update({ where: { id: dishId }, data: { stock: { increment: qty } } }),
             ),
           )
+          // 回补库存后失效菜单缓存，保证菜单页实时库存
+          invalidateGlobalCache()
         }
       }
     }

@@ -6,7 +6,7 @@ import rateLimit from 'express-rate-limit'
 import jwt from 'jsonwebtoken'
 import { PrismaClient } from '@prisma/client'
 import adminRouter from './admin.js'
-import { loadGlobalCache, buildGlobalCache } from './cache.js'
+import { loadGlobalCache, buildGlobalCache, invalidateGlobalCache } from './cache.js'
 import { decryptDeviceToken, encryptDeviceSN } from './crypto.js'
 
 const app = express()
@@ -833,6 +833,9 @@ app.post('/api/orders', orderLimiter, authMiddleware, async (req, res) => {
     }
     throw err
   }
+
+  // 下单扣减库存后失效菜单缓存，保证菜单页实时库存
+  invalidateGlobalCache()
 
   res.status(201).json({
     orderNo: order.orderNo,
