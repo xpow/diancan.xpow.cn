@@ -7,7 +7,7 @@
         <span class="material-icons">inventory_2</span>
         <span>已售罄</span>
       </div>
-      <span v-else-if="showStockBadge" class="dish-stock-badge">预估剩余 {{ dish.stock }} 份</span>
+      <span v-else-if="showStockBadge" class="dish-stock-badge">预估剩余 {{ dish.stock }} 串</span>
     </div>
     <div class="dish-body">
       <div class="dish-header">
