@@ -49,7 +49,7 @@
                   class="stock-input"
                   @value-change="quickSaveStock(data, $event)"
                 />
-                <Button label="取消库存管理" severity="danger" text size="small" @click="disableStock(data)" />
+                <Button label="取消" severity="danger" text size="small" @click="disableStock(data)" />
               </template>
               <template v-else>
                 <span style="color:#999;margin-right:6px">不限</span>
