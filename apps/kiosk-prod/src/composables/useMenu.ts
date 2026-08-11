@@ -155,6 +155,8 @@ const restReason = ref('')
           promoPrice: d.promoPrice ?? undefined,
           promotionName: d.promotionName ?? undefined,
           portionSize: d.portionSize ?? 0,
+          stock: d.stock ?? undefined,
+          stockEnabled: d.stockEnabled ?? undefined,
         }
       })
 

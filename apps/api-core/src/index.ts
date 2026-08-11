@@ -455,6 +455,8 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
       specs: item.specs,
       promotionLabel,
       portionSize: dish.portionSize || undefined,
+      stock: dish.stockEnabled ? dish.stock : undefined,
+      stockEnabled: dish.stockEnabled || undefined,
     })
   }
 

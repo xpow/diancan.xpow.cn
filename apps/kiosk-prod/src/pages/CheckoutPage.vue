@@ -250,6 +250,8 @@ interface QuoteLineItem {
   finalSubtotal: number
   specs?: string
   promotionLabel?: string
+  stock?: number
+  stockEnabled?: boolean
 }
 
 interface AppliedPromotion {
@@ -424,29 +426,22 @@ async function reloadQuote() {
 async function openPaymentPopup() {
   if (!quote.value || !cartItems.value.length || submitting.value) return
 
-  // 打开付款码前先校验实时库存，避免弹码后才发现无库存
-  try {
-    const menuRes = await fetch('/api/catalog/menu')
-    if (menuRes.ok) {
-      const menu = await menuRes.json() as { dishes: { id: string; name: string; stock: number; stockEnabled: boolean }[] }
-      const dishMap = new Map(menu.dishes.map((d) => [d.id, d]))
-      const stockCheck = new Map<string, number>()
-      for (const item of cartItems.value) {
-        const dish = dishMap.get(item.baseDishId)
-        if (dish?.stockEnabled) {
-          stockCheck.set(item.baseDishId, (stockCheck.get(item.baseDishId) ?? 0) + item.quantity)
-        }
-      }
-      for (const [dishId, need] of stockCheck) {
-        const dish = dishMap.get(dishId)
-        if (dish && need > dish.stock) {
-          orderError.value = `「${dish.name}」库存不足，仅剩 ${dish.stock}`
-          return
-        }
-      }
+  // 依据试算接口返回的实时库存校验，不足则不弹付款码
+  const stockCheck = new Map<string, { name: string; need: number; stock: number }>()
+  for (const item of quote.value.itemDetails) {
+    if (!item.stockEnabled || item.stock === undefined) continue
+    const prev = stockCheck.get(item.dishId)
+    if (prev) {
+      prev.need += item.quantity
+    } else {
+      stockCheck.set(item.dishId, { name: item.name, need: item.quantity, stock: item.stock })
     }
-  } catch {
-    // 库存预检失败不阻断，交由下单接口最终校验
+  }
+  for (const [dishId, info] of stockCheck) {
+    if (info.need > info.stock) {
+      orderError.value = `「${info.name}」库存不足，仅剩 ${info.stock}`
+      return
+    }
   }
 
   showPaymentPopup.value = true
@@ -1065,7 +1060,7 @@ onMounted(() => {
 /* Continue Ordering - dark frosted glass */
 .continue-ordering {
   background: var(--surface-container) !important;
-  /* border: 1px solid var(--outline-variant); */
+  border: 2px solid var(--outline-variant);
 }
 
 .continue-ordering .payment-icon,
