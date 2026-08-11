@@ -612,6 +612,8 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
       specs: '',
       promotionLabel: promo.name,
       portionSize: giftDish.portionSize || undefined,
+      stock: giftDish.stockEnabled ? giftDish.stock : undefined,
+      stockEnabled: giftDish.stockEnabled || undefined,
     })
 
     appliedPromotions.push({
@@ -739,15 +741,16 @@ app.post('/api/orders', orderLimiter, authMiddleware, async (req, res) => {
   const rand = Math.random().toString(36).substring(2, 6).toUpperCase()
   const orderNo = `DC${dateStr}${dailySeq}${devCode}${rand}`
 
-  // 库存校验与扣减：仅对启用库存的菜品（stockEnabled），事务内条件扣减防超卖
-  const stockDishIds = [...new Set(normalizedItems.map((i: any) => i.dishId))]
+  // 库存校验与扣减：仅对启用库存的菜品（stockEnabled），事务内条件扣减防超卖。
+  // 需求口径基于试算明细 quote.itemDetails（含买赠赠品行），赠品同样占用库存
+  const stockDishIds = [...new Set(quote.itemDetails.map((i: any) => i.dishId))] as string[]
   const stockDishes = await prisma.dish.findMany({
     where: { id: { in: stockDishIds }, stockEnabled: true },
     select: { id: true, name: true, stock: true },
   })
   const stockDishSet = new Set(stockDishes.map((d) => d.id))
   const stockDemand = new Map<string, number>()
-  for (const item of normalizedItems) {
+  for (const item of quote.itemDetails) {
     if (!stockDishSet.has(item.dishId)) continue
     stockDemand.set(item.dishId, (stockDemand.get(item.dishId) ?? 0) + item.quantity)
   }
