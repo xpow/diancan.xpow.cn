@@ -1150,12 +1150,12 @@ onMounted(() => {
 .qr-img { width: 100%; height: 100%; object-fit: contain; }
 .popup-hint { font-size: var(--text-body-sm); line-height: 1.5; color: var(--secondary); margin-bottom: var(--spacing-lg); }
 .popup-error { color: var(--error); font-size: var(--text-body-sm); line-height: 1.5; margin-bottom: var(--spacing-md); padding: 8px; background: var(--error-container); border-radius: var(--radius-md); }
-.submit-error { position: fixed; top: 68px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; flex-direction: column; align-items: stretch; gap: var(--spacing-sm); max-width: calc(100vw - 48px); padding: 12px 16px; border-radius: var(--radius-lg); background: var(--error-container); color: var(--on-error-container); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14); }
+.submit-error { position: fixed; top: 68px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; flex-direction: column; align-items: stretch; gap: var(--spacing-sm); width: 80%; max-width: min(580px, calc(100vw - 48px)); padding: 12px 16px; border-radius: var(--radius-lg); background: var(--error-container); color: var(--on-error-container); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14); }
 .submit-error-content { display: flex; align-items: center; gap: var(--spacing-sm); }
 .submit-error-icon { font-size: 22px !important; flex-shrink: 0; }
 .submit-error-text { font-family: var(--font-display); font-size: var(--text-body-md); font-weight: 600; line-height: 1.4; }
 .submit-error-close { flex-shrink: 0; padding: 6px 14px; border: none; border-radius: var(--radius-full); background: var(--outline); color: #fff; font-family: var(--font-display); font-size: var(--text-label-md); font-weight: 700; cursor: pointer; }
-.submit-error-actions { display: flex; flex-direction: column; align-items: stretch; gap: var(--spacing-sm); flex-shrink: 0; }
+.submit-error-actions { display: flex; flex-direction: row; align-items: stretch; justify-content: flex-end; gap: var(--spacing-sm); flex-shrink: 0; }
 .submit-error-continue { flex-shrink: 0; padding: 6px 14px; border: none; border-radius: var(--radius-full); background: var(--error); color: #fff; font-family: var(--font-display); font-size: var(--text-label-md); font-weight: 700; cursor: pointer; }
 .popup-btn-row {
   display: flex; gap: var(--spacing-sm);
