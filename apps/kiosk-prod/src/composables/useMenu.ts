@@ -43,6 +43,9 @@ const restReason = ref('')
   const navFloating = ref(false)
   const navSentinel = ref<HTMLElement | null>(null)
   let navObserver: IntersectionObserver | null = null
+  // 库存轮询间隔：下单后菜单页库存实时更新
+  const STOCK_POLL_MS = 15_000
+  let stockTimer: ReturnType<typeof setInterval> | null = null
 
   const displayTitle = computed(() => {
     const m = merchantName.value
@@ -79,6 +82,30 @@ const restReason = ref('')
     const res = await fetch(`/api/catalog/menu${params}`)
     if (!res.ok) throw new Error('接口返回异常，请检查 api-core 是否已启动')
     return res.json()
+  }
+
+  // 就地刷新库存：仅更新 stock/stockEnabled，不重建 dishes，避免丢失用户规格选择
+  async function refreshStocks() {
+    if (!deviceId.value) return
+    try {
+      const menu = (await loadMenu({ deviceId: deviceId.value })) as {
+        dishes: { id: string; stock?: number; stockEnabled?: boolean }[]
+      }
+      const stockMap = new Map(menu.dishes.map((d) => [d.id, d]))
+      for (const dish of dishes.value) {
+        const fresh = stockMap.get(dish.id)
+        if (fresh) {
+          dish.stock = fresh.stock
+          dish.stockEnabled = fresh.stockEnabled
+        }
+      }
+    } catch {
+      // 静默失败，下次轮询重试
+    }
+  }
+
+  function onVisibilityChange() {
+    if (document.visibilityState === 'visible') void refreshStocks()
   }
 
   async function loadData() {
@@ -198,10 +225,14 @@ const restReason = ref('')
   onMounted(() => {
     void loadData()
     setupNavObserver()
+    stockTimer = setInterval(() => { void refreshStocks() }, STOCK_POLL_MS)
+    document.addEventListener('visibilitychange', onVisibilityChange)
   })
 
   onBeforeUnmount(() => {
     navObserver?.disconnect()
+    if (stockTimer) { clearInterval(stockTimer); stockTimer = null }
+    document.removeEventListener('visibilitychange', onVisibilityChange)
   })
 
   return {
