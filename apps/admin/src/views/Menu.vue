@@ -39,16 +39,18 @@
             <span v-else style="font-size:13px;color:#999">无</span>
           </template>
         </Column>
-        <Column field="stock" header="库存（快捷录入）" style="width:170px">
+        <Column field="stock" header="库存（快捷录入）" style="width:260px">
           <template #body="{ data }">
             <div class="stock-quick-edit">
-              <InputNumber
-                v-if="data.stockEnabled"
-                v-model="data.stock"
-                :min="0"
-                class="stock-input"
-                @value-change="quickSaveStock(data, $event)"
-              />
+              <template v-if="data.stockEnabled">
+                <InputNumber
+                  v-model="data.stock"
+                  :min="0"
+                  class="stock-input"
+                  @value-change="quickSaveStock(data, $event)"
+                />
+                <Button label="取消库存管理" severity="danger" text size="small" @click="disableStock(data)" />
+              </template>
               <template v-else>
                 <span style="color:#999;margin-right:6px">不限</span>
                 <Button label="启用" severity="success" size="small" @click="enableStock(data)" />
@@ -511,6 +513,19 @@ async function enableStock(dish: any) {
   if (!res.ok) {
     console.error('enable stock failed', await res.text())
     alert('启用库存失败')
+  }
+}
+
+async function disableStock(dish: any) {
+  dish.stockEnabled = false
+  const res = await fetch(`/api/admin/dishes/${dish.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ stockEnabled: false }),
+  })
+  if (!res.ok) {
+    console.error('disable stock failed', await res.text())
+    alert('取消库存管理失败')
   }
 }
 
