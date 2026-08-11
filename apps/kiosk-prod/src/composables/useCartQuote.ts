@@ -114,6 +114,18 @@ export function useCartQuote(dishes: Ref<MenuDish[]>) {
         }
       }
     }
+
+    // 加购前库存校验：已启用库存的菜品，购物车已有数量 + 本次数量 不得超过剩余库存
+    if (dish.stockEnabled && dish.stock !== undefined) {
+      const inCartQty = cartItems.value
+        .filter((i) => i.baseDishId === dish.id)
+        .reduce((s, i) => s + i.quantity, 0)
+      if (inCartQty + qty > dish.stock) {
+        showToast({ message: `「${dish.name}」库存不足，仅剩 ${dish.stock} 串`, icon: 'fail' })
+        return
+      }
+    }
+
     const specsKey = specsParts.join(' · ')
     const price = (dish.promoPrice ?? dish.price) + priceDelta
 
