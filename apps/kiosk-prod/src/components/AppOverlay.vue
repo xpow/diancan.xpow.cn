@@ -26,10 +26,7 @@ defineEmits<{ 'click-mask': [] }>()
 .app-overlay {
   position: fixed; inset: 0; z-index: 100;
   display: flex; align-items: center; justify-content: center;
-  background: transparent;
-}
-.app-overlay-dim {
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
 }
 </style>
