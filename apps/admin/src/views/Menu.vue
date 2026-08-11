@@ -559,6 +559,6 @@ onMounted(() => {
 .spec-option-row .p-inputtext { max-width: 100%; }
 .add-group-btn { align-self: flex-start; margin-top: 4px; }
 .stock-quick-edit { display: flex; align-items: center; gap: 6px; }
-.stock-input { width: 64px; }
+.stock-input { width: 48px; }
 .stock-input .p-inputtext { text-align: center; font-weight: 600; padding: 4px 4px; }
 </style>
