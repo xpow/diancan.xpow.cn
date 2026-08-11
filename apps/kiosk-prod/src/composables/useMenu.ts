@@ -44,7 +44,7 @@ const restReason = ref('')
   const navSentinel = ref<HTMLElement | null>(null)
   let navObserver: IntersectionObserver | null = null
   // 库存轮询间隔：下单/后台改库存后菜单页库存快速同步
-  const STOCK_POLL_MS = 5_000
+  const STOCK_POLL_MS = 10_000
   let stockTimer: ReturnType<typeof setInterval> | null = null
 
   const displayTitle = computed(() => {
