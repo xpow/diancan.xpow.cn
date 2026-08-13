@@ -27,7 +27,7 @@
 <script setup lang="ts">
 import logoImage from '@/assets/images/pages/logo.jpg'
 import { ref, computed } from 'vue'
-import { getTheme, setTheme } from '@/utils/theme'
+import { getTheme, toggleTheme as cycleTheme } from '@/utils/theme'
 
 const props = defineProps<{
   title: string
@@ -71,7 +71,7 @@ function getThemeIcon(): string {
   return t === 'auto' ? 'brightness_auto' : t === 'dark' ? 'dark_mode' : 'light_mode'
 }
 function toggleTheme() {
-  setTheme(getTheme() === 'dark' ? 'light' : 'dark')
+  cycleTheme()
   themeIcon.value = getThemeIcon()
 }
 </script>

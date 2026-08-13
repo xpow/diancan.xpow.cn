@@ -31,9 +31,7 @@ export function setTheme(theme: Theme) {
 
 export function toggleTheme() {
   const current = getSaved()
-  const next: Theme = current === 'auto'
-    ? (mediaQuery.matches ? 'light' : 'dark')
-    : current === 'dark' ? 'light' : 'auto'
+  const next: Theme = current === 'auto' ? 'dark' : current === 'dark' ? 'light' : 'auto'
   setTheme(next)
   return next
 }
