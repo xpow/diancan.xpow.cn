@@ -7,8 +7,8 @@ const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
 function apply(theme: Theme) {
   const el = document.documentElement
   if (theme === 'auto') {
-    el.removeAttribute('data-theme')
     const isDark = mediaQuery.matches
+    el.setAttribute('data-theme', isDark ? 'dark' : 'light')
     el.style.colorScheme = isDark ? 'dark' : 'light'
   } else {
     el.setAttribute('data-theme', theme)
