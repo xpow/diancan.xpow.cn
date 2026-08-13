@@ -594,7 +594,7 @@ onUnmounted(() => {
   100% { opacity: 0; height: 0; margin-bottom: 0; border-width: 0; padding-top: 0; padding-bottom: 0; }
 }
 
-.ticket-card { width: 100%; background: var(--surface-container-lowest); border-radius: var(--radius-xl); position: relative; margin-bottom: var(--spacing-md); border: 1px solid var(--card-border-light); box-shadow: 0 3px 14px rgba(160, 65, 0, 0.10), 0 1px 4px rgba(0, 0, 0, 0.06); transition: border-color var(--transition-normal), box-shadow var(--transition-normal); }
+.ticket-card { width: 100%; background: var(--surface-container-highest); border-radius: var(--radius-xl); position: relative; margin-bottom: var(--spacing-md); border: 1px solid var(--card-border-light); box-shadow: 0 3px 14px rgba(160, 65, 0, 0.10), 0 1px 4px rgba(0, 0, 0, 0.06); transition: border-color var(--transition-normal), box-shadow var(--transition-normal); }
 /* .ticket-card::before, .ticket-card::after { content: ''; position: absolute; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; border-radius: 50%; background: var(--surface); z-index: 1; pointer-events: none; }
 .ticket-card::before { left: -13px; box-shadow: inset 0 0 0 1px var(--ticket-card-border); }
 .ticket-card::after { right: -13px; box-shadow: inset 0 0 0 1px var(--ticket-card-border); } */
