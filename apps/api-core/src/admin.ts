@@ -10,7 +10,8 @@ const prisma = new PrismaClient()
 // 设备指纹有效期（测试用 30s，上线改回 7 * 24 * 60 * 60 * 1000）
 const FINGERPRINT_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000
 
-const ADMIN_PASSWORD_HASH = crypto.createHash('md5').update('xpow!1234').digest('hex')
+// 后台密码：环境变量 ADMIN_PASSWORD 存 md5 hash，默认 xpow!1234
+const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD || '34deb53eb707328254eac286931a7583'
 console.log('[admin] password hash:', ADMIN_PASSWORD_HASH)
 
 // 独立出餐密码：环境变量 KITCHEN_PASSWORD 存 md5 hash（与 admin 密码不同），默认同 admin
