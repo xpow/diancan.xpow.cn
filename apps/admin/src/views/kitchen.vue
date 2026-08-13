@@ -1,5 +1,27 @@
 <template>
-  <div class="kitchen">
+  <div v-if="!authed" class="kitchen-login">
+    <div class="kitchen-login-card">
+      <h1 class="kitchen-login-title">出餐管理</h1>
+      <p class="kitchen-login-subtitle">请输入出餐密码</p>
+      <form @submit.prevent="doLogin">
+        <div class="field">
+          <label>出餐密码</label>
+          <input
+            v-model="password"
+            type="password"
+            class="kitchen-login-input"
+            placeholder="输入出餐密码"
+          />
+        </div>
+        <p v-if="error" class="kitchen-login-error">{{ error }}</p>
+        <button type="submit" class="kitchen-login-btn" :disabled="loading || !password">
+          {{ loading ? '验证中...' : '进入出餐' }}
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div v-else class="kitchen">
     <header class="top-bar">
       <div class="top-left">
         <span class="material-symbols-outlined top-icon">outdoor_grill</span>
@@ -13,6 +35,9 @@
         </button>
         <button class="settings-btn" @click="openTerminalSettings">
           <span class="material-symbols-outlined">monitor_heart</span>
+        </button>
+        <button class="settings-btn" @click="logout" title="退出">
+          <span class="material-symbols-outlined">logout</span>
         </button>
       </div>
     </header>
@@ -187,6 +212,10 @@ interface Order {
 const orders = ref<Order[]>([])
 const tab = ref<'pending' | 'preparing' | 'ready'>('pending')
 const voiceEnabled = ref(true)
+const authed = ref(false)
+const password = ref('')
+const error = ref('')
+const loading = ref(false)
 let wakeLock: any = null
 let announcedReadyOrders = loadAnnouncedReady()
 let announcedNewOrders = loadAnnounced()
@@ -411,14 +440,63 @@ async function fetchCategories() {
   } catch {}
 }
 
-onMounted(() => {
-  requestWakeLock()
-  if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission()
+async function checkAuth() {
+  try {
+    const res = await fetch('/api/admin/kitchen/check')
+    const data = await res.json()
+    authed.value = !!data.authed
+  } catch {
+    authed.value = false
   }
-  fetchOrders()
-  fetchCategories()
+  return authed.value
+}
+
+async function doLogin() {
+  if (!password.value || loading.value) return
+  loading.value = true
+  error.value = ''
+  try {
+    const res = await fetch('/api/admin/kitchen/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: password.value }),
+    })
+    if (!res.ok) {
+      const data = await res.json()
+      error.value = data.message || '出餐密码错误'
+      return
+    }
+    password.value = ''
+    await enterKitchen()
+  } catch {
+    error.value = '网络错误'
+  } finally {
+    loading.value = false
+  }
+}
+
+async function logout() {
+  try { await fetch('/api/admin/kitchen/logout', { method: 'POST' }) } catch {}
+  authed.value = false
+}
+
+async function enterKitchen() {
+  authed.value = true
+  await fetchOrders()
+  await fetchCategories()
+  if (timer) clearInterval(timer)
   timer = setInterval(fetchOrders, POLL_MS)
+}
+
+onMounted(async () => {
+  const ok = await checkAuth()
+  if (ok) {
+    await enterKitchen()
+    requestWakeLock()
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
+  }
 })
 
 onUnmounted(() => {
@@ -528,4 +606,17 @@ main { padding: 12px 16px; display: flex; flex-direction: column; gap: 16px; }
 .terminal-cat-active { background: var(--primary-container); border-color: var(--primary-container); color: var(--on-primary); }
 .terminal-hint { font-size: 11px; color: var(--secondary); margin-top: 8px; }
 .terminal-save { width: 100%; padding: 12px; border: none; border-radius: 12px; background: var(--primary-container); color: #fff; font-size: 15px; font-weight: 800; cursor: pointer; }
+
+.kitchen-login { display: flex; align-items: center; justify-content: center; min-height: 100dvh; background: #f0f2f5; padding: 16px; box-sizing: border-box; }
+.kitchen-login-card { width: 100%; max-width: 360px; padding: 40px; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); box-sizing: border-box; }
+.kitchen-login-title { margin: 0 0 4px; font-size: 24px; font-weight: 700; text-align: center; }
+.kitchen-login-subtitle { margin: 0 0 24px; font-size: 14px; color: #666; text-align: center; }
+.kitchen-login .field { margin-bottom: 16px; }
+.kitchen-login .field label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 6px; }
+.kitchen-login-input { width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; outline: none; box-sizing: border-box; }
+.kitchen-login-input:focus { border-color: #ff6b00; }
+.kitchen-login-error { color: #e53935; font-size: 13px; margin: -8px 0 16px; }
+.kitchen-login-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; background: #ff6b00; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; }
+.kitchen-login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.kitchen-login-btn:not(:disabled):hover { background: #e05a00; }
 </style>

@@ -13,6 +13,10 @@ const FINGERPRINT_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000
 const ADMIN_PASSWORD_HASH = crypto.createHash('md5').update('xpow!1234').digest('hex')
 console.log('[admin] password hash:', ADMIN_PASSWORD_HASH)
 
+// 独立出餐密码：优先环境变量 KITCHEN_PASSWORD，默认 xpow!1234
+const KITCHEN_PASSWORD_HASH = crypto.createHash('md5').update(process.env.KITCHEN_PASSWORD || 'xpow!1234').digest('hex')
+console.log('[kitchen] password hash:', KITCHEN_PASSWORD_HASH)
+
 function quoteIdentifier(name: string): string {
   return `"${String(name).replace(/"/g, '""')}"`
 }
@@ -33,11 +37,25 @@ function sqlValue(value: unknown): string {
 declare module 'express-session' {
   interface SessionData {
     adminAuthed?: boolean
+    kitchenAuthed?: boolean
   }
 }
 
+// 出餐端可访问的接口路径前缀
+const KITCHEN_ALLOWED_PREFIXES = ['/orders', '/categories', '/merchant']
+
 function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (req.session?.adminAuthed) return next()
+  // 出餐端仅允许订单/分类相关接口
+  if (req.session?.kitchenAuthed && KITCHEN_ALLOWED_PREFIXES.some((p) => req.path.startsWith(p))) {
+    return next()
+  }
+  res.status(401).json({ message: '请先登录' })
+}
+
+// 出餐接口鉴权：admin 或出餐端均允许
+function requireKitchenAuth(req: Request, res: Response, next: NextFunction) {
+  if (req.session?.adminAuthed || req.session?.kitchenAuthed) return next()
   res.status(401).json({ message: '请先登录' })
 }
 
@@ -71,6 +89,27 @@ router.get('/auth/check', (req, res) => {
 
 router.post('/auth/logout', (req, res) => {
   req.session.destroy(() => {})
+  res.json({ success: true })
+})
+
+/* ===== Kitchen Auth（出餐管理独立密码） ===== */
+
+router.post('/kitchen/login', (req, res) => {
+  const { password } = req.body ?? {}
+  const hash = crypto.createHash('md5').update(String(password ?? '')).digest('hex')
+  if (hash !== KITCHEN_PASSWORD_HASH) {
+    return res.status(403).json({ message: '出餐密码错误' })
+  }
+  req.session.kitchenAuthed = true
+  res.json({ success: true })
+})
+
+router.get('/kitchen/check', (req, res) => {
+  res.json({ authed: !!req.session?.kitchenAuthed })
+})
+
+router.post('/kitchen/logout', (req, res) => {
+  req.session.kitchenAuthed = false
   res.json({ success: true })
 })
 
