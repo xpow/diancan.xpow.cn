@@ -196,6 +196,15 @@ router.get('/orders', async (_req, res) => {
   const skip = (Math.max(1, Number(page)) - 1) * Number(limit)
   const take = Math.min(200, Math.max(1, Number(limit)))
 
+  const merchant = await prisma.merchant.findFirst()
+  const dishes = merchant
+    ? await prisma.dish.findMany({
+        where: { merchantId: merchant.id },
+        select: { id: true, categoryId: true, category: { select: { name: true } } },
+      })
+    : []
+  const dishMap = new Map(dishes.map((d) => [d.id, d]))
+
   const [items, total] = await Promise.all([
     prisma.order.findMany({
       where,
@@ -226,6 +235,8 @@ router.get('/orders', async (_req, res) => {
       items: o.items.map((i) => ({
         id: i.id,
         dishId: i.dishId,
+        categoryId: dishMap.get(i.dishId)?.categoryId,
+        categoryName: dishMap.get(i.dishId)?.category.name,
         name: i.name,
         quantity: i.quantity,
         unitPrice: i.unitPrice,

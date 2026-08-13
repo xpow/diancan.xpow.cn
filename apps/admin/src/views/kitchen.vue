@@ -6,15 +6,52 @@
         <h1 class="top-title">出餐管理</h1>
       </div>
       <div class="top-right">
+        <span v-if="terminal.code" class="terminal-badge">{{ terminal.code }}</span>
         <span class="order-count-badge">{{ totalItems }}</span>
         <button class="settings-btn" @click="toggleVoice">
           <span class="material-symbols-outlined">{{ voiceEnabled ? 'volume_up' : 'volume_off' }}</span>
         </button>
-        <router-link to="/orders" class="back-link">
-          <span class="material-symbols-outlined">settings</span>
-        </router-link>
+        <button class="settings-btn" @click="openTerminalSettings">
+          <span class="material-symbols-outlined">monitor_heart</span>
+        </button>
       </div>
     </header>
+
+    <div v-if="showTerminalSettings" class="terminal-settings-overlay" @click.self="showTerminalSettings = false">
+      <div class="terminal-settings">
+        <div class="terminal-settings-header">
+          <h2>终端出餐设置</h2>
+          <button class="terminal-close" @click="showTerminalSettings = false">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="terminal-form-row">
+          <label>出餐机编码</label>
+          <input v-model="terminalCode" class="terminal-input" placeholder="如 01号" maxlength="6" />
+        </div>
+        <div class="terminal-form-row">
+          <label>显示分类</label>
+          <div class="terminal-cats">
+            <button
+              v-for="c in terminalCategories"
+              :key="c.id"
+              :class="['terminal-cat', terminalCats.includes(c.id) && 'terminal-cat-active']"
+              @click="toggleTerminalCat(c.id)"
+            >
+              {{ c.name }}
+            </button>
+            <button
+              :class="['terminal-cat', terminalCats.length === 0 && 'terminal-cat-active']"
+              @click="terminalCats = []"
+            >
+              全部
+            </button>
+          </div>
+          <p class="terminal-hint">留空「全部」表示显示所有分类</p>
+        </div>
+        <button class="terminal-save" @click="saveTerminalSettings">保存</button>
+      </div>
+    </div>
 
     <div class="tabs">
       <button v-for="t in tabs" :key="t.key" :class="['tab', tab === t.key && 'tab-active']" @click="tab = t.key">
@@ -95,6 +132,21 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 const POLL_MS = 5000
 const STORAGE_KEY = 'kitchen_announced'
 const STORAGE_KEY_READY = 'kitchen_announced_ready'
+const STORAGE_KEY_TERMINAL = 'kitchen_terminal_settings'
+
+interface TerminalCategory { id: string; name: string }
+interface TerminalSettings { code: string; categoryIds: string[] }
+
+function loadTerminal(): TerminalSettings {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_TERMINAL)
+    const parsed = raw ? JSON.parse(raw) : null
+    if (parsed && typeof parsed === 'object') {
+      return { code: String(parsed.code ?? ''), categoryIds: Array.isArray(parsed.categoryIds) ? parsed.categoryIds : [] }
+    }
+  } catch {}
+  return { code: '', categoryIds: [] }
+}
 
 function loadAnnounced(): Set<string> {
   try { return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')) } catch { return new Set() }
@@ -112,6 +164,8 @@ function saveAnnouncedReady(s: Set<string>) {
 interface OrderItem {
   id: string
   dishId: string
+  categoryId?: string
+  categoryName?: string
   name: string
   quantity: number
   specs?: string
@@ -136,6 +190,12 @@ const voiceEnabled = ref(true)
 let wakeLock: any = null
 let announcedReadyOrders = loadAnnouncedReady()
 let announcedNewOrders = loadAnnounced()
+
+const terminal = ref<TerminalSettings>(loadTerminal())
+const showTerminalSettings = ref(false)
+const terminalCode = ref(terminal.value.code)
+const terminalCats = ref<string[]>([...terminal.value.categoryIds])
+const terminalCategories = ref<TerminalCategory[]>([])
 
 const tabs = [
   { key: 'pending' as const, label: '等待' },
@@ -165,11 +225,16 @@ document.addEventListener('visibilitychange', () => {
 
 const allItems = computed(() => orders.value.flatMap((o) => o.items))
 
-const totalItems = computed(() => allItems.value.length)
+const visibleItems = computed(() => {
+  if (!terminal.value.categoryIds.length) return allItems.value
+  return allItems.value.filter((item) => terminal.value.categoryIds.includes(item.categoryId ?? ''))
+})
+
+const totalItems = computed(() => visibleItems.value.length)
 
 const itemCounts = computed(() => {
   const m: Record<string, number> = { pending: 0, preparing: 0, ready: 0 }
-  for (const item of allItems.value) {
+  for (const item of visibleItems.value) {
     if (item.status in m) m[item.status]++
   }
   return m
@@ -181,7 +246,11 @@ function payLabel(m: string): string { return payLabels[m] || m }
 const filtered = computed(() => {
   const groups: Record<string, { orderNo: string; pickupCode: string; orderType?: string; paymentMethod?: string; fullReduction?: number; orderId: string; time: string; items: OrderItem[] }> = {}
   for (const order of orders.value) {
-    const filteredItems = order.items.filter((item) => item.status === tab.value)
+    const filteredItems = order.items.filter((item) => {
+      if (item.status !== tab.value) return false
+      if (terminal.value.categoryIds.length && !terminal.value.categoryIds.includes(item.categoryId ?? '')) return false
+      return true
+    })
     if (!filteredItems.length) continue
     groups[order.id] = {
       orderNo: order.orderNo,
@@ -316,12 +385,39 @@ function toggleVoice() {
   voiceEnabled.value = !voiceEnabled.value
 }
 
+function openTerminalSettings() {
+  terminalCode.value = terminal.value.code
+  terminalCats.value = [...terminal.value.categoryIds]
+  showTerminalSettings.value = true
+}
+
+function toggleTerminalCat(id: string) {
+  const i = terminalCats.value.indexOf(id)
+  if (i > -1) terminalCats.value.splice(i, 1)
+  else terminalCats.value.push(id)
+}
+
+function saveTerminalSettings() {
+  terminal.value = { code: terminalCode.value.trim(), categoryIds: [...terminalCats.value] }
+  try { localStorage.setItem(STORAGE_KEY_TERMINAL, JSON.stringify(terminal.value)) } catch {}
+  showTerminalSettings.value = false
+}
+
+async function fetchCategories() {
+  try {
+    const res = await fetch('/api/admin/categories')
+    if (!res.ok) return
+    terminalCategories.value = await res.json()
+  } catch {}
+}
+
 onMounted(() => {
   requestWakeLock()
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission()
   }
   fetchOrders()
+  fetchCategories()
   timer = setInterval(fetchOrders, POLL_MS)
 })
 
@@ -416,4 +512,20 @@ main { padding: 12px 16px; display: flex; flex-direction: column; gap: 16px; }
 
 .empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 80px 0; color: var(--secondary); font-size: 14px; }
 .empty-icon { font-size: 64px; color: var(--outline-variant); }
+
+.terminal-badge { display: inline-flex; align-items: center; justify-content: center; padding: 3px 10px; border-radius: 9999px; background: var(--primary-container); color: #fff; font-size: 12px; font-weight: 800; }
+
+.terminal-settings-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.4); display: flex; align-items: flex-end; justify-content: center; }
+.terminal-settings { width: 100%; max-width: 600px; background: var(--surface-container-lowest); border-radius: 16px 16px 0 0; padding: 20px 20px 24px; box-shadow: 0 -8px 30px rgba(0,0,0,0.15); }
+.terminal-settings-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.terminal-settings-header h2 { margin: 0; font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--text); }
+.terminal-close { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--surface-container-high); color: var(--secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.terminal-form-row { margin-bottom: 16px; }
+.terminal-form-row label { display: block; font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.terminal-input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--outline-variant); background: var(--surface-card); color: var(--text); font-size: 15px; font-weight: 700; box-sizing: border-box; }
+.terminal-cats { display: flex; flex-wrap: wrap; gap: 8px; }
+.terminal-cat { padding: 8px 16px; border-radius: 9999px; border: 1px solid var(--outline-variant); background: var(--surface-container-high); color: var(--secondary); font-size: 13px; font-weight: 600; cursor: pointer; }
+.terminal-cat-active { background: var(--primary-container); border-color: var(--primary-container); color: var(--on-primary); }
+.terminal-hint { font-size: 11px; color: var(--secondary); margin-top: 8px; }
+.terminal-save { width: 100%; padding: 12px; border: none; border-radius: 12px; background: var(--primary-container); color: #fff; font-size: 15px; font-weight: 800; cursor: pointer; }
 </style>
