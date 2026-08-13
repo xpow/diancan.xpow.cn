@@ -32,6 +32,7 @@
         >
           <span class="material-icons">{{ categoryIcons[category.name] || 'restaurant' }}</span>
           {{ category.name }}
+          <span v-if="categoryDishCount(category.id) > 0" class="category-count">{{ categoryDishCount(category.id) }}</span>
         </button>
       </nav>
 
@@ -99,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { useMenu } from '@/composables/useMenu'
 import { useCartQuote } from '@/composables/useCartQuote'
 import { useSpecEditor } from '@/composables/useSpecEditor'
@@ -132,6 +133,17 @@ const {
 
 const hasActiveOrder = ref(false)
 const heroVisible = ref(true)
+
+const categoryCounts = computed(() => {
+  const counts = new Map<string, number>()
+  for (const dish of dishes.value) {
+    counts.set(dish.categoryId, (counts.get(dish.categoryId) ?? 0) + 1)
+  }
+  return counts
+})
+function categoryDishCount(categoryId: string) {
+  return categoryCounts.value.get(categoryId) ?? 0
+}
 
 function checkActiveOrder() {
   try {
@@ -166,6 +178,8 @@ onMounted(() => {
 .nav-sentinel { width: 1px; height: 1px; pointer-events: none; }
 .category-pill { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: var(--surface); color: var(--on-surface-variant); font-family: var(--font-display); font-size: var(--text-body-md); font-weight: 600; cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; }
 .category-pill .material-icons { font-size: 18px !important; }
+.category-count { min-width: 20px; padding: 1px 7px; border-radius: var(--radius-full); background: var(--surface-variant); color: var(--on-surface-variant); font-size: var(--text-label-sm); font-weight: 700; text-align: center; }
+.category-pill-active .category-count { background: var(--primary); color: var(--on-primary); }
 .category-pill-active { background: var(--primary-container); border-color: var(--primary-container); color: var(--on-primary); box-shadow: 0 4px 12px rgba(255, 107, 0, 0.18); }
 .status-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-md); padding: var(--spacing-xl); margin-top: var(--spacing-lg); border-radius: var(--radius-xl); background: var(--surface-container-low); }
 .status-card .material-icons { font-size: 48px !important; }
