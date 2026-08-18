@@ -140,14 +140,14 @@
           <div v-for="(group, gi) in dishForm.specGroups" :key="gi" class="spec-group-card">
             <div class="spec-group-header">
               <div style="flex:1;min-width:0;overflow:hidden;display:flex;align-items:center;gap:6px">
-                <InputText v-model="group.name" placeholder="组名" style="flex:1;min-width:120px;box-sizing:border-box" />
+                <InputText v-model="group.name" placeholder="组名" style="width:160px;flex-shrink:0;box-sizing:border-box" />
                 <Button icon="pi pi-trash" severity="danger" text size="small" @click="removeSpecGroup(gi)" style="flex-shrink:0" />
               </div>
               <Select v-model="group.type" :options="[{label:'单选',value:'single'},{label:'多选',value:'multi'}]" optionLabel="label" optionValue="value" style="width:100px;flex-shrink:0;min-width:0" />
             </div>
             <div v-for="(opt, oi) in group.options" :key="oi" class="spec-option-row">
-              <div style="flex:1;min-width:0;overflow:hidden"><InputText v-model="opt.label" placeholder="选项名" style="width:100%;box-sizing:border-box" /></div>
-              <InputNumber v-model="opt.priceDelta" :min="0" placeholder="加价" style="width:90px;flex-shrink:0;min-width:0">
+              <InputText v-model="opt.label" placeholder="选项名" style="flex:1;min-width:0;box-sizing:border-box" />
+              <InputNumber v-model="opt.priceDelta" :min="0" placeholder="加价" class="spec-price-input" style="flex-shrink:0">
                 <template #prefix>+¥</template>
               </InputNumber>
               <Button icon="pi pi-times" severity="danger" text size="small" @click="removeSpecOption(gi, oi)" style="flex-shrink:0" />
@@ -563,10 +563,8 @@ onMounted(() => {
 .spec-editor { display: flex; flex-direction: column; gap: 8px; max-width: 100%; overflow: hidden; }
 .spec-group-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 10px 12px; background: #fafafa; overflow: hidden; max-width: 100%; box-sizing: border-box; }
 .spec-group-header { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; max-width: 100%; }
-.spec-group-header > div:first-child { flex: 1; min-width: 0; max-width: 200px; }
 .spec-group-header .p-inputtext { max-width: 100%; }
 .spec-option-row { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; max-width: 100%; }
-.spec-option-row > div:first-child { flex: 1; min-width: 0; max-width: 200px; }
 .spec-option-row .p-inputtext { max-width: 100%; }
 .add-group-btn { align-self: flex-start; margin-top: 4px; }
 .stock-quick-edit { display: flex; align-items: center; gap: 6px; }
@@ -575,4 +573,6 @@ onMounted(() => {
 .option-group { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 .option-label { font-size: 13px; font-weight: 600; color: var(--text-color); white-space: nowrap; }
 .option-hint { font-size: 12px; color: var(--text-color-secondary); white-space: nowrap; }
+.spec-price-input { width: 80px; }
+.spec-price-input:deep(.p-inputtext) { width: 80px; text-align: center; padding: 4px 4px; }
 </style>
