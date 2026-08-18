@@ -557,6 +557,9 @@ onMounted(() => {
 .section-count { font-size: 13px; color: #666; }
 .form-group { margin-bottom: 12px; }
 .form-group label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 4px; }
+.form-group :deep(.p-inputnumber-input),
+.form-group :deep(.p-select-label),
+.form-group :deep(.p-inputtext) { height: 36px; }
 .form-row { display: flex; gap: 12px; }
 .flex-1 { flex: 1; }
 .w-full { width: 100%; }
