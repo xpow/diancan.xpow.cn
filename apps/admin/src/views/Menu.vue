@@ -106,22 +106,23 @@
           <Select v-model="dishForm.categoryId" :options="categories" optionLabel="name" optionValue="id" class="w-full" />
         </div>
       </div>
-      <div class="form-row">
-        <div class="form-group" style="width: 120px">
-          <label>按份卖</label>
+      <div class="form-row" style="align-items: flex-end">
+        <div class="option-group">
+          <span class="option-label">按份卖</span>
           <ToggleSwitch v-model="dishForm.sellByPortion" />
+          <template v-if="dishForm.sellByPortion">
+            <span class="option-hint">每份</span>
+            <InputNumber v-model="dishForm.portionSize" :min="2" class="stock-input" placeholder="串" />
+          </template>
         </div>
-        <div class="form-group" v-if="dishForm.sellByPortion">
-          <label>每份数量（串）</label>
-          <InputNumber v-model="dishForm.portionSize" :min="2" class="stock-input" placeholder="例：3" />
-        </div>
-        <div class="form-group" style="width: 150px">
-          <label>启用库存</label>
+        <span class="option-divider"></span>
+        <div class="option-group">
+          <span class="option-label">启用库存</span>
           <ToggleSwitch v-model="dishForm.stockEnabled" />
-        </div>
-        <div class="form-group" v-if="dishForm.stockEnabled">
-          <label>库存数量</label>
-          <InputNumber v-model="dishForm.stock" :min="0" class="stock-input" placeholder="例：100" />
+          <template v-if="dishForm.stockEnabled">
+            <span class="option-hint">数量</span>
+            <InputNumber v-model="dishForm.stock" :min="0" class="stock-input" placeholder="个" />
+          </template>
         </div>
       </div>
       <div class="form-group">
@@ -576,4 +577,8 @@ onMounted(() => {
 .stock-quick-edit { display: flex; align-items: center; gap: 6px; }
 .stock-input { width: 64px; }
 .stock-input:deep(.p-inputtext) { width: 64px; text-align: center; font-weight: 600; padding: 4px 4px; }
+.option-group { display: inline-flex; align-items: center; gap: 8px; }
+.option-label { font-size: 13px; font-weight: 600; color: var(--text-color); white-space: nowrap; }
+.option-hint { font-size: 12px; color: var(--text-color-secondary); white-space: nowrap; }
+.option-divider { width: 1px; height: 24px; background: var(--surface-border); margin: 0 4px; }
 </style>
