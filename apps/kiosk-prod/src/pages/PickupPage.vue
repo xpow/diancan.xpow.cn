@@ -70,12 +70,6 @@
                     </div>
                   </div>
                 </div>
-                <div v-if="!order.paidAt" class="group-sub-footer">
-                  <button class="pay-now-btn" @click="selectedPayOrder = order; showPayPopup = true">
-                    <span class="material-icons">check_circle</span>
-                    立即付款
-                  </button>
-                </div>
               </div>
             </div>
             <div class="group-footer">
@@ -87,9 +81,16 @@
                     <span class="group-total-count">{{ item.orders.length }} 个订单 · {{ item.totalCount }} 项商品</span>
                   </div>
                 </div>
-                <span class="group-total-price"><small class="c-sign">¥</small>{{ item.totalAmount.toFixed(2) }}</span>
+                <div class="group-total-right">
+                  <span v-if="item.totalPending > 0" class="group-total-pending">待付 <small class="c-sign">¥</small>{{ item.totalPending.toFixed(2) }}</span>
+                  <span class="group-total-price"><small class="c-sign">¥</small>{{ item.totalAmount.toFixed(2) }}</span>
+                </div>
               </div>
               <div class="footer-actions">
+                <button v-if="item.totalPending > 0" class="pay-now-btn" @click="selectedPayOrder = item.orders[0]; showPayPopup = true">
+                  <span class="material-icons">check_circle</span>
+                  立即付款 ¥{{ item.totalPending.toFixed(2) }}
+                </button>
                 <button class="merge-btn" @click="startMerge(item.orders[0])">
                   <span class="material-icons">playlist_add</span>
                   继续加单
@@ -461,6 +462,7 @@ interface DisplayItem {
   orders: OrderSummary[]
   totalAmount: number
   totalCount: number
+  totalPending: number
 }
 
 const displayItems = computed<DisplayItem[]>(() => {
@@ -487,6 +489,7 @@ const displayItems = computed<DisplayItem[]>(() => {
       orders,
       totalAmount: orders.reduce((s, o) => s + (o.totals?.payableAmount || 0), 0),
       totalCount: orders.reduce((s, o) => s + (o.items || []).length, 0),
+      totalPending: orders.filter(o => !o.paidAt).reduce((s, o) => s + (o.totals?.payableAmount || 0), 0),
     })
   }
 
@@ -497,6 +500,7 @@ const displayItems = computed<DisplayItem[]>(() => {
       orders: [o],
       totalAmount: o.totals?.payableAmount || 0,
       totalCount: (o.items || []).length,
+      totalPending: o.paidAt ? 0 : (o.totals?.payableAmount || 0),
     })
   }
 
@@ -1090,7 +1094,6 @@ onUnmounted(() => {
 .group-sub-card { padding: 0 var(--spacing-md); }
 .group-sub-card .ticket-card { border: none; box-shadow: none; margin-bottom: 0; }
 .group-sub-divider { height: 1px; background: var(--outline-variant); margin: var(--spacing-sm) 0; }
-.group-sub-footer { padding: var(--spacing-sm) var(--spacing-md) var(--spacing-md); }
 .group-footer { padding: var(--spacing-md); border-top: 1.5px dashed var(--primary-container); }
 .group-total { display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-md); margin-bottom: var(--spacing-sm); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--primary-container) 8%, transparent); }
 .group-total-left { display: flex; align-items: center; gap: var(--spacing-sm); }
@@ -1098,6 +1101,8 @@ onUnmounted(() => {
 .group-total-info { display: flex; flex-direction: column; }
 .group-total-label { font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; color: var(--on-surface); }
 .group-total-count { font-size: var(--text-label-sm); color: var(--secondary); }
+.group-total-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.group-total-pending { font-size: var(--text-label-md); font-weight: 700; color: var(--tertiary); }
 .group-total-price { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 800; color: var(--primary-container); }
 
 .confirm-dialog {
