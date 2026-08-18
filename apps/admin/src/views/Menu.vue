@@ -121,9 +121,9 @@
         </div>
       </div>
       <div class="form-row" v-if="dishForm.stockEnabled">
-        <div class="form-group flex-1" style="max-width:120px">
+        <div class="form-group">
           <label>库存数量</label>
-          <InputNumber v-model="dishForm.stock" :min="0" class="w-full" placeholder="例：100" />
+          <InputNumber v-model="dishForm.stock" :min="0" class="stock-input" placeholder="例：100" />
         </div>
       </div>
       <div class="form-group">
