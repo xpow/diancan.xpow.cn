@@ -146,8 +146,8 @@
               <Select v-model="group.type" :options="[{label:'单选',value:'single'},{label:'多选',value:'multi'}]" optionLabel="label" optionValue="value" style="width:100px;flex-shrink:0;min-width:0" />
             </div>
             <div v-for="(opt, oi) in group.options" :key="oi" class="spec-option-row">
-              <InputText v-model="opt.label" placeholder="选项名" style="flex:1;min-width:0;box-sizing:border-box" />
-              <InputNumber v-model="opt.priceDelta" :min="0" placeholder="加价" class="spec-price-input" style="flex-shrink:0">
+              <InputText v-model="opt.label" placeholder="选项名" class="spec-option-name" />
+              <InputNumber v-model="opt.priceDelta" :min="0" placeholder="加价" class="spec-price-input">
                 <template #prefix>+¥</template>
               </InputNumber>
               <Button icon="pi pi-times" severity="danger" text size="small" @click="removeSpecOption(gi, oi)" style="flex-shrink:0" />
@@ -565,7 +565,9 @@ onMounted(() => {
 .spec-group-header { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; max-width: 100%; }
 .spec-group-header .p-inputtext { max-width: 100%; }
 .spec-option-row { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; max-width: 100%; }
-.spec-option-row .p-inputtext { max-width: 100%; }
+.spec-option-row .spec-option-name { flex: 1; min-width: 0; }
+.spec-option-row .spec-price-input { flex: 1; min-width: 0; }
+.spec-option-row .spec-price-input:deep(.p-inputtext) { width: 100%; text-align: center; padding: 4px 4px; }
 .add-group-btn { align-self: flex-start; margin-top: 4px; }
 .stock-quick-edit { display: flex; align-items: center; gap: 6px; }
 .stock-input { width: 64px; }
