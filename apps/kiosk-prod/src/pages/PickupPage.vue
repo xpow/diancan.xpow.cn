@@ -95,7 +95,7 @@
                 </div>
               </div>
               <div class="footer-actions">
-                <button v-if="item.totalPending > 0" class="pay-now-btn" @click="selectedPayOrder = item.orders[0]; showPayPopup = true">
+                <button v-if="item.totalPending > 0" class="pay-now-btn" @click="selectedPayOrders = item.orders.filter(o => !o.paidAt); showPayPopup = true">
                   <span class="material-icons">check_circle</span>
                   立即付款 ¥{{ item.totalPending.toFixed(2) }}
                 </button>
@@ -183,7 +183,7 @@
                   <span class="material-icons">playlist_add</span>
                   加单
                 </button>
-                <button class="pay-now-btn" @click="selectedPayOrder = item.orders[0]; showPayPopup = true">
+                <button class="pay-now-btn" @click="selectedPayOrders = [item.orders[0]]; showPayPopup = true">
                   <span class="material-icons">check_circle</span>
                   立即付款
                 </button>
@@ -253,14 +253,14 @@
     </AppOverlay>
 
     <!-- Payment Popup -->
-    <AppOverlay :show="showPayPopup && !!selectedPayOrder" @click-mask="showPayPopup = false">
+    <AppOverlay :show="showPayPopup && selectedPayOrders.length > 0" @click-mask="showPayPopup = false">
         <div class="payment-popup">
           <div class="popup-header">
             <span class="popup-icon">
               <span class="material-icons">qr_code_scanner</span>
             </span>
             <h3>扫码付款</h3>
-            <p class="popup-amount"><small class="c-sign">¥</small>{{ selectedPayOrder.totals.payableAmount.toFixed(2) }}</p>
+            <p class="popup-amount"><small class="c-sign">¥</small>{{ payAmount.toFixed(2) }}</p>
           </div>
           <div class="popup-qr-row">
             <div class="popup-qr-box">
@@ -395,7 +395,9 @@ const toastMessage = ref('')
 const toastVisible = ref(false)
 
 const selectedPayOrder = ref<OrderSummary | null>(null)
+const selectedPayOrders = ref<OrderSummary[]>([])
 const showPayPopup = ref(false)
+const payAmount = computed(() => selectedPayOrders.value.reduce((s, o) => s + (o.totals?.payableAmount || 0), 0))
 const paySubmitting = ref(false)
 const payError = ref('')
 const showPickupConfirm = ref(false)
@@ -555,13 +557,15 @@ function payLabel(m: string) {
 }
 
 async function confirmPay() {
-  if (!selectedPayOrder.value || paySubmitting.value) return
+  if (!selectedPayOrders.value.length || paySubmitting.value) return
   paySubmitting.value = true
   payError.value = ''
   try {
-    await apiPost(`/api/orders/${selectedPayOrder.value.orderNo}/pay`, { paymentMethod: 'wechat' })
+    for (const o of selectedPayOrders.value) {
+      await apiPost(`/api/orders/${o.orderNo}/pay`, { paymentMethod: 'wechat' })
+    }
     showPayPopup.value = false
-    selectedPayOrder.value = null
+    selectedPayOrders.value = []
     showToast('付款成功')
     await fetchOrders()
   } catch (error) {
