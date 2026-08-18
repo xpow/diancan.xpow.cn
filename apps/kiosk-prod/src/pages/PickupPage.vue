@@ -80,7 +80,13 @@
             </div>
             <div class="group-footer">
               <div class="group-total">
-                <span class="group-total-label">分组合计 {{ item.totalCount }} 项商品</span>
+                <div class="group-total-left">
+                  <span class="group-total-icon material-icons">receipt_long</span>
+                  <div class="group-total-info">
+                    <span class="group-total-label">分组合计</span>
+                    <span class="group-total-count">{{ item.orders.length }} 个订单 · {{ item.totalCount }} 项商品</span>
+                  </div>
+                </div>
                 <span class="group-total-price"><small class="c-sign">¥</small>{{ item.totalAmount.toFixed(2) }}</span>
               </div>
               <div class="footer-actions">
@@ -1086,8 +1092,12 @@ onUnmounted(() => {
 .group-sub-divider { height: 1px; background: var(--outline-variant); margin: var(--spacing-sm) 0; }
 .group-sub-footer { padding: var(--spacing-sm) var(--spacing-md) var(--spacing-md); }
 .group-footer { padding: var(--spacing-md); border-top: 1.5px dashed var(--primary-container); }
-.group-total { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--spacing-sm); }
-.group-total-label { font-size: var(--text-label-lg); font-weight: 600; color: var(--secondary); }
+.group-total { display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-md); margin-bottom: var(--spacing-sm); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--primary-container) 8%, transparent); }
+.group-total-left { display: flex; align-items: center; gap: var(--spacing-sm); }
+.group-total-icon { font-size: 22px !important; color: var(--primary-container); }
+.group-total-info { display: flex; flex-direction: column; }
+.group-total-label { font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; color: var(--on-surface); }
+.group-total-count { font-size: var(--text-label-sm); color: var(--secondary); }
 .group-total-price { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 800; color: var(--primary-container); }
 
 .confirm-dialog {
