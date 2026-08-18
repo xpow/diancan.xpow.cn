@@ -50,10 +50,17 @@
                 </div>
                 <div class="ticket-body">
                   <div v-for="g in groupOrderItems(order)" :key="g.key" class="ticket-group">
+                    <div class="ticket-group-header">
+                      <span class="ticket-group-title">{{ g.label }}</span>
+                      <span class="ticket-group-count">{{ g.count }} 项</span>
+                    </div>
                     <div v-for="(item2, idx2) in g.items" :key="idx2" class="ticket-item">
                       <div class="ticket-item-left">
+                        <div class="ticket-item-img">
+                          <img :src="dishImage(item2)" :alt="item2.name" class="ticket-item-img-el" />
+                        </div>
                         <div>
-                          <p class="ticket-item-name">{{ item2.name }}<template v-if="item2.portionSize && (item2.finalUnitPrice ?? item2.unitPrice) > 0"> <span class="ticket-item-unit">（¥{{ (item2.finalUnitPrice ?? item2.unitPrice).toFixed(2) }}/{{ item2.portionSize }}串）</span></template></p>
+                          <p class="ticket-item-name">{{ item2.name }}<template v-if="item2.portionSize && (item2.finalUnitPrice ?? item2.unitPrice) > 0"> <span class="ticket-item-unit">（¥{{ (item2.finalUnitPrice ?? item2.unitPrice).toFixed(2) }}/{{ item2.portionSize }}串）</span></template><template v-else-if="(item2.finalUnitPrice ?? item2.unitPrice) === 0"> <span class="ticket-item-unit tag-gift">赠品</span></template></p>
                           <p v-if="item2.specs" class="ticket-item-spec">{{ item2.specs }}</p>
                         </div>
                       </div>
