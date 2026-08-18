@@ -567,14 +567,14 @@ onMounted(() => {
 .spec-option-row { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; max-width: 100%; }
 .spec-option-row .spec-option-name { flex: 1; min-width: 0; }
 .spec-option-row .spec-price-input { flex: 1; min-width: 0; }
-.spec-option-row .spec-price-input:deep(.p-inputtext) { width: 100%; text-align: center; padding: 4px 4px; }
+.spec-option-row .spec-price-input:deep(.p-inputtext) { width: 100%; text-align: center; }
 .add-group-btn { align-self: flex-start; margin-top: 4px; }
 .stock-quick-edit { display: flex; align-items: center; gap: 6px; }
 .stock-input { width: 64px; }
-.stock-input:deep(.p-inputtext) { width: 64px; text-align: center; font-weight: 600; padding: 4px 4px; }
+.stock-input:deep(.p-inputtext) { width: 64px; text-align: center; font-weight: 600; }
 .option-group { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 .option-label { font-size: 13px; font-weight: 600; color: var(--text-color); white-space: nowrap; }
 .option-hint { font-size: 12px; color: var(--text-color-secondary); white-space: nowrap; }
 .spec-price-input { width: 80px; }
-.spec-price-input:deep(.p-inputtext) { width: 80px; text-align: center; padding: 4px 4px; }
+.spec-price-input:deep(.p-inputtext) { width: 80px; text-align: center; }
 </style>
