@@ -84,7 +84,7 @@ const showStockBadge = computed(() => !!props.dish.stockEnabled && (props.dish.s
 .dish-price-original { font-size: 16px; font-weight: 600; color: var(--secondary); text-decoration: line-through; }
 .dish-promo-price { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: var(--primary-container); }
 .dish-promo-tag { display: inline-block; padding: 1px 8px; border-radius: 4px; background: var(--primary-container); color: var(--on-primary); font-family: var(--font-display); font-size: 11px; font-weight: 700; }
-.dish-portion { font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 700; color: var(--secondary); }
+.dish-portion { font-family: var(--font-display); font-size: var(--text-body-lg); font-weight: 700; color: var(--secondary); }
 
 .dish-image-wrap { position: relative; border-radius: var(--radius-lg); overflow: hidden; background: var(--surface-container); margin-bottom: var(--spacing-md); }
 .dish-image { width: 100%; height: 200px; display: block; object-fit: cover; }
