@@ -82,6 +82,7 @@
                   </div>
                 </div>
                 <div class="group-total-right">
+                  <span v-if="item.totalReduction > 0" class="group-total-fr">满减 -¥{{ item.totalReduction.toFixed(2) }}</span>
                   <span v-if="item.totalPending > 0" class="group-total-pending">待付 <small class="c-sign">¥</small>{{ item.totalPending.toFixed(2) }}</span>
                   <span class="group-total-price"><small class="c-sign">¥</small>{{ item.totalAmount.toFixed(2) }}</span>
                 </div>
@@ -463,6 +464,7 @@ interface DisplayItem {
   totalAmount: number
   totalCount: number
   totalPending: number
+  totalReduction: number
 }
 
 const displayItems = computed<DisplayItem[]>(() => {
@@ -490,6 +492,7 @@ const displayItems = computed<DisplayItem[]>(() => {
       totalAmount: orders.reduce((s, o) => s + (o.totals?.payableAmount || 0), 0),
       totalCount: orders.reduce((s, o) => s + (o.items || []).length, 0),
       totalPending: orders.filter(o => !o.paidAt).reduce((s, o) => s + (o.totals?.payableAmount || 0), 0),
+      totalReduction: orders.reduce((s, o) => s + (o.fullReduction || 0), 0),
     })
   }
 
@@ -501,6 +504,7 @@ const displayItems = computed<DisplayItem[]>(() => {
       totalAmount: o.totals?.payableAmount || 0,
       totalCount: (o.items || []).length,
       totalPending: o.paidAt ? 0 : (o.totals?.payableAmount || 0),
+      totalReduction: o.fullReduction || 0,
     })
   }
 
@@ -1102,6 +1106,7 @@ onUnmounted(() => {
 .group-total-label { font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; color: var(--on-surface); }
 .group-total-count { font-size: var(--text-label-sm); color: var(--secondary); }
 .group-total-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.group-total-fr { font-size: var(--text-label-md); font-weight: 700; color: #e53935; }
 .group-total-pending { font-size: var(--text-label-md); font-weight: 700; color: var(--tertiary); }
 .group-total-price { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 800; color: var(--primary-container); }
 
