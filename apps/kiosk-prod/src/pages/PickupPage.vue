@@ -87,17 +87,29 @@
                 <span class="material-icons pay-reminder-icon">payment</span>
                 <span class="pay-reminder-text">待支付</span>
               </div>
-              <button class="pay-now-btn" @click="selectedPayOrder = order; showPayPopup = true">
-                <span class="material-icons">check_circle</span>
-                 立即付款
-              </button>
+              <div class="footer-actions">
+                <button class="merge-btn" @click="startMerge(order)">
+                  <span class="material-icons">playlist_add</span>
+                  加单
+                </button>
+                <button class="pay-now-btn" @click="selectedPayOrder = order; showPayPopup = true">
+                  <span class="material-icons">check_circle</span>
+                  立即付款
+                </button>
+              </div>
             </template>
             <template v-else>
               <template v-if="order.status === 'paid' || order.status === 'preparing' || order.status === 'ready'">
-                <button class="pickup-btn" @click="confirmPickup(order)">
-                  <span class="material-icons">handshake</span>
-                  已取餐
-                </button>
+                <div class="footer-actions">
+                  <button class="merge-btn" @click="startMerge(order)">
+                    <span class="material-icons">playlist_add</span>
+                    加单
+                  </button>
+                  <button class="pickup-btn" @click="confirmPickup(order)">
+                    <span class="material-icons">handshake</span>
+                    已取餐
+                  </button>
+                </div>
               </template>
               <template v-else>
                 <p class="ticket-thanks">感谢您选择{{ displayTitle }}</p>
@@ -185,6 +197,34 @@
         </div>
     </AppOverlay>
 
+    <!-- Merge Overlay -->
+    <AppOverlay :show="showMergeOverlay" @click-mask="showMergeOverlay = false">
+      <div class="merge-dialog">
+        <div class="merge-header">
+          <span class="material-icons merge-icon">playlist_add</span>
+          <h3>加单合并</h3>
+          <p class="merge-subtitle">将 <strong>{{ mergeSource?.pickupCode }}</strong> 合并到哪个订单？</p>
+        </div>
+        <div class="merge-list">
+          <button
+            v-for="o in mergeTargets"
+            :key="o.orderNo"
+            class="merge-target-btn"
+            @click="doMerge(o)"
+            :disabled="merging"
+          >
+            <span class="merge-target-code">{{ o.pickupCode }}</span>
+            <span class="merge-target-info">
+              <span class="merge-target-items">{{ (o.items || []).length }} 项商品</span>
+              <span class="merge-target-price">¥{{ (o.totals?.payableAmount || 0).toFixed(2) }}</span>
+            </span>
+            <span class="material-icons merge-target-arrow">arrow_forward</span>
+          </button>
+        </div>
+        <button class="merge-cancel-btn" @click="showMergeOverlay = false" :disabled="merging">取消</button>
+      </div>
+    </AppOverlay>
+
     <BottomNav current="orders" />
   </main>
 </template>
@@ -261,6 +301,15 @@ for (const [path, url] of Object.entries(qrModules)) {
   const match = path.match(/([^/\\]+)\.(jpg|png|webp)$/)
   if (match) qrMap[match[1]] = url as string
 }
+
+const showMergeOverlay = ref(false)
+const mergeSource = ref<OrderSummary | null>(null)
+const merging = ref(false)
+const mergeTargets = computed(() => {
+  if (!mergeSource.value) return []
+  return orders.value.filter((o) => o.orderNo !== mergeSource.value!.orderNo && activeStatuses.includes(o.status))
+})
+const activeStatuses = ['unpaid', 'paid', 'preparing', 'ready']
 
 function dishImage(item: OrderItem): string {
   return getDishImage(item.dishId)
@@ -386,6 +435,27 @@ async function doPickup() {
     showToast(error instanceof Error ? error.message : '操作失败')
   } finally {
     pickupSubmitting.value = false
+  }
+}
+
+function startMerge(order: OrderSummary) {
+  mergeSource.value = order
+  showMergeOverlay.value = true
+}
+
+async function doMerge(target: OrderSummary) {
+  if (!mergeSource.value || merging.value) return
+  merging.value = true
+  try {
+    await apiPost(`/api/orders/${mergeSource.value.orderNo}/merge`, { targetOrderNo: target.orderNo })
+    showMergeOverlay.value = false
+    mergeSource.value = null
+    showToast(`已合并至 ${target.pickupCode}`)
+    await fetchOrders()
+  } catch (error) {
+    showToast(error instanceof Error ? error.message : '合并失败')
+  } finally {
+    merging.value = false
   }
 }
 
@@ -784,13 +854,59 @@ onUnmounted(() => {
 
 .pickup-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm);
-  width: 100%; padding: var(--spacing-sm) var(--spacing-xl);
+  padding: var(--spacing-sm) var(--spacing-xl);
   border: none; border-radius: var(--radius-full);
   background: var(--primary-container); color: var(--on-primary);
   font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700;
   cursor: pointer; transition: transform var(--transition-fast);
 }
 .pickup-btn:active { transform: scale(0.98); }
+
+.footer-actions { display: flex; gap: var(--spacing-sm); justify-content: center; }
+.merge-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-xl);
+  border: none; border-radius: var(--radius-full);
+  background: var(--surface-container-high); color: var(--on-surface);
+  font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700;
+  cursor: pointer; transition: transform var(--transition-fast);
+}
+.merge-btn:active { transform: scale(0.98); }
+
+.merge-dialog {
+  background: var(--surface); border-radius: var(--radius-xl);
+  padding: var(--spacing-xl); width: 360px; max-width: 90vw;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  border: 1px solid var(--card-border-light);
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  z-index: 100;
+}
+.merge-header { text-align: center; margin-bottom: var(--spacing-lg); }
+.merge-icon { font-size: 36px !important; color: var(--primary-container); }
+.merge-header h3 { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; margin: var(--spacing-xs) 0; }
+.merge-subtitle { font-size: var(--text-body-sm); color: var(--secondary); margin: 0; }
+.merge-list { display: flex; flex-direction: column; gap: var(--spacing-sm); margin-bottom: var(--spacing-lg); }
+.merge-target-btn {
+  display: flex; align-items: center; gap: var(--spacing-md);
+  width: 100%; padding: var(--spacing-md);
+  border: 1px solid var(--outline-variant); border-radius: var(--radius-lg);
+  background: var(--surface-container-low); cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.merge-target-btn:hover { border-color: var(--primary-container); background: rgba(255,107,0,0.05); }
+.merge-target-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.merge-target-code { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: var(--primary-container); min-width: 60px; }
+.merge-target-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.merge-target-items { font-size: var(--text-label-sm); color: var(--secondary); }
+.merge-target-price { font-family: var(--font-display); font-size: var(--text-body-lg); font-weight: 700; color: var(--on-surface); }
+.merge-target-arrow { font-size: 20px !important; color: var(--outline); }
+.merge-cancel-btn {
+  display: block; width: 100%;
+  padding: var(--spacing-sm); border: 1px solid var(--outline-variant); border-radius: var(--radius-full);
+  background: transparent; color: var(--secondary);
+  font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600;
+  cursor: pointer;
+}
 
 .confirm-dialog {
   background: var(--surface); border-radius: var(--radius-xl);
