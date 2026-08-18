@@ -407,7 +407,7 @@ const mergeSource = ref<OrderSummary | null>(null)
 const merging = ref(false)
 const mergeTargets = computed(() => {
   if (!mergeSource.value) return []
-  return orders.value.filter((o) => o.orderNo !== mergeSource.value!.orderNo && activeStatuses.includes(o.status))
+  return orders.value.filter((o) => o.orderNo !== mergeSource.value!.orderNo && activeStatuses.includes(o.status) && !o.groupId)
 })
 const activeStatuses = ['unpaid', 'paid', 'preparing', 'ready']
 
