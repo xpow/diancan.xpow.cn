@@ -119,7 +119,7 @@
           <label>启用库存</label>
           <ToggleSwitch v-model="dishForm.stockEnabled" />
         </div>
-        <div class="form-group flex-1" v-if="dishForm.stockEnabled">
+        <div class="form-group flex-1" v-if="dishForm.stockEnabled" style="max-width:120px">
           <label>库存数量</label>
           <InputNumber v-model="dishForm.stock" :min="0" class="w-full" placeholder="例：100" />
         </div>
