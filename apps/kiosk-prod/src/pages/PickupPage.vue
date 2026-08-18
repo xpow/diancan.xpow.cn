@@ -95,7 +95,7 @@
                   <span class="material-icons">playlist_add</span>
                   继续加单
                 </button>
-                <button v-if="item.orders.some(o => o.status === 'paid' || o.status === 'preparing' || o.status === 'ready')" class="pickup-btn" @click="confirmPickup(item.orders[0])">
+                <button v-if="item.totalPending === 0 && item.orders.some(o => o.status === 'paid' || o.status === 'preparing' || o.status === 'ready')" class="pickup-btn" @click="confirmPickup(item.orders[0])">
                   <span class="material-icons">handshake</span>
                   已取餐
                 </button>
