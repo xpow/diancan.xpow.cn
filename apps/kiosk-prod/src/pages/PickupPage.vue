@@ -1095,7 +1095,7 @@ onUnmounted(() => {
 .group-sub-card .ticket-card { border: none; box-shadow: none; margin-bottom: 0; }
 .group-sub-divider { height: 1px; background: var(--outline-variant); margin: var(--spacing-sm) 0; }
 .group-footer { padding: var(--spacing-md); border-top: 1.5px dashed var(--primary-container); }
-.group-total { display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-md); margin-bottom: var(--spacing-sm); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--primary-container) 8%, transparent); }
+.group-total { display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-md) var(--spacing-md); margin: var(--spacing-sm) 0 var(--spacing-md); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--primary-container) 8%, transparent); }
 .group-total-left { display: flex; align-items: center; gap: var(--spacing-sm); }
 .group-total-icon { font-size: 22px !important; color: var(--primary-container); }
 .group-total-info { display: flex; flex-direction: column; }
