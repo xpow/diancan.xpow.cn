@@ -113,7 +113,7 @@
         </div>
         <div class="form-group flex-1" v-if="dishForm.sellByPortion">
           <label>每份数量（串）</label>
-          <InputNumber v-model="dishForm.portionSize" :min="2" class="w-full" placeholder="例：3" />
+          <InputNumber v-model="dishForm.portionSize" :min="2" class="stock-input" placeholder="例：3" />
         </div>
         <div class="form-group" style="width: 150px">
           <label>启用库存</label>
