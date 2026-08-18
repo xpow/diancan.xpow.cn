@@ -203,8 +203,22 @@
         <div class="merge-header">
           <span class="material-icons merge-icon">playlist_add</span>
           <h3>加单合并</h3>
-          <p class="merge-subtitle">将 <strong>{{ mergeSource?.pickupCode }}</strong> 合并到哪个订单？</p>
+          <p class="merge-subtitle">选择要合并到的目标订单</p>
         </div>
+
+        <div class="merge-source-card" v-if="mergeSource">
+          <span class="merge-source-label">当前订单</span>
+          <div class="merge-source-info">
+            <span class="merge-source-code">{{ mergeSource.pickupCode }}</span>
+            <span class="merge-source-detail">{{ (mergeSource.items || []).length }} 项 · ¥{{ (mergeSource.totals?.payableAmount || 0).toFixed(2) }}</span>
+          </div>
+          <span class="material-icons merge-source-icon">arrow_downward</span>
+        </div>
+
+        <div class="merge-divider">
+          <span class="merge-divider-text">合并到 ↓</span>
+        </div>
+
         <div class="merge-list">
           <button
             v-for="o in mergeTargets"
@@ -220,6 +234,7 @@
             </span>
             <span class="material-icons merge-target-arrow">arrow_forward</span>
           </button>
+          <p v-if="!mergeTargets.length" class="merge-empty">暂无其他可合并的订单</p>
         </div>
         <button class="merge-cancel-btn" @click="showMergeOverlay = false" :disabled="merging">取消</button>
       </div>
@@ -881,11 +896,26 @@ onUnmounted(() => {
   position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
   z-index: 100;
 }
-.merge-header { text-align: center; margin-bottom: var(--spacing-lg); }
+.merge-header { text-align: center; margin-bottom: var(--spacing-md); }
 .merge-icon { font-size: 36px !important; color: var(--primary-container); }
 .merge-header h3 { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; margin: var(--spacing-xs) 0; }
 .merge-subtitle { font-size: var(--text-body-sm); color: var(--secondary); margin: 0; }
+.merge-source-card {
+  display: flex; align-items: center; gap: var(--spacing-md);
+  padding: var(--spacing-md); border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--primary-container) 10%, transparent);
+  border: 1.5px solid var(--primary-container);
+}
+.merge-source-label { font-size: 10px; font-weight: 700; color: var(--primary-container); background: var(--primary-container); color: var(--on-primary); padding: 2px 8px; border-radius: var(--radius-full); white-space: nowrap; }
+.merge-source-info { flex: 1; display: flex; align-items: baseline; gap: var(--spacing-sm); }
+.merge-source-code { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: var(--primary-container); }
+.merge-source-detail { font-size: var(--text-body-sm); color: var(--secondary); }
+.merge-source-icon { font-size: 20px !important; color: var(--primary-container); animation: bounce-down 1s ease infinite; }
+@keyframes bounce-down { 0%,100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+.merge-divider { display: flex; align-items: center; justify-content: center; padding: var(--spacing-sm) 0; }
+.merge-divider-text { font-size: var(--text-label-sm); font-weight: 600; color: var(--outline); }
 .merge-list { display: flex; flex-direction: column; gap: var(--spacing-sm); margin-bottom: var(--spacing-lg); }
+.merge-empty { font-size: var(--text-body-sm); color: var(--secondary); text-align: center; padding: var(--spacing-lg) 0; margin: 0; }
 .merge-target-btn {
   display: flex; align-items: center; gap: var(--spacing-md);
   width: 100%; padding: var(--spacing-md);
