@@ -572,7 +572,7 @@ onMounted(() => {
 .stock-quick-edit { display: flex; align-items: center; gap: 6px; }
 .stock-input { width: 64px; }
 .stock-input:deep(.p-inputtext) { width: 64px; text-align: center; font-weight: 600; padding: 4px 4px; }
-.option-group { display: inline-flex; align-items: center; gap: 8px; }
+.option-group { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 .option-label { font-size: 13px; font-weight: 600; color: var(--text-color); white-space: nowrap; }
 .option-hint { font-size: 12px; color: var(--text-color-secondary); white-space: nowrap; }
 </style>
