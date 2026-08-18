@@ -1048,7 +1048,7 @@ onUnmounted(() => {
 @keyframes bounce-down { 0%,100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
 .merge-divider { display: flex; align-items: center; justify-content: center; padding: var(--spacing-sm) 0; }
 .merge-divider-text { font-size: var(--text-label-sm); font-weight: 600; color: var(--outline); }
-.merge-list { display: flex; flex-direction: column; gap: var(--spacing-sm); margin-bottom: var(--spacing-lg); }
+.merge-list { display: flex; flex-direction: column; gap: var(--spacing-sm); margin-bottom: var(--spacing-lg); max-height: 40vh; overflow-y: auto; }
 .merge-empty { font-size: var(--text-body-sm); color: var(--secondary); text-align: center; padding: var(--spacing-lg) 0; margin: 0; }
 .merge-target-btn {
   display: flex; align-items: center; gap: var(--spacing-md);
