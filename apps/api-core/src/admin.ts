@@ -352,144 +352,54 @@ router.put('/orders/:id/status', async (req, res) => {
   res.json({ id: updated.id, status: updated.status, paymentMethod: updated.paymentMethod })
 })
 
-/* ===== 合并订单（加单） ===== */
-router.post('/orders/:orderNo/merge', async (req, res) => {
+/* ===== 加单分组 ===== */
+router.post('/orders/:orderNo/group', async (req, res) => {
   const { orderNo } = req.params
   const { targetOrderNo } = req.body ?? {}
   if (!targetOrderNo || typeof targetOrderNo !== 'string') {
     return res.status(400).json({ message: 'targetOrderNo is required' })
   }
 
-  const source = await prisma.order.findUnique({ where: { orderNo }, include: { items: true, promotions: true } })
+  const source = await prisma.order.findUnique({ where: { orderNo } })
   if (!source) return res.status(404).json({ message: '源订单不存在' })
 
-  const target = await prisma.order.findUnique({ where: { orderNo: targetOrderNo }, include: { items: true, promotions: true } })
+  const target = await prisma.order.findUnique({ where: { orderNo: targetOrderNo } })
   if (!target) return res.status(404).json({ message: '目标订单不存在' })
 
   if (source.id === target.id) {
-    return res.status(400).json({ message: '不能合并到自身' })
+    return res.status(400).json({ message: '不能分组到自身' })
   }
 
   const activeStatuses = ['unpaid', 'paid', 'preparing', 'ready']
   if (!activeStatuses.includes(source.status)) {
-    return res.status(400).json({ message: `源订单状态「${source.status}」不可合并` })
+    return res.status(400).json({ message: `源订单状态「${source.status}」不可加单` })
   }
   if (!activeStatuses.includes(target.status)) {
-    return res.status(400).json({ message: `目标订单状态「${target.status}」不可合并` })
+    return res.status(400).json({ message: `目标订单状态「${target.status}」不可加单` })
   }
 
-  try {
-    const merged = await prisma.$transaction(async (tx) => {
-      // 1. 移动菜品到目标订单
-      await tx.orderItem.updateMany({
-        where: { orderId: source.id },
-        data: { orderId: target.id },
-      })
+  const groupId = target.groupId || `grp_${target.orderNo}`
 
-      // 2. 删除源订单的优惠记录
-      await tx.orderPromotion.deleteMany({ where: { orderId: source.id } })
+  await prisma.$transaction(async (tx) => {
+    await tx.order.update({ where: { id: target.id }, data: { groupId } })
+    await tx.order.update({ where: { id: source.id }, data: { groupId } })
+    if (source.groupId && source.groupId !== groupId) {
+      await tx.order.updateMany({ where: { groupId: source.groupId }, data: { groupId } })
+    }
+  })
 
-      // 3. 取消源订单（不回退库存，菜品已归属目标）
-      await tx.order.update({
-        where: { id: source.id },
-        data: { status: 'cancelled', cancelReason: `已合并至 ${targetOrderNo}` },
-      })
+  res.json({ success: true, groupId, message: `已将 ${orderNo} 加入 ${targetOrderNo} 的分组` })
+})
 
-      // 4. 获取合并后的目标订单菜品
-      const allItems = await tx.orderItem.findMany({ where: { orderId: target.id } })
+/* ===== 取消分组 ===== */
+router.post('/orders/:orderNo/ungroup', async (req, res) => {
+  const { orderNo } = req.params
+  const order = await prisma.order.findUnique({ where: { orderNo }, select: { id: true, groupId: true } })
+  if (!order) return res.status(404).json({ message: '订单不存在' })
+  if (!order.groupId) return res.status(400).json({ message: '该订单未分组' })
 
-      // 5. 按菜品重新试算目标订单金额
-      const dishIds = [...new Set(allItems.map((i) => i.dishId))]
-      const dishes = await tx.dish.findMany({ where: { id: { in: dishIds } } })
-      const dishMap = new Map(dishes.map((d) => [d.id, d]))
-
-      let originalAmount = 0
-      let payableAmount = 0
-      for (const item of allItems) {
-        const dish = dishMap.get(item.dishId)
-        const portionFactor = (dish?.portionSize || item.portionSize) || 1
-        const subtotal = item.unitPrice * item.quantity / portionFactor
-        originalAmount += subtotal
-        payableAmount += item.finalSubtotal
-      }
-
-      // 6. 重新计算满减
-      let fullReductionDiscount = 0
-      const activePromos = await tx.promotion.findMany({
-        where: { status: 'active' },
-        include: { items: true },
-      })
-      const fullReductionPromos = activePromos
-        .filter((p) => p.type === 'full_reduction')
-        .sort((a, b) => (JSON.parse(b.rules).threshold ?? 0) - (JSON.parse(a.rules).threshold ?? 0))
-
-      for (const promo of fullReductionPromos) {
-        const rules = JSON.parse(promo.rules)
-        const threshold = rules.threshold ?? 0
-        const discount = rules.discount ?? 0
-        if (payableAmount >= threshold && discount > 0) {
-          fullReductionDiscount = discount
-          break
-        }
-      }
-
-      const discountAmount = fullReductionDiscount
-      const finalPayable = Math.round((payableAmount - discountAmount) * 100) / 100
-
-      // 7. 更新目标订单金额
-      await tx.order.update({
-        where: { id: target.id },
-        data: {
-          originalAmount: Math.round(originalAmount * 100) / 100,
-          discountAmount,
-          payableAmount: finalPayable,
-        },
-      })
-
-      // 8. 更新目标订单优惠记录
-      await tx.orderPromotion.deleteMany({ where: { orderId: target.id } })
-      if (fullReductionDiscount > 0) {
-        const matchedPromo = fullReductionPromos.find((p) => {
-          const rules = JSON.parse(p.rules)
-          return payableAmount >= (rules.threshold ?? 0) && (rules.discount ?? 0) === fullReductionDiscount
-        })
-        if (matchedPromo) {
-          const rules = JSON.parse(matchedPromo.rules)
-          await tx.orderPromotion.create({
-            data: {
-              orderId: target.id,
-              promotionId: matchedPromo.id,
-              name: matchedPromo.name,
-              type: 'full_reduction',
-              discount: fullReductionDiscount,
-              description: `订单满 ¥${rules.threshold} 自动减 ¥${rules.discount}`,
-            },
-          })
-        }
-      }
-
-      return tx.order.findUnique({
-        where: { id: target.id },
-        include: { items: true, promotions: true },
-      })
-    })
-
-    invalidateGlobalCache()
-
-    res.json({
-      success: true,
-      message: `已将 ${orderNo} 合并至 ${targetOrderNo}`,
-      target: {
-        orderNo: merged!.orderNo,
-        pickupCode: merged!.pickupCode,
-        status: merged!.status,
-        payableAmount: merged!.payableAmount,
-      },
-    })
-  } catch (err: any) {
-    console.error('[merge order]', err)
-    res.status(500).json({ message: '合并失败' })
-  }
+  await prisma.order.updateMany({ where: { groupId: order.groupId }, data: { groupId: null } })
+  res.json({ success: true, message: '已取消分组' })
 })
 
 router.put('/orders/:orderId/items/:itemId/status', async (req, res) => {

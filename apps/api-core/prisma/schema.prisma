@@ -255,6 +255,7 @@ model Order {
   discountAmount  Float    @default(0)
   payableAmount   Float    @default(0)
   paymentMethod   String   @default("")  // wechat | alipay | cash | ""
+  groupId         String?  // 同组订单共享，用于加单分组显示
 
   branch   Branch   @relation(fields: [branchId], references: [id])
   merchant Merchant @relation(fields: [merchantId], references: [id])

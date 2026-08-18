@@ -16,29 +16,99 @@
       </div>
 
       <TransitionGroup name="card" tag="div" class="card-list">
-        <div v-for="(order, oi) in filteredOrders" :key="order.orderNo" class="card-item-wrapper" :class="{ 'card-leaving': leavingOrders.has(order.orderNo) }">
+        <div v-for="(item, oi) in displayItems" :key="item.type === 'group' ? item.orders[0].groupId : item.orders[0].orderNo" class="card-item-wrapper">
+
           <div v-if="oi > 0" class="order-divider">
             <span class="divider-line"></span>
           </div>
 
-          <div class="ticket-card"
-            @touchstart="onLongPressStart(order.pickupCode)"
+          <!-- 分组卡片 -->
+          <div v-if="item.type === 'group'" class="group-card">
+            <div class="group-header">
+              <span class="material-icons group-icon">group</span>
+              <span class="group-label">分组订单</span>
+              <span class="group-codes">{{ item.orders.map(o => o.pickupCode).join(' + ') }}</span>
+              <button class="group-ungroup-btn" @click="ungroupOrder(item.orders[0])">
+                <span class="material-icons">link_off</span>
+                取消分组
+              </button>
+            </div>
+            <div v-for="(order, idx) in item.orders" :key="order.orderNo" class="group-sub-card">
+              <div v-if="idx > 0" class="group-sub-divider"></div>
+              <div class="ticket-card">
+                <div class="ticket-header" :class="{ 'ticket-header-unpaid': !order.paidAt }">
+                  <p class="ticket-label">
+                    取餐订单
+                    <span v-if="order.orderType === 'takeaway'" class="takeaway-badge">自提</span>
+                    <span v-if="order.paymentMethod" class="pay-badge" :class="'pay-' + order.paymentMethod">{{ payLabel(order.paymentMethod) }}</span>
+                    <span v-if="!order.paidAt" class="unpaid-badge">未付款</span>
+                    <span class="status-badge" :class="'status-' + order.status">{{ statusLabel(order.status) }}</span>
+                  </p>
+                  <div class="ticket-number">{{ order.pickupCode }}</div>
+                  <div class="ticket-hole-left"></div>
+                  <div class="ticket-hole-right"></div>
+                </div>
+                <div class="ticket-body">
+                  <div v-for="g in groupOrderItems(order)" :key="g.key" class="ticket-group">
+                    <div v-for="(item2, idx2) in g.items" :key="idx2" class="ticket-item">
+                      <div class="ticket-item-left">
+                        <div>
+                          <p class="ticket-item-name">{{ item2.name }}<template v-if="item2.portionSize && (item2.finalUnitPrice ?? item2.unitPrice) > 0"> <span class="ticket-item-unit">（¥{{ (item2.finalUnitPrice ?? item2.unitPrice).toFixed(2) }}/{{ item2.portionSize }}串）</span></template></p>
+                          <p v-if="item2.specs" class="ticket-item-spec">{{ item2.specs }}</p>
+                        </div>
+                      </div>
+                      <div class="ticket-item-right">
+                        <span class="ticket-item-price"><small class="c-sign">¥</small>{{ (item2.finalSubtotal ?? item2.finalUnitPrice * item2.quantity).toFixed(2) }}</span>
+                        <span class="ticket-item-qty">x{{ item2.quantity }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="ticket-total">
+                    <span class="ticket-total-label">{{ (order.items || []).length }} 项</span>
+                    <div class="ticket-total-right">
+                      <span class="ticket-total-price"><small class="c-sign">¥</small>{{ (order.totals?.payableAmount || 0).toFixed(2) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="group-footer">
+              <div class="group-total">
+                <span class="group-total-label">分组合计 {{ item.totalCount }} 项商品</span>
+                <span class="group-total-price"><small class="c-sign">¥</small>{{ item.totalAmount.toFixed(2) }}</span>
+              </div>
+              <div class="footer-actions">
+                <button class="merge-btn" @click="startMerge(item.orders[0])">
+                  <span class="material-icons">playlist_add</span>
+                  继续加单
+                </button>
+                <button v-if="item.orders.some(o => o.status === 'paid' || o.status === 'preparing' || o.status === 'ready')" class="pickup-btn" @click="confirmPickup(item.orders[0])">
+                  <span class="material-icons">handshake</span>
+                  已取餐
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 单个订单卡片 -->
+          <div v-else class="ticket-card"
+            @touchstart="onLongPressStart(item.orders[0].pickupCode)"
             @touchend="onLongPressEnd"
             @touchmove="onLongPressMove"
-            @mousedown="onLongPressStart(order.pickupCode)"
+            @mousedown="onLongPressStart(item.orders[0].pickupCode)"
             @mouseup="onLongPressEnd"
             @mouseleave="onLongPressEnd"
             :title="'长按复制取餐码'"
           >
-          <div class="ticket-header" :class="{ 'ticket-header-unpaid': !order.paidAt }">
+          <div class="ticket-header" :class="{ 'ticket-header-unpaid': !item.orders[0].paidAt }">
               <p class="ticket-label">
                 取餐订单
-                <span v-if="order.orderType === 'takeaway'" class="takeaway-badge">自提</span>
-                <span v-if="order.paymentMethod" class="pay-badge" :class="'pay-' + order.paymentMethod">{{ payLabel(order.paymentMethod) }}</span>
-                <span v-if="!order.paidAt" class="unpaid-badge">未付款</span>
-                <span class="status-badge" :class="'status-' + order.status">{{ statusLabel(order.status) }}</span>
+                <span v-if="item.orders[0].orderType === 'takeaway'" class="takeaway-badge">自提</span>
+                <span v-if="item.orders[0].paymentMethod" class="pay-badge" :class="'pay-' + item.orders[0].paymentMethod">{{ payLabel(item.orders[0].paymentMethod) }}</span>
+                <span v-if="!item.orders[0].paidAt" class="unpaid-badge">未付款</span>
+                <span class="status-badge" :class="'status-' + item.orders[0].status">{{ statusLabel(item.orders[0].status) }}</span>
               </p>
-              <div class="ticket-number">{{ order.pickupCode }}</div>
+              <div class="ticket-number">{{ item.orders[0].pickupCode }}</div>
               <div class="ticket-hole-left"></div>
               <div class="ticket-hole-right"></div>
             </div>
@@ -46,66 +116,66 @@
             <div class="ticket-body">
             <div class="ticket-meta">
               <h3 class="ticket-detail-title">订单详情</h3>
-              <span class="ticket-time">{{ formatTime(order.createdAt) }}</span>
+              <span class="ticket-time">{{ formatTime(item.orders[0].createdAt) }}</span>
             </div>
 
-            <div v-for="group in groupOrderItems(order)" :key="group.key" class="ticket-group">
+            <div v-for="group in groupOrderItems(item.orders[0])" :key="group.key" class="ticket-group">
               <div class="ticket-group-header">
                 <span class="ticket-group-title">{{ group.label }}</span>
                 <span class="ticket-group-count">{{ group.count }} 项</span>
               </div>
-              <div v-for="(item, idx) in group.items" :key="idx" class="ticket-item">
+              <div v-for="(item2, idx) in group.items" :key="idx" class="ticket-item">
                 <div class="ticket-item-left">
                   <div class="ticket-item-img">
-                    <img :src="dishImage(item)" :alt="item.name" class="ticket-item-img-el" />
+                    <img :src="dishImage(item2)" :alt="item2.name" class="ticket-item-img-el" />
                   </div>
                   <div>
-                    <p class="ticket-item-name">{{ item.name }}<template v-if="item.portionSize && (item.finalUnitPrice ?? item.unitPrice) > 0"> <span class="ticket-item-unit">（¥{{ (item.finalUnitPrice ?? item.unitPrice).toFixed(2) }}/{{ item.portionSize }}串）</span></template><template v-else-if="(item.finalUnitPrice ?? item.unitPrice) === 0"> <span class="ticket-item-unit tag-gift">赠品</span></template></p>
-                    <p v-if="item.specs" class="ticket-item-spec">{{ item.specs }}</p>
+                    <p class="ticket-item-name">{{ item2.name }}<template v-if="item2.portionSize && (item2.finalUnitPrice ?? item2.unitPrice) > 0"> <span class="ticket-item-unit">（¥{{ (item2.finalUnitPrice ?? item2.unitPrice).toFixed(2) }}/{{ item2.portionSize }}串）</span></template><template v-else-if="(item2.finalUnitPrice ?? item2.unitPrice) === 0"> <span class="ticket-item-unit tag-gift">赠品</span></template></p>
+                    <p v-if="item2.specs" class="ticket-item-spec">{{ item2.specs }}</p>
                   </div>
                 </div>
                 <div class="ticket-item-right">
-                  <span class="ticket-item-price"><small class="c-sign">¥</small>{{ (item.finalSubtotal ?? item.finalUnitPrice * item.quantity).toFixed(2) }}</span>
-                  <span class="ticket-item-qty">x{{ item.quantity }}</span>
+                  <span class="ticket-item-price"><small class="c-sign">¥</small>{{ (item2.finalSubtotal ?? item2.finalUnitPrice * item2.quantity).toFixed(2) }}</span>
+                  <span class="ticket-item-qty">x{{ item2.quantity }}</span>
                 </div>
               </div>
             </div>
 
             <div class="ticket-total">
-              <span class="ticket-total-label">合计 {{ (order.items || []).length }} 项商品</span>
+              <span class="ticket-total-label">合计 {{ (item.orders[0].items || []).length }} 项商品</span>
               <div class="ticket-total-right">
-                <span v-if="order.fullReduction > 0" class="ticket-total-fr">满减 -¥{{ order.fullReduction.toFixed(2) }}</span>
-                <span class="ticket-total-sub">{{ !order.paidAt ? '待付金额' : '实付金额' }}</span>
-                <span class="ticket-total-price"><small class="c-sign">¥</small>{{ (order.totals?.payableAmount || 0).toFixed(2) }}</span>
+                <span v-if="item.orders[0].fullReduction > 0" class="ticket-total-fr">满减 -¥{{ item.orders[0].fullReduction.toFixed(2) }}</span>
+                <span class="ticket-total-sub">{{ !item.orders[0].paidAt ? '待付金额' : '实付金额' }}</span>
+                <span class="ticket-total-price"><small class="c-sign">¥</small>{{ (item.orders[0].totals?.payableAmount || 0).toFixed(2) }}</span>
               </div>
             </div>
           </div>
 
           <div class="ticket-footer">
-            <template v-if="!order.paidAt">
+            <template v-if="!item.orders[0].paidAt">
               <div class="pay-reminder">
                 <span class="material-icons pay-reminder-icon">payment</span>
                 <span class="pay-reminder-text">待支付</span>
               </div>
               <div class="footer-actions">
-                <button class="merge-btn" @click="startMerge(order)">
+                <button class="merge-btn" @click="startMerge(item.orders[0])">
                   <span class="material-icons">playlist_add</span>
                   加单
                 </button>
-                <button class="pay-now-btn" @click="selectedPayOrder = order; showPayPopup = true">
+                <button class="pay-now-btn" @click="selectedPayOrder = item.orders[0]; showPayPopup = true">
                   <span class="material-icons">check_circle</span>
                   立即付款
                 </button>
               </div>
             </template>
             <template v-else>
-              <template v-if="order.status === 'paid' || order.status === 'preparing' || order.status === 'ready'">
+              <template v-if="item.orders[0].status === 'paid' || item.orders[0].status === 'preparing' || item.orders[0].status === 'ready'">
                 <div class="footer-actions">
-                  <button class="merge-btn" @click="startMerge(order)">
+                  <button class="merge-btn" @click="startMerge(item.orders[0])">
                     <span class="material-icons">playlist_add</span>
                     加单
                   </button>
-                  <button class="pickup-btn" @click="confirmPickup(order)">
+                  <button class="pickup-btn" @click="confirmPickup(item.orders[0])">
                     <span class="material-icons">handshake</span>
                     已取餐
                   </button>
@@ -124,7 +194,7 @@
         </div>
       </TransitionGroup>
 
-      <div v-if="!filteredOrders.length" class="empty-state">
+      <div v-if="!displayItems.length" class="empty-state">
         <span class="material-icons empty-icon">receipt_long</span>
         <p class="empty-text">暂无{{ tabLabel }}订单</p>
         <router-link to="/menu" class="empty-cta"><span class="material-icons">add</span> 去点餐</router-link>
@@ -275,6 +345,7 @@ interface OrderSummary {
   orderType?: string
   paymentMethod?: string
   fullReduction?: number
+  groupId?: string
   items: OrderItem[]
   totals: OrderTotals
   createdAt: string
@@ -373,6 +444,53 @@ const filteredOrders = computed(() => {
   return []
 })
 
+interface DisplayItem {
+  type: 'single' | 'group'
+  orders: OrderSummary[]
+  totalAmount: number
+  totalCount: number
+}
+
+const displayItems = computed<DisplayItem[]>(() => {
+  const list = filteredOrders.value
+  const grouped = new Map<string, OrderSummary[]>()
+  const ungrouped: OrderSummary[] = []
+
+  for (const o of list) {
+    if (o.groupId) {
+      const arr = grouped.get(o.groupId) || []
+      arr.push(o)
+      grouped.set(o.groupId, arr)
+    } else {
+      ungrouped.push(o)
+    }
+  }
+
+  const result: DisplayItem[] = []
+
+  // 分组订单
+  for (const [, orders] of grouped) {
+    result.push({
+      type: 'group',
+      orders,
+      totalAmount: orders.reduce((s, o) => s + (o.totals?.payableAmount || 0), 0),
+      totalCount: orders.reduce((s, o) => s + (o.items || []).length, 0),
+    })
+  }
+
+  // 未分组订单
+  for (const o of ungrouped) {
+    result.push({
+      type: 'single',
+      orders: [o],
+      totalAmount: o.totals?.payableAmount || 0,
+      totalCount: (o.items || []).length,
+    })
+  }
+
+  return result
+})
+
 const tabLabel = computed(() => {
   const m: Record<string, string> = { active: '进行中', ready: '待取餐' }
   return m[tab.value] || ''
@@ -462,15 +580,25 @@ async function doMerge(target: OrderSummary) {
   if (!mergeSource.value || merging.value) return
   merging.value = true
   try {
-    await apiPost(`/api/orders/${mergeSource.value.orderNo}/merge`, { targetOrderNo: target.orderNo })
+    await apiPost(`/api/orders/${mergeSource.value.orderNo}/group`, { targetOrderNo: target.orderNo })
     showMergeOverlay.value = false
     mergeSource.value = null
-    showToast(`已合并至 ${target.pickupCode}`)
+    showToast(`已加入 ${target.pickupCode} 的分组`)
     await fetchOrders()
   } catch (error) {
-    showToast(error instanceof Error ? error.message : '合并失败')
+    showToast(error instanceof Error ? error.message : '加单失败')
   } finally {
     merging.value = false
+  }
+}
+
+async function ungroupOrder(order: OrderSummary) {
+  try {
+    await apiPost(`/api/orders/${order.orderNo}/ungroup`)
+    showToast('已取消分组')
+    await fetchOrders()
+  } catch (error) {
+    showToast(error instanceof Error ? error.message : '取消分组失败')
   }
 }
 
@@ -937,6 +1065,22 @@ onUnmounted(() => {
   font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600;
   cursor: pointer;
 }
+
+/* Group Card */
+.group-card { width: 100%; border-radius: var(--radius-xl); border: 2px solid var(--primary-container); background: var(--surface-container-highest); overflow: hidden; }
+.group-header { display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-md); background: color-mix(in srgb, var(--primary-container) 10%, transparent); }
+.group-icon { font-size: 20px !important; color: var(--primary-container); }
+.group-label { font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; color: var(--primary-container); }
+.group-codes { flex: 1; font-family: var(--font-display); font-size: var(--text-body-md); font-weight: 600; color: var(--on-surface); }
+.group-ungroup-btn { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: transparent; color: var(--secondary); font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; cursor: pointer; }
+.group-ungroup-btn:active { background: rgba(0,0,0,0.05); }
+.group-sub-card { padding: 0 var(--spacing-md); }
+.group-sub-card .ticket-card { border: none; box-shadow: none; margin-bottom: 0; }
+.group-sub-divider { height: 1px; background: var(--outline-variant); margin: var(--spacing-sm) 0; }
+.group-footer { padding: var(--spacing-md); border-top: 1.5px dashed var(--primary-container); }
+.group-total { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--spacing-sm); }
+.group-total-label { font-size: var(--text-label-lg); font-weight: 600; color: var(--secondary); }
+.group-total-price { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 800; color: var(--primary-container); }
 
 .confirm-dialog {
   background: var(--surface); border-radius: var(--radius-xl);
