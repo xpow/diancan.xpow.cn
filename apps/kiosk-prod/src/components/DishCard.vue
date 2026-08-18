@@ -91,7 +91,7 @@ const showStockBadge = computed(() => !!props.dish.stockEnabled && (props.dish.s
 .dish-image-disclaimer { position: absolute; bottom: 4px; right: 4px; font-size: 10px; color: rgba(255, 255, 255, 0.85); background: rgba(0, 0, 0, 0.55); padding: 1px 6px; border-radius: 4px; line-height: 1.4; pointer-events: none; }
 .dish-sold-out { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: rgba(0, 0, 0, 0.5); color: #fff; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; letter-spacing: 0.05em; }
 .dish-sold-out .material-icons { font-size: 34px !important; opacity: 0.9; }
-.dish-stock-badge { position: absolute; top: 4px; right: 4px; padding: 2px 8px; border-radius: var(--radius-full); background: rgba(0, 0, 0, 0.6); color: #fff; font-family: var(--font-display); font-size: 11px; font-weight: 600; line-height: 1.5; pointer-events: none; }
+.dish-stock-badge { position: absolute; top: 4px; right: 4px; padding: 4px 12px; border-radius: var(--radius-full); background: linear-gradient(135deg, #ff6b00, #ff3d00); color: #fff; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; line-height: 1.5; pointer-events: none; box-shadow: 0 2px 8px rgba(255, 61, 0, 0.4); }
 
 .dish-specs { margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--card-border-subtle); display: flex; flex-direction: column; gap: var(--spacing-md); }
 .spec-group { display: flex; flex-direction: column; gap: var(--spacing-sm); }
