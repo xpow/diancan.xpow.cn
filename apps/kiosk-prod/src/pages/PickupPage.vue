@@ -70,6 +70,12 @@
                     </div>
                   </div>
                 </div>
+                <div v-if="!order.paidAt" class="group-sub-footer">
+                  <button class="pay-now-btn" @click="selectedPayOrder = order; showPayPopup = true">
+                    <span class="material-icons">check_circle</span>
+                    立即付款
+                  </button>
+                </div>
               </div>
             </div>
             <div class="group-footer">
@@ -1077,6 +1083,7 @@ onUnmounted(() => {
 .group-sub-card { padding: 0 var(--spacing-md); }
 .group-sub-card .ticket-card { border: none; box-shadow: none; margin-bottom: 0; }
 .group-sub-divider { height: 1px; background: var(--outline-variant); margin: var(--spacing-sm) 0; }
+.group-sub-footer { padding: var(--spacing-sm) var(--spacing-md) var(--spacing-md); }
 .group-footer { padding: var(--spacing-md); border-top: 1.5px dashed var(--primary-container); }
 .group-total { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--spacing-sm); }
 .group-total-label { font-size: var(--text-label-lg); font-weight: 600; color: var(--secondary); }
