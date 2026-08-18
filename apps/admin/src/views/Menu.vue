@@ -99,7 +99,7 @@
       <div class="form-row">
         <div class="form-group flex-1">
           <label>价格 (¥)</label>
-          <InputNumber v-model="dishForm.price" :min="0" :step="0.5" class="w-full" />
+          <InputNumber v-model="dishForm.price" :min="0" :step="0.5" mode="decimal" :minFractionDigits="2" :maxFractionDigits="2" class="w-full" />
         </div>
         <div class="form-group flex-1">
           <label>分类</label>
