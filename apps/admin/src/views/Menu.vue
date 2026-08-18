@@ -107,22 +107,17 @@
         </div>
       </div>
       <div class="form-row" style="align-items: flex-end">
-        <div class="option-group">
+        <div class="option-group" style="flex:1">
           <span class="option-label">按份卖</span>
           <ToggleSwitch v-model="dishForm.sellByPortion" />
-          <template v-if="dishForm.sellByPortion">
-            <span class="option-hint">每份</span>
-            <InputNumber v-model="dishForm.portionSize" :min="2" class="stock-input" placeholder="串" />
-          </template>
+          <span class="option-hint">每份</span>
+          <InputNumber v-model="dishForm.portionSize" :min="2" class="stock-input" :disabled="!dishForm.sellByPortion" placeholder="串" />
         </div>
-        <span class="option-divider"></span>
         <div class="option-group">
           <span class="option-label">启用库存</span>
           <ToggleSwitch v-model="dishForm.stockEnabled" />
-          <template v-if="dishForm.stockEnabled">
-            <span class="option-hint">数量</span>
-            <InputNumber v-model="dishForm.stock" :min="0" class="stock-input" placeholder="个" />
-          </template>
+          <span class="option-hint">数量</span>
+          <InputNumber v-model="dishForm.stock" :min="0" class="stock-input" :disabled="!dishForm.stockEnabled" placeholder="个" />
         </div>
       </div>
       <div class="form-group">
@@ -580,5 +575,4 @@ onMounted(() => {
 .option-group { display: inline-flex; align-items: center; gap: 8px; }
 .option-label { font-size: 13px; font-weight: 600; color: var(--text-color); white-space: nowrap; }
 .option-hint { font-size: 12px; color: var(--text-color-secondary); white-space: nowrap; }
-.option-divider { width: 1px; height: 24px; background: var(--surface-border); margin: 0 4px; }
 </style>
