@@ -111,7 +111,7 @@
           <label>按份卖</label>
           <ToggleSwitch v-model="dishForm.sellByPortion" />
         </div>
-        <div class="form-group flex-1" v-if="dishForm.sellByPortion">
+        <div class="form-group" v-if="dishForm.sellByPortion">
           <label>每份数量（串）</label>
           <InputNumber v-model="dishForm.portionSize" :min="2" class="stock-input" placeholder="例：3" />
         </div>
@@ -119,9 +119,7 @@
           <label>启用库存</label>
           <ToggleSwitch v-model="dishForm.stockEnabled" />
         </div>
-      </div>
-      <div class="form-row" v-if="dishForm.stockEnabled">
-        <div class="form-group">
+        <div class="form-group" v-if="dishForm.stockEnabled">
           <label>库存数量</label>
           <InputNumber v-model="dishForm.stock" :min="0" class="stock-input" placeholder="例：100" />
         </div>
