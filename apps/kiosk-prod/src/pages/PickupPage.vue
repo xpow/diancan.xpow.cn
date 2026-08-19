@@ -355,7 +355,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { getDishImage } from '@/utils/dishImages'
 import { apiGet, apiPost } from '@/utils/api'
 import KioskTopBar from '@/components/KioskTopBar.vue'
