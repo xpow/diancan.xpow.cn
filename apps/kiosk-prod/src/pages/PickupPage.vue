@@ -420,17 +420,6 @@ const payAmount = computed(() => selectedPayOrders.value.reduce((s, o) => s + (o
 
 const collapsedGroups = ref<Set<string>>(new Set())
 
-// 新分组默认折叠
-watch(displayItems, (items) => {
-  for (const item of items) {
-    if (item.type === 'group' && item.orders[0].groupId) {
-      if (!collapsedGroups.value.has(item.orders[0].groupId)) {
-        collapsedGroups.value.add(item.orders[0].groupId)
-      }
-    }
-  }
-}, { immediate: true })
-
 function isGroupCollapsed(groupId: string | undefined) {
   if (!groupId) return false
   return collapsedGroups.value.has(groupId)
@@ -570,6 +559,17 @@ const displayItems = computed<DisplayItem[]>(() => {
 
   return result
 })
+
+// 新分组默认折叠
+watch(displayItems, (items) => {
+  for (const item of items) {
+    if (item.type === 'group' && item.orders[0].groupId) {
+      if (!collapsedGroups.value.has(item.orders[0].groupId)) {
+        collapsedGroups.value.add(item.orders[0].groupId)
+      }
+    }
+  }
+}, { immediate: true })
 
 const tabLabel = computed(() => {
   const m: Record<string, string> = { active: '进行中', ready: '待取餐' }
