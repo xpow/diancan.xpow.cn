@@ -61,6 +61,7 @@
                       <span v-if="order.paymentMethod" class="pay-badge" :class="'pay-' + order.paymentMethod">{{ payLabel(order.paymentMethod) }}</span>
                       <span v-if="!order.paidAt" class="unpaid-badge">未付款</span>
                       <span class="status-badge" :class="'status-' + order.status">{{ statusLabel(order.status) }}</span>
+                      <span v-if="!order.dishOutAt" class="fresh-badge">新</span>
                     </p>
                     <div class="ticket-number">{{ order.pickupCode }}</div>
                     <div class="ticket-hole-left"></div>
@@ -113,6 +114,10 @@
                   </div>
                 </div>
                 <div class="footer-actions">
+                  <button v-if="item.orders.some(o => o.paidAt && !o.dishOutAt)" class="dishout-btn" @click="dishOutGroup(item.orders)">
+                    <span class="material-icons">restaurant</span>
+                    已出菜
+                  </button>
                   <button v-if="item.totalPending > 0" class="pay-now-btn" @click="selectedPayOrders = item.orders.filter(o => !o.paidAt); showPayPopup = true">
                     <span class="material-icons">check_circle</span>
                     立即付款 ¥{{ item.totalPending.toFixed(2) }}
@@ -147,6 +152,7 @@
                 <span v-if="item.orders[0].paymentMethod" class="pay-badge" :class="'pay-' + item.orders[0].paymentMethod">{{ payLabel(item.orders[0].paymentMethod) }}</span>
                 <span v-if="!item.orders[0].paidAt" class="unpaid-badge">未付款</span>
                 <span class="status-badge" :class="'status-' + item.orders[0].status">{{ statusLabel(item.orders[0].status) }}</span>
+                <span v-if="!item.orders[0].dishOutAt" class="fresh-badge">新</span>
               </p>
               <div class="ticket-number">{{ item.orders[0].pickupCode }}</div>
               <div class="ticket-hole-left"></div>
@@ -211,6 +217,10 @@
             <template v-else>
               <template v-if="item.orders[0].status === 'paid' || item.orders[0].status === 'preparing' || item.orders[0].status === 'ready'">
                 <div class="footer-actions">
+                  <button v-if="!item.orders[0].dishOutAt" class="dishout-btn" @click="dishOut(item.orders[0])">
+                    <span class="material-icons">restaurant</span>
+                    已出菜
+                  </button>
                   <button class="merge-btn" @click="startMerge(item.orders[0])">
                     <span class="material-icons">playlist_add</span>
                     合单
@@ -390,6 +400,7 @@ interface OrderSummary {
   totals: OrderTotals
   createdAt: string
   paidAt?: string
+  dishOutAt?: string
 }
 
 const orders = ref<OrderSummary[]>([])
@@ -626,6 +637,29 @@ async function confirmPay() {
     payError.value = error instanceof Error ? error.message : '付款失败'
   } finally {
     paySubmitting.value = false
+  }
+}
+
+async function dishOut(order: OrderSummary) {
+  try {
+    await apiPost(`/api/orders/${order.orderNo}/dish-out`)
+    order.dishOutAt = new Date().toISOString()
+    showToast('已出菜')
+  } catch (error) {
+    showToast(error instanceof Error ? error.message : '操作失败')
+  }
+}
+
+async function dishOutGroup(orders: OrderSummary[]) {
+  try {
+    const pending = orders.filter(o => o.paidAt && !o.dishOutAt)
+    for (const o of pending) {
+      await apiPost(`/api/orders/${o.orderNo}/dish-out`)
+      o.dishOutAt = new Date().toISOString()
+    }
+    showToast('已出菜')
+  } catch (error) {
+    showToast(error instanceof Error ? error.message : '操作失败')
   }
 }
 
@@ -906,6 +940,7 @@ onUnmounted(() => {
 .pay-alipay { background: #1677ff; color: #fff; }
 .unpaid-badge { background: var(--error-container); color: var(--on-error-container); }
 .status-badge { background: var(--surface-container-high); color: var(--on-surface); }
+.fresh-badge { background: #ff6d00; color: #fff; display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--radius-full); font-size: 11px; font-weight: 700; }
 .status-unpaid { background: var(--error-container); color: var(--on-error-container); }
 .status-paid, .status-preparing { background: var(--secondary-container); color: var(--on-secondary-container); }
 .status-ready { background: var(--tertiary-container); color: var(--on-tertiary-container); }
@@ -1090,6 +1125,17 @@ onUnmounted(() => {
   cursor: pointer; transition: transform var(--transition-fast);
 }
 .pickup-btn:active { transform: scale(0.98); }
+
+.dishout-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: none; border-radius: var(--radius-full);
+  background: #ff6d00; color: #fff;
+  font-family: var(--font-display); font-size: var(--text-label-md); font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer; transition: transform var(--transition-fast);
+}
+.dishout-btn:active { transform: scale(0.98); }
 
 .footer-actions { display: flex; gap: var(--spacing-sm); justify-content: center; }
 .merge-btn {

@@ -289,6 +289,7 @@ router.get('/orders', async (_req, res) => {
       cancelReason: o.cancelReason || undefined,
       cancelledAt: o.cancelledAt?.toISOString() || undefined,
       paidAt: o.paidAt?.toISOString() || undefined,
+      dishOutAt: o.dishOutAt?.toISOString() || undefined,
     })),
     total,
     page: Number(page),

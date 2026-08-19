@@ -267,6 +267,7 @@ model Order {
   cancelReason String?
   cancelledAt DateTime?
   paidAt      DateTime?
+  dishOutAt   DateTime?
 }
 
 model OrderItem {

@@ -884,6 +884,15 @@ app.post('/api/orders/:orderNo/pay', orderLimiter, authMiddleware, async (req, r
   res.json({ orderNo: updated.orderNo, status: updated.status })
 })
 
+app.post('/api/orders/:orderNo/dish-out', orderLimiter, authMiddleware, async (req, res) => {
+  const { orderNo } = req.params
+  const order = await prisma.order.findUnique({ where: { orderNo }, select: { id: true, dishOutAt: true } })
+  if (!order) return res.status(404).json({ message: '订单不存在' })
+  if (order.dishOutAt) return res.status(400).json({ message: '已出菜' })
+  const updated = await prisma.order.update({ where: { id: order.id }, data: { dishOutAt: new Date() } })
+  res.json({ orderNo: updated.orderNo, dishOutAt: updated.dishOutAt })
+})
+
 app.post('/api/orders/:orderNo/complete', orderLimiter, authMiddleware, async (req, res) => {
   const { orderNo } = req.params
 
@@ -1002,6 +1011,7 @@ app.get('/api/orders', generalLimiter, authMiddleware, async (req, res) => {
       })),
       createdAt: o.createdAt.toISOString(),
       paidAt: o.paidAt?.toISOString() || undefined,
+      dishOutAt: o.dishOutAt?.toISOString() || undefined,
       groupId: o.groupId || undefined,
     })),
   })
