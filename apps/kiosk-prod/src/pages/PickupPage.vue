@@ -979,7 +979,7 @@ onUnmounted(() => {
 .pay-qr-label { font-size: var(--text-label-sm); font-weight: 600; color: var(--secondary); }
 .pay-now-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-xl);
+  padding: var(--spacing-sm) var(--spacing-lg);
   border: none; border-radius: var(--radius-full);
   background: var(--primary-container); color: var(--on-primary);
   font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700;
@@ -1090,7 +1090,7 @@ onUnmounted(() => {
 .footer-actions { display: flex; gap: var(--spacing-sm); justify-content: center; }
 .merge-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-xl);
+  padding: var(--spacing-sm) var(--spacing-lg);
   border: none; border-radius: var(--radius-full);
   background: var(--surface-container-high); color: var(--on-surface);
   font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700;
