@@ -43,12 +43,12 @@
                 <span class="material-icons group-icon">group</span>
                 <span class="group-label">分组订单</span>
                 <span class="group-codes">{{ item.orders.map(o => o.pickupCode).join(' + ') }}</span>
-                <button class="group-collapse-btn" @click="toggleGroupCollapse(item.orders[0].groupId)">
-                  <span class="material-icons">expand_less</span>
-                </button>
                 <button class="group-ungroup-btn" @click="ungroupOrder(item.orders[0])">
                   <span class="material-icons">link_off</span>
                   取消分组
+                </button>
+                <button class="group-collapse-btn" @click="toggleGroupCollapse(item.orders[0].groupId)">
+                  <span class="material-icons">expand_less</span>
                 </button>
               </div>
               <div v-for="(order, idx) in item.orders" :key="order.orderNo" class="group-sub-card">
