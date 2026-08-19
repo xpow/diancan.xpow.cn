@@ -492,11 +492,13 @@ function groupOrderItems(order: OrderSummary): ItemGroup[] {
 
 const tabs = [
   { key: 'active', label: '进行中', icon: 'hourglass_empty' },
+  { key: 'unpaid', label: '待支付', icon: 'payment' },
   { key: 'ready', label: '待取餐', icon: 'notifications_active' },
 ]
 
 const filteredOrders = computed(() => {
   if (tab.value === 'active') return orders.value.filter((o) => o.status === 'unpaid' || o.status === 'paid' || o.status === 'preparing' || (o.status === 'completed' && !o.paidAt))
+  if (tab.value === 'unpaid') return orders.value.filter((o) => !o.paidAt)
   if (tab.value === 'ready') return orders.value.filter((o) => o.status === 'ready' || (o.status === 'completed' && !o.paidAt))
   return []
 })
@@ -572,12 +574,13 @@ watch(displayItems, (items) => {
 }, { immediate: true })
 
 const tabLabel = computed(() => {
-  const m: Record<string, string> = { active: '进行中', ready: '待取餐' }
+  const m: Record<string, string> = { active: '进行中', unpaid: '待支付', ready: '待取餐' }
   return m[tab.value] || ''
 })
 
 function badgeCount(key: string) {
   if (key === 'active') return orders.value.filter((o) => o.status === 'unpaid' || o.status === 'paid' || o.status === 'preparing' || (o.status === 'completed' && !o.paidAt)).length || ''
+  if (key === 'unpaid') return orders.value.filter((o) => !o.paidAt).length || ''
   if (key === 'ready') return orders.value.filter((o) => o.status === 'ready' || (o.status === 'completed' && !o.paidAt)).length || ''
   return ''
 }
