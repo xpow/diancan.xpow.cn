@@ -312,7 +312,7 @@
       <div class="merge-dialog">
         <div class="merge-header">
           <span class="material-icons merge-icon">playlist_add</span>
-          <h3>合单合并</h3>
+          <h3>订单合并</h3>
           <p class="merge-subtitle">选择要合并到的目标订单</p>
         </div>
 
