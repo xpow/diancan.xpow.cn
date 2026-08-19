@@ -985,7 +985,8 @@ onUnmounted(() => {
   padding: var(--spacing-sm) var(--spacing-lg);
   border: none; border-radius: var(--radius-full);
   background: var(--primary-container); color: var(--on-primary);
-  font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700;
+  font-family: var(--font-display); font-size: var(--text-label-md); font-weight: 700;
+  white-space: nowrap;
   cursor: pointer; transition: transform var(--transition-fast);
 }
 .pay-now-btn:active { transform: scale(0.98); }
