@@ -1157,7 +1157,7 @@ onUnmounted(() => {
 .group-collapsed-price { font-family: var(--font-display); font-size: var(--text-title-lg); font-weight: 800; color: var(--primary-container); white-space: nowrap; }
 .group-collapsed-pending { font-size: var(--text-label-sm); font-weight: 700; color: var(--tertiary); }
 .group-expand-icon { font-size: 20px !important; color: var(--secondary); margin-left: auto; flex-shrink: 0; }
-.group-collapse-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: none; border-radius: var(--radius-full); background: transparent; color: var(--secondary); cursor: pointer; margin-left: auto; }
+.group-collapse-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: none; border-radius: var(--radius-full); background: transparent; color: var(--secondary); cursor: pointer; }
 .group-header { display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-md); background: color-mix(in srgb, var(--primary-container) 10%, transparent); }
 .group-icon { font-size: 20px !important; color: var(--primary-container); }
 .group-label { font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; color: var(--primary-container); }
