@@ -119,7 +119,7 @@
                   </button>
                   <button class="merge-btn" @click="startMerge(item.orders[0])">
                     <span class="material-icons">playlist_add</span>
-                    继续加单
+                    继续合单
                   </button>
                   <button v-if="item.totalPending === 0 && item.orders.some(o => o.status === 'paid' || o.status === 'preparing' || o.status === 'ready')" class="pickup-btn" @click="confirmPickup(item.orders[0])">
                     <span class="material-icons">handshake</span>
@@ -200,7 +200,7 @@
               <div class="footer-actions">
                 <button class="merge-btn" @click="startMerge(item.orders[0])">
                   <span class="material-icons">playlist_add</span>
-                  加单
+                  合单
                 </button>
                 <button class="pay-now-btn" @click="selectedPayOrders = [item.orders[0]]; showPayPopup = true">
                   <span class="material-icons">check_circle</span>
@@ -213,7 +213,7 @@
                 <div class="footer-actions">
                   <button class="merge-btn" @click="startMerge(item.orders[0])">
                     <span class="material-icons">playlist_add</span>
-                    加单
+                    合单
                   </button>
                   <button class="pickup-btn" @click="confirmPickup(item.orders[0])">
                     <span class="material-icons">handshake</span>
@@ -312,7 +312,7 @@
       <div class="merge-dialog">
         <div class="merge-header">
           <span class="material-icons merge-icon">playlist_add</span>
-          <h3>加单合并</h3>
+          <h3>合单合并</h3>
           <p class="merge-subtitle">选择要合并到的目标订单</p>
         </div>
 
@@ -671,7 +671,7 @@ async function doMerge(target: OrderSummary) {
     showToast(`已加入 ${target.pickupCode} 的分组`)
     await fetchOrders()
   } catch (error) {
-    showToast(error instanceof Error ? error.message : '加单失败')
+    showToast(error instanceof Error ? error.message : '合单失败')
   } finally {
     merging.value = false
   }
