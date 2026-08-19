@@ -1152,16 +1152,16 @@ onUnmounted(() => {
 /* Group Card */
 .group-card { width: 100%; border-radius: var(--radius-xl); border: 2px solid var(--primary-container); background: var(--surface-container-highest); overflow: hidden; }
 .group-collapsed-view { padding: var(--spacing-md); cursor: pointer; }
-.group-collapsed-top { display: flex; align-items: center; gap: var(--spacing-sm); }
-.group-collapsed-count { font-size: var(--text-label-md); color: var(--secondary); }
-.group-collapsed-price { margin-left: auto; font-family: var(--font-display); font-size: var(--text-title-lg); font-weight: 800; color: var(--primary-container); }
+.group-collapsed-top { display: flex; align-items: center; gap: var(--spacing-sm); width: 100%; }
+.group-collapsed-count { font-size: var(--text-label-md); color: var(--secondary); white-space: nowrap; }
+.group-collapsed-price { font-family: var(--font-display); font-size: var(--text-title-lg); font-weight: 800; color: var(--primary-container); white-space: nowrap; }
 .group-collapsed-pending { font-size: var(--text-label-sm); font-weight: 700; color: var(--tertiary); }
-.group-expand-icon { font-size: 20px !important; color: var(--secondary); transition: transform .2s; }
+.group-expand-icon { font-size: 20px !important; color: var(--secondary); margin-left: auto; flex-shrink: 0; }
 .group-collapse-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: none; border-radius: var(--radius-full); background: transparent; color: var(--secondary); cursor: pointer; margin-left: auto; }
 .group-header { display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-md); background: color-mix(in srgb, var(--primary-container) 10%, transparent); }
 .group-icon { font-size: 20px !important; color: var(--primary-container); }
 .group-label { font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; color: var(--primary-container); }
-.group-codes { flex: 1; font-family: var(--font-display); font-size: var(--text-body-md); font-weight: 600; color: var(--on-surface); }
+.group-codes { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-display); font-size: var(--text-body-md); font-weight: 600; color: var(--on-surface); }
 .group-ungroup-btn { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: transparent; color: var(--secondary); font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; cursor: pointer; }
 .group-ungroup-btn:active { background: rgba(0,0,0,0.05); }
 .group-sub-card { padding: 0 var(--spacing-md); }
