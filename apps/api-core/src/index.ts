@@ -1098,11 +1098,6 @@ app.post('/api/system/device-auth', authLimiter, async (req, res) => {
       }).catch((e) => console.error('[device-auth] fingerprint upsert failed', e))
     }
   }
-  // 绑定该设备当前活跃的 uuid
-  if (authUuid) {
-    prisma.device.update({ where: { id: device.id }, data: { uuid: authUuid } })
-      .catch((e) => console.error('[device-auth] update uuid failed', e))
-  }
   const token = jwt.sign(
     { deviceId: device.id, sn: device.sn, uuid: authUuid },
     JWT_SECRET,
