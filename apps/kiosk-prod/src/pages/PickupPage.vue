@@ -864,7 +864,7 @@ onUnmounted(() => {
 }
 
 /* Page Content */
-.page-content { padding: 70px var(--container-margin) var(--spacing-lg); max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
+.page-content { padding: 70px var(--container-margin) var(--spacing-lg); max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
 
 /* Status Tabs */
 .status-tabs { display: flex; gap: var(--spacing-sm); padding: var(--spacing-md) 0; overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
@@ -873,11 +873,11 @@ onUnmounted(() => {
 .tab-icon { font-size: 18px !important; }
 .tab-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 4px; border-radius: var(--radius-full); background: #c62828; color: #fff; font-size: 11px; font-weight: 700; line-height: 1; }
 
-.order-divider { width: 100%; padding: var(--spacing-sm) 0; display: flex; align-items: center; justify-content: center; }
+.order-divider { display: none; }
 .divider-line { width: 40px; height: 4px; border-radius: 2px; background: var(--outline-variant); }
 
 /* Ticket Card */
-.card-list { position: relative; width: 100%; align-self: stretch; }
+.card-list { position: relative; width: 100%; display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 0 var(--spacing-lg); align-self: stretch; }
 .card-item-wrapper { width: 100%; }
 .card-move { transition: transform 0.45s ease; }
 .card-leave-active { display: none; }
