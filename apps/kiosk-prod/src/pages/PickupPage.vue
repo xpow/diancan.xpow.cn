@@ -430,6 +430,7 @@ const showPayPopup = ref(false)
 const payAmount = computed(() => selectedPayOrders.value.reduce((s, o) => s + (o.totals?.payableAmount || 0), 0))
 
 const collapsedGroups = ref<Set<string>>(new Set())
+const seenGroups = ref<Set<string>>(new Set())
 
 function isGroupCollapsed(groupId: string | undefined) {
   if (!groupId) return false
@@ -573,12 +574,14 @@ const displayItems = computed<DisplayItem[]>(() => {
   return result
 })
 
-// 新分组默认折叠
+// 新分组默认折叠，已见过的保持用户操作状态
 watch(displayItems, (items) => {
   for (const item of items) {
     if (item.type === 'group' && item.orders[0].groupId) {
-      if (!collapsedGroups.value.has(item.orders[0].groupId)) {
-        collapsedGroups.value.add(item.orders[0].groupId)
+      const gid = item.orders[0].groupId
+      if (!seenGroups.value.has(gid)) {
+        collapsedGroups.value.add(gid)
+        seenGroups.value.add(gid)
       }
     }
   }
