@@ -63,7 +63,7 @@
                     </p>
                     <div class="ticket-number">{{ order.pickupCode }}</div>
                     <div v-if="!order.dishOutAt" class="dishout-line" @click.stop="dishOut(order)">
-                      <span class="material-icons">restaurant</span> 已出菜
+                      <span class="material-icons">restaurant</span> 待出菜
                     </div>
                     <div class="ticket-hole-left"></div>
                     <div class="ticket-hole-right"></div>
@@ -151,7 +151,7 @@
               </p>
               <div class="ticket-number">{{ item.orders[0].pickupCode }}</div>
               <div v-if="!item.orders[0].dishOutAt" class="dishout-line" @click.stop="dishOut(item.orders[0])">
-                <span class="material-icons">restaurant</span> 已出菜
+                <span class="material-icons">restaurant</span> 待出菜
               </div>
               <div class="ticket-hole-left"></div>
               <div class="ticket-hole-right"></div>
@@ -638,7 +638,7 @@ async function dishOut(order: OrderSummary) {
   try {
     await apiPost(`/api/orders/${order.orderNo}/dish-out`)
     order.dishOutAt = new Date().toISOString()
-    showToast('已出菜')
+    showToast('待出菜')
   } catch (error) {
     showToast(error instanceof Error ? error.message : '操作失败')
   }
@@ -651,7 +651,7 @@ async function dishOutGroup(orders: OrderSummary[]) {
       await apiPost(`/api/orders/${o.orderNo}/dish-out`)
       o.dishOutAt = new Date().toISOString()
     }
-    showToast('已出菜')
+    showToast('待出菜')
   } catch (error) {
     showToast(error instanceof Error ? error.message : '操作失败')
   }

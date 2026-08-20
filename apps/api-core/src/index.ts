@@ -888,7 +888,7 @@ app.post('/api/orders/:orderNo/dish-out', orderLimiter, authMiddleware, async (r
   const { orderNo } = req.params
   const order = await prisma.order.findUnique({ where: { orderNo }, select: { id: true, dishOutAt: true } })
   if (!order) return res.status(404).json({ message: '订单不存在' })
-  if (order.dishOutAt) return res.status(400).json({ message: '已出菜' })
+  if (order.dishOutAt) return res.status(400).json({ message: '已出过菜' })
   const updated = await prisma.order.update({ where: { id: order.id }, data: { dishOutAt: new Date() } })
   res.json({ orderNo: updated.orderNo, dishOutAt: updated.dishOutAt })
 })
