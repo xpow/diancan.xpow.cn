@@ -961,7 +961,7 @@ onUnmounted(() => {
 .dishout-line .material-icons { font-size: 16px; }
 .dishout-pending { background: #ff6d00; color: #fff; cursor: pointer; }
 .dishout-pending:active { background: #e65100; }
-.dishout-waiting { background: var(--surface-container-highest); color: #e53935; border: 1px dashed #e53935; }
+.dishout-waiting { color: #e53935; border: 1px dashed #e53935; }
 .dishout-done { color: #ff6d00; border: 1px dashed #ff6d00; }
 .ticket-header-unpaid .ticket-number { color: #ef5350; }
 
