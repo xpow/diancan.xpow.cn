@@ -61,7 +61,10 @@
                       <span v-if="order.paymentMethod" class="pay-badge" :class="'pay-' + order.paymentMethod">{{ payLabel(order.paymentMethod) }}</span>
                       <span class="status-badge" :class="'status-' + order.status">{{ statusLabel(order.status) }}</span>
                     </p>
-                    <div class="ticket-number">{{ order.pickupCode }}</div>
+                    <div v-if="order.dishOutAt" class="ticket-number">{{ order.pickupCode }}</div>
+                    <button v-else class="dishout-inline" @click.stop="dishOut(order)">
+                      <span class="material-icons">restaurant</span> 已出菜
+                    </button>
                     <div class="ticket-hole-left"></div>
                     <div class="ticket-hole-right"></div>
                   </div>
@@ -92,12 +95,6 @@
                       <div class="ticket-total-right">
                         <span class="ticket-total-price"><small class="c-sign">¥</small>{{ (order.totals?.payableAmount || 0).toFixed(2) }}</span>
                       </div>
-                    </div>
-                    <div v-if="!order.dishOutAt" class="sub-card-footer">
-                      <button class="dishout-btn" @click="dishOut(order)">
-                        <span class="material-icons">restaurant</span>
-                        已出菜
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -152,7 +149,10 @@
                 <span v-if="item.orders[0].paymentMethod" class="pay-badge" :class="'pay-' + item.orders[0].paymentMethod">{{ payLabel(item.orders[0].paymentMethod) }}</span>
                 <span class="status-badge" :class="'status-' + item.orders[0].status">{{ statusLabel(item.orders[0].status) }}</span>
               </p>
-              <div class="ticket-number">{{ item.orders[0].pickupCode }}</div>
+              <div v-if="item.orders[0].dishOutAt" class="ticket-number">{{ item.orders[0].pickupCode }}</div>
+              <button v-else class="dishout-inline" @click.stop="dishOut(item.orders[0])">
+                <span class="material-icons">restaurant</span> 已出菜
+              </button>
               <div class="ticket-hole-left"></div>
               <div class="ticket-hole-right"></div>
             </div>
@@ -202,10 +202,6 @@
                 <span class="pay-reminder-text">待支付</span>
               </div>
               <div class="footer-actions">
-                <button v-if="!item.orders[0].dishOutAt" class="dishout-btn" @click="dishOut(item.orders[0])">
-                  <span class="material-icons">restaurant</span>
-                  已出菜
-                </button>
                 <button class="merge-btn" @click="startMerge(item.orders[0])">
                   <span class="material-icons">playlist_add</span>
                   合单
@@ -219,10 +215,6 @@
             <template v-else>
               <template v-if="item.orders[0].status === 'paid' || item.orders[0].status === 'preparing' || item.orders[0].status === 'ready'">
                 <div class="footer-actions">
-                  <button v-if="!item.orders[0].dishOutAt" class="dishout-btn" @click="dishOut(item.orders[0])">
-                    <span class="material-icons">restaurant</span>
-                    已出菜
-                  </button>
                   <button class="merge-btn" @click="startMerge(item.orders[0])">
                     <span class="material-icons">playlist_add</span>
                     合单
@@ -948,6 +940,9 @@ onUnmounted(() => {
 .status-ready { background: var(--tertiary-container); color: var(--on-tertiary-container); }
 .status-completed { background: var(--surface-variant); color: var(--on-surface-variant); }
 .ticket-number { font-family: var(--font-display); font-size: 64px; font-weight: 800; color: var(--primary-container); letter-spacing: -0.04em; line-height: 1; }
+.dishout-inline { display: flex; align-items: center; justify-content: center; gap: var(--spacing-sm); width: 100%; padding: 8px 0; border: 2px dashed #ff6d00; border-radius: var(--radius-lg); background: rgba(255, 109, 0, 0.08); color: #ff6d00; font-family: var(--font-display); font-size: var(--text-title-lg); font-weight: 700; cursor: pointer; transition: background var(--transition-fast); }
+.dishout-inline .material-icons { font-size: 24px; }
+.dishout-inline:active { background: rgba(255, 109, 0, 0.18); }
 .ticket-header-unpaid .ticket-number { color: #ef5350; }
 
 .ticket-hole-left, .ticket-hole-right { position: absolute; bottom: -12px; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-hole); }
@@ -1219,7 +1214,6 @@ onUnmounted(() => {
 .group-sub-card { padding: 0 var(--spacing-md); }
 .group-sub-card .ticket-card { border: none; box-shadow: none; margin-bottom: 0; }
 .group-sub-divider { height: 1px; background: var(--outline-variant); margin: var(--spacing-sm) 0; }
-.sub-card-footer { padding: var(--spacing-sm) var(--spacing-md); }
 .group-footer { padding: var(--spacing-md); border-top: 1.5px dashed var(--primary-container); }
 .group-total { display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-md) var(--spacing-md); margin: var(--spacing-sm) 0 var(--spacing-md); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--primary-container) 8%, transparent); }
 .group-total-left { display: flex; align-items: center; gap: var(--spacing-sm); }
