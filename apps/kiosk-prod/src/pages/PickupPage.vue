@@ -62,8 +62,11 @@
                       <span class="status-badge" :class="'status-' + order.status">{{ statusLabel(order.status) }}</span>
                     </p>
                     <div class="ticket-number">{{ order.pickupCode }}</div>
-                    <div v-if="!order.dishOutAt" class="dishout-line" @click.stop="dishOut(order)">
+                    <div v-if="!order.dishOutAt" class="dishout-line dishout-pending" @click.stop="dishOut(order)">
                       <span class="material-icons">restaurant</span> 待出菜
+                    </div>
+                    <div v-else class="dishout-line dishout-done">
+                      <span class="material-icons">check_circle</span> 已出菜
                     </div>
                     <div class="ticket-hole-left"></div>
                     <div class="ticket-hole-right"></div>
@@ -150,8 +153,11 @@
                 <span class="status-badge" :class="'status-' + item.orders[0].status">{{ statusLabel(item.orders[0].status) }}</span>
               </p>
               <div class="ticket-number">{{ item.orders[0].pickupCode }}</div>
-              <div v-if="!item.orders[0].dishOutAt" class="dishout-line" @click.stop="dishOut(item.orders[0])">
+              <div v-if="!item.orders[0].dishOutAt" class="dishout-line dishout-pending" @click.stop="dishOut(item.orders[0])">
                 <span class="material-icons">restaurant</span> 待出菜
+              </div>
+              <div v-else class="dishout-line dishout-done">
+                <span class="material-icons">check_circle</span> 已出菜
               </div>
               <div class="ticket-hole-left"></div>
               <div class="ticket-hole-right"></div>
@@ -940,8 +946,11 @@ onUnmounted(() => {
 .status-ready { background: var(--tertiary-container); color: var(--on-tertiary-container); }
 .status-completed { background: var(--surface-variant); color: var(--on-surface-variant); }
 .ticket-number { font-family: var(--font-display); font-size: 64px; font-weight: 800; color: var(--primary-container); letter-spacing: -0.04em; line-height: 1; }
-.dishout-line { position: absolute; bottom: -12px; left: 50%; transform: translateX(-50%); z-index: 1; display: flex; align-items: center; gap: 4px; padding: 2px 14px; background: var(--surface-container-highest); color: #ff6d00; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; cursor: pointer; white-space: nowrap; border-radius: var(--radius-full); border: 1px dashed #ff6d00; }
+.dishout-line { position: absolute; bottom: -12px; left: 50%; transform: translateX(-50%); z-index: 1; display: flex; align-items: center; gap: 4px; padding: 2px 14px; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; white-space: nowrap; border-radius: var(--radius-full); }
 .dishout-line .material-icons { font-size: 16px; }
+.dishout-pending { background: #ff6d00; color: #fff; cursor: pointer; }
+.dishout-pending:active { background: #e65100; }
+.dishout-done { background: var(--surface-container-highest); color: #ff6d00; border: 1px dashed #ff6d00; }
 .ticket-header-unpaid .ticket-number { color: #ef5350; }
 
 .ticket-hole-left, .ticket-hole-right { position: absolute; bottom: -12px; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-hole); }
