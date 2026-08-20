@@ -823,7 +823,7 @@ async function fetchMerchantName() {
     if (data.merchantName) merchantName.value = data.merchantName
     if (data.branchName) branchName.value = data.branchName
     if (data.deviceCode) deviceCode.value = data.deviceCode
-    if (data.deviceRole) localStorage.setItem('kiosk-device-role', data.deviceRole)
+    if (data.deviceRole && data.deviceRole !== 'user') localStorage.setItem('kiosk-device-role', data.deviceRole)
     if (data.statusText) statusText.value = data.statusText
     branchStatus.value = data.branchStatus ?? ''
     if (data.businessHours) businessHours.value = data.businessHours
