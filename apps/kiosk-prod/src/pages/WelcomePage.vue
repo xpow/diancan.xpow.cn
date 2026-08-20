@@ -249,10 +249,11 @@ async function submitSN() {
   snLoading.value = true
   snError.value = ''
   try {
-    const data = await apiPost<{ token: string; deviceId: string }>('/api/system/device-auth', { sn: snInput.value, uuid: getDeviceUUID(), userAgent: navigator.userAgent })
+    const data = await apiPost<{ token: string; deviceId: string; role?: string }>('/api/system/device-auth', { sn: snInput.value, uuid: getDeviceUUID(), userAgent: navigator.userAgent })
     setDeviceToken(data.token)
     localStorage.setItem('kiosk-device-sn', snInput.value)
     localStorage.setItem('kiosk-device-auth-id', data.deviceId)
+    if (data.role) localStorage.setItem('kiosk-device-role', data.role)
     // 重新加载 bootstrap 获取正确设备信息
     const bootstrapRes = await fetch(`/api/system/bootstrap?sn=${snInput.value}`)
     if (bootstrapRes.ok) {
@@ -272,12 +273,13 @@ async function autoAuth(code: string): Promise<boolean> {
     const decodeRes = await fetch(`/api/system/decode-device?code=${encodeURIComponent(code)}`)
     if (!decodeRes.ok) return false
     const { sn } = await decodeRes.json()
-    const authData = await apiPost<{ token: string; deviceId: string }>('/api/system/device-auth', {
+    const authData = await apiPost<{ token: string; deviceId: string; role?: string }>('/api/system/device-auth', {
       sn, uuid: getDeviceUUID(), userAgent: navigator.userAgent,
     })
     setDeviceToken(authData.token)
     localStorage.setItem('kiosk-device-sn', sn)
     localStorage.setItem('kiosk-device-auth-id', authData.deviceId)
+    if (authData.role) localStorage.setItem('kiosk-device-role', authData.role)
     const bootstrapRes = await fetch(`/api/system/bootstrap?sn=${sn}`)
     if (bootstrapRes.ok) {
       bootstrap.value = await bootstrapRes.json()

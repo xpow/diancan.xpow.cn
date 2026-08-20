@@ -62,7 +62,7 @@
                       <span class="status-badge" :class="'status-' + order.status">{{ statusLabel(order.status) }}</span>
                     </p>
                     <div class="ticket-number">{{ order.pickupCode }}</div>
-                    <div v-if="!order.dishOutAt" class="dishout-line dishout-pending" @click.stop="dishOut(order)">
+                    <div v-if="isDeviceAdmin && !order.dishOutAt" class="dishout-line dishout-pending" @click.stop="dishOut(order)">
                       <span class="material-icons">restaurant</span> 待出菜
                     </div>
                     <div v-else class="dishout-line dishout-done">
@@ -153,7 +153,7 @@
                 <span class="status-badge" :class="'status-' + item.orders[0].status">{{ statusLabel(item.orders[0].status) }}</span>
               </p>
               <div class="ticket-number">{{ item.orders[0].pickupCode }}</div>
-              <div v-if="!item.orders[0].dishOutAt" class="dishout-line dishout-pending" @click.stop="dishOut(item.orders[0])">
+              <div v-if="isDeviceAdmin && !item.orders[0].dishOutAt" class="dishout-line dishout-pending" @click.stop="dishOut(item.orders[0])">
                 <span class="material-icons">restaurant</span> 待出菜
               </div>
               <div v-else class="dishout-line dishout-done">
@@ -405,6 +405,7 @@ interface OrderSummary {
 
 const orders = ref<OrderSummary[]>([])
 const tab = ref('active')
+const isDeviceAdmin = computed(() => localStorage.getItem('kiosk-device-role') === 'admin')
 const merchantName = ref('Sizzling Skewers')
 const branchName = ref('')
 const deviceCode = ref('')

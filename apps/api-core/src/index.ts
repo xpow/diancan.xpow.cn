@@ -1119,6 +1119,7 @@ app.post('/api/system/device-auth', authLimiter, async (req, res) => {
     deviceCode: device.code,
     deviceName: device.name,
     branchId: device.branchId,
+    role: device.role,
   })
 })
 
