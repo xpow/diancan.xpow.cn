@@ -112,7 +112,7 @@
                   </div>
                 </div>
                 <div class="footer-actions">
-                  <button v-if="item.orders.some(o => o.paidAt && !o.dishOutAt)" class="dishout-btn" @click="dishOutGroup(item.orders)">
+                  <button v-if="item.orders.some(o => !o.dishOutAt)" class="dishout-btn" @click="dishOutGroup(item.orders)">
                     <span class="material-icons">restaurant</span>
                     已出菜
                   </button>
@@ -200,6 +200,10 @@
                 <span class="pay-reminder-text">待支付</span>
               </div>
               <div class="footer-actions">
+                <button v-if="!item.orders[0].dishOutAt" class="dishout-btn" @click="dishOut(item.orders[0])">
+                  <span class="material-icons">restaurant</span>
+                  已出菜
+                </button>
                 <button class="merge-btn" @click="startMerge(item.orders[0])">
                   <span class="material-icons">playlist_add</span>
                   合单
@@ -648,7 +652,7 @@ async function dishOut(order: OrderSummary) {
 
 async function dishOutGroup(orders: OrderSummary[]) {
   try {
-    const pending = orders.filter(o => o.paidAt && !o.dishOutAt)
+    const pending = orders.filter(o => !o.dishOutAt)
     for (const o of pending) {
       await apiPost(`/api/orders/${o.orderNo}/dish-out`)
       o.dishOutAt = new Date().toISOString()
