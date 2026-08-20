@@ -36,7 +36,7 @@ export interface GlobalCache {
   dishes: any[]
   promotions: any[]
   featuredItems: any[]
-  devices: { id: string; code: string; name: string; mode: string; status: string; sn: string }[]
+  devices: { id: string; code: string; name: string; mode: string; role: string; status: string; sn: string }[]
 }
 
 export function loadGlobalCache(): GlobalCache | null {
@@ -108,7 +108,7 @@ export async function buildGlobalCache(): Promise<GlobalCache> {
       badge: f.badge,
       badgeTone: f.badgeTone,
     })),
-    devices: devices.map((d) => ({ id: d.id, code: d.code, name: d.name, mode: d.mode, status: d.status, sn: d.sn })),
+    devices: devices.map((d) => ({ id: d.id, code: d.code, name: d.name, mode: d.mode, role: d.role, status: d.status, sn: d.sn })),
   }
 
   saveGlobalCache(cache)
