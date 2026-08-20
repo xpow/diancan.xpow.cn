@@ -786,7 +786,7 @@ async function fetchMerchantName() {
     const savedSN = localStorage.getItem('kiosk-device-sn')
     const res = await fetch(`/api/system/bootstrap${savedSN ? `?sn=${savedSN}` : ''}`)
     if (!res.ok) return
-    const data = await res.json() as { merchantName?: string; branchName?: string; deviceCode?: string; statusText?: string; branchStatus?: string; businessHours?: string; restReason?: string; deviceActive?: boolean; deviceRole?: string; deviceId?: string; commands?: { id: string; command: string }[] }
+    const data = await res.json() as { merchantName?: string; branchName?: string; deviceCode?: string; statusText?: string; branchStatus?: string; businessHours?: string; restReason?: string; deviceActive?: boolean; deviceId?: string; commands?: { id: string; command: string }[] }
 
     // 验证 token 对应的设备与 SN 匹配
     const authId = localStorage.getItem('kiosk-device-auth-id')
@@ -823,7 +823,6 @@ async function fetchMerchantName() {
     if (data.merchantName) merchantName.value = data.merchantName
     if (data.branchName) branchName.value = data.branchName
     if (data.deviceCode) deviceCode.value = data.deviceCode
-    if (data.deviceRole && data.deviceRole !== 'user') localStorage.setItem('kiosk-device-role', data.deviceRole)
     if (data.statusText) statusText.value = data.statusText
     branchStatus.value = data.branchStatus ?? ''
     if (data.businessHours) businessHours.value = data.businessHours
