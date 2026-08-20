@@ -1226,7 +1226,7 @@ onUnmounted(() => {
 }
 
 /* Group Card */
-.group-card { position: relative; width: 100%; border-radius: var(--radius-xl); border: 2px solid var(--primary-container); background: var(--surface-container-highest); overflow: hidden; }
+.group-card { position: relative; width: 100%; border-radius: var(--radius-xl); border: 2px solid var(--primary-container); background: var(--surface-container-highest); }
 .group-collapsed-view { padding: var(--spacing-md); cursor: pointer; }
 .group-collapsed-top { display: flex; align-items: center; gap: var(--spacing-sm); width: 100%; }
 .group-collapsed-count { font-size: var(--text-label-md); color: var(--secondary); white-space: nowrap; }
