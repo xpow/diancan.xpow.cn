@@ -654,7 +654,7 @@ async function dishOut(order: OrderSummary) {
   try {
     await apiPost(`/api/orders/${order.orderNo}/dish-out`)
     order.dishOutAt = new Date().toISOString()
-    showToast('待出菜')
+    showToast('已出菜')
   } catch (error) {
     showToast(error instanceof Error ? error.message : '操作失败')
   }
@@ -667,7 +667,7 @@ async function dishOutGroup(orders: OrderSummary[]) {
       await apiPost(`/api/orders/${o.orderNo}/dish-out`)
       o.dishOutAt = new Date().toISOString()
     }
-    showToast('待出菜')
+    showToast('已出菜')
   } catch (error) {
     showToast(error instanceof Error ? error.message : '操作失败')
   }
