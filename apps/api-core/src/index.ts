@@ -32,7 +32,7 @@ interface JwtPayload {
 declare global {
   namespace Express {
     interface Request {
-      authDevice?: { deviceId: string; sn: string; uuid: string }
+      authDevice?: { deviceId: string; sn: string; uuid: string; role?: string }
     }
   }
 }
@@ -54,14 +54,14 @@ function authMiddleware(req: Request, res: Response, next: NextFunction) {
   try {
     const payload = jwt.verify(token, JWT_SECRET) as JwtPayload
     // 校验设备是否仍有效
-    prisma.device.findUnique({ where: { id: payload.deviceId }, select: { status: true, sn: true } }).then((device) => {
+    prisma.device.findUnique({ where: { id: payload.deviceId }, select: { status: true, sn: true, role: true } }).then((device) => {
       if (!device || device.status !== 'active') {
         return res.status(401).json({ message: '设备已下线，请重新认证' })
       }
       if (device.sn !== payload.sn) {
         return res.status(401).json({ message: '设备信息已变更，请重新认证' })
       }
-      req.authDevice = { deviceId: payload.deviceId, sn: payload.sn, uuid: (payload.uuid as string) || '' }
+      req.authDevice = { deviceId: payload.deviceId, sn: payload.sn, uuid: (payload.uuid as string) || '', role: device.role }
       next()
     }).catch((err) => {
       console.error('[auth] DB check failed', err)
@@ -205,6 +205,7 @@ app.get('/api/system/bootstrap', generalLimiter, async (req, res) => {
     deviceId: device?.id ?? '',
     deviceCode: device?.code ?? '',
     deviceMode: device?.mode ?? 'kiosk',
+    deviceRole: device?.role ?? 'user',
     deviceActive: device?.status === 'active',
     slogan: merchant.slogan,
     businessHours: branch?.businessHours || merchant.businessHours,
@@ -886,6 +887,7 @@ app.post('/api/orders/:orderNo/pay', orderLimiter, authMiddleware, async (req, r
 
 app.post('/api/orders/:orderNo/dish-out', orderLimiter, authMiddleware, async (req, res) => {
   const { orderNo } = req.params
+  if (req.authDevice?.role !== 'admin') return res.status(403).json({ message: '仅管理员可操作' })
   const order = await prisma.order.findUnique({ where: { orderNo }, select: { id: true, dishOutAt: true } })
   if (!order) return res.status(404).json({ message: '订单不存在' })
   if (order.dishOutAt) return res.status(400).json({ message: '已出过菜' })
