@@ -65,7 +65,7 @@
                     <div v-if="isDeviceAdmin && !order.dishOutAt" class="dishout-line dishout-pending" @click.stop="dishOut(order)">
                       <span class="material-icons">restaurant</span> 待出菜
                     </div>
-                    <div v-else class="dishout-line dishout-done">
+                    <div v-else-if="order.dishOutAt" class="dishout-line dishout-done">
                       <span class="material-icons">check_circle</span> 已出菜
                     </div>
                     <div class="ticket-hole-left"></div>
@@ -156,7 +156,7 @@
               <div v-if="isDeviceAdmin && !item.orders[0].dishOutAt" class="dishout-line dishout-pending" @click.stop="dishOut(item.orders[0])">
                 <span class="material-icons">restaurant</span> 待出菜
               </div>
-              <div v-else class="dishout-line dishout-done">
+              <div v-else-if="item.orders[0].dishOutAt" class="dishout-line dishout-done">
                 <span class="material-icons">check_circle</span> 已出菜
               </div>
               <div class="ticket-hole-left"></div>
