@@ -54,14 +54,12 @@
               <div v-for="(order, idx) in item.orders" :key="order.orderNo" class="group-sub-card">
                 <div v-if="idx > 0" class="group-sub-divider"></div>
                 <div class="ticket-card">
+                  <span v-if="!order.dishOutAt" class="fresh-badge">新</span>
                   <div class="ticket-header" :class="{ 'ticket-header-unpaid': !order.paidAt }">
                     <p class="ticket-label">
-                      取餐订单
                       <span v-if="order.orderType === 'takeaway'" class="takeaway-badge">自提</span>
                       <span v-if="order.paymentMethod" class="pay-badge" :class="'pay-' + order.paymentMethod">{{ payLabel(order.paymentMethod) }}</span>
-                      <span v-if="!order.paidAt" class="unpaid-badge">未付款</span>
                       <span class="status-badge" :class="'status-' + order.status">{{ statusLabel(order.status) }}</span>
-                      <span v-if="!order.dishOutAt" class="fresh-badge">新</span>
                     </p>
                     <div class="ticket-number">{{ order.pickupCode }}</div>
                     <div class="ticket-hole-left"></div>
@@ -145,14 +143,12 @@
             @mouseleave="onLongPressEnd"
             :title="'长按复制取餐码'"
           >
+          <span v-if="!item.orders[0].dishOutAt" class="fresh-badge">新</span>
           <div class="ticket-header" :class="{ 'ticket-header-unpaid': !item.orders[0].paidAt }">
               <p class="ticket-label">
-                取餐订单
                 <span v-if="item.orders[0].orderType === 'takeaway'" class="takeaway-badge">自提</span>
                 <span v-if="item.orders[0].paymentMethod" class="pay-badge" :class="'pay-' + item.orders[0].paymentMethod">{{ payLabel(item.orders[0].paymentMethod) }}</span>
-                <span v-if="!item.orders[0].paidAt" class="unpaid-badge">未付款</span>
                 <span class="status-badge" :class="'status-' + item.orders[0].status">{{ statusLabel(item.orders[0].status) }}</span>
-                <span v-if="!item.orders[0].dishOutAt" class="fresh-badge">新</span>
               </p>
               <div class="ticket-number">{{ item.orders[0].pickupCode }}</div>
               <div class="ticket-hole-left"></div>
@@ -940,7 +936,7 @@ onUnmounted(() => {
 .pay-alipay { background: #1677ff; color: #fff; }
 .unpaid-badge { background: var(--error-container); color: var(--on-error-container); }
 .status-badge { background: var(--surface-container-high); color: var(--on-surface); }
-.fresh-badge { background: #ff6d00; color: #fff; display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--radius-full); font-size: 11px; font-weight: 700; }
+.fresh-badge { position: absolute; top: 12px; right: 12px; z-index: 1; background: #ff6d00; color: #fff; display: inline-flex; align-items: center; padding: 2px 10px; border-radius: var(--radius-full); font-size: 12px; font-weight: 700; }
 .status-unpaid { background: var(--error-container); color: var(--on-error-container); }
 .status-paid, .status-preparing { background: var(--secondary-container); color: var(--on-secondary-container); }
 .status-ready { background: var(--tertiary-container); color: var(--on-tertiary-container); }
