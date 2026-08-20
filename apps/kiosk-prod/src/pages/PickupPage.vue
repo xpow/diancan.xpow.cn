@@ -962,7 +962,7 @@ onUnmounted(() => {
 .dishout-pending { background: #ff6d00; color: #fff; cursor: pointer; }
 .dishout-pending:active { background: #e65100; }
 .dishout-waiting { background: var(--surface-container-highest); color: #e53935; border: 1px dashed #e53935; }
-.dishout-done { background: var(--surface-container-highest); color: #ff6d00; border: 1px dashed #ff6d00; }
+.dishout-done { color: #ff6d00; border: 1px dashed #ff6d00; }
 .ticket-header-unpaid .ticket-number { color: #ef5350; }
 
 .ticket-hole-left, .ticket-hole-right { position: absolute; bottom: -12px; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-hole); }
