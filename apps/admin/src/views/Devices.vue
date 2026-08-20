@@ -107,6 +107,10 @@
         <Select v-model="deviceForm.mode" :options="[{ label: '自助点餐机', value: 'kiosk' }, { label: 'H5 扫码点单', value: 'h5' }]" optionLabel="label" optionValue="value" class="w-full" />
       </div>
       <div class="form-group">
+        <label>角色</label>
+        <Select v-model="deviceForm.role" :options="[{ label: '用户', value: 'user' }, { label: '管理员', value: 'admin' }]" optionLabel="label" optionValue="value" class="w-full" />
+      </div>
+      <div class="form-group">
         <label>所属分店</label>
         <Select v-model="deviceForm.branchId" :options="branches" optionLabel="name" optionValue="id" class="w-full" />
       </div>
@@ -168,7 +172,7 @@ const filteredDevices = computed(() =>
 const showDevice = ref(false)
 const editingDevice = ref(false)
 const editingDeviceId = ref('')
-const deviceForm = ref({ code: '', name: '', contact: '', mode: 'kiosk', branchId: '' })
+const deviceForm = ref({ code: '', name: '', contact: '', mode: 'kiosk', role: 'user', branchId: '' })
 
 const showCommand = ref(false)
 const commandTarget = ref<any>(null)
@@ -192,8 +196,8 @@ function openDeviceDialog(device?: any) {
   editingDevice.value = !!device
   editingDeviceId.value = device?.id ?? ''
   deviceForm.value = device
-    ? { code: device.code || '', name: device.name, contact: device.contact || '', mode: device.mode, branchId: device.branchId }
-    : { code: '', name: '', contact: '', mode: 'kiosk', branchId: branches.value[0]?.id || '' }
+    ? { code: device.code || '', name: device.name, contact: device.contact || '', mode: device.mode, role: device.role || 'user', branchId: device.branchId }
+    : { code: '', name: '', contact: '', mode: 'kiosk', role: 'user', branchId: branches.value[0]?.id || '' }
   showDevice.value = true
 }
 

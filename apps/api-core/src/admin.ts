@@ -1014,7 +1014,7 @@ router.get('/devices', async (_req, res) => {
 })
 
 router.post('/devices', async (req, res) => {
-  const { branchId, code, name, mode, contact } = req.body ?? {}
+  const { branchId, code, name, mode, role, contact } = req.body ?? {}
   if (!branchId) return res.status(400).json({ message: 'branchId 必填' })
   const sn = String(Math.floor(10000000 + Math.random() * 90000000))
 
@@ -1047,6 +1047,7 @@ router.post('/devices', async (req, res) => {
       name: devName,
       contact: contact ?? '',
       mode: mode ?? 'kiosk',
+      role: role ?? 'user',
     },
   })
 
@@ -1056,11 +1057,12 @@ router.post('/devices', async (req, res) => {
 
 router.put('/devices/:id', async (req, res) => {
   const { id } = req.params
-  const { code, name, mode, status, contact } = req.body ?? {}
+  const { code, name, mode, role, status, contact } = req.body ?? {}
   const data: any = {}
   if (code !== undefined) data.code = code
   if (name !== undefined) data.name = name
   if (mode !== undefined) data.mode = mode
+  if (role !== undefined) data.role = role
   if (status !== undefined) data.status = status
   if (contact !== undefined) data.contact = contact
 
