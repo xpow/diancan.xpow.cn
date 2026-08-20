@@ -952,6 +952,7 @@ onUnmounted(() => {
 .unpaid-badge { background: var(--error-container); color: var(--on-error-container); }
 .status-badge { background: var(--surface-container-high); color: var(--on-surface); }
 .fresh-badge { position: absolute; top: 12px; right: 12px; z-index: 1; background: #ff6d00; color: #fff; display: inline-flex; align-items: center; padding: 2px 10px; border-radius: var(--radius-full); font-size: 12px; font-weight: 700; }
+.group-fresh-badge { top: -12px; right: -6px; }
 .status-unpaid { background: var(--error-container); color: var(--on-error-container); }
 .status-paid, .status-preparing { background: var(--secondary-container); color: var(--on-secondary-container); }
 .status-ready { background: var(--tertiary-container); color: var(--on-tertiary-container); }
