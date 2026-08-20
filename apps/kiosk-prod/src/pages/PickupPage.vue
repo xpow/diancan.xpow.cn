@@ -93,6 +93,12 @@
                         <span class="ticket-total-price"><small class="c-sign">¥</small>{{ (order.totals?.payableAmount || 0).toFixed(2) }}</span>
                       </div>
                     </div>
+                    <div v-if="!order.dishOutAt" class="sub-card-footer">
+                      <button class="dishout-btn" @click="dishOut(order)">
+                        <span class="material-icons">restaurant</span>
+                        已出菜
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -112,10 +118,6 @@
                   </div>
                 </div>
                 <div class="footer-actions">
-                  <button v-if="item.orders.some(o => !o.dishOutAt)" class="dishout-btn" @click="dishOutGroup(item.orders)">
-                    <span class="material-icons">restaurant</span>
-                    已出菜
-                  </button>
                   <button v-if="item.totalPending > 0" class="pay-now-btn" @click="selectedPayOrders = item.orders.filter(o => !o.paidAt); showPayPopup = true">
                     <span class="material-icons">check_circle</span>
                     立即付款 ¥{{ item.totalPending.toFixed(2) }}
@@ -1217,6 +1219,7 @@ onUnmounted(() => {
 .group-sub-card { padding: 0 var(--spacing-md); }
 .group-sub-card .ticket-card { border: none; box-shadow: none; margin-bottom: 0; }
 .group-sub-divider { height: 1px; background: var(--outline-variant); margin: var(--spacing-sm) 0; }
+.sub-card-footer { padding: var(--spacing-sm) var(--spacing-md); }
 .group-footer { padding: var(--spacing-md); border-top: 1.5px dashed var(--primary-container); }
 .group-total { display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-md) var(--spacing-md); margin: var(--spacing-sm) 0 var(--spacing-md); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--primary-container) 8%, transparent); }
 .group-total-left { display: flex; align-items: center; gap: var(--spacing-sm); }
