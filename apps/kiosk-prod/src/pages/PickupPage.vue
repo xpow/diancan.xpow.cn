@@ -24,10 +24,10 @@
 
           <!-- 分组卡片 -->
           <div v-if="item.type === 'group'" class="group-card" :class="{ 'group-collapsed': isGroupCollapsed(item.orders[0].groupId) }">
+            <span v-if="isGroupCollapsed(item.orders[0].groupId) && item.orders.some(o => !o.dishOutAt)" class="fresh-badge group-fresh-badge">新</span>
 
             <!-- 折叠态 -->
             <div v-if="isGroupCollapsed(item.orders[0].groupId)" class="group-collapsed-view" @click="toggleGroupCollapse(item.orders[0].groupId)">
-              <span v-if="item.orders.some(o => !o.dishOutAt)" class="fresh-badge group-fresh-badge">新</span>
               <div class="group-collapsed-top">
                 <span class="material-icons group-icon">group</span>
                 <span class="group-codes">{{ item.orders.map(o => o.pickupCode).join(' + ') }}</span>
@@ -1226,8 +1226,8 @@ onUnmounted(() => {
 }
 
 /* Group Card */
-.group-card { width: 100%; border-radius: var(--radius-xl); border: 2px solid var(--primary-container); background: var(--surface-container-highest); overflow: hidden; }
-.group-collapsed-view { position: relative; padding: var(--spacing-md); cursor: pointer; }
+.group-card { position: relative; width: 100%; border-radius: var(--radius-xl); border: 2px solid var(--primary-container); background: var(--surface-container-highest); overflow: hidden; }
+.group-collapsed-view { padding: var(--spacing-md); cursor: pointer; }
 .group-collapsed-top { display: flex; align-items: center; gap: var(--spacing-sm); width: 100%; }
 .group-collapsed-count { font-size: var(--text-label-md); color: var(--secondary); white-space: nowrap; }
 .group-collapsed-price { font-family: var(--font-display); font-size: var(--text-title-lg); font-weight: 800; color: var(--primary-container); white-space: nowrap; }
