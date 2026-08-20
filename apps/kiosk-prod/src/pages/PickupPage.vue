@@ -65,7 +65,10 @@
                     <div v-if="isDeviceAdmin && !order.dishOutAt" class="dishout-line dishout-pending" @click.stop="dishOut(order)">
                       <span class="material-icons">restaurant</span> 待出菜
                     </div>
-                    <div v-else-if="order.dishOutAt" class="dishout-line dishout-done">
+                    <div v-else-if="!order.dishOutAt" class="dishout-line dishout-waiting">
+                      <span class="material-icons">restaurant</span> 待出菜
+                    </div>
+                    <div v-else class="dishout-line dishout-done">
                       <span class="material-icons">check_circle</span> 已出菜
                     </div>
                     <div class="ticket-hole-left"></div>
@@ -156,7 +159,10 @@
               <div v-if="isDeviceAdmin && !item.orders[0].dishOutAt" class="dishout-line dishout-pending" @click.stop="dishOut(item.orders[0])">
                 <span class="material-icons">restaurant</span> 待出菜
               </div>
-              <div v-else-if="item.orders[0].dishOutAt" class="dishout-line dishout-done">
+              <div v-else-if="!item.orders[0].dishOutAt" class="dishout-line dishout-waiting">
+                <span class="material-icons">restaurant</span> 待出菜
+              </div>
+              <div v-else class="dishout-line dishout-done">
                 <span class="material-icons">check_circle</span> 已出菜
               </div>
               <div class="ticket-hole-left"></div>
@@ -954,6 +960,7 @@ onUnmounted(() => {
 .dishout-line .material-icons { font-size: 16px; }
 .dishout-pending { background: #ff6d00; color: #fff; cursor: pointer; }
 .dishout-pending:active { background: #e65100; }
+.dishout-waiting { background: var(--surface-container-highest); color: #e53935; border: 1px dashed #e53935; }
 .dishout-done { background: var(--surface-container-highest); color: #ff6d00; border: 1px dashed #ff6d00; }
 .ticket-header-unpaid .ticket-number { color: #ef5350; }
 
