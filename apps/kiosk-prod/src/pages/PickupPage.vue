@@ -909,7 +909,7 @@ onUnmounted(() => {
 }
 
 /* Page Content */
-.page-content { padding: 70px var(--container-margin) var(--spacing-lg); max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
+.page-content { padding: 70px var(--container-margin) var(--spacing-lg); max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
 
 /* Status Tabs */
 .status-tabs { display: flex; gap: var(--spacing-sm); padding: var(--spacing-md) 0; overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
