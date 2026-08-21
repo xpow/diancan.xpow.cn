@@ -922,7 +922,7 @@ onUnmounted(() => {
 .divider-line { width: 40px; height: 4px; border-radius: 2px; background: var(--outline-variant); }
 
 /* Ticket Card */
-.card-list { position: relative; width: 100%; display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: var(--spacing-lg); align-self: stretch; }
+.card-list { position: relative; width: 100%; display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: var(--spacing-lg); align-self: stretch; max-width: 1200px; }
 .card-item-wrapper { width: 100%; }
 .card-move { transition: transform 0.45s ease; }
 .card-leave-active { display: none; }
