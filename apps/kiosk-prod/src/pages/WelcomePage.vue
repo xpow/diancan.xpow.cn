@@ -634,8 +634,8 @@ onMounted(async () => {
 
 .featured-thumb { width: 112px; height: 112px; flex-shrink: 0; overflow: hidden; }
 .featured-thumb img { width: 100%; height: 100%; object-fit: cover; }
-.featured-price { color: var(--primary-container); font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; display: block; margin-top: var(--spacing-sm); }
-.featured-portion { display: block; font-size: var(--text-label-sm); font-weight: 700; color: var(--secondary); }
+.featured-price { color: var(--primary-container); font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; }
+.featured-portion { font-size: var(--text-label-sm); font-weight: 700; color: var(--secondary); }
 
 /* old overrides removed */
 
