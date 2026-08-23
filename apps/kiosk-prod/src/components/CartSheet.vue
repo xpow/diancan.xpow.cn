@@ -95,7 +95,10 @@ defineEmits<{
 </script>
 
 <style scoped>
-.cart-sheet { padding: 0 var(--container-margin) var(--container-margin); min-height: 200px; max-width: 600px; margin: 0 auto; }
+.cart-sheet { padding: 0 var(--container-margin) var(--container-margin); min-height: 200px; max-width: 600px; margin: 0 auto; position: relative; }
+.cart-sheet::before, .cart-sheet::after { content: ''; position: absolute; top: 0; width: 1px; height: 100%; background: var(--outline-variant); }
+.cart-sheet::before { left: 0; }
+.cart-sheet::after { right: 0; }
 .cart-sheet-header { display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-md) 0; border-bottom: 1px solid var(--outline-variant); position: sticky; top: 0; background: var(--surface); z-index: 1; }
 .cart-sheet-title { font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; }
 .clear-btn { display: flex; align-items: center; gap: var(--spacing-xs); border: none; background: transparent; color: var(--secondary); font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 600; cursor: pointer; padding: var(--spacing-xs) var(--spacing-sm); border-radius: var(--radius-md); }
