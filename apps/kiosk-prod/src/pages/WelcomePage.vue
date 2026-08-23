@@ -59,7 +59,7 @@
           <h3>{{ cat.name }}</h3>
         </div>
         <!-- Signature dish: first item as horizontal card -->
-        <div v-if="cat.dishes[0]" class="featured-card-new" @click="router.push('/menu')">
+        <div v-if="cat.dishes[0]" class="featured-card-new" @click="router.push(`/menu?dishId=${cat.dishes[0].id}`)">
           <div class="featured-info">
             <div class="featured-top">
               <span v-if="cat.dishes[0].tags.length" class="featured-tag tag-hot">{{ cat.dishes[0].tags[0] }}</span>
@@ -76,7 +76,7 @@
         </div>
         <!-- Other dishes: 2-column grid -->
         <div v-if="cat.dishes.length > 1" class="menu-grid">
-          <div v-for="dish in cat.dishes.slice(1)" :key="dish.id" class="menu-grid-card" @click="router.push('/menu')">
+          <div v-for="dish in cat.dishes.slice(1)" :key="dish.id" class="menu-grid-card" @click="router.push(`/menu?dishId=${dish.id}`)">
             <div class="menu-grid-info">
               <h4 class="menu-grid-name">{{ dish.name }}</h4>
               <p class="menu-grid-desc">{{ dish.desc }}</p>
