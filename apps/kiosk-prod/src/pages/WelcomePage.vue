@@ -61,7 +61,7 @@
         <!-- Signature dish: first item as horizontal card -->
         <div v-if="cat.dishes[0]" class="featured-card-new" @click="router.push(`/menu?dishId=${cat.dishes[0].id}`)">
           <div v-if="cat.dishes[0].stockEnabled && (cat.dishes[0].stock ?? 0) <= 0" class="featured-sold-out">
-            <span class="material-icons">block</span><span>已售罄</span>
+            <span class="material-icons">block</span><span>今日已售罄</span>
           </div>
           <span v-else-if="cat.dishes[0].stockEnabled && (cat.dishes[0].stock ?? 0) > 0" class="featured-stock-badge">预估剩余 {{ cat.dishes[0].stock }} 串</span>
           <div class="featured-info">
@@ -84,7 +84,7 @@
         <div v-if="cat.dishes.length > 1" class="menu-grid">
           <div v-for="dish in cat.dishes.slice(1)" :key="dish.id" class="menu-grid-card" @click="router.push(`/menu?dishId=${dish.id}`)">
             <div v-if="dish.stockEnabled && (dish.stock ?? 0) <= 0" class="grid-sold-out">
-              <span class="material-icons">block</span><span>已售罄</span>
+              <span class="material-icons">block</span><span>今日已售罄</span>
             </div>
             <span v-else-if="dish.stockEnabled && (dish.stock ?? 0) > 0" class="grid-stock-badge">剩余 {{ dish.stock }} 串</span>
             <div class="menu-grid-info">
