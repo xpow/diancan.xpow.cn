@@ -44,9 +44,6 @@ export function flyToCart(startEl: HTMLElement) {
       requestAnimationFrame(animate)
     } else {
       dot.remove()
-      cartBar.style.transition = 'transform 0.15s ease'
-      cartBar.style.transform = 'translateX(-50%) scale(1.08)'
-      setTimeout(() => { cartBar.style.transform = 'translateX(-50%) scale(1)' }, 150)
     }
   }
   requestAnimationFrame(animate)

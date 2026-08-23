@@ -50,7 +50,7 @@ const priceChars = computed(() => props.total.toFixed(2).split(''))
 .cart-total { display: flex; align-items: baseline; font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--primary-container); line-height: 1; }
 .roll-prefix, .roll-dot { flex-shrink: 0; }
 .roll-digit-wrap { display: inline-block; height: 1em; overflow: hidden; position: relative; flex-shrink: 0; }
-.roll-digit-track { display: flex; flex-direction: column; transition: transform 0.6s cubic-bezier(0.34, 1.2, 0.64, 1) 0.35s; }
+.roll-digit-track { display: flex; flex-direction: column; transition: transform 0.5s cubic-bezier(0.34, 1.2, 0.64, 1); }
 .roll-digit-val { display: block; width: 1ch; height: 1em; line-height: 1; text-align: center; }
 .cart-btn { padding: 12px 28px; font-size: 16px; gap: 4px; }
 .cart-btn .material-icons { font-size: 20px !important; }
