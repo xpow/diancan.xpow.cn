@@ -256,7 +256,7 @@ app.get('/api/system/bootstrap', generalLimiter, async (req, res) => {
           price: d.price,
           portionSize: d.portionSize ?? null,
           image: d.image ?? null,
-          tags: d.tags ?? [],
+          tags: typeof d.tags === 'string' ? JSON.parse(d.tags) : (d.tags ?? []),
         })),
     })).filter((c: any) => c.dishes.length > 0),
     commands: device ? await prisma.deviceCommand.findMany({
