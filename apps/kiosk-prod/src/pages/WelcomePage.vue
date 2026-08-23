@@ -149,7 +149,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getDishImage } from '@/utils/dishImages'
 import { apiPost, setDeviceToken, getDeviceUUID } from '@/utils/api'
@@ -363,7 +363,9 @@ async function loadBootstrap() {
 }
 
 onMounted(async () => {
-  window.scrollTo(0, 0)
+  const saved = sessionStorage.getItem('home-scroll')
+  if (saved) { window.scrollTo(0, Number(saved)); sessionStorage.removeItem('home-scroll') }
+  else { window.scrollTo(0, 0) }
   // 已绑定设备码则忽略 URL 上的扫码参数（防止覆盖已有绑定）
   if (!localStorage.getItem('kiosk-device-sn')) {
     const codeParam = route.query.code as string | undefined
@@ -378,6 +380,10 @@ onMounted(async () => {
 
   await loadBootstrap()
   document.title = `首页-${bootstrap.value?.merchantName || '点餐'}`
+})
+
+onBeforeUnmount(() => {
+  sessionStorage.setItem('home-scroll', String(window.scrollY))
 })
 </script>
 
