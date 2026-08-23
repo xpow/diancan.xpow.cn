@@ -193,9 +193,11 @@ setQuick(range === 'all' ? 'all' : 'yesterday')
 .stats-table td { padding: 12px 16px; font-size: 15px; border-bottom: 1px solid #f5f5f5; }
 .stats-table tr:last-child td { border-bottom: none; }
 .stats-table tbody tr { cursor: pointer; }
-.stats-table tbody tr:nth-child(even) td { background: #fafafa; }
+.stats-table tbody tr:nth-child(even) td { background: #f5f5f5; }
 .stats-table tbody tr:hover td { background: #fafafa; }
+.stats-table tbody tr:nth-child(even):hover td { background: #f0f0f0; }
 .stats-table tbody tr.selected td { background: #fff7f0; }
+.stats-table tbody tr.selected:nth-child(even) td { background: #fff0e5; }
 .stats-table tfoot td { font-weight: 700; background: #fff3e8; border-top: 2px solid var(--p-primary-color, #FF6B00); color: var(--p-primary-color, #FF6B00); }
 .col-check { width: 36px; text-align: center; }
 .col-check input { cursor: pointer; }
