@@ -82,8 +82,7 @@
         </div>
         <!-- Other dishes: 2-column grid -->
         <div v-if="cat.dishes.length > 1" class="menu-grid">
-          <div v-for="dish in cat.dishes.slice(1)" :key="dish.id" class="menu-grid-card" :style="{ backgroundImage: `url(${getDishImage(dish.id)})` }" @click="router.push(`/menu?dishId=${dish.id}`)">
-            <div class="grid-overlay"></div>
+          <div v-for="dish in cat.dishes.slice(1)" :key="dish.id" class="menu-grid-card" @click="router.push(`/menu?dishId=${dish.id}`)">
             <div v-if="dish.stockEnabled && (dish.stock ?? 0) <= 0" class="grid-sold-out">
               <span class="material-icons">block</span><span>今日已售罄</span>
             </div>
@@ -669,7 +668,7 @@ onMounted(async () => {
 /* Menu Grid */
 .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); margin-top: var(--spacing-md); }
 .menu-grid-card {
-  background-size: cover; background-position: center;
+  background: var(--surface-container-lowest);
   border-radius: var(--radius-xl);
   border: 1px solid var(--outline-variant);
   padding: var(--spacing-md);
@@ -682,16 +681,16 @@ onMounted(async () => {
   position: relative;
   overflow: hidden;
 }
-.grid-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.65) 100%); z-index: 1; border-radius: var(--radius-xl); }
 .menu-grid-card:active { transform: scale(0.97); transition: transform 0.1s; }
+.menu-grid-card::after { content: 'restaurant'; font-family: 'Material Symbols Outlined'; position: absolute; bottom: -8px; right: -8px; font-size: 56px; color: var(--outline-variant); opacity: 0.25; transform: rotate(12deg); pointer-events: none; }
 .grid-sold-out { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: rgba(0,0,0,0.5); color: #fff; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; z-index: 2; border-radius: var(--radius-xl); }
 .grid-sold-out .material-icons { font-size: 28px !important; }
 .grid-stock-badge { position: absolute; top: 4px; right: 4px; padding: 1px 8px; border-radius: var(--radius-full); background: rgb(255 124 0 / 89%); color: #fff; font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 700; line-height: 1.5; pointer-events: none; z-index: 2; }
-.menu-grid-name { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: #fff; position: relative; z-index: 2; }
-.menu-grid-desc { margin: 4px 0 0; font-family: var(--font-body); font-size: var(--text-body-md); color: rgba(255,255,255,0.8); line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; position: relative; z-index: 2; }
-.menu-grid-bottom { margin-top: var(--spacing-sm); position: relative; z-index: 2; }
+.menu-grid-name { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: var(--on-surface); }
+.menu-grid-desc { margin: 4px 0 0; font-family: var(--font-body); font-size: var(--text-body-md); color: var(--on-surface-variant); line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.menu-grid-bottom { margin-top: var(--spacing-sm); }
 .menu-grid-price { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: var(--primary-container); display: block; }
-.menu-grid-portion { display: block; font-size: var(--text-label-sm); font-weight: 700; color: rgba(255,255,255,0.85); }
+.menu-grid-portion { display: block; font-size: var(--text-label-sm); font-weight: 700; color: var(--secondary); }
 
 /* Info Grid */
 .info-grid {
