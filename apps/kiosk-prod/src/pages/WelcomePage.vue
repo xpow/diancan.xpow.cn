@@ -639,6 +639,7 @@ onMounted(async () => {
   border: 1px solid var(--outline-variant);
   overflow: hidden;
   transition: box-shadow 0.3s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 .featured-card-new:active { transform: scale(0.98); transition: transform 0.1s; }
 
@@ -680,6 +681,7 @@ onMounted(async () => {
   transition: box-shadow 0.3s;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 .menu-grid-card:active { transform: scale(0.97); transition: transform 0.1s; }
 .menu-grid-card::after { content: 'restaurant'; font-family: 'Material Symbols Outlined'; position: absolute; bottom: -8px; right: -8px; font-size: 56px; color: var(--outline-variant); opacity: 0.25; transform: rotate(12deg); pointer-events: none; }
@@ -961,4 +963,6 @@ onMounted(async () => {
 [data-theme="dark"] .promo-subtitle {
   color: #e8ddd0;
 }
+[data-theme="dark"] .featured-card-new,
+[data-theme="dark"] .menu-grid-card { box-shadow: none; }
 </style>
