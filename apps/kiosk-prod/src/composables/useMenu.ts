@@ -53,7 +53,11 @@ const restReason = ref('')
     return m && b ? `${m}（${b}）` : m || b || '典韦烤串'
   })
 
-  const filteredDishes = computed(() => dishes.value.filter(d => d.categoryId === selectedCategoryId.value))
+  const filteredDishes = computed(() => dishes.value.filter(d => d.categoryId === selectedCategoryId.value).sort((a, b) => {
+    const aOut = a.stockEnabled && (a.stock ?? 0) <= 0 ? 1 : 0
+    const bOut = b.stockEnabled && (b.stock ?? 0) <= 0 ? 1 : 0
+    return aOut - bOut
+  }))
 
   function initSpecs(specGroups: SpecGroup[] | null, preset?: SpecPreset): { groups: SpecGroup[]; defaults: (string | string[])[] } | null {
     const defs = specGroups?.length ? specGroups : (preset ? SPECS_PRESETS[preset] : null)
