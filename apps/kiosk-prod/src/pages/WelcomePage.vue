@@ -629,7 +629,7 @@ onMounted(async () => {
 .featured-name { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: var(--on-surface); line-height: 1.3; }
 .featured-tag {
   display: inline-flex; align-self: flex-start;
-  padding: 1px 6px; border-radius: var(--radius-sm);
+  padding: 0px 4px; border-radius: var(--radius-sm);
   font-family: var(--font-display); font-size: 10px; font-weight: 500;
   color: #fff; margin-bottom: var(--spacing-xs);
 }
