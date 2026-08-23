@@ -363,6 +363,7 @@ async function loadBootstrap() {
 }
 
 onMounted(async () => {
+  window.scrollTo(0, 0)
   // 已绑定设备码则忽略 URL 上的扫码参数（防止覆盖已有绑定）
   if (!localStorage.getItem('kiosk-device-sn')) {
     const codeParam = route.query.code as string | undefined
