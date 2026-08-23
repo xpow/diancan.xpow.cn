@@ -53,7 +53,7 @@
       </section>
 
       <!-- Menu Categories Section -->
-      <section v-for="(cat, ci) in bootstrap?.menuCategories" :key="cat.id" class="section" :id="ci === 0 ? 'menu-section' : undefined">
+      <section v-for="(cat, ci) in sortedCategories" :key="cat.id" class="section" :id="ci === 0 ? 'menu-section' : undefined">
         <div class="section-header-new">
           <span class="section-bar"></span>
           <h3>{{ cat.name }}</h3>
@@ -249,6 +249,17 @@ const displayTitle = computed(() => {
   const m = bootstrap.value?.merchantName
   const b = bootstrap.value?.branchName
   return m && b ? `${m}（${b}）` : m || b || 'Sizzling Skewers'
+})
+
+const sortedCategories = computed(() => {
+  return bootstrap.value?.menuCategories?.map(cat => ({
+    ...cat,
+    dishes: [...cat.dishes].sort((a, b) => {
+      const aOut = a.stockEnabled && (a.stock ?? 0) <= 0 ? 1 : 0
+      const bOut = b.stockEnabled && (b.stock ?? 0) <= 0 ? 1 : 0
+      return aOut - bOut
+    })
+  }))
 })
 const heroImages = [
   lb1, lb2, lb3, lb4,
