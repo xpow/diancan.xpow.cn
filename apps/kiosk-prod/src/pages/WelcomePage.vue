@@ -60,6 +60,10 @@
         </div>
         <!-- Signature dish: first item as horizontal card -->
         <div v-if="cat.dishes[0]" class="featured-card-new" @click="router.push(`/menu?dishId=${cat.dishes[0].id}`)">
+          <div v-if="cat.dishes[0].stockEnabled && (cat.dishes[0].stock ?? 0) <= 0" class="featured-sold-out">
+            <span class="material-icons">block</span><span>已售罄</span>
+          </div>
+          <span v-else-if="cat.dishes[0].stockEnabled && (cat.dishes[0].stock ?? 0) > 0" class="featured-stock-badge">预估剩余 {{ cat.dishes[0].stock }} 串</span>
           <div class="featured-info">
             <div class="featured-top">
               <div class="featured-title-row">
@@ -79,6 +83,10 @@
         <!-- Other dishes: 2-column grid -->
         <div v-if="cat.dishes.length > 1" class="menu-grid">
           <div v-for="dish in cat.dishes.slice(1)" :key="dish.id" class="menu-grid-card" @click="router.push(`/menu?dishId=${dish.id}`)">
+            <div v-if="dish.stockEnabled && (dish.stock ?? 0) <= 0" class="grid-sold-out">
+              <span class="material-icons">block</span><span>已售罄</span>
+            </div>
+            <span v-else-if="dish.stockEnabled && (dish.stock ?? 0) > 0" class="grid-stock-badge">剩余 {{ dish.stock }} 串</span>
             <div class="menu-grid-info">
               <h4 class="menu-grid-name">{{ dish.name }}</h4>
               <p class="menu-grid-desc">{{ dish.desc }}</p>
@@ -647,8 +655,11 @@ onMounted(async () => {
 .tag-hot { background: #ff3d00; }
 .tag-new { background: var(--primary-container); }
 
-.featured-thumb { width: 112px; height: 112px; flex-shrink: 0; overflow: hidden; }
+.featured-thumb { position: relative; width: 112px; height: 112px; flex-shrink: 0; overflow: hidden; border-radius: var(--radius-lg); }
 .featured-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.featured-sold-out { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: rgba(0,0,0,0.5); color: #fff; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; z-index: 2; border-radius: var(--radius-lg); }
+.featured-sold-out .material-icons { font-size: 30px !important; }
+.featured-stock-badge { position: absolute; top: 4px; right: 4px; padding: 2px 10px; border-radius: var(--radius-full); background: rgb(255 124 0 / 89%); color: #fff; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; line-height: 1.5; pointer-events: none; box-shadow: 0 2px 8px rgba(255,61,0,0.4); z-index: 2; }
 .featured-price { color: var(--primary-container); font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; }
 .featured-portion { font-size: var(--text-label-sm); font-weight: 700; color: var(--secondary); }
 
@@ -672,6 +683,9 @@ onMounted(async () => {
 }
 .menu-grid-card:active { transform: scale(0.97); transition: transform 0.1s; }
 .menu-grid-card::after { content: 'restaurant'; font-family: 'Material Symbols Outlined'; position: absolute; bottom: -8px; right: -8px; font-size: 56px; color: var(--outline-variant); opacity: 0.25; transform: rotate(12deg); pointer-events: none; }
+.grid-sold-out { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: rgba(0,0,0,0.5); color: #fff; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; z-index: 2; border-radius: var(--radius-xl); }
+.grid-sold-out .material-icons { font-size: 28px !important; }
+.grid-stock-badge { position: absolute; top: 4px; right: 4px; padding: 1px 8px; border-radius: var(--radius-full); background: rgb(255 124 0 / 89%); color: #fff; font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 700; line-height: 1.5; pointer-events: none; z-index: 2; }
 .menu-grid-name { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: var(--on-surface); }
 .menu-grid-desc { margin: 4px 0 0; font-family: var(--font-body); font-size: var(--text-body-md); color: var(--on-surface-variant); line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .menu-grid-bottom { margin-top: var(--spacing-sm); }
