@@ -32,6 +32,14 @@ defineEmits<{ open: []; checkout: [] }>()
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
   cursor: pointer; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
+@media (min-width: 800px) {
+  .cart-bar { max-width: 720px; padding: 14px 16px 14px 24px; }
+  .cart-icon-wrap .material-icons { font-size: 34px !important; }
+  .cart-badge { min-width: 24px; height: 24px; font-size: 12px; top: -8px; right: -12px; }
+  .cart-total { font-size: 28px; }
+  .cart-btn { padding: 12px 28px; font-size: 16px; gap: 4px; }
+  .cart-btn .material-icons { font-size: 20px !important; }
+}
 .cart-bar:active { transform: translateX(-50%) scale(0.98); }
 
 .cart-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
