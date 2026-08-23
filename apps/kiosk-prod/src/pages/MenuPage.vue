@@ -54,7 +54,7 @@
             :in-cart="cartDishIds.has(dish.id)"
             :qty-group-index="qtyGroupIndex"
             :on-custom-qty="onCustomQty"
-            @add="(dish, btn) => { flyToCart(btn); addToCart(dish) }"
+            @add="(dish, btn) => { addToCart(dish); nextTick(() => flyToCart(btn)) }"
           />
         </template>
         <p v-else class="empty-category">该分类暂无商品</p>
@@ -100,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, computed } from 'vue'
+import { ref, watch, onMounted, computed, nextTick } from 'vue'
 import { useMenu } from '@/composables/useMenu'
 import { useCartQuote } from '@/composables/useCartQuote'
 import { useSpecEditor } from '@/composables/useSpecEditor'
