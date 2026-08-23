@@ -159,6 +159,7 @@ watch(showCart, (val) => {
 onMounted(() => {
   hydrateCart()
   checkActiveOrder()
+  document.title = `菜单-${merchantName.value || '点餐'}`
 })
 </script>
 

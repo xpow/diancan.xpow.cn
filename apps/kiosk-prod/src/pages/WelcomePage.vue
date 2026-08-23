@@ -352,6 +352,7 @@ onMounted(async () => {
   }
 
   await loadBootstrap()
+  document.title = `首页-${bootstrap.value?.merchantName || '点餐'}`
 })
 </script>
 
