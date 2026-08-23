@@ -8,14 +8,17 @@
       <div class="cart-info">
         <div class="cart-total">
           <span class="roll-char">¥</span>
-          <template v-for="(ch, i) in priceChars" :key="i">
-            <span v-if="ch === '.'" class="roll-char">.</span>
-            <span v-else class="roll-digit-wrap">
-              <span class="roll-digit-track" :style="{ transform: `translateY(-${Number(ch) * 10}%)` }">
-                <span v-for="n in 10" :key="n" class="roll-digit-val">{{ n - 1 }}</span>
-              </span>
+          <span v-for="d in intDigits" :key="d" class="roll-digit-wrap">
+            <span class="roll-digit-track" :style="{ transform: `translateY(-${d}0%)` }">
+              <span v-for="n in 10" :key="n" class="roll-digit-val">{{ n - 1 }}</span>
             </span>
-          </template>
+          </span>
+          <span class="roll-char">.</span>
+          <span v-for="d in decDigits" :key="d" class="roll-digit-wrap">
+            <span class="roll-digit-track" :style="{ transform: `translateY(-${d}0%)` }">
+              <span v-for="n in 10" :key="n" class="roll-digit-val">{{ n - 1 }}</span>
+            </span>
+          </span>
         </div>
       </div>
     </div>
@@ -32,7 +35,15 @@ const props = defineProps<{ count: number; total: number }>()
 defineEmits<{ open: []; checkout: [] }>()
 
 const displayTotal = ref(0)
-const priceChars = computed(() => displayTotal.value.toFixed(2).split(''))
+
+const intDigits = computed(() => {
+  const v = Math.floor(displayTotal.value)
+  return [Math.floor(v / 100) % 10, Math.floor(v / 10) % 10, v % 10]
+})
+const decDigits = computed(() => {
+  const v = Math.round(displayTotal.value * 100)
+  return [Math.floor(v / 10) % 10, v % 10]
+})
 
 let initialDone = false
 onMounted(() => {
