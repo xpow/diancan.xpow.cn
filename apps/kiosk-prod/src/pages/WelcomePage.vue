@@ -71,7 +71,7 @@
             </div>
           </div>
           <div class="featured-thumb">
-            <img :src="cat.dishes[0].image || ''" alt="" />
+            <img :src="getDishImage(cat.dishes[0].id)" alt="" />
           </div>
         </div>
         <!-- Other dishes: 2-column grid -->
@@ -156,8 +156,6 @@ import { getDishImage } from '@/utils/dishImages'
 import { apiPost, setDeviceToken, getDeviceUUID } from '@/utils/api'
 import KioskTopBar from '@/components/KioskTopBar.vue'
 import BottomNav from '@/components/BottomNav.vue'
-import featuredImg1 from '@/assets/images/pages/zp-1.jpg'
-import featuredImg2 from '@/assets/images/pages/zp-2.jpg'
 import lb1 from '@/assets/images/pages/lb-1.jpg'
 import lb2 from '@/assets/images/pages/lb-2.jpg'
 import lb3 from '@/assets/images/pages/lb-3.jpg'
