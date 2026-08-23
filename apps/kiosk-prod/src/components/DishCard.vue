@@ -5,7 +5,7 @@
       <span class="dish-image-disclaimer">*手工制作，实物与图片可能存在差异</span>
       <div v-if="soldOut" class="dish-sold-out">
         <span class="material-icons">inventory_2</span>
-        <span>已售罄</span>
+        <span>今日已售罄</span>
       </div>
       <span v-else-if="showStockBadge" class="dish-stock-badge">预估剩余 {{ dish.stock }} 串</span>
     </div>
