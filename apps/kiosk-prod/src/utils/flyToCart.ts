@@ -11,12 +11,13 @@ export function flyToCart(startEl: HTMLElement) {
   const ey = end.top + end.height / 2
 
   const dot = document.createElement('div')
+  const size = 36
   Object.assign(dot.style, {
     position: 'fixed',
-    left: `${sx - 8}px`,
-    top: `${sy - 8}px`,
-    width: '16px',
-    height: '16px',
+    left: `${sx - size / 2}px`,
+    top: `${sy - size / 2}px`,
+    width: `${size}px`,
+    height: `${size}px`,
     borderRadius: '50%',
     background: 'var(--primary-container, #ff6d00)',
     boxShadow: '0 4px 12px rgba(255,107,0,0.5)',
@@ -34,8 +35,8 @@ export function flyToCart(startEl: HTMLElement) {
     const ease = 1 - Math.pow(1 - t, 3)
     const arc = 4 * peak * t * (1 - t)
 
-    dot.style.left = `${sx + (ex - sx) * ease - 8}px`
-    dot.style.top = `${sy + (ey - sy) * ease + arc - 8}px`
+    dot.style.left = `${sx + (ex - sx) * ease - size / 2}px`
+    dot.style.top = `${sy + (ey - sy) * ease + arc - size / 2}px`
     dot.style.transform = `scale(${1 - t * 0.6})`
     dot.style.opacity = `${1 - t * 0.5}`
 
