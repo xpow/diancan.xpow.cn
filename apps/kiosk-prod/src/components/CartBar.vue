@@ -1,5 +1,5 @@
 <template>
-  <div class="cart-bar" @click="$emit('open')">
+  <div class="cart-bar" :class="{ breathing }" @click="$emit('open')">
     <div class="cart-left">
       <div class="cart-icon-wrap">
         <span class="material-icons">shopping_basket</span>
@@ -27,12 +27,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 const props = defineProps<{ count: number; total: number }>()
 defineEmits<{ open: []; checkout: [] }>()
 
-const priceChars = computed(() => {
-  return props.total.toFixed(2).split('')
+const priceChars = computed(() => props.total.toFixed(2).split(''))
+
+const breathing = ref(false)
+watch(() => props.total, () => {
+  breathing.value = true
+  setTimeout(() => { breathing.value = false }, 400)
 })
 </script>
 
@@ -52,11 +56,13 @@ const priceChars = computed(() => {
 .cart-total { display: flex; align-items: baseline; font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--primary-container); line-height: 1; }
 .roll-prefix, .roll-dot { flex-shrink: 0; }
 .roll-digit-wrap { display: inline-block; height: 1em; overflow: hidden; position: relative; flex-shrink: 0; }
-.roll-digit-track { display: flex; flex-direction: column; transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.roll-digit-track { display: flex; flex-direction: column; transition: transform 0.6s cubic-bezier(0.34, 1.2, 0.64, 1) 0.35s; }
 .roll-digit-val { display: block; width: 1ch; height: 1em; line-height: 1; text-align: center; }
 .cart-btn { padding: 12px 28px; font-size: 16px; gap: 4px; }
 .cart-btn .material-icons { font-size: 20px !important; }
 .cart-bar:active { transform: translateX(-50%) scale(0.98); }
+.cart-bar.breathing { animation: cart-pulse 0.4s ease-out; }
+@keyframes cart-pulse { 0% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.06); } 100% { transform: translateX(-50%) scale(1); } }
 
 .cart-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
 
