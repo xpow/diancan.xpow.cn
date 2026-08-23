@@ -265,6 +265,7 @@ onMounted(async () => {
   try {
     const boot = await apiGet<any>('/api/system/bootstrap?sn=' + localStorage.getItem('kiosk-device-sn'))
     merchantName.value = boot.merchantName || ''
+    document.title = `评价-${boot.merchantName || '点餐'}`
     deviceCode.value = boot.deviceCode || ''
     statusText.value = boot.statusText || ''
     businessHours.value = boot.businessHours || ''

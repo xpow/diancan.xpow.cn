@@ -821,7 +821,7 @@ async function fetchMerchantName() {
       return
     }
 
-    if (data.merchantName) merchantName.value = data.merchantName
+    if (data.merchantName) { merchantName.value = data.merchantName; document.title = `取餐-${data.merchantName}` }
     if (data.branchName) branchName.value = data.branchName
     if (data.deviceCode) deviceCode.value = data.deviceCode
     if (data.statusText) statusText.value = data.statusText
