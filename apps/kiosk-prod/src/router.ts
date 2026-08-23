@@ -22,4 +22,10 @@ router.beforeEach((to) => {
   }
 })
 
+router.afterEach((to, from) => {
+  if (from.name) sessionStorage.setItem(`scroll-${from.path}`, String(window.scrollY))
+  const saved = sessionStorage.getItem(`scroll-${to.path}`)
+  if (saved) { requestAnimationFrame(() => window.scrollTo(0, Number(saved))) }
+})
+
 export default router

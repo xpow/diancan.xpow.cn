@@ -62,8 +62,10 @@
         <div v-if="cat.dishes[0]" class="featured-card-new" @click="router.push(`/menu?dishId=${cat.dishes[0].id}`)">
           <div class="featured-info">
             <div class="featured-top">
-              <span v-if="cat.dishes[0].tags.length" class="featured-tag tag-hot">{{ cat.dishes[0].tags[0] }}</span>
-              <h4 class="featured-name">{{ cat.dishes[0].name }}</h4>
+              <div class="featured-title-row">
+                <h4 class="featured-name">{{ cat.dishes[0].name }}</h4>
+                <span v-if="cat.dishes[0].tags.length" class="featured-tag tag-hot">{{ cat.dishes[0].tags[0] }}</span>
+              </div>
               <p class="featured-desc">{{ cat.dishes[0].desc }}</p>
             </div>
             <div class="featured-bottom">
@@ -149,7 +151,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch, nextTick } from 'vue'
+import { computed, onMounted, ref, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getDishImage } from '@/utils/dishImages'
 import { apiPost, setDeviceToken, getDeviceUUID } from '@/utils/api'
@@ -363,7 +365,6 @@ async function loadBootstrap() {
 }
 
 onMounted(async () => {
-  window.scrollTo(0, 0)
   // 已绑定设备码则忽略 URL 上的扫码参数（防止覆盖已有绑定）
   if (!localStorage.getItem('kiosk-device-sn')) {
     const codeParam = route.query.code as string | undefined
@@ -378,16 +379,6 @@ onMounted(async () => {
 
   await loadBootstrap()
   document.title = `首页-${bootstrap.value?.merchantName || '点餐'}`
-})
-
-let firstLoad = true
-watch(() => route.path, (p) => {
-  if (p === '/home') {
-    if (firstLoad) { firstLoad = false; return }
-    nextTick(() => {
-      document.getElementById('menu-section')?.scrollIntoView({ behavior: 'smooth' })
-    })
-  }
 })
 </script>
 
@@ -634,6 +625,7 @@ watch(() => route.path, (p) => {
 
 .featured-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: var(--spacing-md); min-width: 0; }
 .featured-top { display: flex; flex-direction: column; gap: 2px; }
+.featured-title-row { display: flex; align-items: center; gap: var(--spacing-xs); }
 .featured-tag {
   display: inline-flex; align-self: flex-start;
   padding: 2px 8px; border-radius: var(--radius-sm);
