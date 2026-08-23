@@ -7,11 +7,11 @@
       </div>
       <div class="cart-info">
         <div class="cart-total">
-          <span class="roll-char roll-prefix">¥</span>
+          <span class="roll-char">¥</span>
           <template v-for="(ch, i) in priceChars" :key="i">
-            <span v-if="ch === '.'" class="roll-char roll-dot">.</span>
+            <span v-if="ch === '.'" class="roll-char">.</span>
             <span v-else class="roll-digit-wrap">
-              <span class="roll-digit-track" :style="{ transform: `translateY(-${ch}00%)` }">
+              <span class="roll-digit-track" :style="{ transform: `translateY(-${Number(ch) * 10}%)` }">
                 <span v-for="n in 10" :key="n" class="roll-digit-val">{{ n - 1 }}</span>
               </span>
             </span>
@@ -49,12 +49,11 @@ const priceChars = computed(() => {
 }
 .cart-icon-wrap .material-icons { font-size: 34px !important; }
 .cart-badge { min-width: 24px; height: 24px; font-size: 12px; top: -8px; right: -12px; }
-.cart-total { display: flex; align-items: baseline; font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--primary-container); line-height: 1.2; }
-.roll-prefix { margin-right: 1px; }
-.roll-dot { margin: 0 1px; }
-.roll-digit-wrap { display: inline-block; height: 1.2em; overflow: hidden; width: 0.58em; }
+.cart-total { display: flex; align-items: baseline; font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--primary-container); line-height: 1; }
+.roll-prefix, .roll-dot { flex-shrink: 0; }
+.roll-digit-wrap { display: inline-block; height: 1em; overflow: hidden; position: relative; flex-shrink: 0; }
 .roll-digit-track { display: flex; flex-direction: column; transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
-.roll-digit-val { display: block; height: 1.2em; line-height: 1.2em; text-align: center; }
+.roll-digit-val { display: block; width: 1ch; height: 1em; line-height: 1; text-align: center; }
 .cart-btn { padding: 12px 28px; font-size: 16px; gap: 4px; }
 .cart-btn .material-icons { font-size: 20px !important; }
 .cart-bar:active { transform: translateX(-50%) scale(0.98); }
