@@ -54,7 +54,7 @@
             :in-cart="cartDishIds.has(dish.id)"
             :qty-group-index="qtyGroupIndex"
             :on-custom-qty="onCustomQty"
-            @add="addToCart"
+            @add="(dish, btn) => { flyToCart(btn); addToCart(dish) }"
           />
         </template>
         <p v-else class="empty-category">该分类暂无商品</p>
@@ -110,6 +110,7 @@ import DishCard from '@/components/DishCard.vue'
 import CartBar from '@/components/CartBar.vue'
 import CartSheet from '@/components/CartSheet.vue'
 import SpecSelector from '@/components/SpecSelector.vue'
+import { flyToCart } from '@/utils/flyToCart'
 
 const {
   loading, errorMessage, merchantName, branchName,

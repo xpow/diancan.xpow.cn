@@ -37,14 +37,14 @@
       </div>
     </div>
 
-    <button class="add-card-btn" :class="{ 'in-cart': inCart, 'sold-out': soldOut }" :disabled="soldOut" @click="soldOut ? null : $emit('add', dish)">
+    <button ref="addBtnRef" class="add-card-btn" :class="{ 'in-cart': inCart, 'sold-out': soldOut }" :disabled="soldOut" @click="soldOut ? null : $emit('add', dish, addBtnRef)">
       <span class="material-icons">{{ inCart ? 'check_circle' : 'add' }}</span>
     </button>
   </article>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import SpecSelector from './SpecSelector.vue'
 import type { MenuDish } from '@/composables/useMenu'
 
@@ -56,7 +56,9 @@ const props = defineProps<{
   onCustomQty: (dish: MenuDish, gi: number, value: string) => void
 }>()
 
-defineEmits<{ add: [dish: MenuDish] }>()
+defineEmits<{ add: [dish: MenuDish, btn: HTMLElement] }>()
+
+const addBtnRef = ref<HTMLElement>()
 
 const soldOut = computed(() => !!props.dish.stockEnabled && (props.dish.stock ?? 0) <= 0)
 const showStockBadge = computed(() => !!props.dish.stockEnabled && (props.dish.stock ?? 0) > 0)
