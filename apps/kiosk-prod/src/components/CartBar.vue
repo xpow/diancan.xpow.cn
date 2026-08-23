@@ -8,14 +8,29 @@
       <div class="cart-info">
         <div class="cart-total">
           <span class="roll-char">¥</span>
-          <span v-for="d in intDigits" :key="d" class="roll-digit-wrap">
-            <span class="roll-digit-track" :style="{ transform: `translateY(-${d}0%)` }">
+          <span class="roll-digit-wrap" :class="{ 'roll-hidden': hideHundreds }">
+            <span class="roll-digit-track" :style="{ transform: `translateY(-${intDigits[0]}0%)` }">
+              <span v-for="n in 10" :key="n" class="roll-digit-val">{{ n - 1 }}</span>
+            </span>
+          </span>
+          <span class="roll-digit-wrap" :class="{ 'roll-hidden': hideTens }">
+            <span class="roll-digit-track" :style="{ transform: `translateY(-${intDigits[1]}0%)` }">
+              <span v-for="n in 10" :key="n" class="roll-digit-val">{{ n - 1 }}</span>
+            </span>
+          </span>
+          <span class="roll-digit-wrap">
+            <span class="roll-digit-track" :style="{ transform: `translateY(-${intDigits[2]}0%)` }">
               <span v-for="n in 10" :key="n" class="roll-digit-val">{{ n - 1 }}</span>
             </span>
           </span>
           <span class="roll-char">.</span>
-          <span v-for="d in decDigits" :key="d" class="roll-digit-wrap">
-            <span class="roll-digit-track" :style="{ transform: `translateY(-${d}0%)` }">
+          <span class="roll-digit-wrap">
+            <span class="roll-digit-track" :style="{ transform: `translateY(-${decDigits[0]}0%)` }">
+              <span v-for="n in 10" :key="n" class="roll-digit-val">{{ n - 1 }}</span>
+            </span>
+          </span>
+          <span class="roll-digit-wrap">
+            <span class="roll-digit-track" :style="{ transform: `translateY(-${decDigits[1]}0%)` }">
               <span v-for="n in 10" :key="n" class="roll-digit-val">{{ n - 1 }}</span>
             </span>
           </span>
@@ -44,6 +59,8 @@ const decDigits = computed(() => {
   const v = Math.round(displayTotal.value * 100)
   return [Math.floor(v / 10) % 10, v % 10]
 })
+const hideHundreds = computed(() => intDigits.value[0] === 0)
+const hideTens = computed(() => intDigits.value[0] === 0 && intDigits.value[1] === 0)
 
 let initialDone = false
 onMounted(() => {
@@ -67,7 +84,8 @@ watch(() => props.total, (v) => { if (initialDone) displayTotal.value = v })
 .cart-badge { min-width: 24px; height: 24px; font-size: 12px; top: -8px; right: -12px; }
 .cart-total { display: flex; align-items: baseline; font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--primary-container); line-height: 1; }
 .roll-prefix, .roll-dot { flex-shrink: 0; }
-.roll-digit-wrap { display: inline-block; height: 1em; overflow: hidden; position: relative; flex-shrink: 0; }
+.roll-digit-wrap { display: inline-block; height: 1em; overflow: hidden; position: relative; flex-shrink: 0; transition: max-width 0.4s ease, opacity 0.4s ease; max-width: 1ch; }
+.roll-digit-wrap.roll-hidden { max-width: 0; opacity: 0; }
 .roll-digit-track { display: flex; flex-direction: column; transition: transform 0.5s cubic-bezier(0.34, 1.2, 0.64, 1) 0.7s; }
 .roll-digit-val { display: block; width: 1ch; height: 1em; line-height: 1; text-align: center; }
 .cart-btn { padding: 12px 28px; font-size: 16px; gap: 4px; }
