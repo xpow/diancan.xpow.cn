@@ -25,21 +25,18 @@ defineEmits<{ open: []; checkout: [] }>()
 .cart-bar {
   position: fixed; bottom: calc(65px + env(safe-area-inset-bottom, 0)); left: 50%; transform: translateX(-50%);
   z-index: 80; display: flex; align-items: center; justify-content: space-between;
-  width: calc(100% - var(--container-margin) * 1); max-width: 600px;
-  padding: 10px 10px 10px 16px;
+  width: calc(100% - var(--container-margin) * 1); max-width: 720px;
+  padding: 14px 16px 14px 24px;
   background: rgba(255, 255, 255, 0.12); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border-radius: var(--radius-full);
   border: 1px solid rgba(238, 165, 30, 0.457);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
   cursor: pointer; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
-@media (min-width: 800px) {
-  .cart-bar { max-width: 720px; padding: 14px 16px 14px 24px; }
-  .cart-icon-wrap .material-icons { font-size: 34px !important; }
-  .cart-badge { min-width: 24px; height: 24px; font-size: 12px; top: -8px; right: -12px; }
-  .cart-total { font-size: 28px; }
-  .cart-btn { padding: 12px 28px; font-size: 16px; gap: 4px; }
-  .cart-btn .material-icons { font-size: 20px !important; }
-}
+.cart-icon-wrap .material-icons { font-size: 34px !important; }
+.cart-badge { min-width: 24px; height: 24px; font-size: 12px; top: -8px; right: -12px; }
+.cart-total { font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--primary-container); line-height: 1.2; }
+.cart-btn { padding: 12px 28px; font-size: 16px; gap: 4px; }
+.cart-btn .material-icons { font-size: 20px !important; }
 .cart-bar:active { transform: translateX(-50%) scale(0.98); }
 
 .cart-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
@@ -55,7 +52,6 @@ defineEmits<{ open: []; checkout: [] }>()
 }
 
 .cart-info { display: flex; flex-direction: column; gap: 1px; }
-.cart-total { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: var(--primary-container); line-height: 1.2; }
 
 .cart-btn {
   display: flex; align-items: center; gap: 2px; flex-shrink: 0;
