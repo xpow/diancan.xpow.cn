@@ -634,7 +634,7 @@ onMounted(async () => {
 
 .featured-card-new {
   display: flex;
-  background: var(--surface-container-lowest);
+  background: var(--surface-container-highest);
   border-radius: var(--radius-xl);
   border: 1px solid var(--outline-variant);
   overflow: hidden;
@@ -668,7 +668,7 @@ onMounted(async () => {
 /* Menu Grid */
 .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); margin-top: var(--spacing-md); }
 .menu-grid-card {
-  background: var(--surface-container-lowest);
+  background: var(--surface-container-highest);
   border-radius: var(--radius-xl);
   border: 1px solid var(--outline-variant);
   padding: var(--spacing-md);
