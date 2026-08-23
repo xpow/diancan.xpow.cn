@@ -635,7 +635,7 @@ onMounted(async () => {
 .featured-thumb { width: 112px; height: 112px; flex-shrink: 0; overflow: hidden; }
 .featured-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .featured-price { color: var(--primary-container); font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; display: block; margin-top: var(--spacing-sm); }
-.featured-portion { display: block; font-size: var(--text-label-sm); font-weight: 400; color: var(--secondary); }
+.featured-portion { display: block; font-size: var(--text-label-sm); font-weight: 700; color: var(--secondary); }
 
 /* old overrides removed */
 
@@ -661,7 +661,7 @@ onMounted(async () => {
 .menu-grid-desc { margin: 4px 0 0; font-family: var(--font-body); font-size: var(--text-body-md); color: var(--on-surface-variant); line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .menu-grid-bottom { margin-top: var(--spacing-sm); }
 .menu-grid-price { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: var(--primary-container); display: block; }
-.menu-grid-portion { display: block; font-size: var(--text-label-sm); font-weight: 400; color: var(--secondary); }
+.menu-grid-portion { display: block; font-size: var(--text-label-sm); font-weight: 700; color: var(--secondary); }
 
 /* Info Grid */
 .info-grid {
