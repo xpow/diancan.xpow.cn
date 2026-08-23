@@ -67,7 +67,7 @@
               <p class="featured-desc">{{ cat.dishes[0].desc }}</p>
             </div>
             <div class="featured-bottom">
-              <span class="featured-price">¥{{ cat.dishes[0].price.toFixed(2) }}<template v-if="cat.dishes[0].portionSize"> / {{ cat.dishes[0].portionSize }}串</template></span>
+              <span class="featured-price">¥{{ cat.dishes[0].price.toFixed(2) }}<span v-if="cat.dishes[0].portionSize" class="featured-portion"> / {{ cat.dishes[0].portionSize }}串</span></span>
             </div>
           </div>
           <div class="featured-thumb">
@@ -82,8 +82,7 @@
               <p class="menu-grid-desc">{{ dish.desc }}</p>
             </div>
             <div class="menu-grid-bottom">
-              <span class="menu-grid-price">¥{{ dish.price.toFixed(2) }}</span>
-              <p v-if="dish.portionSize" class="menu-grid-portion">/ {{ dish.portionSize }}串</p>
+              <span class="menu-grid-price">¥{{ dish.price.toFixed(2) }}<span v-if="dish.portionSize" class="menu-grid-portion"> / {{ dish.portionSize }}串</span></span>
             </div>
           </div>
         </div>
@@ -635,6 +634,8 @@ onMounted(async () => {
 
 .featured-thumb { width: 112px; height: 112px; flex-shrink: 0; overflow: hidden; }
 .featured-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.featured-price { color: var(--primary-container); font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; }
+.featured-portion { font-size: var(--text-label-sm); font-weight: 400; color: var(--secondary); }
 
 /* old overrides removed */
 
@@ -660,7 +661,7 @@ onMounted(async () => {
 .menu-grid-desc { margin: 4px 0 0; font-family: var(--font-body); font-size: var(--text-body-md); color: var(--on-surface-variant); line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .menu-grid-bottom { margin-top: var(--spacing-sm); }
 .menu-grid-price { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: var(--primary-container); }
-.menu-grid-portion { margin: 2px 0 0; font-family: var(--font-body); font-size: var(--text-label-sm); color: var(--secondary); }
+.menu-grid-portion { font-size: var(--text-label-sm); font-weight: 400; color: var(--secondary); }
 
 /* Info Grid */
 .info-grid {
