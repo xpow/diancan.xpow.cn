@@ -6,7 +6,17 @@
         <span class="cart-badge">{{ count }}</span>
       </div>
       <div class="cart-info">
-        <span class="cart-total">¥{{ total.toFixed(2) }}</span>
+        <div class="cart-total">
+          <span class="roll-char roll-prefix">¥</span>
+          <template v-for="(ch, i) in priceChars" :key="i">
+            <span v-if="ch === '.'" class="roll-char roll-dot">.</span>
+            <span v-else class="roll-digit-wrap">
+              <span class="roll-digit-track" :style="{ transform: `translateY(-${ch}00%)` }">
+                <span v-for="n in 10" :key="n" class="roll-digit-val">{{ n - 1 }}</span>
+              </span>
+            </span>
+          </template>
+        </div>
       </div>
     </div>
     <button class="cart-btn" @click.stop="$emit('checkout')">
@@ -17,8 +27,13 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{ count: number; total: number }>()
+import { computed } from 'vue'
+const props = defineProps<{ count: number; total: number }>()
 defineEmits<{ open: []; checkout: [] }>()
+
+const priceChars = computed(() => {
+  return props.total.toFixed(2).split('')
+})
 </script>
 
 <style scoped>
@@ -34,7 +49,12 @@ defineEmits<{ open: []; checkout: [] }>()
 }
 .cart-icon-wrap .material-icons { font-size: 34px !important; }
 .cart-badge { min-width: 24px; height: 24px; font-size: 12px; top: -8px; right: -12px; }
-.cart-total { font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--primary-container); line-height: 1.2; }
+.cart-total { display: flex; align-items: baseline; font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--primary-container); line-height: 1.2; }
+.roll-prefix { margin-right: 1px; }
+.roll-dot { margin: 0 1px; }
+.roll-digit-wrap { display: inline-block; height: 1.2em; overflow: hidden; width: 0.58em; }
+.roll-digit-track { display: flex; flex-direction: column; transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.roll-digit-val { display: block; height: 1.2em; line-height: 1.2em; text-align: center; }
 .cart-btn { padding: 12px 28px; font-size: 16px; gap: 4px; }
 .cart-btn .material-icons { font-size: 20px !important; }
 .cart-bar:active { transform: translateX(-50%) scale(0.98); }
