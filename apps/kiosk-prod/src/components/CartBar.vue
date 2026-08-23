@@ -1,5 +1,5 @@
 <template>
-  <div class="cart-bar" :class="{ breathing }" @click="$emit('open')">
+  <div class="cart-bar" @click="$emit('open')">
     <div class="cart-left">
       <div class="cart-icon-wrap">
         <span class="material-icons">shopping_basket</span>
@@ -27,17 +27,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 const props = defineProps<{ count: number; total: number }>()
 defineEmits<{ open: []; checkout: [] }>()
 
 const priceChars = computed(() => props.total.toFixed(2).split(''))
-
-const breathing = ref(false)
-watch(() => props.total, () => {
-  breathing.value = true
-  setTimeout(() => { breathing.value = false }, 400)
-})
 </script>
 
 <style scoped>
@@ -61,8 +55,6 @@ watch(() => props.total, () => {
 .cart-btn { padding: 12px 28px; font-size: 16px; gap: 4px; }
 .cart-btn .material-icons { font-size: 20px !important; }
 .cart-bar:active { transform: translateX(-50%) scale(0.98); }
-.cart-bar.breathing { animation: cart-pulse 0.4s ease-out; }
-@keyframes cart-pulse { 0% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.06); } 100% { transform: translateX(-50%) scale(1); } }
 
 .cart-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
 
