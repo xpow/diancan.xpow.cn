@@ -27,11 +27,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
 const props = defineProps<{ count: number; total: number }>()
 defineEmits<{ open: []; checkout: [] }>()
 
-const priceChars = computed(() => props.total.toFixed(2).split(''))
+const displayTotal = ref(0)
+const priceChars = computed(() => displayTotal.value.toFixed(2).split(''))
+
+let initialDone = false
+onMounted(() => {
+  setTimeout(() => { displayTotal.value = props.total; initialDone = true }, 700)
+})
+watch(() => props.total, (v) => { if (initialDone) displayTotal.value = v })
 </script>
 
 <style scoped>
