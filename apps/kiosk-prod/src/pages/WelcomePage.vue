@@ -626,7 +626,7 @@ onMounted(async () => {
 .featured-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: var(--spacing-md); min-width: 0; }
 .featured-top { display: flex; flex-direction: column; gap: 2px; }
 .featured-title-row { display: flex; align-items: center; gap: var(--spacing-xs); }
-.featured-name { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-lg); font-weight: 700; color: var(--on-surface); line-height: 1.3; }
+.featured-name { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: var(--on-surface); line-height: 1.3; }
 .featured-tag {
   display: inline-flex; align-self: flex-start;
   padding: 2px 8px; border-radius: var(--radius-sm);
