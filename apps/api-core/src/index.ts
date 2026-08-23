@@ -175,7 +175,7 @@ app.get('/api/system/bootstrap', generalLimiter, async (req, res) => {
     try { cache = await buildGlobalCache() } catch { return res.status(500).json({ message: '初始化失败' }) }
   }
 
-  const { merchant, branch, promotions: activePromotions, featuredItems, devices: allDevices } = cache
+  const { merchant, branch, promotions: activePromotions, featuredItems, devices: allDevices, categories: cacheCategories, dishes: cacheDishes } = cache
 
   // 实时查询评价设置（不入缓存）
   const merchantDb = await prisma.merchant.findUnique({ where: { id: merchant.id }, select: { reviewSettings: true } })
@@ -243,6 +243,22 @@ app.get('/api/system/bootstrap', generalLimiter, async (req, res) => {
       }
     }),
     featuredItems,
+    menuCategories: cacheCategories.map((cat) => ({
+      id: cat.id,
+      name: cat.name,
+      dishes: cacheDishes
+        .filter((d: any) => d.categoryId === cat.id && d.status === 'active')
+        .slice(0, 6)
+        .map((d: any) => ({
+          id: d.id,
+          name: d.name,
+          desc: d.desc ?? '',
+          price: d.price,
+          portionSize: d.portionSize ?? null,
+          image: d.image ?? null,
+          tags: d.tags ?? [],
+        })),
+    })).filter((c: any) => c.dishes.length > 0),
     commands: device ? await prisma.deviceCommand.findMany({
       where: { deviceId: device.id, status: 'pending' },
       select: { id: true, command: true, params: true },

@@ -52,30 +52,40 @@
         </div>
       </section>
 
-      <!-- Featured Items Section -->
-      <section v-if="bootstrap?.featuredItems?.length" class="section">
-        <div class="section-header">
-          <h3>今日招牌</h3>
-          <span class="section-more">查看全部</span>
+      <!-- Menu Categories Section -->
+      <section v-for="cat in bootstrap?.menuCategories" :key="cat.id" class="section">
+        <div class="section-header-new">
+          <span class="section-bar"></span>
+          <h3>{{ cat.name }}</h3>
         </div>
-        <div class="featured-scroll">
-          <article
-            v-for="(item, index) in bootstrap.featuredItems"
-            :key="item.id"
-            class="featured-card"
-          >
-            <div class="featured-image" :class="item.badgeTone === 'hot' ? 'badge-hot' : 'badge-new'">
-              <img :src="index === 0 ? featuredImg1 : featuredImg2" alt="" class="featured-img-el" />
-              <span class="featured-badge">{{ item.badge }}</span>
+        <!-- Signature dish: first item as horizontal card -->
+        <div v-if="cat.dishes[0]" class="featured-card-new" @click="router.push('/menu')">
+          <div class="featured-info">
+            <div class="featured-top">
+              <span v-if="cat.dishes[0].tags.length" class="featured-tag tag-hot">{{ cat.dishes[0].tags[0] }}</span>
+              <h4 class="featured-name">{{ cat.dishes[0].name }}</h4>
+              <p class="featured-desc">{{ cat.dishes[0].desc }}</p>
             </div>
-            <div class="featured-body">
-              <div class="featured-row">
-                <h4 class="featured-name">{{ item.title }}</h4>
-                <span class="featured-price">{{ item.priceText }}</span>
-              </div>
-              <p class="featured-desc">{{ item.description }}</p>
+            <div class="featured-bottom">
+              <span class="featured-price">¥{{ cat.dishes[0].price.toFixed(2) }}<template v-if="cat.dishes[0].portionSize"> / {{ cat.dishes[0].portionSize }}串</template></span>
             </div>
-          </article>
+          </div>
+          <div class="featured-thumb">
+            <img :src="cat.dishes[0].image || ''" alt="" />
+          </div>
+        </div>
+        <!-- Other dishes: 2-column grid -->
+        <div v-if="cat.dishes.length > 1" class="menu-grid">
+          <div v-for="dish in cat.dishes.slice(1)" :key="dish.id" class="menu-grid-card" @click="router.push('/menu')">
+            <div class="menu-grid-info">
+              <h4 class="menu-grid-name">{{ dish.name }}</h4>
+              <p class="menu-grid-desc">{{ dish.desc }}</p>
+            </div>
+            <div class="menu-grid-bottom">
+              <span class="menu-grid-price">¥{{ dish.price.toFixed(2) }}</span>
+              <p v-if="dish.portionSize" class="menu-grid-portion">/ {{ dish.portionSize }}串</p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -194,6 +204,22 @@ interface FeaturedItem {
   badgeTone: 'hot' | 'new'
 }
 
+interface MenuCategoryDish {
+  id: string
+  name: string
+  desc: string
+  price: number
+  portionSize: number | null
+  image: string | null
+  tags: string[]
+}
+
+interface MenuCategory {
+  id: string
+  name: string
+  dishes: MenuCategoryDish[]
+}
+
 interface DeviceInfo {
   id: string
   code: string
@@ -213,6 +239,7 @@ interface BootstrapResponse {
   restReason?: string
   promotions: BootstrapPromotion[]
   featuredItems: FeaturedItem[]
+  menuCategories: MenuCategory[]
   devices?: DeviceInfo[]
   commands?: { id: string; command: string; params: string }[]
 }
@@ -580,93 +607,62 @@ onMounted(async () => {
   font-weight: 600;
 }
 
-/* Featured Items */
-.featured-scroll {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-}
+/* Featured Items - New Design */
+.section-header-new { display: flex; align-items: center; gap: var(--spacing-sm); margin-bottom: var(--spacing-md); }
+.section-bar { width: 4px; height: 24px; border-radius: 2px; background: var(--primary-container); flex-shrink: 0; }
+.section-header-new h3 { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-lg); font-weight: 700; color: var(--on-surface); }
 
-.featured-card {
-  width: 100%;
+.featured-list { display: flex; flex-direction: column; gap: var(--spacing-md); }
+
+.featured-card-new {
+  display: flex;
   background: var(--surface-container-lowest);
   border-radius: var(--radius-xl);
   border: 1px solid var(--outline-variant);
   overflow: hidden;
-  box-shadow: var(--shadow-md);
+  transition: box-shadow 0.3s;
 }
+.featured-card-new:active { transform: scale(0.98); transition: transform 0.1s; }
 
-.featured-image {
-  position: relative;
-  height: 160px;
-  overflow: hidden;
+.featured-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: var(--spacing-md); min-width: 0; }
+.featured-top { display: flex; flex-direction: column; gap: 2px; }
+.featured-tag {
+  display: inline-flex; align-self: flex-start;
+  padding: 2px 8px; border-radius: var(--radius-sm);
+  font-family: var(--font-display); font-size: 10px; font-weight: 700;
+  color: #fff; margin-bottom: var(--spacing-xs);
 }
-.featured-img-el {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+.tag-hot { background: #ff3d00; }
+.tag-new { background: var(--primary-container); }
 
-.badge-hot {
-  background: linear-gradient(135deg, #2a1200 0%, #8f3700 100%);
-}
+.featured-thumb { width: 112px; height: 112px; flex-shrink: 0; overflow: hidden; }
+.featured-thumb img { width: 100%; height: 100%; object-fit: cover; }
 
-.badge-new {
-  background: linear-gradient(135deg, #56340f 0%, #d36b23 100%);
-}
+/* old overrides removed */
 
-.featured-badge {
-  position: absolute;
-  top: var(--spacing-sm);
-  left: var(--spacing-sm);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  font-family: var(--font-display);
-  font-size: var(--text-label-sm);
-  font-weight: 600;
-}
-
-.featured-body {
+/* Menu Grid */
+.menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); margin-top: var(--spacing-md); }
+.menu-grid-card {
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--outline-variant);
   padding: var(--spacing-md);
-}
-
-.featured-row {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
   justify-content: space-between;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-xs);
-}
-
-.featured-name {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--text-headline-md);
-  font-weight: 700;
-  line-height: 1.3;
-  color: var(--on-surface);
-}
-
-.featured-price {
-  color: var(--primary-container);
-  font-family: var(--font-display);
-  font-size: var(--text-price-display);
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.featured-desc {
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: var(--text-body-md);
-  line-height: 1.5;
-  color: var(--secondary);
+  min-height: 100px;
+  cursor: pointer;
+  transition: box-shadow 0.3s;
+  position: relative;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
+.menu-grid-card:active { transform: scale(0.97); transition: transform 0.1s; }
+.menu-grid-card::after { content: 'restaurant'; font-family: 'Material Symbols Outlined'; position: absolute; bottom: -8px; right: -8px; font-size: 56px; color: var(--outline-variant); opacity: 0.25; transform: rotate(12deg); pointer-events: none; }
+.menu-grid-name { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: var(--on-surface); }
+.menu-grid-desc { margin: 4px 0 0; font-family: var(--font-body); font-size: var(--text-body-md); color: var(--on-surface-variant); line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.menu-grid-bottom { margin-top: var(--spacing-sm); }
+.menu-grid-price { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: var(--primary-container); }
+.menu-grid-portion { margin: 2px 0 0; font-family: var(--font-body); font-size: var(--text-label-sm); color: var(--secondary); }
 
 /* Info Grid */
 .info-grid {
@@ -756,6 +752,8 @@ onMounted(async () => {
   .page-content { max-width: none; }
   .promo-list { display: grid; grid-template-columns: 1fr 1fr; }
   .featured-scroll { display: grid; grid-template-columns: 1fr 1fr; }
+  .featured-thumb { width: 128px; height: 128px; }
+  .menu-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 
@@ -884,7 +882,7 @@ onMounted(async () => {
   }
 
   .promo-card,
-  .featured-body,
+  .featured-card-new,
   .info-card,
   .device-dialog {
     border-radius: var(--radius-lg);
