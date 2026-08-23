@@ -53,7 +53,7 @@
       </section>
 
       <!-- Menu Categories Section -->
-      <section v-for="cat in bootstrap?.menuCategories" :key="cat.id" class="section">
+      <section v-for="(cat, ci) in bootstrap?.menuCategories" :key="cat.id" class="section" :id="ci === 0 ? 'menu-section' : undefined">
         <div class="section-header-new">
           <span class="section-bar"></span>
           <h3>{{ cat.name }}</h3>
@@ -149,7 +149,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
+import { computed, onMounted, ref, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getDishImage } from '@/utils/dishImages'
 import { apiPost, setDeviceToken, getDeviceUUID } from '@/utils/api'
@@ -363,9 +363,7 @@ async function loadBootstrap() {
 }
 
 onMounted(async () => {
-  const saved = sessionStorage.getItem('home-scroll')
-  if (saved) { window.scrollTo(0, Number(saved)); sessionStorage.removeItem('home-scroll') }
-  else { window.scrollTo(0, 0) }
+  window.scrollTo(0, 0)
   // 已绑定设备码则忽略 URL 上的扫码参数（防止覆盖已有绑定）
   if (!localStorage.getItem('kiosk-device-sn')) {
     const codeParam = route.query.code as string | undefined
@@ -382,8 +380,14 @@ onMounted(async () => {
   document.title = `首页-${bootstrap.value?.merchantName || '点餐'}`
 })
 
-onBeforeUnmount(() => {
-  sessionStorage.setItem('home-scroll', String(window.scrollY))
+let firstLoad = true
+watch(() => route.path, (p) => {
+  if (p === '/home') {
+    if (firstLoad) { firstLoad = false; return }
+    nextTick(() => {
+      document.getElementById('menu-section')?.scrollIntoView({ behavior: 'smooth' })
+    })
+  }
 })
 </script>
 
