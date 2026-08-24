@@ -115,7 +115,10 @@
       <footer class="footer">
         <p>© 2026 {{ displayTitle }}</p>
         <p class="footer-tagline">用心做好每一串，传递市井烟火气</p>
-        <p class="switch-device" @click="switchDevice">切换设备</p>
+        <div class="footer-links">
+          <p class="switch-device" @click="switchDevice">切换设备</p>
+          <p class="switch-device" @click="router.push('/share')"><span class="material-icons" style="font-size:14px;vertical-align:middle;margin-right:2px">share</span>分享</p>
+        </div>
       </footer>
     </div>
 
@@ -789,6 +792,8 @@ onMounted(async () => {
   cursor: pointer;
   text-decoration: underline;
 }
+.footer-links { display: flex; justify-content: center; gap: 16px; }
+.footer-links .switch-device { margin-top: 8px; }
 .switch-device:hover { opacity: 0.7; }
 
 @media (min-width: 500px) {
