@@ -58,9 +58,9 @@
             </div>
           </template>
         </Column>
-        <Column field="alliance" header="联盟" style="width:70px">
+        <Column field="alliance" header="联盟" style="width:80px">
           <template #body="{ data }">
-            <Tag v-if="data.alliance" value="联盟" severity="warn" />
+            <Button :label="data.alliance ? '已联盟' : '普通'" :severity="data.alliance ? 'warn' : 'secondary'" size="small" text @click="toggleAlliance(data)" />
           </template>
         </Column>
         <Column field="status" header="状态" style="width:100px">
@@ -457,6 +457,18 @@ async function deleteCategory(id: string) {
     return
   }
   fetchCategories()
+}
+
+async function toggleAlliance(dish: any) {
+  if (!dish.alliance) {
+    if (!confirm(`确认将「${dish.name}」设为联盟商品？\n联盟商品将不计入菜品销量统计。`)) return
+  }
+  const res = await fetch(`/api/admin/dishes/${dish.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ alliance: !dish.alliance }),
+  })
+  if (res.ok) fetchDishes()
 }
 
 async function toggleStatus(dish: any) {
