@@ -80,9 +80,9 @@
             <img :src="getDishImage(cat.dishes[0].id)" alt="" />
           </div>
         </div>
-        <!-- Other dishes: 2-column grid -->
+        <!-- Other dishes: 2-column grid (skip 6th dish, it's a featured card below) -->
         <div v-if="cat.dishes.length > 1" class="menu-grid">
-          <div v-for="dish in cat.dishes.slice(1)" :key="dish.id" class="menu-grid-card" @click="router.push(`/menu?dishId=${dish.id}`)">
+          <div v-for="dish in cat.dishes.slice(1, 5)" :key="dish.id" class="menu-grid-card" @click="router.push(`/menu?dishId=${dish.id}`)">
             <div v-if="dish.stockEnabled && (dish.stock ?? 0) <= 0" class="grid-sold-out">
               <span class="material-icons">block</span><span>今日已售罄</span>
             </div>
@@ -96,9 +96,29 @@
             </div>
           </div>
         </div>
+        <!-- 6th dish: horizontal card with image on left -->
+        <div v-if="cat.dishes[5]" class="featured-card-new featured-card-reversed" @click="router.push(`/menu?dishId=${cat.dishes[5].id}`)">
+          <div v-if="cat.dishes[5].stockEnabled && (cat.dishes[5].stock ?? 0) <= 0" class="featured-sold-out">
+            <span class="material-icons">block</span><span>今日已售罄</span>
+          </div>
+          <span v-else-if="cat.dishes[5].stockEnabled && (cat.dishes[5].stock ?? 0) > 0" class="featured-stock-badge">预估剩余 {{ cat.dishes[5].stock }} 串</span>
+          <div class="featured-thumb">
+            <img :src="getDishImage(cat.dishes[5].id)" alt="" />
+          </div>
+          <div class="featured-info">
+            <div class="featured-top">
+              <div class="featured-title-row">
+                <h4 class="featured-name">{{ cat.dishes[5].name }}</h4>
+                <span v-if="cat.dishes[5].tags.length" class="featured-tag tag-hot">{{ cat.dishes[5].tags[0] }}</span>
+              </div>
+              <p class="featured-desc">{{ cat.dishes[5].desc }}</p>
+            </div>
+            <div class="featured-bottom">
+              <span class="featured-price">¥{{ cat.dishes[5].price.toFixed(2) }}<span v-if="cat.dishes[5].portionSize" class="featured-portion"> / {{ cat.dishes[5].portionSize }}串</span></span>
+            </div>
+          </div>
+        </div>
       </section>
-
-      <!-- Info Grid -->
       <section class="section info-grid">
         <article class="info-card">
           <span class="material-icons info-icon">schedule</span>
@@ -642,6 +662,7 @@ onMounted(async () => {
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 .featured-card-new:active { transform: scale(0.98); transition: transform 0.1s; }
+.featured-card-reversed { flex-direction: row-reverse; }
 
 .featured-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: var(--spacing-md); min-width: 0; }
 .featured-top { display: flex; flex-direction: column; gap: 2px; }
