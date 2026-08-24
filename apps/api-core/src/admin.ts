@@ -1646,11 +1646,17 @@ router.get('/cost-profit-report', requireAuth, async (req, res) => {
   // 销量汇总
   const orders = await prisma.order.findMany({
     where: { createdAt: { gte: fromDate, lt: toDate }, status: { not: 'cancelled' } },
-    select: { items: { select: { dishId: true, quantity: true, finalSubtotal: true, alliance: true } } },
+    select: {
+      items: { select: { dishId: true, quantity: true, finalSubtotal: true, alliance: true } },
+      promotions: { select: { type: true, discount: true } },
+    },
   })
 
   const salesMap = new Map<string, { totalQuantity: number; totalRevenue: number }>()
+  let totalFullReduction = 0
   for (const order of orders) {
+    const fr = order.promotions.filter((p) => p.type === 'full_reduction').reduce((s, p) => s + p.discount, 0)
+    totalFullReduction += fr
     for (const item of order.items) {
       if (item.alliance) continue
       const current = salesMap.get(item.dishId) ?? { totalQuantity: 0, totalRevenue: 0 }
@@ -1701,12 +1707,13 @@ router.get('/cost-profit-report', requireAuth, async (req, res) => {
 
   const totalRevenue = Math.round(dishResults.reduce((s, d) => s + d.totalRevenue, 0) * 100) / 100
   const totalCost = Math.round(dishResults.reduce((s, d) => s + d.totalCost, 0) * 100) / 100
-  const grossProfit = Math.round(dishResults.reduce((s, d) => s + d.grossProfit, 0) * 100) / 100
-  const grossMargin = totalRevenue > 0 ? Math.round((grossProfit / totalRevenue) * 100 * 10) / 10 : 0
+  const netRevenue = Math.round((totalRevenue - totalFullReduction) * 100) / 100
+  const grossProfit = Math.round((netRevenue - totalCost) * 100) / 100
+  const grossMargin = netRevenue > 0 ? Math.round((grossProfit / netRevenue) * 100 * 10) / 10 : 0
   const totalWaste = dishResults.reduce((s, d) => s + d.totalWaste, 0)
   const totalConsumption = dishResults.reduce((s, d) => s + d.totalConsumption, 0)
   const wasteRate = totalConsumption > 0 ? Math.round((totalWaste / totalConsumption) * 100 * 10) / 10 : 0
-  const summary = { totalRevenue, totalCost, grossProfit, grossMargin, totalWaste, wasteRate }
+  const summary = { totalRevenue, totalCost, grossProfit, grossMargin, totalWaste, wasteRate, totalFullReduction: Math.round(totalFullReduction * 100) / 100 }
 
   res.json({ dishes: dishResults, summary, dateRange: { from: from as string, to: to as string } })
 })

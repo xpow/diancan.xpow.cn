@@ -31,12 +31,12 @@
         <span class="summary-value" :class="{ negative: (report?.summary.grossMargin ?? 0) < 0 }">{{ report?.summary.grossMargin ?? 0 }}%</span>
       </div>
       <div class="summary-card waste">
-        <span class="summary-label">总损耗(串)</span>
-        <span class="summary-value">{{ report?.summary.totalWaste ?? 0 }}</span>
+        <span class="summary-label">损耗</span>
+        <span class="summary-value">{{ report?.summary.totalWaste ?? 0 }}串 <small>{{ report?.summary.wasteRate ?? 0 }}%</small></span>
       </div>
-      <div class="summary-card waste-rate">
-        <span class="summary-label">总损耗率</span>
-        <span class="summary-value" :class="{ negative: (report?.summary.wasteRate ?? 0) > 0 }">{{ report?.summary.wasteRate ?? 0 }}%</span>
+      <div class="summary-card fr">
+        <span class="summary-label">满减</span>
+        <span class="summary-value">¥{{ report?.summary.totalFullReduction?.toFixed(2) ?? '0.00' }}</span>
       </div>
     </div>
 
@@ -181,7 +181,7 @@ interface DishProfit {
 
 interface ProfitReport {
   dishes: DishProfit[]
-  summary: { totalRevenue: number; totalCost: number; grossProfit: number; grossMargin: number; totalWaste: number; wasteRate: number }
+  summary: { totalRevenue: number; totalCost: number; grossProfit: number; grossMargin: number; totalWaste: number; wasteRate: number; totalFullReduction?: number }
   dateRange: { from: string; to: string }
 }
 
@@ -311,8 +311,9 @@ onMounted(async () => {
 .summary-card.cost .summary-value { color: #e74c3c; }
 .summary-card.profit .summary-value { color: #27ae60; }
 .summary-card.margin .summary-value { font-size: 28px; color: var(--p-primary-color, #FF6B00); }
-.summary-card.waste .summary-value { font-size: 24px; }
-.summary-card.waste-rate .summary-value { font-size: 24px; color: #e74c3c; }
+.summary-card.waste .summary-value { font-size: 20px; }
+.summary-card.waste .summary-value small { font-size: 14px; color: #e74c3c; margin-left: 4px; }
+.summary-card.fr .summary-value { font-size: 24px; color: #e67e22; }
 .summary-value.negative { color: #e74c3c !important; }
 
 .card { background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); overflow: hidden; margin-bottom: 16px; }
