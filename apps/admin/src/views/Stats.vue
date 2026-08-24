@@ -2,6 +2,10 @@
   <div class="stats">
     <div class="page-header">
       <h2 class="page-title">菜品销量统计</h2>
+      <div class="header-tabs">
+        <button :class="['tab-btn', statsTab === 'normal' && 'active']" @click="statsTab = 'normal'; fetchStats()">菜品统计</button>
+        <button :class="['tab-btn', statsTab === 'alliance' && 'active']" @click="statsTab = 'alliance'; fetchStats()">联盟商品统计</button>
+      </div>
     </div>
 
     <div class="filter-bar">
@@ -79,6 +83,7 @@ const loaded = ref(false)
 const quickRange = ref('yesterday')
 const dateRange = ref<[Date | null, Date | null] | undefined>()
 const selected = ref<Set<string>>(new Set())
+const statsTab = ref<'normal' | 'alliance'>('normal')
 
 const subtotal = computed(() => {
   let qty = 0
@@ -164,7 +169,8 @@ async function fetchStats() {
       params.set('endDate', fmt(end))
     }
     const qs = params.toString()
-    const res = await fetch(`/api/admin/stats/dish-sales${qs ? '?' + qs : ''}`)
+    const endpoint = statsTab.value === 'alliance' ? '/api/admin/stats/alliance-dish-sales' : '/api/admin/stats/dish-sales'
+    const res = await fetch(`${endpoint}${qs ? '?' + qs : ''}`)
     const data = await res.json()
     items.value = data.items ?? []
     summary.value = data.summary ?? { totalFullReduction: 0 }
@@ -181,6 +187,10 @@ setQuick(range === 'all' ? 'all' : 'yesterday')
 <style scoped>
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .page-title { margin: 0; font-size: 22px; font-weight: 700; }
+.header-tabs { display: flex; gap: 4px; }
+.tab-btn { padding: 6px 14px; border: 1px solid #ddd; border-radius: 8px; background: #fff; font-size: 13px; cursor: pointer; color: #666; transition: all 0.15s; }
+.tab-btn.active { background: var(--p-primary-color, #FF6B00); color: #fff; border-color: var(--p-primary-color, #FF6B00); }
+.tab-btn:hover:not(.active) { border-color: var(--p-primary-color, #FF6B00); color: var(--p-primary-color, #FF6B00); }
 .filter-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
 .quick-btns { display: flex; gap: 6px; }
 .quick-btn { padding: 6px 14px; border: 1px solid #ddd; border-radius: 8px; background: #fff; font-size: 13px; cursor: pointer; color: #666; transition: all 0.15s; }

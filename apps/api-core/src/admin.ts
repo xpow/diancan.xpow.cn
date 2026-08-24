@@ -467,6 +467,7 @@ router.get('/dishes', async (_req, res) => {
       portionSize: d.portionSize,
       stock: d.stock,
       stockEnabled: d.stockEnabled,
+      alliance: d.alliance,
       createdAt: d.createdAt.toISOString(),
     })),
   )
@@ -476,7 +477,7 @@ router.post('/dishes', async (req, res) => {
   const merchant = await prisma.merchant.findFirst()
   if (!merchant) return res.status(404).json({ message: 'merchant not found' })
 
-  const { name, price, categoryId, desc, image, tags, specsPreset, specGroups, portionSize, stock, stockEnabled } = req.body ?? {}
+  const { name, price, categoryId, desc, image, tags, specsPreset, specGroups, portionSize, stock, stockEnabled, alliance } = req.body ?? {}
   if (!name || price === undefined || !categoryId) {
     return res.status(400).json({ message: 'name, price, categoryId 必填' })
   }
@@ -498,6 +499,7 @@ router.post('/dishes', async (req, res) => {
       portionSize: Number(portionSize) || 0,
       stock: Number(stock) || 0,
       stockEnabled: Boolean(stockEnabled),
+      alliance: Boolean(alliance),
     },
   })
 
@@ -518,7 +520,7 @@ router.put('/dishes/reorder', async (req, res) => {
 
 router.put('/dishes/:id', async (req, res) => {
   const { id } = req.params
-  const { name, price, categoryId, desc, image, tags, specsPreset, specGroups, status, sort, portionSize, stock, stockEnabled } = req.body ?? {}
+  const { name, price, categoryId, desc, image, tags, specsPreset, specGroups, status, sort, portionSize, stock, stockEnabled, alliance } = req.body ?? {}
 
   const dish = await prisma.dish.findUnique({ where: { id } })
   if (!dish) return res.status(404).json({ message: '菜品不存在' })
@@ -536,6 +538,7 @@ router.put('/dishes/:id', async (req, res) => {
   if (portionSize !== undefined) data.portionSize = Number(portionSize)
   if (stock !== undefined) data.stock = Number(stock)
   if (stockEnabled !== undefined) data.stockEnabled = Boolean(stockEnabled)
+  if (alliance !== undefined) data.alliance = Boolean(alliance)
   if (sort !== undefined) {
     const newSort = Number(sort)
     if (newSort !== dish.sort) {
@@ -1215,8 +1218,8 @@ router.post('/devices/:id/commands', async (req, res) => {
   }
 })
 
-// 菜品销量统计
-router.get('/stats/dish-sales', async (req, res) => {
+// 菜品销量统计（内部函数，支持过滤联盟商品）
+async function getDishSales(req: any, filterAlliance: boolean | null) {
   const { startDate, endDate } = req.query
   const where: any = {
     status: { not: 'cancelled' },
@@ -1225,6 +1228,20 @@ router.get('/stats/dish-sales', async (req, res) => {
     where.createdAt = {}
     if (startDate) where.createdAt.gte = new Date(startDate as string)
     if (endDate) where.createdAt.lte = new Date(endDate as string)
+  }
+
+  // 获取联盟商品ID集合
+  let allianceDishIds: Set<string> | null = null
+  if (filterAlliance !== null) {
+    const merchant = await prisma.merchant.findFirst()
+    if (merchant) {
+      const allianceDishes = await prisma.dish.findMany({
+        where: { merchantId: merchant.id, alliance: filterAlliance },
+        select: { id: true },
+      })
+      allianceDishIds = new Set(allianceDishes.map((d) => d.id))
+      if (allianceDishIds.size === 0) return { items: [], summary: { totalFullReduction: 0 } }
+    }
   }
 
   const orders = await prisma.order.findMany({
@@ -1257,10 +1274,11 @@ router.get('/stats/dish-sales', async (req, res) => {
   let totalFullReduction = 0
   for (const order of orders) {
     const fullReduction = order.promotions
-      .filter((p) => p.type === 'full_reduction')
-      .reduce((s, p) => s + p.discount, 0)
+      .filter((p: any) => p.type === 'full_reduction')
+      .reduce((s: number, p: any) => s + p.discount, 0)
     totalFullReduction += fullReduction
     for (const item of order.items) {
+      if (allianceDishIds && !allianceDishIds.has(item.dishId)) continue
       const key = item.dishId || item.name
       const current = salesMap.get(key) ?? {
         dishId: item.dishId,
@@ -1275,10 +1293,22 @@ router.get('/stats/dish-sales', async (req, res) => {
   }
 
   const result = Array.from(salesMap.values()).sort((a, b) => b.totalQuantity - a.totalQuantity)
-  res.json({
+  return {
     items: result,
     summary: { totalFullReduction: Number(totalFullReduction.toFixed(2)) },
-  })
+  }
+}
+
+// 菜品销量统计（排除联盟商品）
+router.get('/stats/dish-sales', async (req, res) => {
+  const result = await getDishSales(req, false)
+  res.json(result)
+})
+
+// 联盟商品销量统计
+router.get('/stats/alliance-dish-sales', async (req, res) => {
+  const result = await getDishSales(req, true)
+  res.json(result)
 })
 
 // 总览统计（全局聚合，不依赖前端分页拉取）

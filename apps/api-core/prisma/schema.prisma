@@ -179,6 +179,7 @@ model Dish {
   portionSize Int      @default(0)
   stock       Int      @default(0)
   stockEnabled Boolean @default(false)
+  alliance    Boolean @default(false)
 
   merchant   Merchant       @relation(fields: [merchantId], references: [id])
   category   Category       @relation(fields: [categoryId], references: [id])

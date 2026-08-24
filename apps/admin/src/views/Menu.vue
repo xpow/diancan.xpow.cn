@@ -58,6 +58,11 @@
             </div>
           </template>
         </Column>
+        <Column field="alliance" header="联盟" style="width:70px">
+          <template #body="{ data }">
+            <Tag v-if="data.alliance" value="联盟" severity="warn" />
+          </template>
+        </Column>
         <Column field="status" header="状态" style="width:100px">
           <template #body="{ data }">
             <Button :label="data.status === 'active' ? '下架' : '上架'" :severity="data.status === 'active' ? 'success' : 'danger'" size="small" @click="toggleStatus(data)" />
@@ -118,6 +123,11 @@
           <ToggleSwitch v-model="dishForm.stockEnabled" />
           <span class="option-hint">数量</span>
           <InputNumber v-model="dishForm.stock" :min="0" class="stock-input" :disabled="!dishForm.stockEnabled" placeholder="个" />
+        </div>
+        <div class="option-group">
+          <span class="option-label">联盟商品</span>
+          <ToggleSwitch v-model="dishForm.alliance" />
+          <span class="option-hint">不计入销量统计</span>
         </div>
       </div>
       <div class="form-group">
@@ -211,6 +221,7 @@ import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import Select from 'primevue/select'
 import ToggleSwitch from 'primevue/toggleswitch'
+import Tag from 'primevue/tag'
 
 const tab = ref('dishes')
 const dishes = ref<any[]>([])
@@ -278,7 +289,7 @@ function applyPreset() {
   dishForm.value.specGroups = preset ? JSON.parse(JSON.stringify(preset)) : []
 }
 
-const dishForm = ref({ name: '', price: 0, categoryId: '', desc: '', image: '', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0, stockEnabled: false, stock: 0, specGroups: [] as any[] })
+const dishForm = ref({ name: '', price: 0, categoryId: '', desc: '', image: '', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0, stockEnabled: false, stock: 0, alliance: false, specGroups: [] as any[] })
 
 function addSpecGroup() {
   dishForm.value.specGroups.push({ name: '', type: 'single', options: [{ label: '', priceDelta: 0 }] })
@@ -329,13 +340,14 @@ function openDishDialog(dish?: any) {
       portionSize: dish.portionSize ?? 0,
       stockEnabled: !!dish.stockEnabled,
       stock: dish.stock ?? 0,
+      alliance: !!dish.alliance,
       specGroups,
     }
   } else {
     editingDish.value = false
     originalName.value = ''
     selectedPreset.value = 'none'
-    dishForm.value = { name: '', price: 0, categoryId: categories.value[0]?.id || '', desc: '', image: '', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0, stockEnabled: false, stock: 0, specGroups: [] }
+    dishForm.value = { name: '', price: 0, categoryId: categories.value[0]?.id || '', desc: '', image: '', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0, stockEnabled: false, stock: 0, alliance: false, specGroups: [] }
   }
   showDish.value = true
 }
@@ -353,6 +365,7 @@ async function saveDish() {
     portionSize: dishForm.value.sellByPortion ? dishForm.value.portionSize : 0,
     stockEnabled: dishForm.value.stockEnabled,
     stock: dishForm.value.stockEnabled ? dishForm.value.stock : 0,
+    alliance: dishForm.value.alliance,
   }
 
   const dishId = editingDish.value ? (dishes.value.find((d) => d.name === originalName.value)?.id) : null
