@@ -34,10 +34,8 @@
               <h4>{{ featuredDish(cat)!.name }}</h4>
               <span v-for="t in featuredDish(cat)!.tags" :key="t" class="dish-tag">{{ t }}</span>
             </div>
+            <span class="featured-price"><small class="c-sign">¥</small>{{ featuredDish(cat)!.price.toFixed(2) }}<span v-if="featuredDish(cat)!.portionSize" class="dish-h-portion"> / {{ featuredDish(cat)!.portionSize }}串</span></span>
             <p>{{ featuredDish(cat)!.desc }}</p>
-            <div class="featured-bottom">
-              <span class="featured-price"><small class="c-sign">¥</small>{{ featuredDish(cat)!.price.toFixed(2) }}<span v-if="featuredDish(cat)!.portionSize" class="dish-h-portion"> / {{ featuredDish(cat)!.portionSize }}串</span></span>
-            </div>
           </div>
         </a>
         <div v-if="normalDishes(cat).length" class="grid-2col">
@@ -48,8 +46,8 @@
                 <span v-if="d.tags?.length" class="img-tag-badge">{{ d.tags[0] }}</span>
               </div>
               <div class="grid-card-right">
-                <span class="grid-price"><small class="c-sign">¥</small>{{ d.price.toFixed(2) }}</span>
                 <h4>{{ d.name }}</h4>
+                <span class="grid-price"><small class="c-sign">¥</small>{{ d.price.toFixed(2) }}</span>
                 <p v-if="d.portionSize" class="grid-portion">{{ d.portionSize }}串/份</p>
               </div>
             </div>
