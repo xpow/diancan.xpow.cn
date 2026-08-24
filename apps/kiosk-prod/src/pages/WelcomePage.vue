@@ -686,7 +686,7 @@ onMounted(async () => {
 .featured-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .featured-sold-out { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: rgba(0,0,0,0.5); color: #fff; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; z-index: 2; border-radius: var(--radius-lg); }
 .featured-sold-out .material-icons { font-size: 30px !important; }
-.featured-stock-badge { position: absolute; top: 4px; right: 4px; padding: 2px 10px; border-radius: var(--radius-full); background: rgb(255 124 0 / 89%); color: #fff; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; line-height: 1.5; pointer-events: none; box-shadow: 0 2px 8px rgba(255,61,0,0.4); z-index: 2; }
+.featured-stock-badge { position: absolute; top: 4px; right: 4px; padding: 1px 8px; border-radius: var(--radius-full); background: rgb(255 124 0 / 89%); color: #fff; font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 700; line-height: 1.5; pointer-events: none; z-index: 2; }
 .featured-price { color: var(--primary-container); font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; }
 .featured-portion { font-size: var(--text-label-sm); font-weight: 700; color: var(--secondary); }
 
