@@ -686,7 +686,7 @@ onMounted(async () => {
 .featured-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .featured-sold-out { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: rgba(0,0,0,0.5); color: #fff; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; z-index: 2; border-radius: var(--radius-lg); }
 .featured-sold-out .material-icons { font-size: 30px !important; }
-.featured-stock-badge { position: absolute; top: 4px; right: 4px; padding: 1px 8px; border-radius: var(--radius-full); background: rgb(255 124 0 / 89%); color: #fff; font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 700; line-height: 1.5; pointer-events: none; z-index: 2; }
+.featured-stock-badge { position: absolute; bottom: 8px; right: 8px; padding: 1px 8px; border-radius: var(--radius-full); background: rgb(255 124 0 / 89%); color: #fff; font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 700; line-height: 1.5; pointer-events: none; z-index: 2; }
 .featured-price { color: var(--primary-container); font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; }
 .featured-portion { font-size: var(--text-label-sm); font-weight: 700; color: var(--secondary); }
 
@@ -713,7 +713,7 @@ onMounted(async () => {
 .menu-grid-card::after { content: 'restaurant'; font-family: 'Material Symbols Outlined'; position: absolute; bottom: -8px; right: -8px; font-size: 56px; color: var(--outline-variant); opacity: 0.4; transform: rotate(12deg); pointer-events: none; }
 .grid-sold-out { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: rgba(0,0,0,0.5); color: #fff; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; z-index: 2; border-radius: var(--radius-xl); }
 .grid-sold-out .material-icons { font-size: 28px !important; }
-.grid-stock-badge { position: absolute; top: 4px; right: 4px; padding: 1px 8px; border-radius: var(--radius-full); background: rgb(255 124 0 / 89%); color: #fff; font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 700; line-height: 1.5; pointer-events: none; z-index: 2; }
+.grid-stock-badge { position: absolute; bottom: 8px; right: 8px; padding: 1px 8px; border-radius: var(--radius-full); background: rgb(255 124 0 / 89%); color: #fff; font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 700; line-height: 1.5; pointer-events: none; z-index: 2; }
 .menu-grid-name { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: var(--on-surface); }
 .menu-grid-desc { margin: 4px 0 0; font-family: var(--font-body); font-size: var(--text-body-md); color: var(--on-surface-variant); line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .menu-grid-bottom { margin-top: var(--spacing-sm); }
