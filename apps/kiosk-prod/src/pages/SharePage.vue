@@ -189,7 +189,7 @@ onMounted(async () => {
 .cat-section { margin-bottom: 24px; }
 .cat-section h3 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 700; color: var(--on-surface, #1c1b1b); margin: 0 0 16px; display: flex; align-items: center; gap: 10px; }
 .cat-bar { width: 4px; height: 20px; border-radius: 2px; flex-shrink: 0; }
-.featured-card { background: var(--surface-container-low, #fff); border: 1px solid var(--outline-variant, #e5e5e5); border-radius: 12px; padding: 12px; display: flex; gap: 12px; margin-bottom: 8px; }
+.featured-card { background: var(--surface-container-highest, #fff); border: 1px solid var(--outline-variant, #e5e5e5); border-radius: var(--radius-xl, 12px); padding: 12px; display: flex; gap: 12px; margin-bottom: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
 .clickable { text-decoration: none; color: inherit; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
 .clickable:active { transform: scale(0.97); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
 .featured-img { width: 72px; height: 72px; border-radius: 10px; overflow: hidden; flex-shrink: 0; background: var(--surface-container, #f0eded); }
@@ -202,7 +202,7 @@ onMounted(async () => {
 .featured-price { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 800; color: var(--primary, #ff6b00); }
 .featured-price .c-sign, .grid-price .c-sign { font-size: 0.7em; font-weight: 700; }
 .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.grid-card { display: block; background: var(--surface-container-low, #fff); border: 1px solid var(--outline-variant, #e5e5e5); border-radius: 12px; padding:8px 10px; }
+.grid-card { display: block; background: var(--surface-container-highest, #fff); border: 1px solid var(--outline-variant, #e5e5e5); border-radius: var(--radius-xl, 12px); padding:8px 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
 .grid-card-top { display: flex; gap: 10px; }
 .grid-card-img { width: 64px; height: 64px; border-radius: 8px; overflow: hidden; background: var(--surface-container, #f0eded); flex-shrink: 0; position: relative; }
 .grid-card-img img { width: 100%; height: 100%; object-fit: cover; }
@@ -227,4 +227,6 @@ onMounted(async () => {
 .scan-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 24px; font-weight: 800; color: #ffb693; text-transform: uppercase; margin: 0 0 16px; letter-spacing: -0.02em; }
 .footer-info { display: flex; justify-content: center; gap: 16px; }
 .footer-info span { display: flex; align-items: center; gap: 4px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 600; color: var(--inverse-on-surface, #e5e2e1); }
+:global([data-theme="dark"]) .featured-card,
+:global([data-theme="dark"]) .grid-card { box-shadow: none; }
 </style>
