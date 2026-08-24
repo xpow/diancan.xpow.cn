@@ -124,6 +124,8 @@
           <span class="option-hint">数量</span>
           <InputNumber v-model="dishForm.stock" :min="0" class="stock-input" :disabled="!dishForm.stockEnabled" placeholder="个" />
         </div>
+      </div>
+      <div class="form-row" style="align-items: flex-end">
         <div class="option-group">
           <span class="option-label">联盟商品</span>
           <ToggleSwitch v-model="dishForm.alliance" />
