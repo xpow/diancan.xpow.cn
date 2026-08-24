@@ -476,6 +476,7 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
       portionSize: dish.portionSize || undefined,
       stock: dish.stockEnabled ? dish.stock : undefined,
       stockEnabled: dish.stockEnabled || undefined,
+      alliance: !!dish.alliance,
     })
   }
 
@@ -831,6 +832,7 @@ app.post('/api/orders', orderLimiter, authMiddleware, async (req, res) => {
               specs: item.specs || null,
               promotionLabel: item.promotionLabel,
               portionSize: item.portionSize || 0,
+              alliance: !!item.alliance,
             })),
           },
           promotions: {

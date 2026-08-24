@@ -1230,20 +1230,6 @@ async function getDishSales(req: any, filterAlliance: boolean | null) {
     if (endDate) where.createdAt.lte = new Date(endDate as string)
   }
 
-  // 获取联盟商品ID集合
-  let allianceDishIds: Set<string> | null = null
-  if (filterAlliance !== null) {
-    const merchant = await prisma.merchant.findFirst()
-    if (merchant) {
-      const allianceDishes = await prisma.dish.findMany({
-        where: { merchantId: merchant.id, alliance: filterAlliance },
-        select: { id: true },
-      })
-      allianceDishIds = new Set(allianceDishes.map((d) => d.id))
-      if (allianceDishIds.size === 0) return { items: [], summary: { totalFullReduction: 0 } }
-    }
-  }
-
   const orders = await prisma.order.findMany({
     where,
     select: {
@@ -1253,6 +1239,7 @@ async function getDishSales(req: any, filterAlliance: boolean | null) {
           name: true,
           quantity: true,
           finalSubtotal: true,
+          alliance: true,
         },
       },
       promotions: {
@@ -1278,7 +1265,8 @@ async function getDishSales(req: any, filterAlliance: boolean | null) {
       .reduce((s: number, p: any) => s + p.discount, 0)
     totalFullReduction += fullReduction
     for (const item of order.items) {
-      if (allianceDishIds && !allianceDishIds.has(item.dishId)) continue
+      if (filterAlliance === true && !item.alliance) continue
+      if (filterAlliance === false && item.alliance) continue
       const key = item.dishId || item.name
       const current = salesMap.get(key) ?? {
         dishId: item.dishId,
