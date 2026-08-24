@@ -82,7 +82,7 @@
         </div>
         <!-- Other dishes: 2-column grid (skip 6th dish, it's a featured card below) -->
         <div v-if="cat.dishes.length > 1" class="menu-grid">
-          <div v-for="dish in cat.dishes.slice(1, 5)" :key="dish.id" class="menu-grid-card" @click="router.push(`/menu?dishId=${dish.id}`)">
+          <div v-for="dish in cat.dishes.filter((_, i) => i !== 0 && i !== 5)" :key="dish.id" class="menu-grid-card" @click="router.push(`/menu?dishId=${dish.id}`)">
             <div v-if="dish.stockEnabled && (dish.stock ?? 0) <= 0" class="grid-sold-out">
               <span class="material-icons">block</span><span>今日已售罄</span>
             </div>
