@@ -1514,11 +1514,12 @@ router.get('/cost-entries', requireAuth, async (req, res) => {
   // 查当天实际销售数据
   const orders = await prisma.order.findMany({
     where: { createdAt: { gte: dayStart, lt: dayEnd }, status: { not: 'cancelled' } },
-    select: { items: { select: { dishId: true, quantity: true, finalSubtotal: true } } },
+    select: { items: { select: { dishId: true, quantity: true, finalSubtotal: true, alliance: true } } },
   })
   const salesMap = new Map<string, { qty: number; rev: number }>()
   for (const order of orders) {
     for (const item of order.items) {
+      if (item.alliance) continue
       const cur = salesMap.get(item.dishId) ?? { qty: 0, rev: 0 }
       cur.qty += item.quantity
       cur.rev += item.finalSubtotal
@@ -1645,12 +1646,13 @@ router.get('/cost-profit-report', requireAuth, async (req, res) => {
   // 销量汇总
   const orders = await prisma.order.findMany({
     where: { createdAt: { gte: fromDate, lt: toDate }, status: { not: 'cancelled' } },
-    select: { items: { select: { dishId: true, quantity: true, finalSubtotal: true } } },
+    select: { items: { select: { dishId: true, quantity: true, finalSubtotal: true, alliance: true } } },
   })
 
   const salesMap = new Map<string, { totalQuantity: number; totalRevenue: number }>()
   for (const order of orders) {
     for (const item of order.items) {
+      if (item.alliance) continue
       const current = salesMap.get(item.dishId) ?? { totalQuantity: 0, totalRevenue: 0 }
       current.totalQuantity += item.quantity
       current.totalRevenue += item.finalSubtotal
