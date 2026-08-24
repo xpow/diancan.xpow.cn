@@ -276,12 +276,15 @@ function getDisplayGroups(dishes: any[]): DisplayItem[] {
   const items: DisplayItem[] = []
   let i = 0
   while (i < dishes.length) {
-    if (i % 6 === 0) {
-      items.push({ type: 'featured', dish: dishes[i], reversed: Math.floor(i / 6) % 2 !== 0 })
+    if (i > 0 && i % 6 === 5) {
+      items.push({ type: 'featured', dish: dishes[i], reversed: Math.floor(i / 6) % 2 === 0 })
+      i++
+    } else if (i === 0) {
+      items.push({ type: 'featured', dish: dishes[i], reversed: false })
       i++
     } else {
       const gridDishes: any[] = []
-      while (i < dishes.length && i % 6 !== 0) {
+      while (i < dishes.length && !(i > 0 && i % 6 === 5)) {
         gridDishes.push(dishes[i])
         i++
       }
