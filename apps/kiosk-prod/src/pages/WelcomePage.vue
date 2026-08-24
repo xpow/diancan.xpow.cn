@@ -80,9 +80,9 @@
             <img :src="getDishImage(cat.dishes[0].id)" alt="" />
           </div>
         </div>
-        <!-- Other dishes: 2-column grid (skip 6th dish, it's a featured card below) -->
+        <!-- Grid: dishes 2-5 (index 1-4) -->
         <div v-if="cat.dishes.length > 1" class="menu-grid">
-          <div v-for="dish in cat.dishes.filter((_, i) => i !== 0 && i !== 5)" :key="dish.id" class="menu-grid-card" @click="router.push(`/menu?dishId=${dish.id}`)">
+          <div v-for="dish in cat.dishes.slice(1, 5)" :key="dish.id" class="menu-grid-card" @click="router.push(`/menu?dishId=${dish.id}`)">
             <div v-if="dish.stockEnabled && (dish.stock ?? 0) <= 0" class="grid-sold-out">
               <span class="material-icons">block</span><span>今日已售罄</span>
             </div>
@@ -116,6 +116,22 @@
           </div>
           <div class="featured-thumb">
             <img :src="getDishImage(cat.dishes[5].id)" alt="" />
+          </div>
+        </div>
+        <!-- Remaining dishes after 6th: index 6+ -->
+        <div v-if="cat.dishes.length > 6" class="menu-grid">
+          <div v-for="dish in cat.dishes.slice(6)" :key="dish.id" class="menu-grid-card" @click="router.push(`/menu?dishId=${dish.id}`)">
+            <div v-if="dish.stockEnabled && (dish.stock ?? 0) <= 0" class="grid-sold-out">
+              <span class="material-icons">block</span><span>今日已售罄</span>
+            </div>
+            <span v-else-if="dish.stockEnabled && (dish.stock ?? 0) > 0" class="grid-stock-badge">剩余 {{ dish.stock }} 串</span>
+            <div class="menu-grid-info">
+              <h4 class="menu-grid-name">{{ dish.name }}</h4>
+              <p class="menu-grid-desc">{{ dish.desc }}</p>
+            </div>
+            <div class="menu-grid-bottom">
+              <span class="menu-grid-price">¥{{ dish.price.toFixed(2) }}<span v-if="dish.portionSize" class="menu-grid-portion"> / {{ dish.portionSize }}串</span></span>
+            </div>
           </div>
         </div>
       </section>
