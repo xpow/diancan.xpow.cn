@@ -666,7 +666,7 @@ onMounted(async () => {
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 .featured-card-new:active { transform: scale(0.98); transition: transform 0.1s; }
-.featured-card-reversed { flex-direction: row-reverse; margin-top: var(--spacing-lg); }
+.featured-card-reversed { flex-direction: row-reverse; margin-top: var(--spacing-md); }
 
 .featured-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: var(--spacing-md); min-width: 0; }
 .featured-top { display: flex; flex-direction: column; gap: 2px; }
