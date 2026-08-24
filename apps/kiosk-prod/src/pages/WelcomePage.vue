@@ -58,82 +58,44 @@
           <span class="section-bar"></span>
           <h3>{{ cat.name }}</h3>
         </div>
-        <!-- Signature dish: first item as horizontal card -->
-        <div v-if="cat.dishes[0]" class="featured-card-new" @click="router.push(`/menu?dishId=${cat.dishes[0].id}`)">
-          <div v-if="cat.dishes[0].stockEnabled && (cat.dishes[0].stock ?? 0) <= 0" class="featured-sold-out">
-            <span class="material-icons">block</span><span>今日已售罄</span>
-          </div>
-          <span v-else-if="cat.dishes[0].stockEnabled && (cat.dishes[0].stock ?? 0) > 0" class="featured-stock-badge">预估剩余 {{ cat.dishes[0].stock }} 串</span>
-          <div class="featured-info">
-            <div class="featured-top">
-              <div class="featured-title-row">
-                <h4 class="featured-name">{{ cat.dishes[0].name }}</h4>
-                <span v-if="cat.dishes[0].tags.length" class="featured-tag tag-hot">{{ cat.dishes[0].tags[0] }}</span>
-              </div>
-              <p class="featured-desc">{{ cat.dishes[0].desc }}</p>
-            </div>
-            <div class="featured-bottom">
-              <span class="featured-price">¥{{ cat.dishes[0].price.toFixed(2) }}<span v-if="cat.dishes[0].portionSize" class="featured-portion"> / {{ cat.dishes[0].portionSize }}串</span></span>
-            </div>
-          </div>
-          <div class="featured-thumb">
-            <img :src="getDishImage(cat.dishes[0].id)" alt="" />
-          </div>
-        </div>
-        <!-- Grid: dishes 2-5 (index 1-4) -->
-        <div v-if="cat.dishes.length > 1" class="menu-grid">
-          <div v-for="dish in cat.dishes.slice(1, 5)" :key="dish.id" class="menu-grid-card" @click="router.push(`/menu?dishId=${dish.id}`)">
-            <div v-if="dish.stockEnabled && (dish.stock ?? 0) <= 0" class="grid-sold-out">
+        <template v-for="(item, ii) in getDisplayGroups(cat.dishes)" :key="ii">
+          <div v-if="item.type === 'featured'" class="featured-card-new" :class="{ 'featured-card-reversed': item.reversed }" @click="router.push(`/menu?dishId=${item.dish.id}`)">
+            <div v-if="item.dish.stockEnabled && (item.dish.stock ?? 0) <= 0" class="featured-sold-out">
               <span class="material-icons">block</span><span>今日已售罄</span>
             </div>
-            <span v-else-if="dish.stockEnabled && (dish.stock ?? 0) > 0" class="grid-stock-badge">剩余 {{ dish.stock }} 串</span>
-            <div class="menu-grid-info">
-              <h4 class="menu-grid-name">{{ dish.name }}</h4>
-              <p class="menu-grid-desc">{{ dish.desc }}</p>
-            </div>
-            <div class="menu-grid-bottom">
-              <span class="menu-grid-price">¥{{ dish.price.toFixed(2) }}<span v-if="dish.portionSize" class="menu-grid-portion"> / {{ dish.portionSize }}串</span></span>
-            </div>
-          </div>
-        </div>
-        <!-- 6th dish: horizontal card with image on left -->
-        <div v-if="cat.dishes[5]" class="featured-card-new featured-card-reversed" @click="router.push(`/menu?dishId=${cat.dishes[5].id}`)">
-          <div v-if="cat.dishes[5].stockEnabled && (cat.dishes[5].stock ?? 0) <= 0" class="featured-sold-out">
-            <span class="material-icons">block</span><span>今日已售罄</span>
-          </div>
-          <span v-else-if="cat.dishes[5].stockEnabled && (cat.dishes[5].stock ?? 0) > 0" class="featured-stock-badge">预估剩余 {{ cat.dishes[5].stock }} 串</span>
-          <div class="featured-info">
-            <div class="featured-top">
-              <div class="featured-title-row">
-                <h4 class="featured-name">{{ cat.dishes[5].name }}</h4>
-                <span v-if="cat.dishes[5].tags.length" class="featured-tag tag-hot">{{ cat.dishes[5].tags[0] }}</span>
+            <span v-else-if="item.dish.stockEnabled && (item.dish.stock ?? 0) > 0" class="featured-stock-badge">预估剩余 {{ item.dish.stock }} 串</span>
+            <div class="featured-info">
+              <div class="featured-top">
+                <div class="featured-title-row">
+                  <h4 class="featured-name">{{ item.dish.name }}</h4>
+                  <span v-if="item.dish.tags.length" class="featured-tag tag-hot">{{ item.dish.tags[0] }}</span>
+                </div>
+                <p class="featured-desc">{{ item.dish.desc }}</p>
               </div>
-              <p class="featured-desc">{{ cat.dishes[5].desc }}</p>
+              <div class="featured-bottom">
+                <span class="featured-price">¥{{ item.dish.price.toFixed(2) }}<span v-if="item.dish.portionSize" class="featured-portion"> / {{ item.dish.portionSize }}串</span></span>
+              </div>
             </div>
-            <div class="featured-bottom">
-              <span class="featured-price">¥{{ cat.dishes[5].price.toFixed(2) }}<span v-if="cat.dishes[5].portionSize" class="featured-portion"> / {{ cat.dishes[5].portionSize }}串</span></span>
-            </div>
-          </div>
-          <div class="featured-thumb">
-            <img :src="getDishImage(cat.dishes[5].id)" alt="" />
-          </div>
-        </div>
-        <!-- Remaining dishes after 6th: index 6+ -->
-        <div v-if="cat.dishes.length > 6" class="menu-grid">
-          <div v-for="dish in cat.dishes.slice(6)" :key="dish.id" class="menu-grid-card" @click="router.push(`/menu?dishId=${dish.id}`)">
-            <div v-if="dish.stockEnabled && (dish.stock ?? 0) <= 0" class="grid-sold-out">
-              <span class="material-icons">block</span><span>今日已售罄</span>
-            </div>
-            <span v-else-if="dish.stockEnabled && (dish.stock ?? 0) > 0" class="grid-stock-badge">剩余 {{ dish.stock }} 串</span>
-            <div class="menu-grid-info">
-              <h4 class="menu-grid-name">{{ dish.name }}</h4>
-              <p class="menu-grid-desc">{{ dish.desc }}</p>
-            </div>
-            <div class="menu-grid-bottom">
-              <span class="menu-grid-price">¥{{ dish.price.toFixed(2) }}<span v-if="dish.portionSize" class="menu-grid-portion"> / {{ dish.portionSize }}串</span></span>
+            <div class="featured-thumb">
+              <img :src="getDishImage(item.dish.id)" alt="" />
             </div>
           </div>
-        </div>
+          <div v-else class="menu-grid">
+            <div v-for="dish in item.dishes" :key="dish.id" class="menu-grid-card" @click="router.push(`/menu?dishId=${dish.id}`)">
+              <div v-if="dish.stockEnabled && (dish.stock ?? 0) <= 0" class="grid-sold-out">
+                <span class="material-icons">block</span><span>今日已售罄</span>
+              </div>
+              <span v-else-if="dish.stockEnabled && (dish.stock ?? 0) > 0" class="grid-stock-badge">剩余 {{ dish.stock }} 串</span>
+              <div class="menu-grid-info">
+                <h4 class="menu-grid-name">{{ dish.name }}</h4>
+                <p class="menu-grid-desc">{{ dish.desc }}</p>
+              </div>
+              <div class="menu-grid-bottom">
+                <span class="menu-grid-price">¥{{ dish.price.toFixed(2) }}<span v-if="dish.portionSize" class="menu-grid-portion"> / {{ dish.portionSize }}串</span></span>
+              </div>
+            </div>
+          </div>
+        </template>
       </section>
       <section class="section info-grid">
         <article class="info-card">
@@ -305,6 +267,29 @@ const sortedCategories = computed(() => {
     })
   }))
 })
+
+type DisplayItem =
+  | { type: 'featured'; dish: any; reversed: boolean }
+  | { type: 'grid'; dishes: any[] }
+
+function getDisplayGroups(dishes: any[]): DisplayItem[] {
+  const items: DisplayItem[] = []
+  let i = 0
+  while (i < dishes.length) {
+    if (i % 6 === 0) {
+      items.push({ type: 'featured', dish: dishes[i], reversed: Math.floor(i / 6) % 2 !== 0 })
+      i++
+    } else {
+      const gridDishes: any[] = []
+      while (i < dishes.length && i % 6 !== 0) {
+        gridDishes.push(dishes[i])
+        i++
+      }
+      items.push({ type: 'grid', dishes: gridDishes })
+    }
+  }
+  return items
+}
 const heroImages = [
   lb1, lb2, lb3, lb4,
 ]
@@ -678,7 +663,7 @@ onMounted(async () => {
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 .featured-card-new:active { transform: scale(0.98); transition: transform 0.1s; }
-.featured-card-reversed { flex-direction: row-reverse; margin-top: var(--spacing-md); }
+.featured-card-reversed { flex-direction: row-reverse; }
 
 .featured-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: var(--spacing-md); min-width: 0; }
 .featured-top { display: flex; flex-direction: column; gap: 2px; }
