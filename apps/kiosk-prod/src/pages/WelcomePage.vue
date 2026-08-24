@@ -658,6 +658,7 @@ onMounted(async () => {
 
 .featured-card-new {
   display: flex;
+  position: relative;
   background: var(--surface-container-highest);
   border-radius: var(--radius-xl);
   border: 1px solid var(--outline-variant);
