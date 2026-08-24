@@ -60,7 +60,9 @@
         </Column>
         <Column field="alliance" header="联盟" style="width:80px">
           <template #body="{ data }">
-            <ToggleSwitch :modelValue="data.alliance" @update:modelValue="toggleAlliance(data)" />
+            <div @click.stop="toggleAlliance(data)" style="cursor:pointer">
+              <ToggleSwitch :modelValue="data.alliance" :binary="true" tabindex="-1" style="pointer-events:none" />
+            </div>
           </template>
         </Column>
         <Column field="status" header="状态" style="width:100px">
