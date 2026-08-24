@@ -102,9 +102,6 @@
             <span class="material-icons">block</span><span>今日已售罄</span>
           </div>
           <span v-else-if="cat.dishes[5].stockEnabled && (cat.dishes[5].stock ?? 0) > 0" class="featured-stock-badge">预估剩余 {{ cat.dishes[5].stock }} 串</span>
-          <div class="featured-thumb">
-            <img :src="getDishImage(cat.dishes[5].id)" alt="" />
-          </div>
           <div class="featured-info">
             <div class="featured-top">
               <div class="featured-title-row">
@@ -116,6 +113,9 @@
             <div class="featured-bottom">
               <span class="featured-price">¥{{ cat.dishes[5].price.toFixed(2) }}<span v-if="cat.dishes[5].portionSize" class="featured-portion"> / {{ cat.dishes[5].portionSize }}串</span></span>
             </div>
+          </div>
+          <div class="featured-thumb">
+            <img :src="getDishImage(cat.dishes[5].id)" alt="" />
           </div>
         </div>
       </section>
@@ -662,7 +662,7 @@ onMounted(async () => {
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 .featured-card-new:active { transform: scale(0.98); transition: transform 0.1s; }
-.featured-card-reversed { flex-direction: row-reverse; }
+.featured-card-reversed { flex-direction: row-reverse; margin-top: var(--spacing-md); }
 
 .featured-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: var(--spacing-md); min-width: 0; }
 .featured-top { display: flex; flex-direction: column; gap: 2px; }
