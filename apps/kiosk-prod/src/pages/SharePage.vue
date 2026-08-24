@@ -25,7 +25,7 @@
     <div class="share-container">
       <section v-for="cat in sortedCategories" :key="cat.id" class="cat-section">
         <h3><span class="cat-bar" :style="{ background: catBarColor(cat.name) }"></span>{{ cat.name }}</h3>
-        <a v-if="featuredDish(cat)" :href="kioskUrl" class="featured-card clickable">
+        <a v-if="featuredDish(cat)" :href="`${kioskUrl.includes('?') ? kioskUrl + '&' : kioskUrl + '?'}dishId=${featuredDish(cat)!.id}`" class="featured-card clickable">
           <div class="featured-img">
             <img :src="dishImage(featuredDish(cat)!)" width="72" height="72" :alt="featuredDish(cat)!.name" @error="onImgError" />
           </div>
@@ -39,7 +39,7 @@
           </div>
         </a>
         <div v-if="normalDishes(cat).length" class="grid-2col">
-          <a v-for="d in normalDishes(cat)" :key="d.id" :href="kioskUrl" class="grid-card clickable">
+          <a v-for="d in normalDishes(cat)" :key="d.id" :href="`${kioskUrl.includes('?') ? kioskUrl + '&' : kioskUrl + '?'}dishId=${d.id}`" class="grid-card clickable">
             <div class="grid-card-top">
               <div class="grid-card-img">
                 <img :src="dishImage(d)" width="64" height="64" :alt="d.name" @error="onImgError" />
