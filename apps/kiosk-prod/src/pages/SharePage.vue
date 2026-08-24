@@ -34,8 +34,8 @@
               <h4>{{ featuredDish(cat)!.name }}</h4>
               <span v-for="t in featuredDish(cat)!.tags" :key="t" class="dish-tag">{{ t }}</span>
             </div>
-            <span class="featured-price"><small class="c-sign">¥</small>{{ featuredDish(cat)!.price.toFixed(2) }}<span v-if="featuredDish(cat)!.portionSize" class="dish-h-portion"> / {{ featuredDish(cat)!.portionSize }}串</span></span>
             <p>{{ featuredDish(cat)!.desc }}</p>
+            <span class="featured-price"><small class="c-sign">¥</small>{{ featuredDish(cat)!.price.toFixed(2) }}<span v-if="featuredDish(cat)!.portionSize" class="dish-h-portion"> / {{ featuredDish(cat)!.portionSize }}串</span></span>
           </div>
         </a>
         <div v-if="normalDishes(cat).length" class="grid-2col">
