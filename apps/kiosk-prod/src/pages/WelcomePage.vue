@@ -116,7 +116,7 @@
         <p>© 2026 {{ displayTitle }}</p>
         <p class="footer-tagline">用心做好每一串，传递市井烟火气</p>
         <div class="footer-links">
-          <p class="switch-device" @click="switchDevice">切换设备</p>
+          <p class="switch-device" @click="switchDevice"><span class="material-icons" style="font-size:14px;vertical-align:middle;margin-right:2px">swap_horiz</span>切换设备</p>
           <p class="switch-device" @click="router.push('/share')"><span class="material-icons" style="font-size:14px;vertical-align:middle;margin-right:2px">share</span>分享</p>
         </div>
       </footer>
