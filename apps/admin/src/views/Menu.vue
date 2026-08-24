@@ -60,7 +60,7 @@
         </Column>
         <Column field="alliance" header="联盟" style="width:80px">
           <template #body="{ data }">
-            <Button :label="data.alliance ? '已联盟' : '普通'" :severity="data.alliance ? 'warn' : 'secondary'" size="small" text @click="toggleAlliance(data)" />
+            <ToggleSwitch :modelValue="data.alliance" @update:modelValue="toggleAlliance(data)" />
           </template>
         </Column>
         <Column field="status" header="状态" style="width:100px">
