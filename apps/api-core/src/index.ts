@@ -248,7 +248,7 @@ app.get('/api/system/bootstrap', generalLimiter, async (req, res) => {
       name: cat.name,
       dishes: cacheDishes
         .filter((d: any) => d.categoryId === cat.id && d.status === 'active')
-        .slice(0, 6)
+        .slice(0, 20)
         .map((d: any) => ({
           id: d.id,
           name: d.name,
