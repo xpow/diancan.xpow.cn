@@ -223,7 +223,6 @@ import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import Select from 'primevue/select'
 import ToggleSwitch from 'primevue/toggleswitch'
-import Tag from 'primevue/tag'
 
 const tab = ref('dishes')
 const dishes = ref<any[]>([])
