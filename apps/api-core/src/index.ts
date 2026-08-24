@@ -247,7 +247,11 @@ app.get('/api/system/bootstrap', generalLimiter, async (req, res) => {
       id: cat.id,
       name: cat.name,
       dishes: cacheDishes
-        .filter((d: any) => d.categoryId === cat.id && d.status === 'active')
+        .filter((d: any) => {
+          if (d.categoryId !== cat.id || d.status !== 'active') return false
+          const tags = typeof d.tags === 'string' ? JSON.parse(d.tags) : (d.tags ?? [])
+          return !tags.includes('辅助')
+        })
         .slice(0, 20)
         .map((d: any) => ({
           id: d.id,
