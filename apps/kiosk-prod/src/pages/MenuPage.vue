@@ -27,18 +27,31 @@
       <div ref="navWrapRef" class="category-nav-wrap">
         <nav :class="['category-nav', navFloating && 'floating']">
           <button
-            v-for="category in categories" :key="category.id"
-            :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active', needExpand && categories.indexOf(category) >= 3 && !showCatDropdown && 'cat-hidden']"
+            v-for="category in categories.slice(0, 3)" :key="category.id"
+            :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
             @click.stop="selectedCategoryId = category.id"
           >
             <span class="material-icons">{{ categoryIcons[category.name] || 'restaurant' }}</span>
             {{ category.name }}
             <span v-if="categoryDishCount(category.id) > 0" class="category-count">{{ categoryDishCount(category.id) }}</span>
           </button>
-          <button v-if="needExpand" class="cat-expand-btn" :class="{ 'cat-expand-open': showCatDropdown }" @click="showCatDropdown = !showCatDropdown">
+          <button v-if="categories.length > 3" class="cat-expand-btn" :class="{ 'cat-expand-open': showCatDropdown }" @click="showCatDropdown = !showCatDropdown">
             <span class="material-icons">expand_more</span>
           </button>
         </nav>
+        <div v-if="categories.length > 3" ref="expandWrapRef" class="cat-expand-wrap" :class="{ 'cat-expand-open': showCatDropdown }">
+          <div class="cat-expand-inner">
+            <button
+              v-for="category in categories.slice(3)" :key="'extra-' + category.id"
+              :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
+              @click.stop="selectedCategoryId = category.id"
+            >
+              <span class="material-icons">{{ categoryIcons[category.name] || 'restaurant' }}</span>
+              {{ category.name }}
+              <span v-if="categoryDishCount(category.id) > 0" class="category-count">{{ categoryDishCount(category.id) }}</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       <section v-if="errorMessage" class="status-card error-card">
@@ -105,7 +118,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
+import { ref, watch, onMounted, computed, nextTick } from 'vue'
 import { useMenu } from '@/composables/useMenu'
 import { useCartQuote } from '@/composables/useCartQuote'
 import { useSpecEditor } from '@/composables/useSpecEditor'
@@ -140,33 +153,6 @@ const {
 const hasActiveOrder = ref(false)
 const heroVisible = ref(true)
 const showCatDropdown = ref(false)
-const needExpand = ref(false)
-const navWrapRef = ref<HTMLElement | null>(null)
-let resizeObs: ResizeObserver | null = null
-
-function checkNeedExpand() {
-  if (!navWrapRef.value) return
-  const nav = navWrapRef.value.querySelector('.category-nav') as HTMLElement
-  if (!nav) return
-  const hiddenPills = nav.querySelectorAll('.cat-hidden')
-  hiddenPills.forEach(p => (p as HTMLElement).style.setProperty('display', 'inline-flex', 'important'))
-  const pills = nav.querySelectorAll<HTMLElement>('.category-pill')
-  const gap = 6
-  let totalWidth = 0
-  pills.forEach(p => { totalWidth += (p as HTMLElement).getBoundingClientRect().width })
-  totalWidth += Math.max(0, pills.length - 1) * gap
-  const expandBtnWidth = 40
-  const available = navWrapRef.value.clientWidth
-  const margin = 16
-  needExpand.value = totalWidth + expandBtnWidth + margin > available
-  hiddenPills.forEach(p => (p as HTMLElement).style.removeProperty('display'))
-}
-
-let expandCheckTimer: ReturnType<typeof setTimeout> | null = null
-function debouncedCheckExpand() {
-  if (expandCheckTimer) clearTimeout(expandCheckTimer)
-  expandCheckTimer = setTimeout(checkNeedExpand, 200)
-}
 
 const categoryCounts = computed(() => {
   const counts = new Map<string, number>()
@@ -195,16 +181,11 @@ onMounted(() => {
   checkActiveOrder()
   watch(merchantName, (v) => { if (v) document.title = `菜单-${v}` }, { immediate: true })
   watch(loading, (val) => {
-    if (!val) nextTick(checkNeedExpand)
+    if (!val) nextTick()
   }, { immediate: true })
-  watch(categories, () => nextTick(checkNeedExpand), { deep: true })
-  resizeObs = new ResizeObserver(() => debouncedCheckExpand())
-  if (navWrapRef.value) resizeObs.observe(navWrapRef.value)
 })
 
-onBeforeUnmount(() => {
-  resizeObs?.disconnect()
-})
+
 </script>
 
 <style scoped>
@@ -224,8 +205,10 @@ onBeforeUnmount(() => {
 .cat-expand-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: var(--surface); color: var(--on-surface-variant); cursor: pointer; flex-shrink: 0; transition: all var(--transition-fast); }
 .cat-expand-btn:active { background: var(--surface-variant); }
 .cat-expand-btn .material-icons { transition: transform 0.25s ease; }
-.cat-expand-open .material-icons { transform: rotate(180deg); }
-.cat-hidden { display: none !important; }
+.cat-expand-open .cat-expand-btn .material-icons { transform: rotate(180deg); }
+.cat-expand-wrap { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.3s ease; }
+.cat-expand-wrap.cat-expand-open { grid-template-rows: 1fr; }
+.cat-expand-inner { overflow: hidden; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding-top: 8px; }
 .nav-sentinel { width: 1px; height: 1px; pointer-events: none; }
 .category-pill { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: var(--surface); color: var(--on-surface-variant); font-family: var(--font-display); font-size: var(--text-body-md); font-weight: 600; cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; flex-shrink: 0; }
 .category-pill .material-icons { font-size: 18px !important; }
