@@ -222,8 +222,8 @@ onMounted(() => {
 .cat-expand-btn .material-icons { transition: transform 0.25s ease; }
 .cat-expand-btn.cat-expand-open .material-icons { transform: rotate(180deg); }
 .nav-sentinel { width: 1px; height: 1px; pointer-events: none; }
-.category-pill { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: var(--surface); color: var(--on-surface-variant); font-family: var(--font-display); font-size: var(--text-body-md); font-weight: 600; cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; flex-shrink: 0; }
-.category-pill .material-icons { font-size: 18px !important; line-height: 1; }
+.category-pill { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: var(--surface); color: var(--on-surface-variant); font-family: var(--font-display); font-size: var(--text-body-md); font-weight: 600; line-height: 15px; cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; flex-shrink: 0; }
+.category-pill .material-icons { font-size: 18px !important; }
 .category-count { min-width: 20px; padding: 1px 7px; border-radius: var(--radius-full); background: var(--surface-variant); color: var(--on-surface-variant); font-size: var(--text-label-sm); font-weight: 700; text-align: center; }
 .category-pill-active .category-count { background: var(--primary); color: var(--on-primary); }
 .category-pill-active { background: var(--primary-container); border-color: var(--primary-container); color: var(--on-primary); box-shadow: 0 4px 12px rgba(255, 107, 0, 0.18); }
