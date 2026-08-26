@@ -34,6 +34,21 @@
           {{ category.name }}
           <span v-if="categoryDishCount(category.id) > 0" class="category-count">{{ categoryDishCount(category.id) }}</span>
         </button>
+        <button class="cat-dropdown-trigger" @click="showCatDropdown = !showCatDropdown">
+          <span class="material-icons">expand_more</span>
+        </button>
+        <Transition name="cat-dd">
+          <div v-if="showCatDropdown" class="cat-dropdown">
+            <button
+              v-for="category in categories" :key="category.id"
+              :class="['cat-dropdown-item', selectedCategoryId === category.id && 'cat-dropdown-active']"
+              @click="selectedCategoryId = category.id; showCatDropdown = false"
+            >
+              <span class="material-icons">{{ categoryIcons[category.name] || 'restaurant' }}</span>
+              {{ category.name }}
+            </button>
+          </div>
+        </Transition>
       </nav>
 
       <section v-if="errorMessage" class="status-card error-card">
@@ -134,6 +149,7 @@ const {
 
 const hasActiveOrder = ref(false)
 const heroVisible = ref(true)
+const showCatDropdown = ref(false)
 
 const categoryCounts = computed(() => {
   const counts = new Map<string, number>()
@@ -161,6 +177,11 @@ onMounted(() => {
   hydrateCart()
   checkActiveOrder()
   watch(merchantName, (v) => { if (v) document.title = `菜单-${v}` }, { immediate: true })
+  document.addEventListener('click', (e) => {
+    if (showCatDropdown.value && !(e.target as HTMLElement).closest('.category-nav')) {
+      showCatDropdown.value = false
+    }
+  })
 })
 </script>
 
@@ -184,6 +205,16 @@ onMounted(() => {
 .category-count { min-width: 20px; padding: 1px 7px; border-radius: var(--radius-full); background: var(--surface-variant); color: var(--on-surface-variant); font-size: var(--text-label-sm); font-weight: 700; text-align: center; }
 .category-pill-active .category-count { background: var(--primary); color: var(--on-primary); }
 .category-pill-active { background: var(--primary-container); border-color: var(--primary-container); color: var(--on-primary); box-shadow: 0 4px 12px rgba(255, 107, 0, 0.18); }
+.cat-dropdown-trigger { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: var(--surface); color: var(--on-surface-variant); cursor: pointer; flex-shrink: 0; transition: all var(--transition-fast); }
+.cat-dropdown-trigger:active { background: var(--surface-variant); }
+.cat-dropdown { position: absolute; top: 100%; right: 0; min-width: 160px; background: var(--surface-container); border: 1px solid var(--outline-variant); border-radius: var(--radius-xl); box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: var(--spacing-xs); z-index: 50; }
+.cat-dropdown-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 14px; border: none; border-radius: var(--radius-lg); background: transparent; color: var(--on-surface); font-family: var(--font-display); font-size: var(--text-body-md); font-weight: 500; cursor: pointer; text-align: left; transition: background var(--transition-fast); }
+.cat-dropdown-item:active { background: var(--surface-variant); }
+.cat-dropdown-item .material-icons { font-size: 18px !important; color: var(--on-surface-variant); }
+.cat-dropdown-active { background: var(--primary-container); color: var(--on-primary); font-weight: 700; }
+.cat-dropdown-active .material-icons { color: var(--on-primary); }
+.cat-dd-enter-active, .cat-dd-leave-active { transition: all 0.2s ease; }
+.cat-dd-enter-from, .cat-dd-leave-to { opacity: 0; transform: translateY(-8px) scale(0.95); }
 .status-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-md); padding: var(--spacing-xl); margin-top: var(--spacing-lg); border-radius: var(--radius-xl); background: var(--surface-container-low); }
 .status-card .material-icons { font-size: 48px !important; }
 .error-card { color: var(--error); }
