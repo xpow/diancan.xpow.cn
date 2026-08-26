@@ -27,7 +27,7 @@
       <nav :class="['category-nav', navFloating && 'floating']">
         <button
           v-for="category in categories" :key="category.id"
-          class="category-pill"
+          :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
           @click="scrollToCategory(category.id)"
         >
           <span class="material-icons">{{ categoryIcons[category.name] || 'restaurant' }}</span>
@@ -105,7 +105,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, computed, nextTick } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
 import { useMenu } from '@/composables/useMenu'
 import { useCartQuote } from '@/composables/useCartQuote'
 import { useSpecEditor } from '@/composables/useSpecEditor'
@@ -163,6 +163,25 @@ function scrollToCategory(categoryId: string) {
   el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
+let catObserver: IntersectionObserver | null = null
+function setupCategoryObserver() {
+  catObserver = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          const id = entry.target.id.replace('cat-', '')
+          selectedCategoryId.value = id
+        }
+      }
+    },
+    { rootMargin: '-100px 0px -60% 0px' }
+  )
+  for (const cat of categories.value) {
+    const el = document.getElementById(`cat-${cat.id}`)
+    if (el) catObserver.observe(el)
+  }
+}
+
 watch(showCart, (val) => {
   if (val) debouncedFetchQuote()
 })
@@ -171,6 +190,11 @@ onMounted(() => {
   hydrateCart()
   checkActiveOrder()
   watch(merchantName, (v) => { if (v) document.title = `菜单-${v}` }, { immediate: true })
+  watch(loading, (val) => { if (!val) nextTick(setupCategoryObserver) }, { immediate: true })
+})
+
+onBeforeUnmount(() => {
+  catObserver?.disconnect()
 })
 </script>
 
