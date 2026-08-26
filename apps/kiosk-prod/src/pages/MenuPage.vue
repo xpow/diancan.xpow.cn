@@ -175,10 +175,11 @@ onMounted(() => {
 .hero-close { position: absolute; top: 12px; right: 12px; z-index: 2; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: none; border-radius: 50%; background: rgba(0, 0, 0, 0.35); color: #fff; cursor: pointer; transition: background var(--transition-fast); }
 .hero-close .material-icons { font-size: 20px; }
 .hero-close:active { background: rgba(0, 0, 0, 0.55); }
-.category-nav { display: flex; justify-content: center; gap: 10px; width: auto; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: var(--spacing-md) var(--container-margin) 14px; position: sticky; top: 52px; z-index: 40; overflow-x: auto; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: box-shadow var(--transition-fast); }
+.category-nav { display: flex; justify-content: center; gap: 10px; width: auto; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: var(--spacing-md) var(--container-margin) 14px; position: sticky; top: 52px; z-index: 40; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: box-shadow var(--transition-fast); }
+.category-nav::-webkit-scrollbar { display: none; }
 .category-nav.floating { box-shadow: 0 6px 18px rgba(87, 32, 0, 0.05); }
 .nav-sentinel { width: 1px; height: 1px; pointer-events: none; }
-.category-pill { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: var(--surface); color: var(--on-surface-variant); font-family: var(--font-display); font-size: var(--text-body-md); font-weight: 600; cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; }
+.category-pill { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: var(--surface); color: var(--on-surface-variant); font-family: var(--font-display); font-size: var(--text-body-md); font-weight: 600; cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; flex-shrink: 0; }
 .category-pill .material-icons { font-size: 18px !important; }
 .category-count { min-width: 20px; padding: 1px 7px; border-radius: var(--radius-full); background: var(--surface-variant); color: var(--on-surface-variant); font-size: var(--text-label-sm); font-weight: 700; text-align: center; }
 .category-pill-active .category-count { background: var(--primary); color: var(--on-primary); }
