@@ -438,7 +438,7 @@ function openCategoryDialog(cat?: any) {
 
 async function saveCategory() {
   const body = { name: catForm.value.name, sort: catForm.value.sort }
-  const catId = editingCategory.value ? (categories.value.find((c) => c.name === catForm.value.name)?.id) : null
+  const catId = editingCategory.value?.id ?? null
   const url = catId ? `/api/admin/categories/${catId}` : '/api/admin/categories'
   await fetch(url, {
     method: catId ? 'PUT' : 'POST',
