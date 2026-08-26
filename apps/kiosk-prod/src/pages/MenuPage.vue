@@ -242,7 +242,9 @@ onMounted(() => {
   .category-nav { gap: 12px; padding-bottom: 18px; }
   .category-pill { padding: 12px 24px; font-size: var(--text-label-lg); }
   .category-pill .material-icons { font-size: 20px !important; }
-  .cat-expand-btn, .cat-expand-wrap { display: none !important; }
+  .cat-expand-btn { display: none !important; }
+  .cat-expand-wrap { display: block !important; grid-template-rows: unset !important; }
+  .cat-expand-inner { padding-top: 0; gap: 12px; }
 }
 @media (min-width: 1200px) {
   .dish-list { grid-template-columns: repeat(4, 1fr); }
