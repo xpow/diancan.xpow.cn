@@ -25,7 +25,7 @@
 
       <div ref="navSentinel" class="nav-sentinel"></div>
       <div ref="navWrapRef" class="category-nav-wrap">
-        <nav :class="['category-nav', navFloating && 'floating', showCatDropdown && 'nav-expanded']">
+        <nav :class="['category-nav', navFloating && 'floating']">
           <button
             v-for="(category, idx) in categories.slice(0, 3)" :key="category.id"
             :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
@@ -38,16 +38,20 @@
           <button v-if="categories.length > 3" class="cat-expand-btn" :class="{ 'cat-expand-open': showCatDropdown }" @click="showCatDropdown = !showCatDropdown">
             <span class="material-icons">expand_more</span>
           </button>
-          <button
-            v-for="category in categories.slice(3)" :key="'extra-' + category.id"
-            :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active', 'cat-extra']"
-            @click.stop="selectedCategoryId = category.id; scrollToTop()"
-          >
-            <span class="material-icons">{{ categoryIcons[category.name] || 'restaurant' }}</span>
-            {{ category.name }}
-            <span v-if="categoryDishCount(category.id) > 0" class="category-count">{{ categoryDishCount(category.id) }}</span>
-          </button>
         </nav>
+        <div v-if="categories.length > 3" class="cat-expand-wrap" :class="{ 'cat-expand-open': showCatDropdown }">
+          <div class="cat-expand-inner">
+            <button
+              v-for="category in categories.slice(3)" :key="'extra-' + category.id"
+              :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
+              @click.stop="selectedCategoryId = category.id; scrollToTop()"
+            >
+              <span class="material-icons">{{ categoryIcons[category.name] || 'restaurant' }}</span>
+              {{ category.name }}
+              <span v-if="categoryDishCount(category.id) > 0" class="category-count">{{ categoryDishCount(category.id) }}</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       <section v-if="errorMessage" class="status-card error-card">
@@ -212,8 +216,9 @@ onMounted(() => {
 .category-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; }
 .cat-expand-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: var(--surface); color: var(--on-surface-variant); cursor: pointer; flex-shrink: 0; transition: all var(--transition-fast); }
 .cat-expand-btn:active { background: var(--surface-variant); }
-.cat-extra { display: none !important; }
-.nav-expanded .cat-extra { display: inline-flex !important; }
+.cat-expand-wrap { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.3s ease; }
+.cat-expand-wrap.cat-expand-open { grid-template-rows: 1fr; }
+.cat-expand-inner { overflow: hidden; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding-top: 8px; }
 .cat-expand-btn .material-icons { transition: transform 0.25s ease; }
 .cat-expand-btn.cat-expand-open .material-icons { transform: rotate(180deg); }
 .nav-sentinel { width: 1px; height: 1px; pointer-events: none; }
@@ -238,7 +243,8 @@ onMounted(() => {
   .category-pill { padding: 12px 24px; font-size: var(--text-label-lg); }
   .category-pill .material-icons { font-size: 20px !important; }
   .cat-expand-btn { display: none !important; }
-  .nav-expanded .cat-extra, .cat-extra { display: inline-flex !important; }
+  .cat-expand-wrap { grid-template-rows: unset !important; }
+  .cat-expand-inner { padding-top: 0; gap: 12px; }
 }
 @media (min-width: 1200px) {
   .dish-list { grid-template-columns: repeat(4, 1fr); }
