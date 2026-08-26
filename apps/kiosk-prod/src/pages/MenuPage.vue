@@ -194,11 +194,6 @@ onMounted(() => {
   hydrateCart()
   checkActiveOrder()
   watch(merchantName, (v) => { if (v) document.title = `菜单-${v}` }, { immediate: true })
-  document.addEventListener('click', (e) => {
-    if (showCatDropdown.value && !(e.target as HTMLElement).closest('.category-nav-wrap')) {
-      showCatDropdown.value = false
-    }
-  })
   watch(loading, (val) => {
     if (!val) nextTick(checkNeedExpand)
   }, { immediate: true })
