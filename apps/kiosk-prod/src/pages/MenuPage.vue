@@ -159,14 +159,19 @@ function checkActiveOrder() {
 }
 
 function scrollToCategory(categoryId: string) {
+  catScrollClick = true
+  selectedCategoryId.value = categoryId
   const el = document.getElementById(`cat-${categoryId}`)
   el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  setTimeout(() => { catScrollClick = false }, 800)
 }
 
 let catObserver: IntersectionObserver | null = null
+let catScrollClick = false
 function setupCategoryObserver() {
   catObserver = new IntersectionObserver(
     (entries) => {
+      if (catScrollClick) return
       for (const entry of entries) {
         if (entry.isIntersecting) {
           const id = entry.target.id.replace('cat-', '')
