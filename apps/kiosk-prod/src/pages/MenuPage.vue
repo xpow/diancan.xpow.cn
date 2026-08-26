@@ -226,7 +226,7 @@ onBeforeUnmount(() => {
 .category-nav-wrap { position: sticky; top: 52px; z-index: 40; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: var(--spacing-md) var(--container-margin) 14px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: box-shadow var(--transition-fast); }
 .category-nav-wrap.floating { box-shadow: 0 6px 18px rgba(87, 32, 0, 0.05); }
 .category-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; width: 100%; }
-.category-pill { padding: 8px 14px; font-size: var(--text-label-md); }
+.category-pill { padding: 8px 12px; font-size: var(--text-label-sm); }
 .category-pill .material-icons { font-size: 16px !important; }
 .cat-expand-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: var(--surface); color: var(--on-surface-variant); cursor: pointer; flex-shrink: 0; transition: all var(--transition-fast); }
 .cat-expand-btn:active { background: var(--surface-variant); }
