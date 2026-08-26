@@ -12,13 +12,13 @@
     />
 
     <div class="page-content">
-      <section v-if="heroVisible" class="hero-context" @dblclick="heroVisible = false">
+      <section v-if="heroVisible" class="hero-context" @dblclick="closeHero()">
         <img :src="heroImage" alt="菜单横幅" class="hero-img" />
         <div class="hero-overlay">
           <h2>精选食材，炭火现烤</h2>
           <p>{{ displayTitle }}</p>
         </div>
-        <button class="hero-close" @click.stop="heroVisible = false" aria-label="关闭横幅" title="双击也可关闭">
+        <button class="hero-close" @click.stop="closeHero()" aria-label="关闭横幅" title="双击也可关闭">
           <span class="material-icons">close</span>
         </button>
       </section>
@@ -151,7 +151,13 @@ const {
 } = useSpecEditor(dishes)
 
 const hasActiveOrder = ref(false)
-const heroVisible = ref(true)
+const today = new Date().toISOString().slice(0, 10)
+const heroVisible = ref(localStorage.getItem(`hero-closed-${today}`) !== '1')
+
+function closeHero() {
+  heroVisible.value = false
+  localStorage.setItem(`hero-closed-${today}`, '1')
+}
 const showCatDropdown = ref(false)
 
 function scrollToTop() {
