@@ -35,20 +35,18 @@
             {{ category.name }}
             <span v-if="categoryDishCount(category.id) > 0" class="category-count">{{ categoryDishCount(category.id) }}</span>
           </button>
-          <template v-if="categories.length > 3">
-            <button
-              v-for="category in showCatDropdown ? categories.slice(3) : []" :key="'extra-' + category.id"
-              :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
-              @click="selectedCategoryId = category.id"
-            >
-              <span class="material-icons">{{ categoryIcons[category.name] || 'restaurant' }}</span>
-              {{ category.name }}
-              <span v-if="categoryDishCount(category.id) > 0" class="category-count">{{ categoryDishCount(category.id) }}</span>
-            </button>
-            <button class="cat-expand-btn" :class="{ 'cat-expand-open': showCatDropdown }" @click="showCatDropdown = !showCatDropdown">
-              <span class="material-icons">expand_more</span>
-            </button>
-          </template>
+          <button v-if="categories.length > 3" class="cat-expand-btn" :class="{ 'cat-expand-open': showCatDropdown }" @click="showCatDropdown = !showCatDropdown">
+            <span class="material-icons">expand_more</span>
+          </button>
+          <button
+            v-for="category in showCatDropdown ? categories.slice(3) : []" :key="'extra-' + category.id"
+            :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
+            @click="selectedCategoryId = category.id"
+          >
+            <span class="material-icons">{{ categoryIcons[category.name] || 'restaurant' }}</span>
+            {{ category.name }}
+            <span v-if="categoryDishCount(category.id) > 0" class="category-count">{{ categoryDishCount(category.id) }}</span>
+          </button>
         </nav>
       </div>
 
