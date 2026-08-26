@@ -35,25 +35,21 @@
             {{ category.name }}
             <span v-if="categoryDishCount(category.id) > 0" class="category-count">{{ categoryDishCount(category.id) }}</span>
           </button>
+          <template v-if="categories.length > 3">
+            <button
+              v-for="category in showCatDropdown ? categories.slice(3) : []" :key="'extra-' + category.id"
+              :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
+              @click="selectedCategoryId = category.id"
+            >
+              <span class="material-icons">{{ categoryIcons[category.name] || 'restaurant' }}</span>
+              {{ category.name }}
+              <span v-if="categoryDishCount(category.id) > 0" class="category-count">{{ categoryDishCount(category.id) }}</span>
+            </button>
+            <button class="cat-expand-btn" :class="{ 'cat-expand-open': showCatDropdown }" @click="showCatDropdown = !showCatDropdown">
+              <span class="material-icons">expand_more</span>
+            </button>
+          </template>
         </nav>
-        <template v-if="categories.length > 3">
-          <button class="cat-dropdown-trigger" :class="{ 'cat-dropdown-open': showCatDropdown }" @click.stop="showCatDropdown = !showCatDropdown">
-            <span class="material-icons">expand_more</span>
-          </button>
-          <Transition name="cat-dd">
-            <div v-if="showCatDropdown" class="cat-dropdown">
-              <button
-                v-for="category in categories.slice(3)" :key="category.id"
-                :class="['cat-dropdown-item', selectedCategoryId === category.id && 'cat-dropdown-active']"
-                @click="selectedCategoryId = category.id; showCatDropdown = false"
-              >
-                <span class="material-icons">{{ categoryIcons[category.name] || 'restaurant' }}</span>
-                {{ category.name }}
-                <span v-if="categoryDishCount(category.id) > 0" class="cat-dropdown-count">{{ categoryDishCount(category.id) }}</span>
-              </button>
-            </div>
-          </Transition>
-        </template>
       </div>
 
       <section v-if="errorMessage" class="status-card error-card">
@@ -201,30 +197,19 @@ onMounted(() => {
 .hero-close { position: absolute; top: 12px; right: 12px; z-index: 2; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: none; border-radius: 50%; background: rgba(0, 0, 0, 0.35); color: #fff; cursor: pointer; transition: background var(--transition-fast); }
 .hero-close .material-icons { font-size: 20px; }
 .hero-close:active { background: rgba(0, 0, 0, 0.55); }
-.category-nav-wrap { display: flex; align-items: center; position: sticky; top: 52px; z-index: 40; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: var(--spacing-md) var(--container-margin) 14px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: box-shadow var(--transition-fast); }
+.category-nav-wrap { position: sticky; top: 52px; z-index: 40; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: var(--spacing-md) var(--container-margin) 14px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: box-shadow var(--transition-fast); }
 .category-nav-wrap.floating { box-shadow: 0 6px 18px rgba(87, 32, 0, 0.05); }
-.category-nav { display: flex; justify-content: center; gap: 10px; flex: 1; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-.category-nav::-webkit-scrollbar { display: none; }
+.category-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.cat-expand-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: var(--surface); color: var(--on-surface-variant); cursor: pointer; flex-shrink: 0; transition: all var(--transition-fast); }
+.cat-expand-btn:active { background: var(--surface-variant); }
+.cat-expand-btn .material-icons { transition: transform 0.25s ease; }
+.cat-expand-open .material-icons { transform: rotate(180deg); }
 .nav-sentinel { width: 1px; height: 1px; pointer-events: none; }
 .category-pill { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: var(--surface); color: var(--on-surface-variant); font-family: var(--font-display); font-size: var(--text-body-md); font-weight: 600; cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; flex-shrink: 0; }
 .category-pill .material-icons { font-size: 18px !important; }
 .category-count { min-width: 20px; padding: 1px 7px; border-radius: var(--radius-full); background: var(--surface-variant); color: var(--on-surface-variant); font-size: var(--text-label-sm); font-weight: 700; text-align: center; }
 .category-pill-active .category-count { background: var(--primary); color: var(--on-primary); }
 .category-pill-active { background: var(--primary-container); border-color: var(--primary-container); color: var(--on-primary); box-shadow: 0 4px 12px rgba(255, 107, 0, 0.18); }
-.cat-dropdown-trigger { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: var(--surface); color: var(--on-surface-variant); cursor: pointer; flex-shrink: 0; transition: all var(--transition-fast); }
-.cat-dropdown-trigger:active { background: var(--surface-variant); }
-.cat-dropdown-trigger .material-icons { transition: transform 0.2s; }
-.cat-dropdown-open .material-icons { transform: rotate(180deg); }
-.cat-dropdown { position: absolute; top: 100%; right: 0; min-width: 160px; background: var(--surface-container); border: 1px solid var(--outline-variant); border-radius: var(--radius-xl); box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: var(--spacing-xs); z-index: 50; }
-.cat-dropdown-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 14px; border: none; border-radius: var(--radius-lg); background: transparent; color: var(--on-surface); font-family: var(--font-display); font-size: var(--text-body-md); font-weight: 500; cursor: pointer; text-align: left; transition: background var(--transition-fast); }
-.cat-dropdown-item:active { background: var(--surface-variant); }
-.cat-dropdown-item .material-icons { font-size: 18px !important; color: var(--on-surface-variant); }
-.cat-dropdown-active { background: var(--primary-container); color: var(--on-primary); font-weight: 700; }
-.cat-dropdown-active .material-icons { color: var(--on-primary); }
-.cat-dropdown-count { margin-left: auto; min-width: 20px; padding: 1px 7px; border-radius: var(--radius-full); background: var(--surface-variant); color: var(--on-surface-variant); font-size: var(--text-label-sm); font-weight: 700; text-align: center; }
-.cat-dropdown-active .cat-dropdown-count { background: rgba(255,255,255,0.2); color: var(--on-primary); }
-.cat-dd-enter-active, .cat-dd-leave-active { transition: all 0.2s ease; }
-.cat-dd-enter-from, .cat-dd-leave-to { opacity: 0; transform: translateY(-8px) scale(0.95); }
 .status-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--spacing-md); padding: var(--spacing-xl); margin-top: var(--spacing-lg); border-radius: var(--radius-xl); background: var(--surface-container-low); }
 .status-card .material-icons { font-size: 48px !important; }
 .error-card { color: var(--error); }
