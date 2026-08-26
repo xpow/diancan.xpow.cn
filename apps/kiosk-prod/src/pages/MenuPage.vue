@@ -27,8 +27,8 @@
       <div ref="navWrapRef" class="category-nav-wrap">
         <nav :class="['category-nav', navFloating && 'floating']">
           <button
-            v-for="category in needExpand ? categories.slice(0, 3) : categories" :key="category.id"
-            :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
+            v-for="category in categories" :key="category.id"
+            :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active', needExpand && categories.indexOf(category) >= 3 && !showCatDropdown && 'cat-hidden']"
             @click="selectedCategoryId = category.id"
           >
             <span class="material-icons">{{ categoryIcons[category.name] || 'restaurant' }}</span>
@@ -37,15 +37,6 @@
           </button>
           <button v-if="needExpand" class="cat-expand-btn" :class="{ 'cat-expand-open': showCatDropdown }" @click="showCatDropdown = !showCatDropdown">
             <span class="material-icons">expand_more</span>
-          </button>
-          <button
-            v-for="category in needExpand && showCatDropdown ? categories.slice(3) : []" :key="'extra-' + category.id"
-            :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
-            @click="selectedCategoryId = category.id"
-          >
-            <span class="material-icons">{{ categoryIcons[category.name] || 'restaurant' }}</span>
-            {{ category.name }}
-            <span v-if="categoryDishCount(category.id) > 0" class="category-count">{{ categoryDishCount(category.id) }}</span>
           </button>
         </nav>
       </div>
@@ -155,18 +146,20 @@ let resizeObs: ResizeObserver | null = null
 
 function checkNeedExpand() {
   if (!navWrapRef.value) return
-  const wrap = navWrapRef.value
-  const nav = wrap.querySelector('.category-nav') as HTMLElement
+  const nav = navWrapRef.value.querySelector('.category-nav') as HTMLElement
   if (!nav) return
-  const pills = nav.querySelectorAll('.category-pill')
+  const hiddenPills = nav.querySelectorAll('.cat-hidden')
+  hiddenPills.forEach(p => (p as HTMLElement).style.setProperty('display', 'inline-flex', 'important'))
+  const pills = nav.querySelectorAll<HTMLElement>('.category-pill')
   const gap = 8
   let totalWidth = 0
   pills.forEach(p => { totalWidth += p.getBoundingClientRect().width })
-  totalWidth += (pills.length - 1) * gap
+  totalWidth += Math.max(0, pills.length - 1) * gap
   const expandBtnWidth = 48
-  const available = wrap.clientWidth
+  const available = navWrapRef.value.clientWidth
   const margin = 16
   needExpand.value = totalWidth + expandBtnWidth + margin > available
+  hiddenPills.forEach(p => (p as HTMLElement).style.removeProperty('display'))
 }
 
 let expandCheckTimer: ReturnType<typeof setTimeout> | null = null
@@ -239,6 +232,7 @@ onBeforeUnmount(() => {
 .cat-expand-btn:active { background: var(--surface-variant); }
 .cat-expand-btn .material-icons { transition: transform 0.25s ease; }
 .cat-expand-open .material-icons { transform: rotate(180deg); }
+.cat-hidden { display: none !important; }
 .nav-sentinel { width: 1px; height: 1px; pointer-events: none; }
 .category-pill { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: var(--surface); color: var(--on-surface-variant); font-family: var(--font-display); font-size: var(--text-body-md); font-weight: 600; cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; flex-shrink: 0; }
 .category-pill .material-icons { font-size: 18px !important; }
