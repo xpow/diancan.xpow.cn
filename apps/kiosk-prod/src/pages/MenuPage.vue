@@ -29,7 +29,7 @@
           <button
             v-for="category in categories" :key="category.id"
             :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active', needExpand && categories.indexOf(category) >= 3 && !showCatDropdown && 'cat-hidden']"
-            @click="selectedCategoryId = category.id"
+            @click.stop="selectedCategoryId = category.id"
           >
             <span class="material-icons">{{ categoryIcons[category.name] || 'restaurant' }}</span>
             {{ category.name }}
