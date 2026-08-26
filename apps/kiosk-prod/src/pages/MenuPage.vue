@@ -242,6 +242,7 @@ onMounted(() => {
   .category-nav { gap: 12px; padding-bottom: 18px; }
   .category-pill { padding: 12px 24px; font-size: var(--text-label-lg); }
   .category-pill .material-icons { font-size: 20px !important; }
+  .cat-expand-btn, .cat-expand-wrap { display: none !important; }
 }
 @media (min-width: 1200px) {
   .dish-list { grid-template-columns: repeat(4, 1fr); }
