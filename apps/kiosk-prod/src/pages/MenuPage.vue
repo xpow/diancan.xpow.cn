@@ -226,10 +226,10 @@ onBeforeUnmount(() => {
 .category-nav-wrap { position: sticky; top: 52px; z-index: 40; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: var(--spacing-md) var(--container-margin) 14px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: box-shadow var(--transition-fast); }
 .category-nav-wrap.floating { box-shadow: 0 6px 18px rgba(87, 32, 0, 0.05); }
 .category-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; width: 100%; }
-.category-pill { padding: 6px 10px; font-size: 12px; line-height: 1.2; }
-.category-pill .material-icons { font-size: 14px !important; margin-right: 2px; }
+.category-pill { padding: 8px 11px; font-size: 13px; line-height: 1.2; }
+.category-pill .material-icons { font-size: 15px !important; margin-right: 2px; }
 .category-pill .category-count { font-size: 10px; padding: 0 4px; min-width: 16px; height: 16px; line-height: 16px; }
-.cat-expand-btn { width: 34px; height: 34px; }
+.cat-expand-btn { width: 36px; height: 36px; }
 .cat-expand-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: var(--surface); color: var(--on-surface-variant); cursor: pointer; flex-shrink: 0; transition: all var(--transition-fast); }
 .cat-expand-btn:active { background: var(--surface-variant); }
 .cat-expand-btn .material-icons { transition: transform 0.25s ease; }
