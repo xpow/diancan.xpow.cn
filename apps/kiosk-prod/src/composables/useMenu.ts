@@ -207,12 +207,11 @@ const restReason = ref('')
 
   watch(loading, async (val) => {
     if (val) return
-    await nextTick()
     const targetDishId = route.query.dishId as string
     if (!targetDishId) return
     const dish = dishes.value.find((d) => d.id === targetDishId)
     if (!dish) return
-    await nextTick()
+    await nextTick(); await nextTick()
     highlightDishId.value = targetDishId
     const el = document.getElementById(`dish-${targetDishId}`)
     el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
