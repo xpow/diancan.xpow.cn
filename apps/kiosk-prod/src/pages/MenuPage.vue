@@ -24,16 +24,18 @@
       </section>
 
       <div ref="navSentinel" class="nav-sentinel"></div>
-      <nav :class="['category-nav', navFloating && 'floating']">
-        <button
-          v-for="category in categories.slice(0, 3)" :key="category.id"
-          :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
-          @click="selectedCategoryId = category.id"
-        >
-          <span class="material-icons">{{ categoryIcons[category.name] || 'restaurant' }}</span>
-          {{ category.name }}
-          <span v-if="categoryDishCount(category.id) > 0" class="category-count">{{ categoryDishCount(category.id) }}</span>
-        </button>
+      <div class="category-nav-wrap">
+        <nav :class="['category-nav', navFloating && 'floating']">
+          <button
+            v-for="category in categories.slice(0, 3)" :key="category.id"
+            :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
+            @click="selectedCategoryId = category.id"
+          >
+            <span class="material-icons">{{ categoryIcons[category.name] || 'restaurant' }}</span>
+            {{ category.name }}
+            <span v-if="categoryDishCount(category.id) > 0" class="category-count">{{ categoryDishCount(category.id) }}</span>
+          </button>
+        </nav>
         <template v-if="categories.length > 3">
           <button class="cat-dropdown-trigger" :class="{ 'cat-dropdown-open': showCatDropdown }" @click.stop="showCatDropdown = !showCatDropdown">
             <span class="material-icons">expand_more</span>
@@ -52,7 +54,7 @@
             </div>
           </Transition>
         </template>
-      </nav>
+      </div>
 
       <section v-if="errorMessage" class="status-card error-card">
         <span class="material-icons">error_outline</span>
@@ -181,7 +183,7 @@ onMounted(() => {
   checkActiveOrder()
   watch(merchantName, (v) => { if (v) document.title = `菜单-${v}` }, { immediate: true })
   document.addEventListener('click', (e) => {
-    if (showCatDropdown.value && !(e.target as HTMLElement).closest('.category-nav')) {
+    if (showCatDropdown.value && !(e.target as HTMLElement).closest('.category-nav-wrap')) {
       showCatDropdown.value = false
     }
   })
@@ -199,9 +201,10 @@ onMounted(() => {
 .hero-close { position: absolute; top: 12px; right: 12px; z-index: 2; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: none; border-radius: 50%; background: rgba(0, 0, 0, 0.35); color: #fff; cursor: pointer; transition: background var(--transition-fast); }
 .hero-close .material-icons { font-size: 20px; }
 .hero-close:active { background: rgba(0, 0, 0, 0.55); }
-.category-nav { display: flex; justify-content: center; gap: 10px; width: auto; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: var(--spacing-md) var(--container-margin) 14px; position: sticky; top: 52px; z-index: 40; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: box-shadow var(--transition-fast); }
+.category-nav-wrap { display: flex; align-items: center; position: sticky; top: 52px; z-index: 40; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: var(--spacing-md) var(--container-margin) 14px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: box-shadow var(--transition-fast); }
+.category-nav-wrap.floating { box-shadow: 0 6px 18px rgba(87, 32, 0, 0.05); }
+.category-nav { display: flex; justify-content: center; gap: 10px; flex: 1; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .category-nav::-webkit-scrollbar { display: none; }
-.category-nav.floating { box-shadow: 0 6px 18px rgba(87, 32, 0, 0.05); }
 .nav-sentinel { width: 1px; height: 1px; pointer-events: none; }
 .category-pill { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: var(--surface); color: var(--on-surface-variant); font-family: var(--font-display); font-size: var(--text-body-md); font-weight: 600; cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; flex-shrink: 0; }
 .category-pill .material-icons { font-size: 18px !important; }
