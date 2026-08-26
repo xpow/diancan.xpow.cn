@@ -114,7 +114,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, computed, nextTick } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
 import { useMenu } from '@/composables/useMenu'
 import { useCartQuote } from '@/composables/useCartQuote'
 import { useSpecEditor } from '@/composables/useSpecEditor'
