@@ -29,7 +29,7 @@
           <button
             v-for="category in categories.slice(0, 3)" :key="category.id"
             :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
-            @click.stop="selectedCategoryId = category.id"
+            @click.stop="selectedCategoryId = category.id; scrollToTop()"
           >
             <span class="material-icons">{{ categoryIcons[category.name] || 'restaurant' }}</span>
             {{ category.name }}
@@ -44,7 +44,7 @@
             <button
               v-for="category in categories.slice(3)" :key="'extra-' + category.id"
               :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
-              @click.stop="selectedCategoryId = category.id"
+              @click.stop="selectedCategoryId = category.id; scrollToTop()"
             >
               <span class="material-icons">{{ categoryIcons[category.name] || 'restaurant' }}</span>
               {{ category.name }}
@@ -153,6 +153,12 @@ const {
 const hasActiveOrder = ref(false)
 const heroVisible = ref(true)
 const showCatDropdown = ref(false)
+
+function scrollToTop() {
+  nextTick(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  })
+}
 
 const categoryCounts = computed(() => {
   const counts = new Map<string, number>()
