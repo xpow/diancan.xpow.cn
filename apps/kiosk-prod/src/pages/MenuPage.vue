@@ -24,10 +24,10 @@
       </section>
 
       <div ref="navSentinel" class="nav-sentinel"></div>
-      <div class="category-nav-wrap">
+      <div ref="navWrapRef" class="category-nav-wrap">
         <nav :class="['category-nav', navFloating && 'floating']">
           <button
-            v-for="category in categories.slice(0, 3)" :key="category.id"
+            v-for="category in needExpand ? categories.slice(0, 3) : categories" :key="category.id"
             :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
             @click="selectedCategoryId = category.id"
           >
@@ -35,11 +35,11 @@
             {{ category.name }}
             <span v-if="categoryDishCount(category.id) > 0" class="category-count">{{ categoryDishCount(category.id) }}</span>
           </button>
-          <button v-if="categories.length > 3" class="cat-expand-btn" :class="{ 'cat-expand-open': showCatDropdown }" @click="showCatDropdown = !showCatDropdown">
+          <button v-if="needExpand" class="cat-expand-btn" :class="{ 'cat-expand-open': showCatDropdown }" @click="showCatDropdown = !showCatDropdown">
             <span class="material-icons">expand_more</span>
           </button>
           <button
-            v-for="category in showCatDropdown ? categories.slice(3) : []" :key="'extra-' + category.id"
+            v-for="category in needExpand && showCatDropdown ? categories.slice(3) : []" :key="'extra-' + category.id"
             :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
             @click="selectedCategoryId = category.id"
           >
@@ -149,6 +149,24 @@ const {
 const hasActiveOrder = ref(false)
 const heroVisible = ref(true)
 const showCatDropdown = ref(false)
+const needExpand = ref(false)
+const navWrapRef = ref<HTMLElement | null>(null)
+let resizeObs: ResizeObserver | null = null
+
+function checkNeedExpand() {
+  if (!navWrapRef.value) return
+  const wrap = navWrapRef.value
+  const nav = wrap.querySelector('.category-nav') as HTMLElement
+  if (!nav) return
+  const pills = nav.querySelectorAll('.category-pill')
+  const gap = 8
+  let totalWidth = 0
+  pills.forEach(p => { totalWidth += p.getBoundingClientRect().width })
+  totalWidth += (pills.length - 1) * gap
+  const expandBtnWidth = 48
+  const available = wrap.clientWidth
+  needExpand.value = totalWidth + expandBtnWidth > available
+}
 
 const categoryCounts = computed(() => {
   const counts = new Map<string, number>()
@@ -181,6 +199,16 @@ onMounted(() => {
       showCatDropdown.value = false
     }
   })
+  watch(loading, (val) => {
+    if (!val) nextTick(checkNeedExpand)
+  }, { immediate: true })
+  watch(categories, () => nextTick(checkNeedExpand), { deep: true })
+  resizeObs = new ResizeObserver(() => checkNeedExpand())
+  if (navWrapRef.value) resizeObs.observe(navWrapRef.value)
+})
+
+onBeforeUnmount(() => {
+  resizeObs?.disconnect()
 })
 </script>
 
