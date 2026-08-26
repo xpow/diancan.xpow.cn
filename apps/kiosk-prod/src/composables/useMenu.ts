@@ -22,6 +22,7 @@ const categoryIcons: Record<string, string> = {
   '肉串': 'kebab_dining',
   '素菜': 'eco',
   '饮品': 'local_bar',
+  '果汁': 'local_drink',
 }
 
 export function useMenu() {
