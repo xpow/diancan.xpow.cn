@@ -212,8 +212,8 @@ onMounted(() => {
 .category-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; }
 .cat-expand-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: var(--surface); color: var(--on-surface-variant); cursor: pointer; flex-shrink: 0; transition: all var(--transition-fast); }
 .cat-expand-btn:active { background: var(--surface-variant); }
-.cat-extra { display: none; }
-.nav-expanded .cat-extra { display: inline-flex; }
+.cat-extra { display: none !important; }
+.nav-expanded .cat-extra { display: inline-flex !important; }
 .cat-expand-btn .material-icons { transition: transform 0.25s ease; }
 .cat-expand-btn.cat-expand-open .material-icons { transform: rotate(180deg); }
 .nav-sentinel { width: 1px; height: 1px; pointer-events: none; }
