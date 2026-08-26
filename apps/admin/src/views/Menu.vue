@@ -422,15 +422,15 @@ function downloadMenuImage() {
 
 /* Category */
 const showCategory = ref(false)
-const editingCategory = ref(false)
+const editingCategory = ref<any>(null)
 const catForm = ref({ name: '', sort: 0 })
 
 function openCategoryDialog(cat?: any) {
   if (cat) {
-    editingCategory.value = true
+    editingCategory.value = cat
     catForm.value = { name: cat.name, sort: cat.sort }
   } else {
-    editingCategory.value = false
+    editingCategory.value = null
     catForm.value = { name: '', sort: 0 }
   }
   showCategory.value = true
