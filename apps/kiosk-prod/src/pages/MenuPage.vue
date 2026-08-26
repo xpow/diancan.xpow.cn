@@ -165,7 +165,14 @@ function checkNeedExpand() {
   totalWidth += (pills.length - 1) * gap
   const expandBtnWidth = 48
   const available = wrap.clientWidth
-  needExpand.value = totalWidth + expandBtnWidth > available
+  const margin = 16
+  needExpand.value = totalWidth + expandBtnWidth + margin > available
+}
+
+let expandCheckTimer: ReturnType<typeof setTimeout> | null = null
+function debouncedCheckExpand() {
+  if (expandCheckTimer) clearTimeout(expandCheckTimer)
+  expandCheckTimer = setTimeout(checkNeedExpand, 200)
 }
 
 const categoryCounts = computed(() => {
@@ -203,7 +210,7 @@ onMounted(() => {
     if (!val) nextTick(checkNeedExpand)
   }, { immediate: true })
   watch(categories, () => nextTick(checkNeedExpand), { deep: true })
-  resizeObs = new ResizeObserver(() => checkNeedExpand())
+  resizeObs = new ResizeObserver(() => debouncedCheckExpand())
   if (navWrapRef.value) resizeObs.observe(navWrapRef.value)
 })
 
