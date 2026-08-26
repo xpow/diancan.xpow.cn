@@ -27,8 +27,8 @@
       <nav :class="['category-nav', navFloating && 'floating']">
         <button
           v-for="category in categories" :key="category.id"
-          :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
-          @click="selectedCategoryId = category.id"
+          class="category-pill"
+          @click="scrollToCategory(category.id)"
         >
           <span class="material-icons">{{ categoryIcons[category.name] || 'restaurant' }}</span>
           {{ category.name }}
@@ -46,9 +46,15 @@
       </section>
 
       <section v-else class="dish-list">
-        <template v-if="filteredDishes.length">
+        <template v-for="cat in categories" :key="cat.id">
+          <div :id="`cat-${cat.id}`" class="category-divider">
+            <span class="category-divider-bar"></span>
+            <h3 class="category-divider-title">{{ cat.name }}</h3>
+            <span class="category-divider-count">{{ categoryDishCount(cat.id) }}道</span>
+          </div>
           <DishCard
-            v-for="dish in filteredDishes" :key="dish.id"
+            v-for="dish in dishes.filter(d => d.categoryId === cat.id).sort((a, b) => { const aO = a.stockEnabled && (a.stock ?? 0) <= 0 ? 1 : 0; const bO = b.stockEnabled && (b.stock ?? 0) <= 0 ? 1 : 0; return aO - bO })"
+            :key="dish.id"
             :dish="dish"
             :highlight="highlightDishId === dish.id"
             :in-cart="cartDishIds.has(dish.id)"
@@ -57,8 +63,6 @@
             @add="(dish, btn) => { addToCart(dish); nextTick(() => flyToCart(btn)) }"
           />
         </template>
-        <p v-else class="empty-category">该分类暂无商品</p>
-        <div ref="bottomSentinel" class="bottom-sentinel"></div>
       </section>
     </div>
 
@@ -117,7 +121,7 @@ const {
   loading, errorMessage, merchantName, branchName,
   deviceId, deviceCode, statusText, branchStatus, displayTitle, heroImage,
   categoryIcons, categories, selectedCategoryId, filteredDishes,
-  highlightDishId, navFloating, navSentinel, bottomSentinel,
+  highlightDishId, navFloating, navSentinel,
   qtyGroupIndex, onCustomQty, dishes, businessHours, restReason,
 } = useMenu()
 
@@ -154,6 +158,11 @@ function checkActiveOrder() {
   } catch { hasActiveOrder.value = false }
 }
 
+function scrollToCategory(categoryId: string) {
+  const el = document.getElementById(`cat-${categoryId}`)
+  el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 watch(showCart, (val) => {
   if (val) debouncedFetchQuote()
 })
@@ -179,7 +188,6 @@ onMounted(() => {
 .category-nav { display: flex; justify-content: center; gap: 10px; width: auto; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: var(--spacing-md) var(--container-margin) 14px; position: sticky; top: 52px; z-index: 40; overflow-x: auto; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: box-shadow var(--transition-fast); }
 .category-nav.floating { box-shadow: 0 6px 18px rgba(87, 32, 0, 0.05); }
 .nav-sentinel { width: 1px; height: 1px; pointer-events: none; }
-.bottom-sentinel { width: 1px; height: 1px; pointer-events: none; }
 .category-pill { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: var(--surface); color: var(--on-surface-variant); font-family: var(--font-display); font-size: var(--text-body-md); font-weight: 600; cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; }
 .category-pill .material-icons { font-size: 18px !important; }
 .category-count { min-width: 20px; padding: 1px 7px; border-radius: var(--radius-full); background: var(--surface-variant); color: var(--on-surface-variant); font-size: var(--text-label-sm); font-weight: 700; text-align: center; }
@@ -192,6 +200,10 @@ onMounted(() => {
 .spinner { width: 32px; height: 32px; border: 3px solid var(--surface-container); border-top-color: var(--primary-container); border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .dish-list { display: flex; flex-direction: column; gap: var(--spacing-md); }
+.category-divider { display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-sm) 0; grid-column: 1 / -1; }
+.category-divider-bar { width: 4px; height: 20px; border-radius: 2px; background: var(--primary); flex-shrink: 0; }
+.category-divider-title { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-sm); font-weight: 700; color: var(--on-surface); }
+.category-divider-count { font-size: var(--text-label-sm); color: var(--on-surface-variant); }
 .empty-category { text-align: center; padding: var(--spacing-xl); color: var(--secondary); font-family: var(--font-display); font-size: var(--text-body-md); }
 @media (min-width: 500px) {
   .dish-list { display: grid; grid-template-columns: 1fr 1fr; }

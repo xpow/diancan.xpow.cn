@@ -42,9 +42,7 @@ const restReason = ref('')
   const highlightDishId = ref('')
   const navFloating = ref(false)
   const navSentinel = ref<HTMLElement | null>(null)
-  const bottomSentinel = ref<HTMLElement | null>(null)
   let navObserver: IntersectionObserver | null = null
-  let bottomObserver: IntersectionObserver | null = null
   // 库存轮询间隔：下单/后台改库存后菜单页库存快速同步
   const STOCK_POLL_MS = 10_000
   let stockTimer: ReturnType<typeof setInterval> | null = null
@@ -210,7 +208,6 @@ const restReason = ref('')
   watch(loading, async (val) => {
     if (val) return
     await nextTick()
-    setupBottomObserver()
     const targetDishId = route.query.dishId as string
     if (!targetDishId) return
     const dish = dishes.value.find((d) => d.id === targetDishId)
@@ -230,29 +227,6 @@ const restReason = ref('')
     if (navSentinel.value) navObserver.observe(navSentinel.value)
   }
 
-  let autoAdvanceEnabled = true
-
-  function setupBottomObserver() {
-    bottomObserver = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting || !autoAdvanceEnabled) return
-        const curIdx = categories.value.findIndex(c => c.id === selectedCategoryId.value)
-        if (curIdx < categories.value.length - 1) {
-          autoAdvanceEnabled = false
-          selectedCategoryId.value = categories.value[curIdx + 1].id
-        }
-      },
-      { rootMargin: '200px' }
-    )
-    if (bottomSentinel.value) bottomObserver.observe(bottomSentinel.value)
-  }
-
-  watch(selectedCategoryId, async () => {
-    autoAdvanceEnabled = true
-    await nextTick()
-    setupBottomObserver()
-  })
-
   onMounted(() => {
     void loadData()
     setupNavObserver()
@@ -262,7 +236,6 @@ const restReason = ref('')
 
   onBeforeUnmount(() => {
     navObserver?.disconnect()
-    bottomObserver?.disconnect()
     if (stockTimer) { clearInterval(stockTimer); stockTimer = null }
     document.removeEventListener('visibilitychange', onVisibilityChange)
   })
@@ -272,7 +245,7 @@ const restReason = ref('')
     merchantName, branchName, deviceId, deviceCode, statusText, branchStatus, businessHours, restReason,
     displayTitle, heroImage, categoryIcons,
     categories, dishes, selectedCategoryId, filteredDishes,
-    highlightDishId, navFloating, navSentinel, bottomSentinel,
+    highlightDishId, navFloating, navSentinel,
     qtyGroupIndex, onCustomQty,
   }
 }
