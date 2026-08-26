@@ -58,6 +58,7 @@
           />
         </template>
         <p v-else class="empty-category">该分类暂无商品</p>
+        <div ref="bottomSentinel" class="bottom-sentinel"></div>
       </section>
     </div>
 
@@ -116,7 +117,7 @@ const {
   loading, errorMessage, merchantName, branchName,
   deviceId, deviceCode, statusText, branchStatus, displayTitle, heroImage,
   categoryIcons, categories, selectedCategoryId, filteredDishes,
-  highlightDishId, navFloating, navSentinel,
+  highlightDishId, navFloating, navSentinel, bottomSentinel,
   qtyGroupIndex, onCustomQty, dishes, businessHours, restReason,
 } = useMenu()
 
@@ -178,6 +179,7 @@ onMounted(() => {
 .category-nav { display: flex; justify-content: center; gap: 10px; width: auto; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: var(--spacing-md) var(--container-margin) 14px; position: sticky; top: 52px; z-index: 40; overflow-x: auto; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: box-shadow var(--transition-fast); }
 .category-nav.floating { box-shadow: 0 6px 18px rgba(87, 32, 0, 0.05); }
 .nav-sentinel { width: 1px; height: 1px; pointer-events: none; }
+.bottom-sentinel { width: 1px; height: 1px; pointer-events: none; }
 .category-pill { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: var(--surface); color: var(--on-surface-variant); font-family: var(--font-display); font-size: var(--text-body-md); font-weight: 600; cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; }
 .category-pill .material-icons { font-size: 18px !important; }
 .category-count { min-width: 20px; padding: 1px 7px; border-radius: var(--radius-full); background: var(--surface-variant); color: var(--on-surface-variant); font-size: var(--text-label-sm); font-weight: 700; text-align: center; }
