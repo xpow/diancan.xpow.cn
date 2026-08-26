@@ -245,6 +245,8 @@ onMounted(() => {
   .cat-expand-btn { display: none !important; }
   .cat-expand-wrap { display: contents !important; }
   .cat-expand-inner { display: contents !important; padding-top: 0; }
+  .category-nav-wrap { display: flex; justify-content: center; }
+  .category-nav { display: contents !important; }
 }
 @media (min-width: 1200px) {
   .dish-list { grid-template-columns: repeat(4, 1fr); }
