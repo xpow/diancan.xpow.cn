@@ -243,8 +243,8 @@ onMounted(() => {
   .category-pill { padding: 12px 24px; font-size: var(--text-label-lg); }
   .category-pill .material-icons { font-size: 20px !important; }
   .cat-expand-btn { display: none !important; }
-  .cat-expand-wrap { grid-template-rows: unset !important; }
-  .cat-expand-inner { padding-top: 0; gap: 12px; }
+  .cat-expand-wrap { display: contents !important; }
+  .cat-expand-inner { display: contents !important; padding-top: 0; }
 }
 @media (min-width: 1200px) {
   .dish-list { grid-template-columns: repeat(4, 1fr); }
