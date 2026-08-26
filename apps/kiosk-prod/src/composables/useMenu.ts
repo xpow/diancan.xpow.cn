@@ -209,11 +209,13 @@ const restReason = ref('')
 
   watch(loading, async (val) => {
     if (val) return
+    await nextTick()
+    setupBottomObserver()
     const targetDishId = route.query.dishId as string
     if (!targetDishId) return
     const dish = dishes.value.find((d) => d.id === targetDishId)
     if (!dish) return
-    await nextTick(); await nextTick()
+    await nextTick()
     highlightDishId.value = targetDishId
     const el = document.getElementById(`dish-${targetDishId}`)
     el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -245,14 +247,15 @@ const restReason = ref('')
     if (bottomSentinel.value) bottomObserver.observe(bottomSentinel.value)
   }
 
-  watch(selectedCategoryId, () => {
+  watch(selectedCategoryId, async () => {
     autoAdvanceEnabled = true
+    await nextTick()
+    setupBottomObserver()
   })
 
   onMounted(() => {
     void loadData()
     setupNavObserver()
-    setupBottomObserver()
     stockTimer = setInterval(() => { void refreshStocks() }, STOCK_POLL_MS)
     document.addEventListener('visibilitychange', onVisibilityChange)
   })
