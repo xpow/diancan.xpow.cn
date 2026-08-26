@@ -28,7 +28,7 @@
         <button
           v-for="category in categories" :key="category.id"
           :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
-          @click="scrollToCategory(category.id)"
+          @click="selectedCategoryId = category.id"
         >
           <span class="material-icons">{{ categoryIcons[category.name] || 'restaurant' }}</span>
           {{ category.name }}
@@ -46,15 +46,14 @@
       </section>
 
       <section v-else class="dish-list">
-        <template v-for="cat in categories" :key="cat.id">
-          <div :id="`cat-${cat.id}`" class="category-divider">
+        <template v-for="cat in visibleCategories" :key="cat.id">
+          <div v-if="cat.id !== selectedCategoryId" :id="`cat-${cat.id}`" class="category-divider">
             <span class="category-divider-bar"></span>
             <h3 class="category-divider-title">{{ cat.name }}</h3>
             <span class="category-divider-count">{{ categoryDishCount(cat.id) }}道</span>
           </div>
           <DishCard
-            v-for="dish in dishes.filter(d => d.categoryId === cat.id).sort((a, b) => { const aO = a.stockEnabled && (a.stock ?? 0) <= 0 ? 1 : 0; const bO = b.stockEnabled && (b.stock ?? 0) <= 0 ? 1 : 0; return aO - bO })"
-            :key="dish.id"
+            v-for="dish in catDishes(cat.id)" :key="dish.id"
             :dish="dish"
             :highlight="highlightDishId === dish.id"
             :in-cart="cartDishIds.has(dish.id)"
@@ -63,6 +62,7 @@
             @add="(dish, btn) => { addToCart(dish); nextTick(() => flyToCart(btn)) }"
           />
         </template>
+        <div ref="bottomSentinelEl" class="bottom-sentinel"></div>
       </section>
     </div>
 
@@ -159,33 +159,65 @@ function checkActiveOrder() {
 }
 
 function scrollToCategory(categoryId: string) {
-  catScrollClick = true
-  selectedCategoryId.value = categoryId
   const el = document.getElementById(`cat-${categoryId}`)
   el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  setTimeout(() => { catScrollClick = false }, 800)
+}
+
+const loadedCategoryIds = ref<Set<string>>(new Set())
+
+watch(selectedCategoryId, (val) => {
+  loadedCategoryIds.value = new Set([val])
+  bottomSentinelEl.value = null
+  nextTick(setupBottomObserver)
+})
+
+const visibleCategories = computed(() => {
+  return categories.value.filter(c => loadedCategoryIds.value.has(c.id))
+})
+
+function catDishes(categoryId: string) {
+  return dishes.value
+    .filter(d => d.categoryId === categoryId)
+    .sort((a, b) => {
+      const aO = a.stockEnabled && (a.stock ?? 0) <= 0 ? 1 : 0
+      const bO = b.stockEnabled && (b.stock ?? 0) <= 0 ? 1 : 0
+      return aO - bO
+    })
 }
 
 let catObserver: IntersectionObserver | null = null
 let catScrollClick = false
-function setupCategoryObserver() {
-  catObserver = new IntersectionObserver(
-    (entries) => {
-      if (catScrollClick) return
-      for (const entry of entries) {
-        if (entry.isIntersecting) {
-          const id = entry.target.id.replace('cat-', '')
-          selectedCategoryId.value = id
-        }
-      }
-    },
-    { rootMargin: '-100px 0px -60% 0px' }
-  )
-  for (const cat of categories.value) {
-    const el = document.getElementById(`cat-${cat.id}`)
-    if (el) catObserver.observe(el)
+
+const bottomSentinelEl = ref<HTMLElement | null>(null)
+let bottomObs: IntersectionObserver | null = null
+
+function loadNextCategory() {
+  const curIdx = categories.value.findIndex(c => c.id === selectedCategoryId.value)
+  const loaded = loadedCategoryIds.value
+  for (let i = curIdx + 1; i < categories.value.length; i++) {
+    if (!loaded.has(categories.value[i].id)) {
+      loaded.add(categories.value[i].id)
+      loadedCategoryIds.value = new Set(loaded)
+      return
+    }
   }
 }
+
+function setupBottomObserver() {
+  bottomObs?.disconnect()
+  if (!bottomSentinelEl.value) return
+  bottomObs = new IntersectionObserver(
+    ([entry]) => {
+      if (entry.isIntersecting) loadNextCategory()
+    },
+    { rootMargin: '200px' }
+  )
+  bottomObs.observe(bottomSentinelEl.value)
+}
+
+watch(bottomSentinelEl, (el) => {
+  if (el) setupBottomObserver()
+})
 
 watch(showCart, (val) => {
   if (val) debouncedFetchQuote()
@@ -195,10 +227,10 @@ onMounted(() => {
   hydrateCart()
   checkActiveOrder()
   watch(merchantName, (v) => { if (v) document.title = `菜单-${v}` }, { immediate: true })
-  watch(loading, (val) => { if (!val) nextTick(setupCategoryObserver) }, { immediate: true })
 })
 
 onBeforeUnmount(() => {
+  bottomObs?.disconnect()
   catObserver?.disconnect()
 })
 </script>
@@ -217,6 +249,7 @@ onBeforeUnmount(() => {
 .category-nav { display: flex; justify-content: center; gap: 10px; width: auto; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: var(--spacing-md) var(--container-margin) 14px; position: sticky; top: 52px; z-index: 40; overflow-x: auto; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: box-shadow var(--transition-fast); }
 .category-nav.floating { box-shadow: 0 6px 18px rgba(87, 32, 0, 0.05); }
 .nav-sentinel { width: 1px; height: 1px; pointer-events: none; }
+.bottom-sentinel { width: 1px; height: 1px; pointer-events: none; }
 .category-pill { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: var(--surface); color: var(--on-surface-variant); font-family: var(--font-display); font-size: var(--text-body-md); font-weight: 600; cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; }
 .category-pill .material-icons { font-size: 18px !important; }
 .category-count { min-width: 20px; padding: 1px 7px; border-radius: var(--radius-full); background: var(--surface-variant); color: var(--on-surface-variant); font-size: var(--text-label-sm); font-weight: 700; text-align: center; }
