@@ -672,7 +672,9 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
     let eligibleAmount = 0
     const excludedItems: string[] = []
     for (const item of itemDetails) {
-      if (!excludedDishIds.includes(item.dishId)) {
+      if (item.alliance) {
+        excludedItems.push(item.name)
+      } else if (!excludedDishIds.includes(item.dishId)) {
         eligibleAmount += item.finalSubtotal
       } else {
         excludedItems.push(item.name)
