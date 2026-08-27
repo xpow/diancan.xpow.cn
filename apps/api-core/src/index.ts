@@ -501,6 +501,7 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
   const totalDiscountPromos = activePromotions.filter((p) => p.type === 'total_discount')
   let totalDiscountApplied = false
   let activePromoWithExclusion: { name: string; excludedItems: string[] } | null = null
+  let hitPromoId: string | null = null
   for (const promo of totalDiscountPromos) {
     const rules = JSON.parse(promo.rules)
     const { discountType, discountValue, maxDiscount, minAmount, excludedDishIds } = rules
@@ -584,6 +585,7 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
           discount,
           description: `订单满 ¥${threshold} 自动减 ¥${discount}`,
         })
+        hitPromoId = promo.id
         break
       }
     }
@@ -666,6 +668,7 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
     ...totalDiscountPromos.map((p) => ({ promo: p, threshold: JSON.parse(p.rules).minAmount ?? 0 })),
   ].sort((a, b) => a.threshold - b.threshold)
   for (const { promo } of allThresholdPromos) {
+    if (promo.id === hitPromoId) continue
     const rules = JSON.parse(promo.rules)
     const threshold = promo.type === 'full_reduction' ? (rules.threshold ?? 0) : (rules.minAmount ?? 0)
     const excludedDishIds = rules.excludedDishIds ?? []
