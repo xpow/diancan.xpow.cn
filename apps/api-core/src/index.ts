@@ -500,7 +500,6 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
   // 总价折扣（优先级最高，命中后不再执行满减）
   const totalDiscountPromos = activePromotions.filter((p) => p.type === 'total_discount')
   let totalDiscountApplied = false
-  let activePromoWithExclusion: { name: string; excludedItems: string[] } | null = null
   let hitPromoId: string | null = null
   for (const promo of totalDiscountPromos) {
     const rules = JSON.parse(promo.rules)
@@ -532,9 +531,6 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
     if (discount > 0) {
       payableAmount -= discount
       totalDiscountApplied = true
-      if (excludedItems.length > 0) {
-        activePromoWithExclusion = { name: promo.name, excludedItems }
-      }
       const typeText = discountType === 'percentage' ? `${discountValue}%` : `¥${discountValue}`
       const maxText = maxDiscount ? `(最高减¥${maxDiscount})` : ''
       appliedPromotions.push({
@@ -549,6 +545,7 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
 
   // 满减（仅当总价折扣未命中时执行，多档满减只取最高一档）
   const allianceItemNames = [...new Set(itemDetails.filter((i) => i.alliance).map((i) => i.name))]
+  let hitThreshold = 0
   if (!totalDiscountApplied) {
     const sortedFullReduction = (fullReductionPromos as any[])
       .sort((a, b) => (JSON.parse(b.rules).threshold ?? 0) - (JSON.parse(a.rules).threshold ?? 0))
@@ -559,13 +556,11 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
       const excludedDishIds = rules.excludedDishIds ?? []
 
       let eligibleAmount = 0
-      const excludedItems: string[] = []
-      const allianceExcluded: string[] = []
+      const manualExcluded: string[] = []
       for (const item of itemDetails) {
-        if (item.alliance) {
-          allianceExcluded.push(item.name)
-        } else if (excludedDishIds.includes(item.dishId)) {
-          excludedItems.push(item.name)
+        if (item.alliance) continue
+        if (excludedDishIds.includes(item.dishId)) {
+          manualExcluded.push(item.name)
         } else {
           eligibleAmount += item.finalSubtotal
         }
@@ -573,9 +568,7 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
 
       if (eligibleAmount >= threshold && discount > 0) {
         payableAmount -= discount
-        if (excludedItems.length > 0) {
-          activePromoWithExclusion = { name: promo.name, excludedItems }
-        }
+        hitThreshold = threshold
         appliedPromotions.push({
           id: promo.id,
           name: promo.name,
@@ -589,8 +582,58 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
     }
   }
 
-  if (allianceItemNames.length > 0 && fullReductionPromos.length > 0) {
-    hints.push(`${allianceItemNames.join('、')} 不参与满减。`)
+  // 满减提示：统一生成
+  if (fullReductionPromos.length > 0 && !totalDiscountApplied) {
+    const allExcluded = [...allianceItemNames]
+    // 收集所有手动排除的商品名（取最低档的规则）
+    const lowestFullReduction = fullReductionPromos.sort((a: any, b: any) => (JSON.parse(a.rules).threshold ?? 0) - (JSON.parse(b.rules).threshold ?? 0))[0]
+    if (lowestFullReduction) {
+      const manualIds: string[] = JSON.parse(lowestFullReduction.rules).excludedDishIds ?? []
+      const manualNames = [...new Set(itemDetails.filter((i) => !i.alliance && manualIds.includes(i.dishId)).map((i) => i.name))]
+      allExcluded.push(...manualNames)
+    }
+    if (allExcluded.length > 0) {
+      hints.push(`${[...new Set(allExcluded)].join('、')} 不参与满减。`)
+    }
+
+    // 再点提示
+    if (hitThreshold === 0) {
+      // 未命中任何档位，找最低档提示差额
+      const lowest = fullReductionPromos.sort((a: any, b: any) => (JSON.parse(a.rules).threshold ?? 0) - (JSON.parse(b.rules).threshold ?? 0))[0]
+      if (lowest) {
+        const rules = JSON.parse(lowest.rules)
+        const threshold = rules.threshold ?? 0
+        const manualIds: string[] = rules.excludedDishIds ?? []
+        let eligibleAmount = 0
+        for (const item of itemDetails) {
+          if (item.alliance || manualIds.includes(item.dishId)) continue
+          eligibleAmount += item.finalSubtotal
+        }
+        if (eligibleAmount > 0 && eligibleAmount < threshold) {
+          hints.push(`再点 ¥${(threshold - eligibleAmount).toFixed(2)} 可享${lowest.name}。`)
+        } else if (eligibleAmount === 0) {
+          hints.push(`再点 ¥${threshold.toFixed(2)} 可享${lowest.name}。`)
+        }
+      }
+    } else {
+      // 已命中，找下一档提示
+      const nextPromo = fullReductionPromos
+        .sort((a: any, b: any) => (JSON.parse(a.rules).threshold ?? 0) - (JSON.parse(b.rules).threshold ?? 0))
+        .find((p: any) => (JSON.parse(p.rules).threshold ?? 0) > hitThreshold)
+      if (nextPromo) {
+        const rules = JSON.parse(nextPromo.rules)
+        const threshold = rules.threshold ?? 0
+        const manualIds: string[] = rules.excludedDishIds ?? []
+        let eligibleAmount = 0
+        for (const item of itemDetails) {
+          if (item.alliance || manualIds.includes(item.dishId)) continue
+          eligibleAmount += item.finalSubtotal
+        }
+        if (eligibleAmount < threshold) {
+          hints.push(`再点 ¥${(threshold - eligibleAmount).toFixed(2)} 可享${nextPromo.name}。`)
+        }
+      }
+    }
   }
 
   // ==== 买赠（满X件送Y）====
@@ -659,43 +702,19 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
     })
   }
 
-  // 生成提示文案：已命中的活动有排除 → 显示排除提示；再找第一个未满足的档位显示"再点..."
-  // 排除提示：当前已满足档位中有排除的商品
-  if (activePromoWithExclusion) {
-    hints.push(`${[...new Set(activePromoWithExclusion.excludedItems)].join('、')} 不参与满减。`)
-  }
-  // 下一档提示：找第一个未满足的活动
-  const allThresholdPromos = [
-    ...fullReductionPromos.map((p) => ({ promo: p, threshold: JSON.parse(p.rules).threshold ?? 0 })),
-    ...totalDiscountPromos.map((p) => ({ promo: p, threshold: JSON.parse(p.rules).minAmount ?? 0 })),
-  ].sort((a, b) => a.threshold - b.threshold)
-  for (const { promo } of allThresholdPromos) {
-    if (promo.id === hitPromoId) continue
-    const rules = JSON.parse(promo.rules)
-    const threshold = promo.type === 'full_reduction' ? (rules.threshold ?? 0) : (rules.minAmount ?? 0)
-    const excludedDishIds = rules.excludedDishIds ?? []
-    let eligibleAmount = 0
-    const excludedItems: string[] = []
-    for (const item of itemDetails) {
-      if (item.alliance) {
-        excludedItems.push(item.name)
-      } else if (!excludedDishIds.includes(item.dishId)) {
-        eligibleAmount += item.finalSubtotal
-      } else {
-        excludedItems.push(item.name)
-      }
-    }
-    if (eligibleAmount < threshold) {
-      if (eligibleAmount > 0) {
-        const diff = Number((threshold - eligibleAmount).toFixed(2))
-        hints.push(`再点 ¥${diff.toFixed(2)} 可享${promo.name}。`)
-      } else if (excludedItems.length > 0) {
-        hints.push(`${[...new Set(excludedItems)].join('、')} 不参与满减。`)
-        if (threshold > 0) {
-          hints.push(`再点 ¥${threshold.toFixed(2)} 可享${promo.name}。`)
+  // 总价折扣下一档提示
+  if (totalDiscountPromos.length > 0) {
+    const sortedTD = totalDiscountPromos
+      .sort((a: any, b: any) => (JSON.parse(a.rules).minAmount ?? 0) - (JSON.parse(b.rules).minAmount ?? 0))
+    for (const promo of sortedTD) {
+      const rules = JSON.parse(promo.rules)
+      const threshold = rules.minAmount ?? 0
+      if (originalAmount < threshold) {
+        if (originalAmount > 0) {
+          hints.push(`再点 ¥${(threshold - originalAmount).toFixed(2)} 可享${promo.name}。`)
         }
+        break
       }
-      break
     }
   }
 
