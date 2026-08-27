@@ -558,10 +558,12 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
 
       let eligibleAmount = 0
       const excludedItems: string[] = []
+      const allianceExcluded: string[] = []
       for (const item of itemDetails) {
-        if (item.alliance || excludedDishIds.includes(item.dishId)) {
-          if (item.alliance) excludedItems.push(`${item.name}(联盟)`)
-          else excludedItems.push(item.name)
+        if (item.alliance) {
+          allianceExcluded.push(item.name)
+        } else if (excludedDishIds.includes(item.dishId)) {
+          excludedItems.push(item.name)
         } else {
           eligibleAmount += item.finalSubtotal
         }
@@ -571,6 +573,9 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
         payableAmount -= discount
         if (excludedItems.length > 0) {
           activePromoWithExclusion = { name: promo.name, excludedItems }
+        }
+        if (allianceExcluded.length > 0) {
+          hints.push(`「${allianceExcluded.join('、')}」为联盟商品，不参与满减活动。`)
         }
         appliedPromotions.push({
           id: promo.id,
