@@ -590,7 +590,8 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
   }
 
   if (allianceItemNames.length > 0 && fullReductionPromos.length > 0) {
-    hints.push(`「${allianceItemNames.join('、')}」不参与满减活动。`)
+    const lowestPromo = fullReductionPromos.sort((a: any, b: any) => (JSON.parse(a.rules).threshold ?? 0) - (JSON.parse(b.rules).threshold ?? 0))[0]
+    hints.push(`${allianceItemNames.join('、')} 不参与${lowestPromo.name}。`)
   }
 
   // ==== 买赠（满X件送Y）====
