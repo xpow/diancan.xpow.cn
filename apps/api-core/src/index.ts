@@ -590,8 +590,7 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
   }
 
   if (allianceItemNames.length > 0 && fullReductionPromos.length > 0) {
-    const lowestPromo = fullReductionPromos.sort((a: any, b: any) => (JSON.parse(a.rules).threshold ?? 0) - (JSON.parse(b.rules).threshold ?? 0))[0]
-    hints.push(`${allianceItemNames.join('、')} 不参与${lowestPromo.name}。`)
+    hints.push(`${allianceItemNames.join('、')} 不参与满减。`)
   }
 
   // ==== 买赠（满X件送Y）====
@@ -663,7 +662,7 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
   // 生成提示文案：已命中的活动有排除 → 显示排除提示；再找第一个未满足的档位显示"再点..."
   // 排除提示：当前已满足档位中有排除的商品
   if (activePromoWithExclusion) {
-    hints.push(`${[...new Set(activePromoWithExclusion.excludedItems)].join('、')} 不参与${activePromoWithExclusion.name}。`)
+    hints.push(`${[...new Set(activePromoWithExclusion.excludedItems)].join('、')} 不参与满减。`)
   }
   // 下一档提示：找第一个未满足的活动
   const allThresholdPromos = [
@@ -691,7 +690,7 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
         const diff = Number((threshold - eligibleAmount).toFixed(2))
         hints.push(`再点 ¥${diff.toFixed(2)} 可享${promo.name}。`)
       } else if (excludedItems.length > 0) {
-        hints.push(`${[...new Set(excludedItems)].join('、')} 不参与${promo.name}。`)
+        hints.push(`${[...new Set(excludedItems)].join('、')} 不参与满减。`)
         if (threshold > 0) {
           hints.push(`再点 ¥${threshold.toFixed(2)} 可享${promo.name}。`)
         }
