@@ -548,6 +548,7 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
   }
 
   // 满减（仅当总价折扣未命中时执行，多档满减只取最高一档）
+  const allianceItemNames = [...new Set(itemDetails.filter((i) => i.alliance).map((i) => i.name))]
   if (!totalDiscountApplied) {
     const sortedFullReduction = (fullReductionPromos as any[])
       .sort((a, b) => (JSON.parse(b.rules).threshold ?? 0) - (JSON.parse(a.rules).threshold ?? 0))
@@ -575,9 +576,6 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
         if (excludedItems.length > 0) {
           activePromoWithExclusion = { name: promo.name, excludedItems }
         }
-        if (allianceExcluded.length > 0) {
-          hints.push(`「${allianceExcluded.join('、')}」不参与满减活动。`)
-        }
         appliedPromotions.push({
           id: promo.id,
           name: promo.name,
@@ -589,6 +587,10 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
         break
       }
     }
+  }
+
+  if (allianceItemNames.length > 0 && fullReductionPromos.length > 0) {
+    hints.push(`「${allianceItemNames.join('、')}」不参与满减活动。`)
   }
 
   // ==== 买赠（满X件送Y）====
@@ -684,22 +686,11 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
       }
     }
     if (eligibleAmount < threshold) {
-      const allianceInExcluded = excludedItems.filter((name) =>
-        itemDetails.some((d) => d.name === name && d.alliance),
-      )
-      const nonAllianceExcluded = [...new Set(excludedItems)].filter((name) =>
-        !itemDetails.some((d) => d.name === name && d.alliance),
-      )
-      if (allianceInExcluded.length > 0) {
-        hints.push(`「${allianceInExcluded.join('、')}」不参与${promo.name}。`)
-      }
-      if (nonAllianceExcluded.length > 0) {
-        hints.push(`${nonAllianceExcluded.join('、')} 不参与${promo.name}。`)
-      }
       if (eligibleAmount > 0) {
         const diff = Number((threshold - eligibleAmount).toFixed(2))
         hints.push(`再点 ¥${diff.toFixed(2)} 可享${promo.name}。`)
-      } else if (excludedItems.length > 0 && allianceInExcluded.length === 0) {
+      } else if (excludedItems.length > 0) {
+        hints.push(`${[...new Set(excludedItems)].join('、')} 不参与${promo.name}。`)
         if (threshold > 0) {
           hints.push(`再点 ¥${threshold.toFixed(2)} 可享${promo.name}。`)
         }
