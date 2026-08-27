@@ -681,6 +681,12 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
       }
     }
     if (eligibleAmount < threshold) {
+      const allianceInExcluded = excludedItems.filter((name) =>
+        itemDetails.some((d) => d.name === name && d.alliance),
+      )
+      if (allianceInExcluded.length > 0) {
+        hints.push(`「${allianceInExcluded.join('、')}」不参与${promo.name}。`)
+      }
       if (eligibleAmount > 0) {
         const diff = Number((threshold - eligibleAmount).toFixed(2))
         hints.push(`再点 ¥${diff.toFixed(2)} 可享${promo.name}。`)
