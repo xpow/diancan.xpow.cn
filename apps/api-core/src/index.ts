@@ -575,7 +575,7 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
           activePromoWithExclusion = { name: promo.name, excludedItems }
         }
         if (allianceExcluded.length > 0) {
-          hints.push(`「${allianceExcluded.join('、')}」为联盟商品，不参与满减活动。`)
+          hints.push(`「${allianceExcluded.join('、')}」不参与满减活动。`)
         }
         appliedPromotions.push({
           id: promo.id,
