@@ -8,6 +8,7 @@
       <nav>
         <router-link to="/dashboard" class="nav-link"><span class="nav-icon">📊</span> 总览</router-link>
         <router-link to="/orders" class="nav-link"><span class="nav-icon">📋</span> 订单管理</router-link>
+        <router-link to="/kitchen" class="nav-link"><span class="nav-icon">🔥</span> 出餐管理</router-link>
         <router-link to="/menu" class="nav-link"><span class="nav-icon">🍽️</span> 菜单管理</router-link>
         <router-link to="/promotions" class="nav-link"><span class="nav-icon">🏷️</span> 营销活动</router-link>
         <router-link to="/merchant" class="nav-link"><span class="nav-icon">⚙️</span> 商家设置</router-link>
