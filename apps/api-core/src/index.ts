@@ -436,7 +436,7 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
       }
     }
 
-    // 限时折扣
+    // 限时折扣（以菜品原始价 dish.price 为基准，忽略前端已折扣的 unitPrice）
     if (!promotionLabel) {
       const timeDiscountPromo = timeDiscountPromos.find((p) =>
         p.items.some((pi) => pi.dishId === item.dishId),
@@ -445,11 +445,12 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
         const promoItem = timeDiscountPromo.items.find((pi) => pi.dishId === item.dishId)
         const rules = JSON.parse(timeDiscountPromo.rules)
         const discountRate = rules.discountRate ?? 1
-        const discountedPrice = Math.round(basePrice * discountRate * 100) / 100
+        const originalPrice = dish.price
+        const discountedPrice = Math.round(originalPrice * discountRate * 100) / 100
         if (discountRate < 1) {
           finalUnitPrice = discountedPrice
           finalSubtotal = discountedPrice * item.quantity / portionFactor
-          const perItem = basePrice - discountedPrice
+          const perItem = originalPrice - discountedPrice
           const discount = Number((perItem * item.quantity / portionFactor).toFixed(2))
           if (discount > 0) {
             appliedPromotions.push({
@@ -457,7 +458,7 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
               name: timeDiscountPromo.name,
               type: 'time_discount',
               discount,
-              description: `${timeDiscountPromo.name}，${basePrice.toFixed(2)} → ${discountedPrice.toFixed(2)}`,
+              description: `${timeDiscountPromo.name}，${originalPrice.toFixed(2)} → ${discountedPrice.toFixed(2)}`,
             })
             promotionLabel = timeDiscountPromo.name
           }
