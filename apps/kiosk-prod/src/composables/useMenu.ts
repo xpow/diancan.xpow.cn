@@ -24,6 +24,7 @@ const categoryIcons: Record<string, string> = {
   '素菜': 'eco',
   '饮品': 'local_bar',
   '果茶': 'local_drink',
+  '龙虾大王': '🦞',
 }
 
 export function useMenu() {
