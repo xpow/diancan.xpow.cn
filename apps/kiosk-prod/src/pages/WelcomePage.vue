@@ -86,12 +86,17 @@
                 <span class="material-icons">block</span><span>今日已售罄</span>
               </div>
               <span v-else-if="dish.stockEnabled && (dish.stock ?? 0) > 0" class="grid-stock-badge">剩余 {{ dish.stock }} 串</span>
-              <div class="menu-grid-info">
-                <h4 class="menu-grid-name">{{ dish.name }}</h4>
-                <p class="menu-grid-desc">{{ dish.desc }}</p>
+              <div class="menu-grid-thumb">
+                <img :src="getDishImage(dish.id)" :alt="dish.name" loading="lazy" />
               </div>
-              <div class="menu-grid-bottom">
-                <span class="menu-grid-price">¥{{ dish.price.toFixed(2) }}<span v-if="dish.portionSize" class="menu-grid-portion"> / {{ dish.portionSize }}串</span></span>
+              <div class="menu-grid-half">
+                <div class="menu-grid-info">
+                  <h4 class="menu-grid-name">{{ dish.name }}</h4>
+                  <p class="menu-grid-desc">{{ dish.desc }}</p>
+                </div>
+                <div class="menu-grid-bottom">
+                  <span class="menu-grid-price">¥{{ dish.price.toFixed(2) }}<span v-if="dish.portionSize" class="menu-grid-portion"> / {{ dish.portionSize }}串</span></span>
+                </div>
               </div>
             </div>
           </div>
@@ -715,6 +720,9 @@ onMounted(async () => {
 }
 .menu-grid-card:active { transform: scale(0.97); transition: transform 0.1s; }
 .menu-grid-card::after { content: 'restaurant'; font-family: 'Material Symbols Outlined'; position: absolute; bottom: -8px; right: -8px; font-size: 56px; color: var(--outline-variant); opacity: 0.4; transform: rotate(12deg); pointer-events: none; }
+.menu-grid-thumb { width: 100%; height: 120px; border-radius: var(--radius-lg); overflow: hidden; background: var(--surface-container); margin-bottom: var(--spacing-md); }
+.menu-grid-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.menu-grid-half { display: flex; flex-direction: column; justify-content: space-between; flex: 1; min-width: 0; }
 .grid-sold-out { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: rgba(0,0,0,0.5); color: #fff; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; z-index: 2; border-radius: var(--radius-xl); }
 .grid-sold-out .material-icons { font-size: 28px !important; }
 .grid-stock-badge { position: absolute; bottom: 8px; right: 8px; padding: 1px 8px; border-radius: var(--radius-full); background: rgb(255 124 0 / 89%); color: #fff; font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 700; line-height: 1.5; pointer-events: none; z-index: 2; }
