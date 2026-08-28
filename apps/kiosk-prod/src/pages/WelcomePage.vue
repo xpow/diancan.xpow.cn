@@ -685,7 +685,8 @@ onMounted(async () => {
 .tag-hot { background: #ff3d00; }
 .tag-new { background: var(--primary-container); }
 
-.featured-thumb { position: relative; width: 112px; height: 112px; flex-shrink: 0; overflow: hidden; border-radius: var(--radius-lg); }
+.featured-thumb { position: relative; width: 112px; height: 112px; flex-shrink: 0; overflow: hidden; border-radius: var(--radius-lg) calc(var(--radius-xl) - 1px) calc(var(--radius-xl) - 1px) var(--radius-lg); }
+.featured-card-reversed .featured-thumb { border-radius: calc(var(--radius-xl) - 1px) var(--radius-lg) var(--radius-lg) calc(var(--radius-xl) - 1px); }
 .featured-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .featured-sold-out { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: rgba(0,0,0,0.5); color: #fff; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; z-index: 2; border-radius: var(--radius-lg); }
 .featured-sold-out .material-icons { font-size: 30px !important; }
