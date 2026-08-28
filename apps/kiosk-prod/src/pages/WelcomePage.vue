@@ -680,6 +680,7 @@ onMounted(async () => {
 .featured-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: var(--spacing-md); min-width: 0; }
 .featured-top { display: flex; flex-direction: column; gap: 2px; }
 .featured-title-row { display: flex; align-items: center; gap: var(--spacing-xs); }
+.featured-desc { margin: var(--spacing-xs) 0 0; font-family: var(--font-body); font-size: var(--text-body-md); color: var(--on-surface-variant); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .featured-name { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: var(--on-surface); line-height: 1.3; }
 .featured-tag {
   display: inline-flex; align-self: flex-start;
