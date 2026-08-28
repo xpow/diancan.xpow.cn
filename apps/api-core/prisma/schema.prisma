@@ -156,6 +156,7 @@ model Category {
   branchId String
   name     String
   sort     Int    @default(0)
+  showStatusLight Boolean @default(false)
 
   branch Branch @relation(fields: [branchId], references: [id])
   dishes Dish[]

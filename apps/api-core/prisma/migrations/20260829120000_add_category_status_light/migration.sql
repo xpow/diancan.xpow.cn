@@ -1,0 +1,1 @@
+﻿ALTER TABLE "Category" ADD COLUMN "showStatusLight" BOOLEAN NOT NULL DEFAULT false;

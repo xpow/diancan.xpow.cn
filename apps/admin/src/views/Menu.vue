@@ -88,6 +88,13 @@
       <DataTable :value="categories" striped-rows>
         <Column field="name" header="名称" />
         <Column field="sort" header="排序" />
+        <Column header="状态灯" style="width:110px">
+          <template #body="{ data }">
+            <div class="ctl-switch">
+              <ToggleSwitch :modelValue="!!data.showStatusLight" binary @change="toggleCategoryLight(data)" />
+            </div>
+          </template>
+        </Column>
         <Column header="操作" style="width:160px">
           <template #body="{ data }">
             <Button icon="pi pi-pencil" label="编辑" severity="info" text size="small" @click="openCategoryDialog(data)" />
@@ -195,6 +202,13 @@
         <label>排序</label>
         <InputNumber v-model="catForm.sort" :min="0" class="w-full" />
       </div>
+      <div class="option-group ctl-group">
+        <span class="option-label">启用状态灯</span>
+        <span class="ctl-switch">
+          <ToggleSwitch v-model="catForm.showStatusLight" />
+        </span>
+      </div>
+      <p class="option-hint ctl-hint">启用后该分类菜品在取餐页显示制作/待取餐状态灯</p>
       <template #footer>
         <Button label="取消" severity="secondary" @click="showCategory = false" />
         <Button label="保存" @click="saveCategory" />
@@ -423,21 +437,21 @@ function downloadMenuImage() {
 /* Category */
 const showCategory = ref(false)
 const editingCategory = ref<any>(null)
-const catForm = ref({ name: '', sort: 0 })
+const catForm = ref({ name: '', sort: 0, showStatusLight: false })
 
 function openCategoryDialog(cat?: any) {
   if (cat) {
     editingCategory.value = cat
-    catForm.value = { name: cat.name, sort: cat.sort }
+    catForm.value = { name: cat.name, sort: cat.sort, showStatusLight: !!cat.showStatusLight }
   } else {
     editingCategory.value = null
-    catForm.value = { name: '', sort: 0 }
+    catForm.value = { name: '', sort: 0, showStatusLight: false }
   }
   showCategory.value = true
 }
 
 async function saveCategory() {
-  const body = { name: catForm.value.name, sort: catForm.value.sort }
+  const body = { name: catForm.value.name, sort: catForm.value.sort, showStatusLight: catForm.value.showStatusLight }
   const catId = editingCategory.value?.id ?? null
   const url = catId ? `/api/admin/categories/${catId}` : '/api/admin/categories'
   await fetch(url, {
@@ -446,6 +460,15 @@ async function saveCategory() {
     body: JSON.stringify(body),
   })
   showCategory.value = false
+  fetchCategories()
+}
+
+async function toggleCategoryLight(cat: any) {
+  await fetch(`/api/admin/categories/${cat.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ showStatusLight: !cat.showStatusLight }),
+  })
   fetchCategories()
 }
 
@@ -606,6 +629,13 @@ onMounted(() => {
 .option-group { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 .option-label { font-size: 13px; font-weight: 600; color: var(--text-color); white-space: nowrap; }
 .option-hint { font-size: 12px; color: var(--text-color-secondary); white-space: nowrap; }
+.ctl-switch { display: inline-flex; align-items: center; }
+.ctl-group { margin-bottom: 4px; }
+.ctl-hint { margin: 0 0 12px; white-space: normal; line-height: 1.5; }
+.ctl-switch :deep(.p-switch.p-switch-checked) {
+  --p-switch-checked-background: #22c55e;
+  --p-switch-checked-border-color: #22c55e;
+}
 .spec-price-input { width: 80px; }
 .spec-price-input:deep(.p-inputtext) { width: 80px; text-align: center; }
 </style>

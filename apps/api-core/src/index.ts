@@ -1039,6 +1039,13 @@ app.get('/api/orders', generalLimiter, authMiddleware, async (req, res) => {
     take: 50,
   })
 
+  let cache = loadGlobalCache()
+  if (!cache) {
+    try { cache = await buildGlobalCache() } catch { /* ignore */ }
+  }
+  const catLight = new Map((cache?.categories ?? []).map((c: any) => [c.id, !!c.showStatusLight]))
+  const dishCat = new Map((cache?.dishes ?? []).map((d: any) => [d.id, d.categoryId]))
+
   res.json({
     items: orders.map((o) => ({
       id: o.id,
@@ -1067,6 +1074,7 @@ app.get('/api/orders', generalLimiter, authMiddleware, async (req, res) => {
         promotionLabel: i.promotionLabel || undefined,
         status: i.status,
         portionSize: i.portionSize || undefined,
+        statusLight: catLight.get(dishCat.get(i.dishId) ?? '') ?? false,
       })),
       createdAt: o.createdAt.toISOString(),
       paidAt: o.paidAt?.toISOString() || undefined,

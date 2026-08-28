@@ -86,9 +86,11 @@
                           <div class="ticket-item-img">
                             <img :src="dishImage(item2)" :alt="item2.name" class="ticket-item-img-el" />
                           </div>
+                          <span v-if="itemStatusLabel(item2.status) && item2.statusLight" class="item-status-light" :class="'item-status-light-' + item2.status"></span>
                           <div>
                             <p class="ticket-item-name">{{ item2.name }}<template v-if="item2.portionSize && (item2.finalUnitPrice ?? item2.unitPrice) > 0"> <span class="ticket-item-unit">（¥{{ (item2.finalUnitPrice ?? item2.unitPrice).toFixed(2) }}/{{ item2.portionSize }}串）</span></template><template v-else-if="(item2.finalUnitPrice ?? item2.unitPrice) === 0"> <span class="ticket-item-unit tag-gift">赠品</span></template></p>
                             <p v-if="item2.specs" class="ticket-item-spec">{{ item2.specs }}</p>
+                            
                           </div>
                         </div>
                         <div class="ticket-item-right">
@@ -186,9 +188,11 @@
                   <div class="ticket-item-img">
                     <img :src="dishImage(item2)" :alt="item2.name" class="ticket-item-img-el" />
                   </div>
+                  <span v-if="itemStatusLabel(item2.status) && item2.statusLight" class="item-status-light" :class="'item-status-light-' + item2.status"></span>
                   <div>
                     <p class="ticket-item-name">{{ item2.name }}<template v-if="item2.portionSize && (item2.finalUnitPrice ?? item2.unitPrice) > 0"> <span class="ticket-item-unit">（¥{{ (item2.finalUnitPrice ?? item2.unitPrice).toFixed(2) }}/{{ item2.portionSize }}串）</span></template><template v-else-if="(item2.finalUnitPrice ?? item2.unitPrice) === 0"> <span class="ticket-item-unit tag-gift">赠品</span></template></p>
                     <p v-if="item2.specs" class="ticket-item-spec">{{ item2.specs }}</p>
+                            
                   </div>
                 </div>
                 <div class="ticket-item-right">
@@ -387,6 +391,8 @@ interface OrderItem {
   finalSubtotal: number
   specs?: string
   promotionLabel?: string
+  status?: string
+  statusLight?: boolean
 }
 
 interface OrderTotals {
@@ -517,11 +523,15 @@ const tabs = [
 ]
 
 const filteredOrders = computed(() => {
-  if (tab.value === 'active') return orders.value.filter((o) => o.status === 'unpaid' || o.status === 'paid' || o.status === 'preparing' || (o.status === 'completed' && !o.paidAt))
+  if (tab.value === 'active') return orders.value
   if (tab.value === 'unpaid') return orders.value.filter((o) => !o.paidAt)
-  if (tab.value === 'ready') return orders.value.filter((o) => o.status === 'ready' || (o.status === 'completed' && !o.paidAt))
+  if (tab.value === 'ready') return orders.value.filter((o) => hasReadyItem(o))
   return []
 })
+
+function hasReadyItem(order: OrderSummary) {
+  return (order.items ?? []).some((i) => i.status === 'ready')
+}
 
 interface DisplayItem {
   type: 'single' | 'group'
@@ -601,9 +611,9 @@ const tabLabel = computed(() => {
 })
 
 function badgeCount(key: string) {
-  if (key === 'active') return orders.value.filter((o) => o.status === 'unpaid' || o.status === 'paid' || o.status === 'preparing' || (o.status === 'completed' && !o.paidAt)).length || ''
+  if (key === 'active') return orders.value.length || ''
   if (key === 'unpaid') return orders.value.filter((o) => !o.paidAt).length || ''
-  if (key === 'ready') return orders.value.filter((o) => o.status === 'ready' || (o.status === 'completed' && !o.paidAt)).length || ''
+  if (key === 'ready') return orders.value.filter((o) => hasReadyItem(o)).length || ''
   return ''
 }
 
@@ -616,6 +626,16 @@ function statusLabel(s: string) {
     completed: '已完成',
   }
   return m[s] || s
+}
+
+function itemStatusLabel(s: string) {
+  const m: Record<string, string> = {
+    pending: '待制作',
+    preparing: '制作中',
+    ready: '待取餐',
+    completed: '已完成',
+  }
+  return m[s] || ''
 }
 
 function formatTime(ts: string) {
@@ -981,9 +1001,16 @@ onUnmounted(() => {
 .ticket-time { font-size: var(--text-label-sm); font-weight: 600; color: var(--secondary); background: var(--surface-container); padding: 4px 8px; border-radius: var(--radius-default); letter-spacing: 0.02em; }
 
 .ticket-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 0; }
-.ticket-item-left { display: flex; gap: var(--spacing-sm); }
-.ticket-item-img { width: 48px; height: 48px; border-radius: var(--radius-lg); overflow: hidden; flex-shrink: 0; background: var(--surface-container); }
-.ticket-item-img-el { width: 100%; height: 100%; object-fit: cover; }
+.ticket-item-left { position: relative; display: flex; gap: var(--spacing-sm); }
+.ticket-item-img { width: 48px; height: 48px; border-radius: var(--radius-lg); overflow: hidden; flex-shrink: 0; background: var(--surface-container); position: relative; }
+  .ticket-item-img-el { width: 100%; height: 100%; object-fit: cover; }
+  .item-status-light { position: absolute; top: -6px; left: -6px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--surface) 85%, transparent); box-shadow: 0 0 0 1px rgba(0,0,0,.12), 0 1px 3px rgba(0,0,0,.35); }
+  .item-status-light-pending { background: #9e9e9e; animation: itemLightPulseGray 2s ease-in-out infinite; }
+  .item-status-light-preparing { background: #f5b400; animation: itemLightPulseYellow 1.2s ease-in-out infinite; }
+  .item-status-light-ready { background: #22c55e; animation: itemLightPulseGreen 1.2s ease-in-out infinite; }
+  @keyframes itemLightPulseGray { 0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(158,158,158,0); } 50% { opacity: .6; box-shadow: 0 0 8px 3px rgba(158,158,158,.45); } }
+  @keyframes itemLightPulseYellow { 0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(245,180,0,0); } 50% { opacity: .7; box-shadow: 0 0 10px 4px rgba(245,180,0,.55); } }
+  @keyframes itemLightPulseGreen { 0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0); } 50% { opacity: .7; box-shadow: 0 0 10px 4px rgba(34,197,94,.55); } }
 .ticket-item-name { font-family: var(--font-display); font-size: var(--text-body-lg); font-weight: 600; line-height: 24px; margin: 0; color: var(--on-surface); }
 .ticket-item-spec { font-size: var(--text-label-sm); font-weight: 600; color: var(--secondary); margin: 2px 0 0; }
 .ticket-item-right { text-align: right; }

@@ -66,6 +66,7 @@
             <div class="item-name">{{ item.name }}</div>
             <div class="item-tags">
               <span class="tag-qty">x{{ item.quantity }}</span>
+              <span v-if="isGift(item)" class="tag-gift">赠品</span>
               <span v-if="item.specs" class="tag-specs">{{ item.specs }}</span>
             </div>
           </div>
@@ -151,6 +152,12 @@ interface OrderItem {
   quantity: number
   specs?: string
   status: string
+  finalUnitPrice?: number
+  promotionLabel?: string
+}
+
+function isGift(item: OrderItem): boolean {
+  return item.finalUnitPrice === 0 || (item.promotionLabel || '').includes('赠品')
 }
 
 interface Order {
@@ -205,7 +212,8 @@ document.addEventListener('visibilitychange', () => {
 const allItems = computed(() => orders.value.flatMap((o) => o.items))
 
 const visibleItems = computed(() => {
-  if (isAdmin.value || !terminal.value.categoryIds.length) return allItems.value
+  if (isAdmin.value) return allItems.value
+  if (!terminal.value.categoryIds.length) return []
   return allItems.value.filter((item) => terminal.value.categoryIds.includes(item.categoryId ?? ''))
 })
 
@@ -227,7 +235,10 @@ const filtered = computed(() => {
   for (const order of orders.value) {
     const filteredItems = order.items.filter((item) => {
       if (item.status !== tab.value) return false
-      if (!isAdmin.value && terminal.value.categoryIds.length && !terminal.value.categoryIds.includes(item.categoryId ?? '')) return false
+      if (!isAdmin.value) {
+        if (!terminal.value.categoryIds.length) return false
+        if (!terminal.value.categoryIds.includes(item.categoryId ?? '')) return false
+      }
       return true
     })
     if (!filteredItems.length) continue
@@ -510,6 +521,7 @@ main { padding: 12px 16px; display: flex; flex-direction: column; gap: 16px; }
 .item-tags { display: flex; gap: 6px; margin-top: 6px; }
 .tag-qty { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; background: var(--primary-container); color: var(--on-primary); font-size: 13px; font-weight: 800; }
 .tag-specs { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; background: var(--surface-container-high); color: var(--secondary); font-size: 13px; font-weight: 600; }
+.tag-gift { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; background: #e74c3c; color: #fff; font-size: 13px; font-weight: 800; }
 
 .action-btn {
   display: flex; align-items: center; gap: 4px;

@@ -760,7 +760,7 @@ router.get('/categories', async (_req, res) => {
     orderBy: { sort: 'asc' },
   })
 
-  res.json(categories.map((c) => ({ id: c.id, name: c.name, sort: c.sort })))
+  res.json(categories.map((c) => ({ id: c.id, name: c.name, sort: c.sort, showStatusLight: c.showStatusLight })))
 })
 
 router.post('/categories', async (req, res) => {
@@ -770,11 +770,11 @@ router.post('/categories', async (req, res) => {
   const branch = await prisma.branch.findFirst({ where: { merchantId: merchant.id } })
   if (!branch) return res.status(400).json({ message: '请先创建分店' })
 
-  const { name, sort = 0 } = req.body ?? {}
+  const { name, sort = 0, showStatusLight = false } = req.body ?? {}
   if (!name) return res.status(400).json({ message: 'name 必填' })
 
   const cat = await prisma.category.create({
-    data: { branchId: branch.id, name, sort: Number(sort) },
+    data: { branchId: branch.id, name, sort: Number(sort), showStatusLight: !!showStatusLight },
   })
 
   res.status(201).json({ id: cat.id, name: cat.name })
@@ -783,10 +783,11 @@ router.post('/categories', async (req, res) => {
 
 router.put('/categories/:id', async (req, res) => {
   const { id } = req.params
-  const { name, sort } = req.body ?? {}
+  const { name, sort, showStatusLight } = req.body ?? {}
   const data: any = {}
   if (name !== undefined) data.name = name
   if (sort !== undefined) data.sort = Number(sort)
+  if (showStatusLight !== undefined) data.showStatusLight = !!showStatusLight
 
   await prisma.category.update({ where: { id }, data })
   invalidateGlobalCache()

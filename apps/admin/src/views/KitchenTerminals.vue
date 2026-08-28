@@ -35,24 +35,9 @@
       <Column field="status" header="状态">
         <template #body="{ data }">
           <div class="status-cell">
-            <Button
-              v-if="data.status === 'active'"
-              icon="pi pi-power-off"
-              label="停用"
-              severity="danger"
-              text
-              size="small"
-              @click="toggleStatus(data)"
-            />
-            <Button
-              v-else
-              icon="pi pi-power"
-              label="启用"
-              severity="success"
-              text
-              size="small"
-              @click="toggleStatus(data)"
-            />
+            <span class="kt-switch">
+              <ToggleSwitch :modelValue="data.status === 'active'" binary @change="toggleStatus(data)" />
+            </span>
           </div>
         </template>
       </Column>
@@ -80,7 +65,7 @@
       </div>
       <div v-if="form.role !== 'admin'" class="form-group">
         <label>显示分类</label>
-        <MultiSelect v-model="form.categoryIds" :options="categories" optionLabel="name" optionValue="id" placeholder="选择出餐机显示的菜品分类（不选=全部）" class="w-full" display="chip" />
+        <MultiSelect v-model="form.categoryIds" :options="categories" optionLabel="name" optionValue="id" placeholder="选择出餐机显示的菜品分类（不选则不显示任何分类）" class="w-full" display="chip" />
       </div>
       <div v-if="editing" class="form-group">
         <label>状态</label>
@@ -105,6 +90,7 @@ import InputText from 'primevue/inputtext'
 import MultiSelect from 'primevue/multiselect'
 import Select from 'primevue/select'
 import Tag from 'primevue/tag'
+import ToggleSwitch from 'primevue/toggleswitch'
 
 const terminals = ref<any[]>([])
 const categories = ref<any[]>([])
@@ -212,6 +198,11 @@ onMounted(() => {
 .cat-wrap { display: flex; flex-wrap: wrap; gap: 4px; }
 .cat-tag { padding: 2px 8px; border-radius: 9999px; background: #fff3e6; color: #bf5b00; font-size: 12px; }
 .status-cell { display: flex; align-items: center; }
+.kt-switch { display: inline-flex; align-items: center; }
+.kt-switch :deep(.p-switch.p-switch-checked) {
+  --p-switch-checked-background: #22c55e;
+  --p-switch-checked-border-color: #22c55e;
+}
 .empty-text { color: #999; }
 .form-group { margin-bottom: 14px; }
 .form-group label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 6px; }

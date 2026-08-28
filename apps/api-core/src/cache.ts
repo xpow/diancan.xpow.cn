@@ -32,7 +32,7 @@ export interface GlobalCache {
     businessHours: string
     restReason: string
   } | null
-  categories: { id: string; name: string; sort: number }[]
+  categories: { id: string; name: string; sort: number; showStatusLight: boolean }[]
   dishes: any[]
   promotions: any[]
   featuredItems: any[]
@@ -97,7 +97,7 @@ export async function buildGlobalCache(): Promise<GlobalCache> {
       businessHours: branch.businessHours ?? '',
       restReason: branch.restReason ?? '',
     } : null,
-    categories: categories.map((c) => ({ id: c.id, name: c.name, sort: c.sort })),
+    categories: categories.map((c) => ({ id: c.id, name: c.name, sort: c.sort, showStatusLight: c.showStatusLight })),
     dishes,
     promotions,
     featuredItems: featuredItems.map((f) => ({
