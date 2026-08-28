@@ -28,37 +28,16 @@
         <h1 class="top-title">出餐管理</h1>
       </div>
       <div class="top-right">
-        <span v-if="terminal.code" class="terminal-badge">出餐机{{ terminal.code }}</span>
+        <span v-if="terminal.code" class="terminal-badge">{{ terminal.role === 'admin' ? '管理员' : '' }}出餐机{{ terminal.code }}</span>
         <span class="order-count-badge">{{ totalItems }}</span>
         <button class="settings-btn" @click="toggleVoice">
           <span class="material-symbols-outlined">{{ voiceEnabled ? 'volume_up' : 'volume_off' }}</span>
-        </button>
-        <button class="settings-btn" :class="{ 'settings-btn-active': showTerminalSettings }" @click="openTerminalSettings" title="地址码绑定/显示分类">
-          <span class="material-symbols-outlined">monitor_heart</span>
         </button>
         <button class="settings-btn" @click="logout" title="退出">
           <span class="material-symbols-outlined">logout</span>
         </button>
       </div>
     </header>
-
-    <div v-if="showTerminalSettings" class="terminal-settings-overlay" @click.self="showTerminalSettings = false">
-      <div class="terminal-settings">
-        <div class="terminal-settings-header">
-          <h2>出餐机绑定</h2>
-          <button class="terminal-close" @click="showTerminalSettings = false">
-            <span class="material-symbols-outlined">close</span>
-          </button>
-        </div>
-        <div class="terminal-form-row">
-          <label>地址码</label>
-          <input v-model="terminalAddressCode" class="terminal-input" placeholder="输入出餐机地址码（后台生成）" />
-          <p class="terminal-hint">在「出餐机管理」复制对应出餐机的地址码粘贴到此，即可识别为对应出餐机</p>
-        </div>
-        <button class="terminal-save" @click="saveTerminalAddress" :disabled="binding">绑定</button>
-        <button v-if="terminal.code" class="terminal-unbind" @click="unbindTerminal">解绑（清除本机出餐机码）</button>
-      </div>
-    </div>
 
     <div class="tabs">
       <button v-for="t in tabs" :key="t.key" :class="['tab', tab === t.key && 'tab-active']" @click="tab = t.key">
@@ -135,29 +114,20 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+const urlToken = computed(() => String(route.params.token ?? ''))
 
 const POLL_MS = 5000
 const STORAGE_KEY = 'kitchen_announced'
 const STORAGE_KEY_READY = 'kitchen_announced_ready'
-const STORAGE_KEY_TERMINAL = 'kitchen_terminal_settings'
 
-interface TerminalSettings { code: string; name: string; addressCode: string; categoryIds: string[] }
+interface TerminalSettings { code: string; name: string; role: string; categoryIds: string[] }
 
-function loadTerminal(): TerminalSettings {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_TERMINAL)
-    const parsed = raw ? JSON.parse(raw) : null
-    if (parsed && typeof parsed === 'object') {
-      return {
-        code: String(parsed.code ?? ''),
-        name: String(parsed.name ?? ''),
-        addressCode: String(parsed.addressCode ?? ''),
-        categoryIds: Array.isArray(parsed.categoryIds) ? parsed.categoryIds : [],
-      }
-    }
-  } catch {}
-  return { code: '', name: '', addressCode: '', categoryIds: [] }
-}
+// 当前出餐机由URL唯一地址识别；admin 或无出餐机时看全部
+const terminal = ref<TerminalSettings>({ code: '', name: '', role: 'user', categoryIds: [] })
+const isAdmin = computed(() => terminal.value.role === 'admin' || !terminal.value.code)
 
 function loadAnnounced(): Set<string> {
   try { return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')) } catch { return new Set() }
@@ -206,11 +176,6 @@ let wakeLock: any = null
 let announcedReadyOrders = loadAnnouncedReady()
 let announcedNewOrders = loadAnnounced()
 
-const terminal = ref<TerminalSettings>(loadTerminal())
-const showTerminalSettings = ref(false)
-const terminalAddressCode = ref(terminal.value.addressCode)
-const binding = ref(false)
-
 const tabs = [
   { key: 'pending' as const, label: '等待' },
   { key: 'preparing' as const, label: '制作中' },
@@ -240,7 +205,7 @@ document.addEventListener('visibilitychange', () => {
 const allItems = computed(() => orders.value.flatMap((o) => o.items))
 
 const visibleItems = computed(() => {
-  if (!terminal.value.categoryIds.length) return allItems.value
+  if (isAdmin.value || !terminal.value.categoryIds.length) return allItems.value
   return allItems.value.filter((item) => terminal.value.categoryIds.includes(item.categoryId ?? ''))
 })
 
@@ -262,7 +227,7 @@ const filtered = computed(() => {
   for (const order of orders.value) {
     const filteredItems = order.items.filter((item) => {
       if (item.status !== tab.value) return false
-      if (terminal.value.categoryIds.length && !terminal.value.categoryIds.includes(item.categoryId ?? '')) return false
+      if (!isAdmin.value && terminal.value.categoryIds.length && !terminal.value.categoryIds.includes(item.categoryId ?? '')) return false
       return true
     })
     if (!filteredItems.length) continue
@@ -399,49 +364,15 @@ function toggleVoice() {
   voiceEnabled.value = !voiceEnabled.value
 }
 
-function openTerminalSettings() {
-  terminalAddressCode.value = terminal.value.addressCode
-  showTerminalSettings.value = true
-}
-
-async function saveTerminalAddress() {
-  const code = terminalAddressCode.value.trim()
-  if (!code || binding.value) return
-  binding.value = true
+async function resolveTerminalByToken() {
+  const t = urlToken.value.trim()
+  if (!t) return
   try {
-    const res = await fetch(`/api/admin/kitchen-terminal/me?addressCode=${encodeURIComponent(code)}`)
-    if (!res.ok) {
-      const data = await res.json()
-      alert(data.message || '地址码无效')
-      return
-    }
-    const t = await res.json()
-    terminal.value = { code: t.code, name: t.name, addressCode: code, categoryIds: t.categoryIds }
-    try { localStorage.setItem(STORAGE_KEY_TERMINAL, JSON.stringify(terminal.value)) } catch {}
-    showTerminalSettings.value = false
-  } catch {
-    alert('网络错误')
-  } finally {
-    binding.value = false
-  }
-}
-
-function unbindTerminal() {
-  terminal.value = { code: '', name: '', addressCode: '', categoryIds: [] }
-  terminalAddressCode.value = ''
-  try { localStorage.removeItem(STORAGE_KEY_TERMINAL) } catch {}
-}
-
-async function ensureTerminalResolved() {
-  if (terminal.value.code) return
-  if (terminal.value.addressCode) {
-    const res = await fetch(`/api/admin/kitchen-terminal/me?addressCode=${encodeURIComponent(terminal.value.addressCode)}`)
-    if (res.ok) {
-      const t = await res.json()
-      terminal.value = { code: t.code, name: t.name, addressCode: terminal.value.addressCode, categoryIds: t.categoryIds }
-      try { localStorage.setItem(STORAGE_KEY_TERMINAL, JSON.stringify(terminal.value)) } catch {}
-    }
-  }
+    const res = await fetch(`/api/admin/kitchen-terminal/by-token?token=${encodeURIComponent(t)}`)
+    if (!res.ok) return
+    const data = await res.json()
+    terminal.value = { code: data.code, name: data.name, role: data.role || 'user', categoryIds: data.categoryIds || [] }
+  } catch {}
 }
 
 async function checkAuth() {
@@ -486,7 +417,7 @@ async function logout() {
 
 async function enterKitchen() {
   authed.value = true
-  await ensureTerminalResolved()
+  await resolveTerminalByToken()
   await fetchOrders()
   if (timer) clearInterval(timer)
   timer = setInterval(fetchOrders, POLL_MS)
@@ -596,22 +527,6 @@ main { padding: 12px 16px; display: flex; flex-direction: column; gap: 16px; }
 .empty-icon { font-size: 64px; color: var(--outline-variant); }
 
 .terminal-badge { display: inline-flex; align-items: center; justify-content: center; padding: 3px 10px; border-radius: 9999px; background: var(--primary-container); color: #fff; font-size: 12px; font-weight: 800; }
-
-.terminal-settings-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.4); display: flex; align-items: flex-end; justify-content: center; }
-.terminal-settings { width: 100%; max-width: 600px; background: var(--surface-container-lowest); border-radius: 16px 16px 0 0; padding: 20px 20px 24px; box-shadow: 0 -8px 30px rgba(0,0,0,0.15); }
-.terminal-settings-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.terminal-settings-header h2 { margin: 0; font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--text); }
-.terminal-close { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--surface-container-high); color: var(--secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; }
-.terminal-form-row { margin-bottom: 16px; }
-.terminal-form-row label { display: block; font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
-.terminal-input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--outline-variant); background: var(--surface-card); color: var(--text); font-size: 15px; font-weight: 700; box-sizing: border-box; }
-.terminal-cats { display: flex; flex-wrap: wrap; gap: 8px; }
-.terminal-cat { padding: 8px 16px; border-radius: 9999px; border: 1px solid var(--outline-variant); background: var(--surface-container-high); color: var(--secondary); font-size: 13px; font-weight: 600; cursor: pointer; }
-.terminal-cat-active { background: var(--primary-container); border-color: var(--primary-container); color: var(--on-primary); }
-.terminal-hint { font-size: 11px; color: var(--secondary); margin-top: 8px; }
-.terminal-save { width: 100%; padding: 12px; border: none; border-radius: 12px; background: var(--primary-container); color: #fff; font-size: 15px; font-weight: 800; cursor: pointer; }
-.terminal-unbind { width: 100%; margin-top: 10px; padding: 10px; border: 1px solid var(--outline-variant); border-radius: 12px; background: transparent; color: var(--secondary); font-size: 13px; font-weight: 600; cursor: pointer; }
-.settings-btn-active { background: var(--surface-container-high); }
 
 .kitchen-login { display: flex; align-items: center; justify-content: center; min-height: 100dvh; background: #f0f2f5; padding: 16px; box-sizing: border-box; }
 .kitchen-login-card { width: 100%; max-width: 360px; padding: 40px; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); box-sizing: border-box; }

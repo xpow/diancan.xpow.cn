@@ -114,15 +114,9 @@ router.post('/kitchen/logout', (req, res) => {
 
 /* ===== Kitchen Terminal（出餐机管理） ===== */
 
-// 生成不可逆地址码：返回原始码 + 仅存哈希，不可反推
-function generateAddressCode(): { raw: string; hash: string } {
-  const raw = crypto.randomBytes(6).toString('base64url').replace(/-/g, 'A').replace(/_/g, 'B').toUpperCase().slice(0, 8)
-  const hash = crypto.createHash('sha256').update(raw).digest('hex')
-  return { raw, hash }
-}
-
-function hashAddressCode(raw: string): string {
-  return crypto.createHash('sha256').update(String(raw ?? '')).digest('hex')
+// 由机码生成不可逆唯一token（用于出餐机唯一访问地址），机码变化则地址变化
+function tokenFromCode(code: string): string {
+  return crypto.createHash('sha256').update(String(code ?? '').trim()).digest('hex').slice(0, 16)
 }
 
 async function getMerchantId(): Promise<string> {
@@ -130,7 +124,7 @@ async function getMerchantId(): Promise<string> {
   return merchant?.id ?? ''
 }
 
-// 出餐机列表（不返回原始地址码，仅返回哈希用于展示/比对）
+// 出餐机列表
 router.get('/kitchen-terminals', requireAuth, async (_req, res) => {
   const merchantId = await getMerchantId()
   const terminals = await prisma.kitchenTerminal.findMany({
@@ -141,39 +135,54 @@ router.get('/kitchen-terminals', requireAuth, async (_req, res) => {
     id: t.id,
     code: t.code,
     name: t.name,
-    addressCode: t.addressCode,
+    token: t.token,
     categoryIds: JSON.parse(t.categoryIds || '[]'),
+    role: t.role,
     status: t.status,
     createdAt: t.createdAt,
   })))
 })
 
-// 新增出餐机：返回原始地址码（仅本次展示）
+// 新增出餐机
 router.post('/kitchen-terminals', requireAuth, async (req, res) => {
   const merchantId = await getMerchantId()
-  const { code, name, categoryIds = [] } = req.body ?? {}
+  const { code, name, categoryIds = [], role = 'user' } = req.body ?? {}
   if (!code) return res.status(400).json({ message: '请填写出餐机码' })
-  const { raw, hash } = generateAddressCode()
+  const trimmed = String(code).trim()
   const terminal = await prisma.kitchenTerminal.create({
     data: {
       merchantId,
-      code: String(code).trim(),
+      code: trimmed,
       name: String(name ?? '').trim(),
-      addressCode: hash,
+      token: tokenFromCode(trimmed),
       categoryIds: JSON.stringify(Array.isArray(categoryIds) ? categoryIds : []),
+      role: role === 'admin' ? 'admin' : 'user',
       status: 'active',
     },
   })
-  res.json({ id: terminal.id, code: terminal.code, name: terminal.name, addressCode: raw })
+  res.json({
+    id: terminal.id,
+    code: terminal.code,
+    name: terminal.name,
+    token: terminal.token,
+    categoryIds: JSON.parse(terminal.categoryIds || '[]'),
+    role: terminal.role,
+    status: terminal.status,
+  })
 })
 
-// 更新出餐机（机码/名称/显示分类/状态）
+// 更新出餐机（机码变化时同步重新生成唯一地址token）
 router.put('/kitchen-terminals/:id', requireAuth, async (req, res) => {
-  const { code, name, categoryIds, status } = req.body ?? {}
+  const { code, name, categoryIds, role, status } = req.body ?? {}
   const data: Record<string, unknown> = {}
-  if (code !== undefined) data.code = String(code).trim()
+  if (code !== undefined) {
+    const trimmed = String(code).trim()
+    data.code = trimmed
+    data.token = tokenFromCode(trimmed)
+  }
   if (name !== undefined) data.name = String(name).trim()
   if (categoryIds !== undefined) data.categoryIds = JSON.stringify(Array.isArray(categoryIds) ? categoryIds : [])
+  if (role !== undefined) data.role = role === 'admin' ? 'admin' : 'user'
   if (status !== undefined) data.status = status
   try {
     const terminal = await prisma.kitchenTerminal.update({ where: { id: String(req.params.id) }, data })
@@ -181,21 +190,11 @@ router.put('/kitchen-terminals/:id', requireAuth, async (req, res) => {
       id: terminal.id,
       code: terminal.code,
       name: terminal.name,
-      addressCode: terminal.addressCode,
+      token: terminal.token,
       categoryIds: JSON.parse(terminal.categoryIds || '[]'),
+      role: terminal.role,
       status: terminal.status,
     })
-  } catch {
-    res.status(404).json({ message: '出餐机不存在' })
-  }
-})
-
-// 重新生成地址码（旧码立即失效），返回原始码仅本次展示
-router.post('/kitchen-terminals/:id/regenerate-address', requireAuth, async (req, res) => {
-  const { raw, hash } = generateAddressCode()
-  try {
-    await prisma.kitchenTerminal.update({ where: { id: String(req.params.id) }, data: { addressCode: hash } })
-    res.json({ addressCode: raw })
   } catch {
     res.status(404).json({ message: '出餐机不存在' })
   }
@@ -211,19 +210,19 @@ router.delete('/kitchen-terminals/:id', requireAuth, async (req, res) => {
   }
 })
 
-// 出餐端按地址码识别出餐机（requireKitchenAuth，需先出餐密码登录）
-router.get('/kitchen-terminal/me', requireKitchenAuth, async (req, res) => {
-  const rawCode = (req.query.addressCode as string) || ''
-  if (!rawCode) return res.status(400).json({ message: '缺少地址码' })
-  const hash = hashAddressCode(rawCode)
-  const terminal = await prisma.kitchenTerminal.findUnique({ where: { addressCode: hash } })
+// 出餐端按唯一地址token识别出餐机（requireKitchenAuth，需先出餐密码登录）
+router.get('/kitchen-terminal/by-token', requireKitchenAuth, async (req, res) => {
+  const token = (req.query.token as string) || ''
+  if (!token) return res.status(400).json({ message: '缺少地址' })
+  const terminal = await prisma.kitchenTerminal.findUnique({ where: { token } })
   if (!terminal || terminal.status !== 'active') {
-    return res.status(404).json({ message: '地址码无效或已失效' })
+    return res.status(404).json({ message: '出餐机地址无效或已停用' })
   }
   res.json({
     id: terminal.id,
     code: terminal.code,
     name: terminal.name,
+    role: terminal.role,
     categoryIds: JSON.parse(terminal.categoryIds || '[]'),
   })
 })

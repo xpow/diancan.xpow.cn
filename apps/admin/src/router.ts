@@ -14,6 +14,7 @@ const router = createRouter({
     { path: '/kitchen-terminals', name: 'kitchenTerminals', component: () => import('./views/KitchenTerminals.vue') },
     { path: '/users', name: 'users', component: () => import('./views/Users.vue') },
     { path: '/kitchen', name: 'kitchen', meta: { hideLayout: true, noAuth: true }, component: () => import('./views/kitchen.vue') },
+    { path: '/k/:token', name: 'kterminal', meta: { hideLayout: true, noAuth: true }, component: () => import('./views/kitchen.vue') },
     { path: '/stats', name: 'stats', component: () => import('./views/Stats.vue') },
     { path: '/cost-profit', name: 'costProfit', component: () => import('./views/CostProfit.vue') },
     { path: '/reviews', name: 'reviews', component: () => import('./views/ReviewManagement.vue') },

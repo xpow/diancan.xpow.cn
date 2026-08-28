@@ -367,8 +367,9 @@ model KitchenTerminal {
   merchantId  String
   code        String   @default("")   // 出餐机码，如 01
   name        String   @default("")   // 出餐机01
-  addressCode String   @unique        // 地址码：不可逆hash，出餐端携带用于识别
+  token       String   @unique        // 唯一访问地址key：由机码哈希生成，不可逆
   categoryIds String   @default("[]") // JSON：显示分类ID数组
+  role        String   @default("user") // user 按显示分类过滤 | admin 默认看全部
   status      String   @default("active")
   merchant    Merchant @relation(fields: [merchantId], references: [id])
 
