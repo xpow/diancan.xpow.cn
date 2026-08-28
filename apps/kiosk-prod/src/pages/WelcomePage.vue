@@ -699,6 +699,7 @@ onMounted(async () => {
 .featured-stock-badge { position: absolute; bottom: 8px; right: 8px; padding: 1px 8px; border-radius: var(--radius-full); background: rgb(255 124 0 / 89%); color: #fff; font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 700; line-height: 1.5; pointer-events: none; z-index: 2; }
 .featured-price { color: var(--primary-container); font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; }
 .featured-portion { font-size: var(--text-label-sm); font-weight: 700; color: var(--secondary); }
+.featured-bottom { margin-top: var(--spacing-md); }
 
 /* old overrides removed */
 
