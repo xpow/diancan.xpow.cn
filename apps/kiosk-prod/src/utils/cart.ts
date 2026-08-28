@@ -11,6 +11,7 @@ export interface StoredCartItem {
   originalPrice?: number
   promotionName?: string
   portionSize?: number
+  unit?: string
 }
 
 const CART_STORAGE_KEY = 'kiosk-cart'

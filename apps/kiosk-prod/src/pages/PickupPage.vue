@@ -88,7 +88,7 @@
                           </div>
                           <span v-if="itemStatusLabel(item2.status) && item2.statusLight" class="item-status-light" :class="'item-status-light-' + item2.status"></span>
                           <div>
-                            <p class="ticket-item-name">{{ item2.name }}<template v-if="item2.portionSize && (item2.finalUnitPrice ?? item2.unitPrice) > 0"> <span class="ticket-item-unit">（¥{{ (item2.finalUnitPrice ?? item2.unitPrice).toFixed(2) }}/{{ item2.portionSize }}串）</span></template><template v-else-if="(item2.finalUnitPrice ?? item2.unitPrice) === 0"> <span class="ticket-item-unit tag-gift">赠品</span></template></p>
+                            <p class="ticket-item-name">{{ item2.name }}<template v-if="item2.portionSize && (item2.finalUnitPrice ?? item2.unitPrice) > 0"> <span class="ticket-item-unit">（¥{{ (item2.finalUnitPrice ?? item2.unitPrice).toFixed(2) }}/{{ item2.portionSize }}{{ item2.unit || '串' }}）</span></template><template v-else-if="(item2.finalUnitPrice ?? item2.unitPrice) === 0"> <span class="ticket-item-unit tag-gift">赠品</span></template></p>
                             <p v-if="item2.specs" class="ticket-item-spec">{{ item2.specs }}</p>
                             
                           </div>
@@ -190,7 +190,7 @@
                   </div>
                   <span v-if="itemStatusLabel(item2.status) && item2.statusLight" class="item-status-light" :class="'item-status-light-' + item2.status"></span>
                   <div>
-                    <p class="ticket-item-name">{{ item2.name }}<template v-if="item2.portionSize && (item2.finalUnitPrice ?? item2.unitPrice) > 0"> <span class="ticket-item-unit">（¥{{ (item2.finalUnitPrice ?? item2.unitPrice).toFixed(2) }}/{{ item2.portionSize }}串）</span></template><template v-else-if="(item2.finalUnitPrice ?? item2.unitPrice) === 0"> <span class="ticket-item-unit tag-gift">赠品</span></template></p>
+                    <p class="ticket-item-name">{{ item2.name }}<template v-if="item2.portionSize && (item2.finalUnitPrice ?? item2.unitPrice) > 0"> <span class="ticket-item-unit">（¥{{ (item2.finalUnitPrice ?? item2.unitPrice).toFixed(2) }}/{{ item2.portionSize }}{{ item2.unit || '串' }}）</span></template><template v-else-if="(item2.finalUnitPrice ?? item2.unitPrice) === 0"> <span class="ticket-item-unit tag-gift">赠品</span></template></p>
                     <p v-if="item2.specs" class="ticket-item-spec">{{ item2.specs }}</p>
                             
                   </div>

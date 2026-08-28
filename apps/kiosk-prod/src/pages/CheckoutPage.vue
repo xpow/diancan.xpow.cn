@@ -87,7 +87,7 @@
                 <p v-if="item.specs" class="item-variant">{{ item.specs }}</p>
               </div>
               <div class="item-price-col">
-                <p class="item-price" v-if="item.finalUnitPrice > 0"><small class="c-sign">¥</small>{{ item.finalUnitPrice.toFixed(2) }}<template v-if="item.portionSize">/{{ item.portionSize }}串</template></p>
+                <p class="item-price" v-if="item.finalUnitPrice > 0"><small class="c-sign">¥</small>{{ item.finalUnitPrice.toFixed(2) }}<template v-if="item.portionSize">/{{ item.portionSize }}{{ item.unit || '串' }}</template></p>
                 <p class="item-price gift-price" v-else>赠品</p>
                 <p class="item-qty">x{{ item.quantity }}</p>
                 <p v-if="item.promotionLabel" class="item-promo-tag">{{ item.promotionLabel }}</p>

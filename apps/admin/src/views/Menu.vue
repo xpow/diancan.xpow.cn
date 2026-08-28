@@ -120,13 +120,22 @@
           <Select v-model="dishForm.categoryId" :options="categories" optionLabel="name" optionValue="id" class="w-full" />
         </div>
       </div>
+      <div class="option-group opt-full">
+        <span class="option-label">按份卖</span>
+        <ToggleSwitch v-model="dishForm.sellByPortion" />
+        <span class="option-hint">每份</span>
+        <InputNumber v-model="dishForm.portionSize" :min="1" class="stock-input" :disabled="!dishForm.sellByPortion" placeholder="数量" />
+        <Select
+          v-model="dishForm.unit"
+          :options="unitOptions"
+          optionLabel="label"
+          optionValue="value"
+          class="unit-select"
+          :disabled="!dishForm.sellByPortion"
+          placeholder="单位"
+        />
+      </div>
       <div class="form-row" style="align-items: flex-end">
-        <div class="option-group" style="flex:1">
-          <span class="option-label">按份卖</span>
-          <ToggleSwitch v-model="dishForm.sellByPortion" />
-          <span class="option-hint">每份</span>
-          <InputNumber v-model="dishForm.portionSize" :min="2" class="stock-input" :disabled="!dishForm.sellByPortion" placeholder="串" />
-        </div>
         <div class="option-group">
           <span class="option-label">启用库存</span>
           <ToggleSwitch v-model="dishForm.stockEnabled" />
@@ -134,13 +143,12 @@
           <InputNumber v-model="dishForm.stock" :min="0" class="stock-input" :disabled="!dishForm.stockEnabled" placeholder="个" />
         </div>
       </div>
-      <div class="form-row" style="align-items: flex-end">
-        <div class="option-group">
-          <span class="option-label">联盟商品</span>
-          <ToggleSwitch v-model="dishForm.alliance" />
-          <span class="option-hint">不计入销量统计</span>
-        </div>
+      <div class="option-group">
+        <span class="option-label">联盟商品</span>
+        <ToggleSwitch v-model="dishForm.alliance" />
+        <span class="option-hint">不计入销量统计</span>
       </div>
+
       <div class="form-group">
         <label>描述</label>
         <InputText v-model="dishForm.desc" class="w-full" placeholder="选填" />
@@ -306,7 +314,17 @@ function applyPreset() {
   dishForm.value.specGroups = preset ? JSON.parse(JSON.stringify(preset)) : []
 }
 
-const dishForm = ref({ name: '', price: 0, categoryId: '', desc: '', image: '', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0, stockEnabled: false, stock: 0, alliance: false, specGroups: [] as any[] })
+const unitOptions = [
+  { label: '串', value: '串' },
+  { label: '斤', value: '斤' },
+  { label: '只', value: '只' },
+  { label: '条', value: '条' },
+  { label: '份', value: '份' },
+  { label: '盒', value: '盒' },
+  { label: '个', value: '个' },
+]
+
+const dishForm = ref({ name: '', price: 0, categoryId: '', desc: '', image: '', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0, unit: '串', stockEnabled: false, stock: 0, alliance: false, specGroups: [] as any[] })
 
 function addSpecGroup() {
   dishForm.value.specGroups.push({ name: '', type: 'single', options: [{ label: '', priceDelta: 0 }] })
@@ -355,6 +373,7 @@ function openDishDialog(dish?: any) {
       status: dish.status || 'active',
       sellByPortion: (dish.portionSize ?? 0) > 0,
       portionSize: dish.portionSize ?? 0,
+      unit: dish.unit || '串',
       stockEnabled: !!dish.stockEnabled,
       stock: dish.stock ?? 0,
       alliance: !!dish.alliance,
@@ -364,7 +383,7 @@ function openDishDialog(dish?: any) {
     editingDish.value = false
     originalName.value = ''
     selectedPreset.value = 'none'
-    dishForm.value = { name: '', price: 0, categoryId: categories.value[0]?.id || '', desc: '', image: '', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0, stockEnabled: false, stock: 0, alliance: false, specGroups: [] }
+    dishForm.value = { name: '', price: 0, categoryId: categories.value[0]?.id || '', desc: '', image: '', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0, unit: '串', stockEnabled: false, stock: 0, alliance: false, specGroups: [] }
   }
   showDish.value = true
 }
@@ -380,6 +399,7 @@ async function saveDish() {
     tags: dishForm.value.tagsText ? dishForm.value.tagsText.split(/[，,]\s*/).filter(Boolean) : [],
     status: dishForm.value.status,
     portionSize: dishForm.value.sellByPortion ? dishForm.value.portionSize : 0,
+    unit: dishForm.value.sellByPortion ? dishForm.value.unit : '串',
     stockEnabled: dishForm.value.stockEnabled,
     stock: dishForm.value.stockEnabled ? dishForm.value.stock : 0,
     alliance: dishForm.value.alliance,
@@ -625,10 +645,15 @@ onMounted(() => {
 .add-group-btn { align-self: flex-start; margin-top: 4px; }
 .stock-quick-edit { display: flex; align-items: center; gap: 6px; }
 .stock-input { width: 80px; }
-.stock-input:deep(.p-inputtext) { width: 80px; text-align: center; font-weight: 600; }
+.stock-input:deep(.p-inputtext) { width: 80px; text-align: center; font-weight: 600; height: 36px; box-sizing: border-box; }
 .option-group { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 .option-label { font-size: 13px; font-weight: 600; color: var(--text-color); white-space: nowrap; }
 .option-hint { font-size: 12px; color: var(--text-color-secondary); white-space: nowrap; }
+.opt-full { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; }
+.unit-select { width: 86px; }
+.unit-select:deep(.p-select),
+.unit-select:deep(.p-select-label) { height: 36px; box-sizing: border-box; }
+.unit-select:deep(.p-select-label) { display: flex; align-items: center; }
 .ctl-switch { display: inline-flex; align-items: center; }
 .ctl-group { margin-bottom: 4px; }
 .ctl-hint { margin: 0 0 12px; white-space: normal; line-height: 1.5; }

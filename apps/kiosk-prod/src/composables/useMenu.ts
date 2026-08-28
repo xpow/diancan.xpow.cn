@@ -14,6 +14,7 @@ export interface MenuDish {
   selectedLabels?: (string | string[])[]
   promotionId?: string; promoPrice?: number; promotionName?: string
   portionSize?: number
+  unit?: string
   stock?: number
   stockEnabled?: boolean
 }
@@ -145,7 +146,7 @@ const restReason = ref('')
         dishes: {
           id: string; categoryId: string; name: string; price: number
           desc: string; image?: string; tags?: string[]; specsPreset?: SpecPreset
-          promoPrice?: number | null; promotionName?: string | null; portionSize?: number
+          promoPrice?: number | null; promotionName?: string | null; portionSize?: number; unit?: string
         }[]
       }
 
@@ -187,6 +188,7 @@ const restReason = ref('')
           promoPrice: d.promoPrice ?? undefined,
           promotionName: d.promotionName ?? undefined,
           portionSize: d.portionSize ?? 0,
+          unit: d.unit || '串',
           stock: d.stock ?? undefined,
           stockEnabled: d.stockEnabled ?? undefined,
         }

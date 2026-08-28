@@ -73,7 +73,7 @@
                 <p class="featured-desc">{{ item.dish.desc }}</p>
               </div>
               <div class="featured-bottom">
-                <span class="featured-price">¥{{ item.dish.price.toFixed(2) }}<span v-if="item.dish.portionSize" class="featured-portion"> / {{ item.dish.portionSize }}串</span></span>
+                <span class="featured-price">¥{{ item.dish.price.toFixed(2) }}<span v-if="item.dish.portionSize" class="featured-portion"> / {{ item.dish.portionSize }}{{ item.dish.unit || '串' }}</span></span>
               </div>
             </div>
             <div class="featured-thumb">
@@ -85,7 +85,7 @@
               <div v-if="dish.stockEnabled && (dish.stock ?? 0) <= 0" class="grid-sold-out">
                 <span class="material-icons">block</span><span>今日已售罄</span>
               </div>
-              <span v-else-if="dish.stockEnabled && (dish.stock ?? 0) > 0" class="grid-stock-badge">剩余 {{ dish.stock }} 串</span>
+              <span v-else-if="dish.stockEnabled && (dish.stock ?? 0) > 0" class="grid-stock-badge">剩余 {{ dish.stock }} {{ dish.unit || '串' }}</span>
               <div class="menu-grid-thumb">
                 <img :src="getDishThumbnail(dish.id)" :alt="dish.name" loading="lazy" />
               </div>
@@ -95,7 +95,7 @@
                   <p class="menu-grid-desc">{{ dish.desc }}</p>
                 </div>
                 <div class="menu-grid-bottom">
-                  <span class="menu-grid-price">¥{{ dish.price.toFixed(2) }}<span v-if="dish.portionSize" class="menu-grid-portion"> / {{ dish.portionSize }}串</span></span>
+                  <span class="menu-grid-price">¥{{ dish.price.toFixed(2) }}<span v-if="dish.portionSize" class="menu-grid-portion"> / {{ dish.portionSize }}{{ dish.unit || '串' }}</span></span>
                 </div>
               </div>
             </div>

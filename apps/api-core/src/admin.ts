@@ -399,6 +399,7 @@ router.get('/orders', async (_req, res) => {
         promotionLabel: i.promotionLabel || undefined,
         status: i.status,
         portionSize: i.portionSize || undefined,
+        unit: i.unit || '串',
       })),
       createdAt: o.createdAt.toISOString(),
       cancelReason: o.cancelReason || undefined,
@@ -580,6 +581,7 @@ router.get('/dishes', async (_req, res) => {
       status: d.status,
       sort: d.sort,
       portionSize: d.portionSize,
+      unit: d.unit,
       stock: d.stock,
       stockEnabled: d.stockEnabled,
       alliance: d.alliance,
@@ -592,7 +594,7 @@ router.post('/dishes', async (req, res) => {
   const merchant = await prisma.merchant.findFirst()
   if (!merchant) return res.status(404).json({ message: 'merchant not found' })
 
-  const { name, price, categoryId, desc, image, tags, specsPreset, specGroups, portionSize, stock, stockEnabled, alliance } = req.body ?? {}
+  const { name, price, categoryId, desc, image, tags, specsPreset, specGroups, portionSize, unit, stock, stockEnabled, alliance } = req.body ?? {}
   if (!name || price === undefined || !categoryId) {
     return res.status(400).json({ message: 'name, price, categoryId 必填' })
   }
@@ -612,6 +614,7 @@ router.post('/dishes', async (req, res) => {
       specsPreset: specsPreset ?? 'none',
       specGroups: JSON.stringify(specGroups ?? []),
       portionSize: Number(portionSize) || 0,
+      unit: unit || '串',
       stock: Number(stock) || 0,
       stockEnabled: Boolean(stockEnabled),
       alliance: Boolean(alliance),
@@ -635,7 +638,7 @@ router.put('/dishes/reorder', async (req, res) => {
 
 router.put('/dishes/:id', async (req, res) => {
   const { id } = req.params
-  const { name, price, categoryId, desc, image, tags, specsPreset, specGroups, status, sort, portionSize, stock, stockEnabled, alliance } = req.body ?? {}
+  const { name, price, categoryId, desc, image, tags, specsPreset, specGroups, status, sort, portionSize, unit, stock, stockEnabled, alliance } = req.body ?? {}
 
   const dish = await prisma.dish.findUnique({ where: { id } })
   if (!dish) return res.status(404).json({ message: '菜品不存在' })
@@ -651,6 +654,7 @@ router.put('/dishes/:id', async (req, res) => {
   if (specGroups !== undefined) data.specGroups = JSON.stringify(specGroups)
   if (status !== undefined) data.status = status
   if (portionSize !== undefined) data.portionSize = Number(portionSize)
+  if (unit !== undefined) data.unit = unit
   if (stock !== undefined) data.stock = Number(stock)
   if (stockEnabled !== undefined) data.stockEnabled = Boolean(stockEnabled)
   if (alliance !== undefined) data.alliance = Boolean(alliance)
@@ -734,6 +738,7 @@ router.get('/generate-menu-image', async (_req, res) => {
         price: d.price,
         tags: typeof d.tags === 'string' ? JSON.parse(d.tags) : d.tags,
         portionSize: d.portionSize,
+        unit: d.unit,
       })),
     })
 

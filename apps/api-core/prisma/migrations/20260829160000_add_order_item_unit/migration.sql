@@ -1,0 +1,1 @@
+ALTER TABLE "OrderItem" ADD COLUMN "unit" TEXT NOT NULL DEFAULT '串';

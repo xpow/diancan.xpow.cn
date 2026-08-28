@@ -7,7 +7,7 @@
         <span class="material-icons">inventory_2</span>
         <span>今日已售罄</span>
       </div>
-      <span v-else-if="showStockBadge" class="dish-stock-badge">预估剩余 {{ dish.stock }} 串</span>
+      <span v-else-if="showStockBadge" class="dish-stock-badge">预估剩余 {{ dish.stock }} {{ dish.unit || '串' }}</span>
     </div>
     <div class="dish-body">
       <div class="dish-header">
@@ -18,10 +18,10 @@
       <div class="dish-price-row">
         <template v-if="dish.promoPrice">
           <span class="dish-price dish-price-original">¥{{ dish.price.toFixed(2) }}</span>
-          <span class="dish-promo-price">¥{{ dish.promoPrice.toFixed(2) }}<span class="dish-portion" v-if="dish.portionSize"> / {{ dish.portionSize }}串</span></span>
+          <span class="dish-promo-price">¥{{ dish.promoPrice.toFixed(2) }}<span class="dish-portion" v-if="dish.portionSize"> / {{ dish.portionSize }}{{ dish.unit || '串' }}</span></span>
           <span class="dish-promo-tag">{{ dish.promotionName }}</span>
         </template>
-        <span v-else class="dish-price">¥{{ dish.price.toFixed(2) }}<span class="dish-portion" v-if="dish.portionSize"> / {{ dish.portionSize }}串</span></span>
+        <span v-else class="dish-price">¥{{ dish.price.toFixed(2) }}<span class="dish-portion" v-if="dish.portionSize"> / {{ dish.portionSize }}{{ dish.unit || '串' }}</span></span>
       </div>
     </div>
 

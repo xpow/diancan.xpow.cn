@@ -71,7 +71,7 @@
                 :class="['spec-chip', dish.selectedQty === opt && 'chip-active']" @click="dish.selectedQty = opt">{{ opt
                 }}</button>
               <input class="qty-input" type="number" placeholder="其他数量"
-                @input="dish.selectedQty = ($event.target as HTMLInputElement).value + '串'" />
+                @input="dish.selectedQty = ($event.target as HTMLInputElement).value + (dish.unit || '串')" />
             </div>
           </div>
         </div>
@@ -158,6 +158,7 @@ interface DishItem {
   specs?: DishSpecs
   selectedSpice?: string
   selectedQty?: string
+  unit?: string
   rawPrice?: number
   promoPrice?: number
   promotionId?: string
@@ -218,6 +219,7 @@ const IMG_KQS = '/src/assets/images/kqs.webp?raw=true'
 function initDish(data: Omit<DishItem, 'selectedSpice' | 'selectedQty'>): DishItem {
   return {
     ...data,
+    unit: data.unit || '串',
     selectedSpice: data.specs?.spice?.[0],
     selectedQty: data.specs?.qty?.[0],
   }

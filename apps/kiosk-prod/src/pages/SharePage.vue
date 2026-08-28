@@ -35,7 +35,7 @@
               <span v-for="t in featuredDish(cat)!.tags" :key="t" class="dish-tag">{{ t }}</span>
             </div>
             <p>{{ featuredDish(cat)!.desc }}</p>
-            <span class="featured-price"><small class="c-sign">¥</small>{{ featuredDish(cat)!.price.toFixed(2) }}<span v-if="featuredDish(cat)!.portionSize" class="dish-h-portion"> / {{ featuredDish(cat)!.portionSize }}串</span></span>
+            <span class="featured-price"><small class="c-sign">¥</small>{{ featuredDish(cat)!.price.toFixed(2) }}<span v-if="featuredDish(cat)!.portionSize" class="dish-h-portion"> / {{ featuredDish(cat)!.portionSize }}{{ featuredDish(cat)!.unit || '串' }}</span></span>
           </div>
         </a>
         <div v-if="normalDishes(cat).length" class="grid-2col">
@@ -48,7 +48,7 @@
               <div class="grid-card-right">
                 <h4>{{ d.name }}</h4>
                 <span class="grid-price"><small class="c-sign">¥</small>{{ d.price.toFixed(2) }}</span>
-                <p v-if="d.portionSize" class="grid-portion">{{ d.portionSize }}串/份</p>
+                <p v-if="d.portionSize" class="grid-portion">{{ d.portionSize }}{{ d.unit || '串' }}/份</p>
               </div>
             </div>
           </a>
@@ -97,7 +97,7 @@ function onToggleTheme() {
 
 interface Dish {
   id: string; categoryId: string; name: string; price: number
-  desc: string; image?: string; tags?: string[]; portionSize?: number
+  desc: string; image?: string; tags?: string[]; portionSize?: number; unit?: string
 }
 
 interface Category { id: string; name: string; sort: number }

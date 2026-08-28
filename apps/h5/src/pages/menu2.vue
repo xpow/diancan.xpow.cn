@@ -74,7 +74,7 @@
           <div class="dish-action">
             <input v-if="dish.specs?.qty" :id="`qty-input-${dish.id}`" maxlength="3" inputmode="numeric" class="qty-input" type="text" placeholder="其他数量"
               :value="qtyCustom[dish.id] || ''"
-              @input="qtyCustom[dish.id] = ($event.target as HTMLInputElement).value.replace(/\D/g, ''); dish.selectedQty = qtyCustom[dish.id] + '串'" />
+              @input="qtyCustom[dish.id] = ($event.target as HTMLInputElement).value.replace(/\D/g, ''); dish.selectedQty = qtyCustom[dish.id] + (dish.unit || '串')" />
             <button class="add-card-btn" @click="addToCart(dish)">
               <span class="material-symbols-outlined">add</span>
             </button>
@@ -181,6 +181,7 @@ interface DishItem {
   specs?: DishSpecs
   selectedSpice?: string
   selectedQty?: string
+  unit?: string
   rawPrice?: number
   promoPrice?: number
   promotionId?: string
@@ -258,6 +259,7 @@ const SPECS_PRESETS: Record<string, { spice: string[]; qty: string[] }> = {
 function initDish(data: Omit<DishItem, 'selectedSpice' | 'selectedQty'>): DishItem {
   return {
     ...data,
+    unit: data.unit || '串',
     selectedSpice: data.specs?.spice?.[0],
     selectedQty: data.specs?.qty?.[0],
   }

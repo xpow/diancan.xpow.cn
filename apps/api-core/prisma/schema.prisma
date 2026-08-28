@@ -179,6 +179,7 @@ model Dish {
   status      String   @default("active")
   sort        Int      @default(0)
   portionSize Int      @default(0)
+  unit        String   @default("串")
   stock       Int      @default(0)
   stockEnabled Boolean @default(false)
   alliance    Boolean @default(false)
@@ -287,6 +288,7 @@ model OrderItem {
   promotionLabel String?
   status         String  @default("pending") // pending | preparing | ready
   portionSize    Int     @default(0)
+  unit           String  @default("串")
   alliance       Boolean @default(false)
 
   order Order @relation(fields: [orderId], references: [id])

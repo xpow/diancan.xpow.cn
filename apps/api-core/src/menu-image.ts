@@ -34,6 +34,7 @@ interface DishItem {
   price: number
   tags?: string[]
   portionSize?: number
+  unit?: string
 }
 
 interface MenuData {
@@ -100,7 +101,7 @@ export async function generateMenuImage(data: MenuData): Promise<Buffer> {
     y += catTitleH
     for (const item of items) {
       const priceStr = `¥${item.price.toFixed(2).replace(/\.?0+$/, '')}`
-      const portionStr = item.portionSize ? `/ ${item.portionSize}串` : ''
+      const portionStr = item.portionSize ? `/ ${item.portionSize}${item.unit || '串'}` : ''
       const nameEnd = 96 + estimateTextWidth(item.name, 28, false)
       const tagParts: string[] = []
       if (item.tags?.length) {

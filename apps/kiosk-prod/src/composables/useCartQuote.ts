@@ -119,7 +119,7 @@ export function useCartQuote(dishes: Ref<MenuDish[]>) {
         .filter((i) => i.baseDishId === dish.id)
         .reduce((s, i) => s + i.quantity, 0)
       if (inCartQty + qty > dish.stock) {
-        showToast({ message: `「${dish.name}」库存不足，仅剩 ${dish.stock} 串`, icon: 'fail' })
+        showToast({ message: `「${dish.name}」库存不足，仅剩 ${dish.stock} ${dish.unit || '串'}`, icon: 'fail' })
         return
       }
     }
@@ -139,6 +139,7 @@ export function useCartQuote(dishes: Ref<MenuDish[]>) {
       originalPrice: dish.promoPrice ? dish.price : undefined,
       promotionName: dish.promotionName,
       portionSize: dish.portionSize || undefined,
+      unit: dish.unit || '串',
     })
 
     hydrateCart()
