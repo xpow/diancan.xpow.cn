@@ -246,7 +246,7 @@ import Tag from 'primevue/tag'
 
 const form = ref({ name: '', slogan: '', statusText: '', logoUrl: '' })
 const showRestReason = ref(false)
-const restReasons = ['天气原因', '市政管理', '停业休息']
+const restReasons = ['天气原因', '市政管理', '停业', '已打烊']
 const restTarget = ref<any>(null)
 const restFormReason = ref('')
 
