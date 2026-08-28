@@ -49,18 +49,16 @@ export function useCartQuote(dishes: Ref<MenuDish[]>) {
   }
 
   function isItemDiscounted(item: StoredCartItem) {
-    const qi = quoteItemForDishId(item.baseDishId)
-    return qi ? qi.finalUnitPrice !== qi.unitPrice : !!item.promoPrice
+    return !!item.originalPrice
   }
 
   function getItemOriginalPrice(item: StoredCartItem) {
-    const qi = quoteItemForDishId(item.baseDishId)
-    return qi ? qi.unitPrice : (item.originalPrice ?? item.price)
+    return item.originalPrice ?? item.price
   }
 
   function getItemFinalPrice(item: StoredCartItem) {
     const qi = quoteItemForDishId(item.baseDishId)
-    return qi ? qi.finalUnitPrice : item.price
+    return qi ? qi.finalUnitPrice : (item.promoPrice ?? item.price)
   }
 
   function cartItemPromotionLabel(item: StoredCartItem) {
