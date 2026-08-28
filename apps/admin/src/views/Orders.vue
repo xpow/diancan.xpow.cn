@@ -41,13 +41,14 @@
           <span v-else class="text-muted">-</span>
         </template>
       </Column>
-      <Column header="商品" style="min-width:200px">
+      <Column header="商品" style="min-width:240px">
         <template #body="{ data }">
           <div v-for="item in data.items" :key="item.id" class="order-item-line">
             <span class="item-name">{{ item.name }}</span>
             <span class="item-qty">x{{ item.quantity }}</span>
             <span v-if="item.specs" class="item-spec">{{ item.specs }}</span>
             <span v-if="item.promotionLabel" class="item-promo">{{ item.promotionLabel }}</span>
+            <Tag :value="itemStatusLabel(item.status)" :severity="itemStatusSeverity(item.status)" class="item-status" />
           </div>
         </template>
       </Column>
@@ -112,6 +113,7 @@ interface OrderItem {
   finalSubtotal: number
   specs: string | null
   promotionLabel: string | null
+  status: string
 }
 
 interface Order {
@@ -154,6 +156,16 @@ function statusLabel(s: string): string {
 
 function statusSeverity(s: string): string {
   const map: Record<string, string> = { unpaid: 'danger', pending: 'warn', paid: 'warn', preparing: 'info', ready: 'success', completed: 'contrast', cancelled: 'danger' }
+  return map[s] || 'info'
+}
+
+function itemStatusLabel(s: string): string {
+  const map: Record<string, string> = { pending: '待制作', preparing: '制作中', ready: '待取餐' }
+  return map[s] || s
+}
+
+function itemStatusSeverity(s: string): string {
+  const map: Record<string, string> = { pending: 'warn', preparing: 'info', ready: 'success' }
   return map[s] || 'info'
 }
 
@@ -222,6 +234,7 @@ async function confirmCancel() {
 .item-meta { color: var(--text-color-secondary); font-size: 13px; }
 .item-spec { color: var(--text-color-secondary); font-size: 12px; margin-left: 4px; }
 .item-promo { background: #fff3e0; color: #e65100; font-size: 11px; padding: 1px 6px; border-radius: 4px; }
+.item-status { margin-left: 8px; font-size: 11px; padding: 2px 6px; }
 .fr-amount { font-weight: 700; color: #e53935; }
 .text-muted { color: var(--text-color-secondary); }
 .empty { text-align: center; padding: 40px; color: var(--text-color-secondary); }
