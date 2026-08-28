@@ -22,6 +22,7 @@ model Merchant {
   promotions Promotion[]
   promotionBanners PromotionBanner[]
   featuredItems   FeaturedItem[]
+  kitchenTerminals KitchenTerminal[]
   orders    Order[]
   reviewSettings String? @default("{}") // JSON: { enabled: bool }
 
@@ -359,4 +360,20 @@ model ReviewGiftDish {
   createdAt  DateTime @default(now())
 
   @@unique([merchantId, dishId])
+}
+
+model KitchenTerminal {
+  id          String   @id @default(cuid())
+  merchantId  String
+  code        String   @default("")   // 出餐机码，如 01
+  name        String   @default("")   // 出餐机01
+  addressCode String   @unique        // 地址码：不可逆hash，出餐端携带用于识别
+  categoryIds String   @default("[]") // JSON：显示分类ID数组
+  status      String   @default("active")
+  merchant    Merchant @relation(fields: [merchantId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([merchantId])
 }

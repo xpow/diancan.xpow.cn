@@ -28,13 +28,16 @@
         <h1 class="top-title">出餐管理</h1>
       </div>
       <div class="top-right">
-        <span v-if="terminal.code" class="terminal-badge">{{ terminal.code }}</span>
+        <span v-if="terminal.code" class="terminal-badge">出餐机{{ terminal.code }}</span>
         <span class="order-count-badge">{{ totalItems }}</span>
         <button class="settings-btn" @click="toggleVoice">
           <span class="material-symbols-outlined">{{ voiceEnabled ? 'volume_up' : 'volume_off' }}</span>
         </button>
-        <button class="settings-btn" @click="openTerminalSettings">
+        <button class="settings-btn" :class="{ 'settings-btn-active': showTerminalSettings }" @click="openTerminalSettings" title="地址码绑定/显示分类">
           <span class="material-symbols-outlined">monitor_heart</span>
+        </button>
+        <button class="settings-btn" @click="openTerminalManage" title="出餐机管理">
+          <span class="material-symbols-outlined">settings</span>
         </button>
         <button class="settings-btn" @click="logout" title="退出">
           <span class="material-symbols-outlined">logout</span>
@@ -45,36 +48,91 @@
     <div v-if="showTerminalSettings" class="terminal-settings-overlay" @click.self="showTerminalSettings = false">
       <div class="terminal-settings">
         <div class="terminal-settings-header">
-          <h2>终端出餐设置</h2>
+          <h2>出餐机绑定</h2>
           <button class="terminal-close" @click="showTerminalSettings = false">
             <span class="material-symbols-outlined">close</span>
           </button>
         </div>
         <div class="terminal-form-row">
-          <label>出餐机编码</label>
-          <input v-model="terminalCode" class="terminal-input" placeholder="如 01号" maxlength="6" />
+          <label>地址码</label>
+          <input v-model="terminalAddressCode" class="terminal-input" placeholder="输入出餐机地址码（后台生成）" />
+          <p class="terminal-hint">在「出餐机管理」复制对应出餐机的地址码粘贴到此，即可识别为对应出餐机</p>
         </div>
-        <div class="terminal-form-row">
-          <label>显示分类</label>
-          <div class="terminal-cats">
-            <button
-              v-for="c in terminalCategories"
-              :key="c.id"
-              :class="['terminal-cat', terminalCats.includes(c.id) && 'terminal-cat-active']"
-              @click="toggleTerminalCat(c.id)"
-            >
-              {{ c.name }}
-            </button>
-            <button
-              :class="['terminal-cat', terminalCats.length === 0 && 'terminal-cat-active']"
-              @click="terminalCats = []"
-            >
-              全部
-            </button>
+        <button class="terminal-save" @click="saveTerminalAddress" :disabled="binding">绑定</button>
+        <button v-if="terminal.code" class="terminal-unbind" @click="unbindTerminal">解绑（清除本机出餐机码）</button>
+      </div>
+    </div>
+
+    <div v-if="showTerminalManage" class="terminal-settings-overlay" @click.self="showTerminalManage = false">
+      <div class="terminal-settings terminal-manage">
+        <div class="terminal-settings-header">
+          <h2>出餐机管理</h2>
+          <button class="terminal-close" @click="showTerminalManage = false">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <button class="terminal-save terminal-add" @click="openTerminalForm(null)">+ 新增出餐机</button>
+
+        <div v-for="t in terminals" :key="t.id" class="terminal-item">
+          <div class="terminal-item-head">
+            <span class="terminal-item-name">出餐机{{ t.code }} <small v-if="t.name">{{ t.name }}</small></span>
+            <span :class="['terminal-item-status', t.status === 'active' ? 'st-active' : 'st-inactive']">{{ t.status === 'active' ? '启用' : '停用' }}</span>
           </div>
-          <p class="terminal-hint">留空「全部」表示显示所有分类</p>
+          <div class="terminal-item-addr">地址码：{{ t.addressCode }}</div>
+          <div class="terminal-item-groups">
+            <span class="terminal-item-label">显示分类：</span>
+            <span v-if="!t.categoryIds.length" class="terminal-item-none">全部</span>
+            <span v-for="c in t.categoryIds" :key="c" class="terminal-item-cat">{{ categoryName(c) }}</span>
+          </div>
+          <div class="terminal-item-actions">
+            <button class="terminal-act-btn" @click="copyAddressCode(t)">复制地址码</button>
+            <button class="terminal-act-btn" @click="regenerateAddress(t)">重置地址码</button>
+            <button class="terminal-act-btn" @click="openTerminalForm(t)">编辑</button>
+            <button class="terminal-act-btn terminal-act-danger" @click="deleteTerminal(t)">删除</button>
+          </div>
         </div>
-        <button class="terminal-save" @click="saveTerminalSettings">保存</button>
+        <div v-if="!terminals.length" class="terminal-item-empty">暂无出餐机，点击「新增出餐机」创建</div>
+
+        <div v-if="showTerminalForm" class="terminal-form-box">
+          <div class="terminal-form-row">
+            <label>出餐机码</label>
+            <input v-model="form.code" class="terminal-input" placeholder="如 01" maxlength="6" />
+          </div>
+          <div class="terminal-form-row">
+            <label>名称（可选）</label>
+            <input v-model="form.name" class="terminal-input" placeholder="如 出餐机01" />
+          </div>
+          <div class="terminal-form-row">
+            <label>显示分类</label>
+            <div class="terminal-cats">
+              <button
+                v-for="c in terminalCategories"
+                :key="c.id"
+                :class="['terminal-cat', form.categoryIds.includes(c.id) && 'terminal-cat-active']"
+                @click="toggleFormCat(c.id)"
+              >
+                {{ c.name }}
+              </button>
+              <button
+                :class="['terminal-cat', form.categoryIds.length === 0 && 'terminal-cat-active']"
+                @click="form.categoryIds = []"
+              >
+                全部
+              </button>
+            </div>
+            <p class="terminal-hint">留空「全部」表示该出餐机显示所有分类</p>
+          </div>
+          <div v-if="form.id && generatedAddressCode" class="terminal-form-row">
+            <label>新地址码（仅本次显示）</label>
+            <div class="terminal-new-code">{{ generatedAddressCode }}</div>
+            <button class="terminal-act-btn" @click="copyText(generatedAddressCode)">复制</button>
+          </div>
+          <div class="terminal-form-actions">
+            <button class="terminal-save" @click="saveTerminalForm">保存</button>
+            <button class="terminal-cancel" @click="closeTerminalForm">取消</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -160,17 +218,22 @@ const STORAGE_KEY_READY = 'kitchen_announced_ready'
 const STORAGE_KEY_TERMINAL = 'kitchen_terminal_settings'
 
 interface TerminalCategory { id: string; name: string }
-interface TerminalSettings { code: string; categoryIds: string[] }
+interface TerminalSettings { code: string; name: string; addressCode: string; categoryIds: string[] }
 
 function loadTerminal(): TerminalSettings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_TERMINAL)
     const parsed = raw ? JSON.parse(raw) : null
     if (parsed && typeof parsed === 'object') {
-      return { code: String(parsed.code ?? ''), categoryIds: Array.isArray(parsed.categoryIds) ? parsed.categoryIds : [] }
+      return {
+        code: String(parsed.code ?? ''),
+        name: String(parsed.name ?? ''),
+        addressCode: String(parsed.addressCode ?? ''),
+        categoryIds: Array.isArray(parsed.categoryIds) ? parsed.categoryIds : [],
+      }
     }
   } catch {}
-  return { code: '', categoryIds: [] }
+  return { code: '', name: '', addressCode: '', categoryIds: [] }
 }
 
 function loadAnnounced(): Set<string> {
@@ -222,9 +285,14 @@ let announcedNewOrders = loadAnnounced()
 
 const terminal = ref<TerminalSettings>(loadTerminal())
 const showTerminalSettings = ref(false)
-const terminalCode = ref(terminal.value.code)
-const terminalCats = ref<string[]>([...terminal.value.categoryIds])
+const terminalAddressCode = ref(terminal.value.addressCode)
+const binding = ref(false)
 const terminalCategories = ref<TerminalCategory[]>([])
+const showTerminalManage = ref(false)
+const terminals = ref<any[]>([])
+const showTerminalForm = ref(false)
+const form = ref({ id: '', code: '', name: '', categoryIds: [] as string[] })
+const generatedAddressCode = ref('')
 
 const tabs = [
   { key: 'pending' as const, label: '等待' },
@@ -415,21 +483,36 @@ function toggleVoice() {
 }
 
 function openTerminalSettings() {
-  terminalCode.value = terminal.value.code
-  terminalCats.value = [...terminal.value.categoryIds]
+  terminalAddressCode.value = terminal.value.addressCode
   showTerminalSettings.value = true
 }
 
-function toggleTerminalCat(id: string) {
-  const i = terminalCats.value.indexOf(id)
-  if (i > -1) terminalCats.value.splice(i, 1)
-  else terminalCats.value.push(id)
+async function saveTerminalAddress() {
+  const code = terminalAddressCode.value.trim()
+  if (!code || binding.value) return
+  binding.value = true
+  try {
+    const res = await fetch(`/api/admin/kitchen-terminal/me?addressCode=${encodeURIComponent(code)}`)
+    if (!res.ok) {
+      const data = await res.json()
+      alert(data.message || '地址码无效')
+      return
+    }
+    const t = await res.json()
+    terminal.value = { code: t.code, name: t.name, addressCode: code, categoryIds: t.categoryIds }
+    try { localStorage.setItem(STORAGE_KEY_TERMINAL, JSON.stringify(terminal.value)) } catch {}
+    showTerminalSettings.value = false
+  } catch {
+    alert('网络错误')
+  } finally {
+    binding.value = false
+  }
 }
 
-function saveTerminalSettings() {
-  terminal.value = { code: terminalCode.value.trim(), categoryIds: [...terminalCats.value] }
-  try { localStorage.setItem(STORAGE_KEY_TERMINAL, JSON.stringify(terminal.value)) } catch {}
-  showTerminalSettings.value = false
+function unbindTerminal() {
+  terminal.value = { code: '', name: '', addressCode: '', categoryIds: [] }
+  terminalAddressCode.value = ''
+  try { localStorage.removeItem(STORAGE_KEY_TERMINAL) } catch {}
 }
 
 async function fetchCategories() {
@@ -438,6 +521,114 @@ async function fetchCategories() {
     if (!res.ok) return
     terminalCategories.value = await res.json()
   } catch {}
+}
+
+function categoryName(id: string): string {
+  return terminalCategories.value.find((c) => c.id === id)?.name || id
+}
+
+/* 出餐机管理 */
+async function openTerminalManage() {
+  await fetchTerminals()
+  showTerminalManage.value = true
+}
+
+async function fetchTerminals() {
+  try {
+    const res = await fetch('/api/admin/kitchen-terminals')
+    if (!res.ok) return
+    terminals.value = await res.json()
+  } catch {}
+}
+
+function openTerminalForm(t: any) {
+  if (t) {
+    form.value = { id: t.id, code: t.code, name: t.name || '', categoryIds: [...t.categoryIds] }
+  } else {
+    form.value = { id: '', code: '', name: '', categoryIds: [] }
+  }
+  generatedAddressCode.value = ''
+  showTerminalForm.value = true
+}
+
+function toggleFormCat(id: string) {
+  const i = form.value.categoryIds.indexOf(id)
+  if (i > -1) form.value.categoryIds.splice(i, 1)
+  else form.value.categoryIds.push(id)
+}
+
+function closeTerminalForm() {
+  showTerminalForm.value = false
+}
+
+async function saveTerminalForm() {
+  if (!form.value.code.trim()) { alert('请填写出餐机码'); return }
+  try {
+    const url = form.value.id ? `/api/admin/kitchen-terminals/${form.value.id}` : '/api/admin/kitchen-terminals'
+    const method = form.value.id ? 'PUT' : 'POST'
+    const body = { code: form.value.code, name: form.value.name, categoryIds: form.value.categoryIds }
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    const data = await res.json()
+    if (!res.ok) { alert(data.message || '保存失败'); return }
+    if (!form.value.id && data.addressCode) {
+      generatedAddressCode.value = data.addressCode
+      alert(`出餐机创建成功！地址码（仅本次显示，请复制保存）：\n${data.addressCode}`)
+    }
+    await fetchTerminals()
+    showTerminalForm.value = false
+  } catch {
+    alert('网络错误')
+  }
+}
+
+async function regenerateAddress(t: any) {
+  if (!confirm(`确认重置「出餐机${t.code}」的地址码？旧地址码将立即失效。`)) return
+  try {
+    const res = await fetch(`/api/admin/kitchen-terminals/${t.id}/regenerate-address`, { method: 'POST' })
+    const data = await res.json()
+    if (!res.ok) { alert(data.message || '重置失败'); return }
+    alert(`新地址码（仅本次显示，请复制保存）：\n${data.addressCode}`)
+    await fetchTerminals()
+  } catch {
+    alert('网络错误')
+  }
+}
+
+async function deleteTerminal(t: any) {
+  if (!confirm(`确认删除「出餐机${t.code}」？`)) return
+  try {
+    await fetch(`/api/admin/kitchen-terminals/${t.id}`, { method: 'DELETE' })
+    await fetchTerminals()
+  } catch {
+    alert('网络错误')
+  }
+}
+
+function copyText(text: string) {
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(text).catch(() => {})
+  }
+}
+
+function copyAddressCode(t: any) {
+  copyText(t.addressCode)
+}
+
+async function ensureTerminalResolved() {
+  if (terminal.value.code) return
+  await fetchCategories()
+  if (terminal.value.addressCode) {
+    const res = await fetch(`/api/admin/kitchen-terminal/me?addressCode=${encodeURIComponent(terminal.value.addressCode)}`)
+    if (res.ok) {
+      const t = await res.json()
+      terminal.value = { code: t.code, name: t.name, addressCode: terminal.value.addressCode, categoryIds: t.categoryIds }
+      try { localStorage.setItem(STORAGE_KEY_TERMINAL, JSON.stringify(terminal.value)) } catch {}
+    }
+  }
 }
 
 async function checkAuth() {
@@ -482,6 +673,7 @@ async function logout() {
 
 async function enterKitchen() {
   authed.value = true
+  await ensureTerminalResolved()
   await fetchOrders()
   await fetchCategories()
   if (timer) clearInterval(timer)
@@ -606,6 +798,31 @@ main { padding: 12px 16px; display: flex; flex-direction: column; gap: 16px; }
 .terminal-cat-active { background: var(--primary-container); border-color: var(--primary-container); color: var(--on-primary); }
 .terminal-hint { font-size: 11px; color: var(--secondary); margin-top: 8px; }
 .terminal-save { width: 100%; padding: 12px; border: none; border-radius: 12px; background: var(--primary-container); color: #fff; font-size: 15px; font-weight: 800; cursor: pointer; }
+.terminal-unbind { width: 100%; margin-top: 10px; padding: 10px; border: 1px solid var(--outline-variant); border-radius: 12px; background: transparent; color: var(--secondary); font-size: 13px; font-weight: 600; cursor: pointer; }
+.settings-btn-active { background: var(--surface-container-high); }
+.terminal-manage { max-height: 80dvh; overflow-y: auto; }
+.terminal-add { margin-bottom: 14px; background: var(--primary); }
+.terminal-item { padding: 12px 0; border-bottom: 1px solid var(--outline-variant); }
+.terminal-item-head { display: flex; justify-content: space-between; align-items: center; }
+.terminal-item-name { font-size: 15px; font-weight: 800; }
+.terminal-item-name small { color: var(--secondary); font-weight: 600; margin-left: 4px; }
+.terminal-item-status { font-size: 11px; padding: 2px 8px; border-radius: 9999px; font-weight: 700; }
+.st-active { background: #e6f6ec; color: #1a7f37; }
+.st-inactive { background: var(--surface-container-high); color: var(--secondary); }
+.terminal-item-addr { margin-top: 6px; font-size: 12px; color: var(--primary-container); font-weight: 700; font-family: monospace; word-break: break-all; }
+.terminal-item-groups { margin-top: 6px; font-size: 12px; color: var(--secondary); }
+.terminal-item-label { color: var(--secondary); }
+.terminal-item-none { color: var(--secondary); }
+.terminal-item-cat { display: inline-block; margin: 2px 4px 2px 0; padding: 2px 8px; border-radius: 9999px; background: var(--surface-container-high); color: var(--text); font-size: 12px; }
+.terminal-item-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.terminal-act-btn { padding: 6px 14px; border-radius: 9999px; border: 1px solid var(--outline-variant); background: var(--surface-container-high); color: var(--primary-container); font-size: 12px; font-weight: 700; cursor: pointer; }
+.terminal-act-danger { color: #e53935; }
+.terminal-item-empty { padding: 24px 0; color: var(--secondary); text-align: center; font-size: 13px; }
+.terminal-form-box { margin-top: 14px; padding: 14px; border: 1px solid var(--outline-variant); border-radius: 12px; background: var(--surface-container-lowest); }
+.terminal-new-code { padding: 10px 12px; border-radius: 10px; background: var(--surface-container-high); color: var(--primary-container); font-weight: 800; font-family: monospace; font-size: 14px; margin-bottom: 8px; word-break: break-all; }
+.terminal-form-actions { display: flex; gap: 10px; margin-top: 12px; }
+.terminal-form-actions .terminal-save { flex: 1; }
+.terminal-cancel { flex: 1; padding: 12px; border: 1px solid var(--outline-variant); border-radius: 12px; background: transparent; color: var(--secondary); font-size: 15px; font-weight: 700; cursor: pointer; }
 
 .kitchen-login { display: flex; align-items: center; justify-content: center; min-height: 100dvh; background: #f0f2f5; padding: 16px; box-sizing: border-box; }
 .kitchen-login-card { width: 100%; max-width: 360px; padding: 40px; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); box-sizing: border-box; }
