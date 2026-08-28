@@ -27,7 +27,7 @@
       <div ref="navWrapRef" class="category-nav-wrap">
         <nav :class="['category-nav', navFloating && 'floating']">
           <button
-            v-for="(category, idx) in categories.slice(0, 3)" :key="category.id"
+            v-for="category in categories.slice(0, 3)" :key="category.id"
             :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
             @click.stop="selectedCategoryId = category.id; scrollToTop()"
           >
@@ -35,12 +35,7 @@
             {{ category.name }}
             <span v-if="categoryDishCount(category.id) > 0" class="category-count">{{ categoryDishCount(category.id) }}</span>
           </button>
-          <button v-if="categories.length > 3" class="cat-expand-btn" :class="{ 'cat-expand-open': showCatDropdown }" @click="showCatDropdown = !showCatDropdown">
-            <span class="material-icons">expand_more</span>
-          </button>
-        </nav>
-        <div v-if="categories.length > 3" class="cat-expand-wrap" :class="{ 'cat-expand-open': showCatDropdown }">
-          <div class="cat-expand-inner">
+          <span v-if="categories.length > 3" class="cat-extra-inline" :class="{ 'cat-expand-open': showCatDropdown }">
             <button
               v-for="category in categories.slice(3)" :key="'extra-' + category.id"
               :class="['category-pill', selectedCategoryId === category.id && 'category-pill-active']"
@@ -50,8 +45,11 @@
               {{ category.name }}
               <span v-if="categoryDishCount(category.id) > 0" class="category-count">{{ categoryDishCount(category.id) }}</span>
             </button>
-          </div>
-        </div>
+          </span>
+          <button v-if="categories.length > 3" class="cat-expand-btn" :class="{ 'cat-expand-open': showCatDropdown }" @click="showCatDropdown = !showCatDropdown">
+            <span class="material-icons">expand_more</span>
+          </button>
+        </nav>
       </div>
 
       <section v-if="errorMessage" class="status-card error-card">
@@ -214,11 +212,10 @@ onMounted(() => {
 .category-nav-wrap { position: sticky; top: 52px; z-index: 40; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: var(--spacing-md) var(--container-margin) 14px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: box-shadow var(--transition-fast); }
 .category-nav-wrap.floating { box-shadow: 0 6px 18px rgba(87, 32, 0, 0.05); }
 .category-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; }
+.cat-extra-inline { display: none; gap: 10px; }
+.cat-extra-inline.cat-expand-open { display: inline-flex; }
 .cat-expand-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 1px solid var(--outline-variant); border-radius: var(--radius-full); background: var(--surface); color: var(--on-surface-variant); cursor: pointer; flex-shrink: 0; transition: all var(--transition-fast); }
 .cat-expand-btn:active { background: var(--surface-variant); }
-.cat-expand-wrap { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.3s ease; }
-.cat-expand-wrap.cat-expand-open { grid-template-rows: 1fr; }
-.cat-expand-inner { overflow: hidden; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding-top: 8px; }
 .cat-expand-btn .material-icons { transition: transform 0.25s ease; }
 .cat-expand-btn.cat-expand-open .material-icons { transform: rotate(180deg); }
 .nav-sentinel { width: 1px; height: 1px; pointer-events: none; }
@@ -243,8 +240,7 @@ onMounted(() => {
   .category-pill { padding: 12px 24px; font-size: var(--text-label-lg); }
   .category-pill .material-icons { font-size: 20px !important; }
   .cat-expand-btn { display: none !important; }
-  .cat-expand-wrap { display: contents !important; }
-  .cat-expand-inner { display: contents !important; padding-top: 0; }
+  .cat-extra-inline { display: contents !important; }
   .category-nav-wrap { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; padding-top: var(--spacing-lg); padding-bottom: var(--spacing-lg); }
   .category-nav { display: contents !important; }
 }
