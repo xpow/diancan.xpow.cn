@@ -34,7 +34,26 @@
       </Column>
       <Column field="status" header="状态">
         <template #body="{ data }">
-          <Tag :value="data.status === 'active' ? '启用' : '停用'" :severity="data.status === 'active' ? 'success' : 'secondary'" />
+          <div class="status-cell">
+            <Button
+              v-if="data.status === 'active'"
+              icon="pi pi-power-off"
+              label="停用"
+              severity="danger"
+              text
+              size="small"
+              @click="toggleStatus(data)"
+            />
+            <Button
+              v-else
+              icon="pi pi-power"
+              label="启用"
+              severity="success"
+              text
+              size="small"
+              @click="toggleStatus(data)"
+            />
+          </div>
         </template>
       </Column>
       <Column header="操作">
@@ -152,6 +171,20 @@ async function remove(term: any) {
   fetchTerminals()
 }
 
+async function toggleStatus(term: any) {
+  const next = term.status === 'active' ? 'inactive' : 'active'
+  const res = await fetch(`/api/admin/kitchen-terminals/${term.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: next }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: `HTTP ${res.status}` }))
+    return alert('操作失败：' + (err.message || err.error || res.statusText))
+  }
+  fetchTerminals()
+}
+
 async function copyUrl(term: any) {
   const url = terminalUrl(term)
   if (!url || url === '-') return alert('暂无唯一访问地址')
@@ -178,6 +211,7 @@ onMounted(() => {
 .mono-url { font-family: monospace; font-size: 11px; color: #888; word-break: break-all; }
 .cat-wrap { display: flex; flex-wrap: wrap; gap: 4px; }
 .cat-tag { padding: 2px 8px; border-radius: 9999px; background: #fff3e6; color: #bf5b00; font-size: 12px; }
+.status-cell { display: flex; align-items: center; }
 .empty-text { color: #999; }
 .form-group { margin-bottom: 14px; }
 .form-group label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 6px; }
