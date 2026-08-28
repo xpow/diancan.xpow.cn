@@ -13,6 +13,7 @@
         <router-link to="/promotions" class="nav-link"><span class="nav-icon">🏷️</span> 营销活动</router-link>
         <router-link to="/merchant" class="nav-link"><span class="nav-icon">⚙️</span> 商家设置</router-link>
         <router-link to="/devices" class="nav-link"><span class="nav-icon">📟</span> 设备管理</router-link>
+        <router-link to="/kitchen-terminals" class="nav-link"><span class="nav-icon">🍳</span> 出餐机管理</router-link>
         <router-link to="/users" class="nav-link"><span class="nav-icon">👥</span> 用户管理</router-link>
         <router-link to="/stats" class="nav-link"><span class="nav-icon">📈</span> 销量统计</router-link>
         <router-link to="/cost-profit" class="nav-link"><span class="nav-icon">💰</span> 成本利润</router-link>

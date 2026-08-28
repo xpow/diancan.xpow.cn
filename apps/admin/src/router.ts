@@ -11,6 +11,7 @@ const router = createRouter({
     { path: '/promotions', name: 'promotions', component: () => import('./views/Promotions.vue') },
     { path: '/merchant', name: 'merchant', component: () => import('./views/Merchant.vue') },
     { path: '/devices', name: 'devices', component: () => import('./views/Devices.vue') },
+    { path: '/kitchen-terminals', name: 'kitchenTerminals', component: () => import('./views/KitchenTerminals.vue') },
     { path: '/users', name: 'users', component: () => import('./views/Users.vue') },
     { path: '/kitchen', name: 'kitchen', meta: { hideLayout: true, noAuth: true }, component: () => import('./views/kitchen.vue') },
     { path: '/stats', name: 'stats', component: () => import('./views/Stats.vue') },
