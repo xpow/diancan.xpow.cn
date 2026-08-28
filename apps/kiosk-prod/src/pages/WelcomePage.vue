@@ -77,7 +77,7 @@
               </div>
             </div>
             <div class="featured-thumb">
-              <img :src="getDishImage(item.dish.id)" alt="" />
+              <img :src="getDishThumbnail(item.dish.id)" alt="" />
             </div>
           </div>
           <div v-else class="menu-grid">
@@ -87,7 +87,7 @@
               </div>
               <span v-else-if="dish.stockEnabled && (dish.stock ?? 0) > 0" class="grid-stock-badge">剩余 {{ dish.stock }} 串</span>
               <div class="menu-grid-thumb">
-                <img :src="getDishImage(dish.id)" :alt="dish.name" loading="lazy" />
+                <img :src="getDishThumbnail(dish.id)" :alt="dish.name" loading="lazy" />
               </div>
               <div class="menu-grid-half">
                 <div class="menu-grid-info">
@@ -167,7 +167,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { getDishImage } from '@/utils/dishImages'
+import { getDishImage, getDishThumbnail } from '@/utils/dishImages'
 import { apiPost, setDeviceToken, getDeviceUUID } from '@/utils/api'
 import KioskTopBar from '@/components/KioskTopBar.vue'
 import BottomNav from '@/components/BottomNav.vue'
