@@ -65,7 +65,7 @@
           <Button v-if="data.status === 'unpaid' || data.status === 'pending' || data.status === 'paid'" label="开始制作" icon="pi pi-play" size="small" @click="updateStatus(data.id, 'preparing')" />
           <Button v-if="data.status === 'preparing'" label="完成" icon="pi pi-check" size="small" severity="success" @click="updateStatus(data.id, 'ready')" />
           <Button v-if="data.status === 'ready'" label="已取餐" icon="pi pi-check-circle" size="small" severity="info" @click="updateStatus(data.id, 'completed')" />
-          <Button v-if="data.status === 'unpaid' || data.status === 'pending' || data.status === 'paid' || data.status === 'preparing'" label="取消" icon="pi pi-times" size="small" severity="danger" text @click="openCancelDialog(data.id)" />
+          <Button v-if="data.status === 'unpaid' || data.status === 'pending' || data.status === 'paid' || data.status === 'preparing' || data.status === 'ready'" label="取消" icon="pi pi-times" size="small" severity="danger" text @click="openCancelDialog(data.id)" />
         </template>
       </Column>
     </DataTable>
