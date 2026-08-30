@@ -95,14 +95,6 @@
             再次提醒
           </button>
         </div>
-        <button
-          v-if="group.canComplete && tab === 'ready'"
-          class="action-btn action-done order-done"
-          @click="completeOrder(group)"
-        >
-          <span class="material-symbols-outlined">checklist</span>
-          全部取餐
-        </button>
       </div>
 
       <div v-if="!filtered.length" class="empty">
@@ -253,10 +245,7 @@ const filtered = computed(() => {
       items: filteredItems,
     }
   }
-  return Object.values(groups).map((g) => ({
-    ...g,
-    canComplete: tab.value === 'ready' && orders.value.find((o) => o.id === g.orderId)?.items.every((i) => i.status === 'ready'),
-  }))
+  return Object.values(groups)
 })
 
 let speechQueue: string[] = []
@@ -335,18 +324,6 @@ async function finishCook(item: OrderItem) {
     speakTwice(`请${order.pickupCode}取餐`)
     notify('取餐提醒', `${order.pickupCode} 号已全部出餐`)
   }
-}
-
-async function completeOrder(group: { pickupCode: string; orderId: string }) {
-  try {
-    await fetch(`/api/admin/orders/${group.orderId}/status`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'completed' }),
-    })
-    const order = orders.value.find((o) => o.id === group.orderId)
-    if (order) order.status = 'completed'
-  } catch {}
 }
 
 async function fetchOrders() {
