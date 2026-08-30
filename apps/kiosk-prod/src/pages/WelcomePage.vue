@@ -193,7 +193,7 @@ function promoIcon(type: string): string {
 }
 
 function promoImage(p: BootstrapPromotion): string | null {
-  return p.image || (p.dishId ? getDishImage(p.dishId) : null)
+  return p.image || (p.dishId ? getDishThumbnail(p.dishId) : null)
 }
 
 interface BootstrapPromotion {
@@ -569,15 +569,15 @@ onMounted(async () => {
 
 /* Promo List */
 .promo-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--spacing-md);
 }
 
 .promo-card {
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: var(--spacing-md);
   padding: var(--spacing-md);
   border-radius: var(--radius-xl);
@@ -593,6 +593,7 @@ onMounted(async () => {
   border-radius: var(--radius-lg);
   object-fit: cover;
   flex-shrink: 0;
+  align-self: center;
 }
 
 .promo-body {
@@ -822,10 +823,10 @@ onMounted(async () => {
   }
   .hero-cta .material-icons { font-size: 20px !important; }
   .page-content { max-width: none; }
-  .promo-list { display: grid; grid-template-columns: 1fr 1fr; }
+  .promo-list { display: grid; grid-template-columns: repeat(3, 1fr); }
   .featured-scroll { display: grid; grid-template-columns: 1fr 1fr; }
   .featured-thumb { width: 128px; max-width: 170px; }
-  .menu-grid { grid-template-columns: repeat(3, 1fr); }
+  .menu-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
 
