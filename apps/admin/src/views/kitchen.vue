@@ -330,7 +330,7 @@ async function fetchOrders() {
   try {
     const res = await fetch('/api/admin/orders?scope=active&limit=50')
     const body = await res.json()
-    const active: Order[] = (body.items ?? [])
+    const active: Order[] = ((body.items ?? []) as Order[]).filter((o) => o.status !== 'completed')
     active.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     orders.value = active
 
