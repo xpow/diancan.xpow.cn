@@ -1035,7 +1035,7 @@ app.get('/api/orders', generalLimiter, authMiddleware, async (req, res) => {
   if (device && device.role !== 'admin') {
     where.deviceId = device.id
   }
-  if (scope === 'active') where.status = { in: ['unpaid', 'paid', 'preparing', 'ready', 'completed'] }
+  if (scope === 'active') where.status = { in: ['unpaid', 'paid', 'preparing', 'ready'] }
 
   const orders = await prisma.order.findMany({
     where,
