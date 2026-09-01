@@ -17,9 +17,15 @@
         <button :class="['quick-btn', quickRange === 'week' && 'active']" @click="setQuick('week')">本周</button>
         <button :class="['quick-btn', quickRange === 'month' && 'active']" @click="setQuick('month')">本月</button>
         <button :class="['quick-btn', quickRange === 'all' && 'active']" @click="setQuick('all')">全部</button>
+        <span class="nav-sep"></span>
+        <button class="nav-btn" @click="shiftRange(navUnit, -1)"><span class="nav-arrow">‹</span> {{ navLabels[0] }}</button>
+        <button class="nav-btn" @click="shiftRange(navUnit, 1)">{{ navLabels[1] }} <span class="nav-arrow">›</span></button>
       </div>
       <DatePicker v-model="dateRange" selectionMode="range" :manualInput="false" showIcon class="date-picker"
         @update:modelValue="onDateChange" />
+    </div>
+    <div class="date-display" v-if="dateDisplayText()">
+      📅 {{ dateDisplayText() }}
     </div>
 
     <!-- ==================== 经营概览 ==================== -->
@@ -30,6 +36,11 @@
           <div class="metric-body">
             <span class="metric-label">总营收</span>
             <span class="metric-value">¥{{ fmtNum(overview?.summary.revenue) }}</span>
+            <span class="metric-sub">
+              菜品 <b>¥{{ fmtNum(overview?.summary.normalRevenue) }}</b>
+              <span class="sub-sep">·</span>
+              联盟 <b>¥{{ fmtNum(overview?.summary.allianceRevenue) }}</b>
+            </span>
           </div>
           <span v-if="overview?.summary.revenueDelta != null" :class="['delta', overview.summary.revenueDelta >= 0 ? 'up' : 'down']">
             {{ overview.summary.revenueDelta >= 0 ? '↑' : '↓' }} {{ Math.abs(overview.summary.revenueDelta) }}%
@@ -77,6 +88,7 @@
                 <div class="trend-bar" :style="{ height: barHeight(t.revenue) + '%' }"></div>
               </div>
               <span class="trend-label">{{ t.day }}</span>
+              <span class="trend-weekday">{{ weekday(t.day) }}</span>
             </div>
           </div>
         </div>
@@ -310,6 +322,26 @@ const maxHourlyCount = computed(() => {
   return Math.max(...flow.map(h => h.orderCount), 1)
 })
 
+const navUnit = computed(() => {
+  const r = dateRange.value
+  if (r && r[0] && r[1]) {
+    const days = Math.round((new Date(r[1]).getTime() - new Date(r[0]).getTime()) / 86400000)
+    if (days <= 1) return 'day'
+    if (days <= 8) return 'week'
+    if (days <= 35) return 'month'
+    return 'year'
+  }
+  if (quickRange.value === 'week') return 'week'
+  if (quickRange.value === 'month' || quickRange.value === 'all') return 'month'
+  return 'day'
+})
+
+const navLabels = computed(() => {
+  const u = navUnit.value
+  const unitMap: Record<string, [string, string]> = { day: ['上一日', '下一日'], week: ['上一周', '下一周'], month: ['上一月', '下一月'], year: ['上一年', '下一年'] }
+  return unitMap[u]
+})
+
 const dineInPct = computed(() => {
   if (!overview.value) return 0
   const { orderTypeShare, summary } = overview.value
@@ -326,6 +358,29 @@ const takeawayPct = computed(() => {
 
 function fmtNum(v: number | null | undefined) {
   return v != null ? v.toFixed(2) : '—'
+}
+
+function formatDate(d: Date | null) {
+  if (!d) return ''
+  const dt = new Date(d)
+  return `${dt.getMonth() + 1}/${dt.getDate()}`
+}
+
+function weekday(dayStr: string) {
+  const now = new Date()
+  const [m, d] = dayStr.split('-').map(Number)
+  const dt = new Date(now.getFullYear(), m - 1, d)
+  return ['日', '一', '二', '三', '四', '五', '六'][dt.getDay()]
+}
+
+function dateDisplayText() {
+  const r = dateRange.value
+  if (!r || !r[0] || !r[1]) return ''
+  const s = new Date(r[0])
+  const e = new Date(r[1])
+  const sameDay = s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth() && s.getDate() === e.getDate()
+  if (sameDay) return formatDate(s)
+  return `${formatDate(s)} — ${formatDate(e)}`
 }
 
 function barHeight(revenue: number) {
@@ -428,6 +483,40 @@ function onDateChange(value: (Date | null)[] | undefined) {
   dateRange.value = [start ?? null, end ?? null]
 
   if (start && !end) return
+  fetchStats()
+}
+
+function shiftRange(unit: 'day' | 'week' | 'month' | 'year', dir: -1 | 1) {
+  const cur = dateRange.value
+  let start: Date
+  let end: Date
+
+  if (cur && cur[0] && cur[1]) {
+    start = new Date(cur[0])
+    end = new Date(cur[1])
+  } else {
+    start = new Date()
+    end = new Date()
+  }
+
+  if (unit === 'day') {
+    const d = dir * 86400000
+    start = new Date(start.getTime() + d)
+    end = new Date(end.getTime() + d)
+  } else if (unit === 'week') {
+    const d = dir * 7 * 86400000
+    start = new Date(start.getTime() + d)
+    end = new Date(end.getTime() + d)
+  } else if (unit === 'month') {
+    start = new Date(start.getFullYear(), start.getMonth() + dir, start.getDate())
+    end = new Date(end.getFullYear(), end.getMonth() + dir, end.getDate())
+  } else if (unit === 'year') {
+    start = new Date(start.getFullYear() + dir, start.getMonth(), start.getDate())
+    end = new Date(end.getFullYear() + dir, end.getMonth(), end.getDate())
+  }
+
+  quickRange.value = ''
+  dateRange.value = [start, end]
   fetchStats()
 }
 
@@ -541,6 +630,49 @@ setQuick(range === 'all' ? 'all' : 'today')
   border-color: #ff6b00;
   color: #ff6b00;
 }
+.nav-sep {
+  width: 1px;
+  background: #e0d8d0;
+  margin: 0 2px;
+}
+.nav-btn {
+  padding: 5px 14px;
+  border-radius: 8px;
+  border: 1px solid #e0d8d0;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  white-space: nowrap;
+  gap: 2px;
+}
+.nav-btn:hover {
+  border-color: #ff6b00;
+  color: #ff6b00;
+  background: #fff8f3;
+}
+.nav-arrow {
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 700;
+}
+.date-display {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 6px 14px;
+  background: #fff8f3;
+  border: 1px solid #ffe0c2;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #a04100;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
 .date-picker { margin-left: auto; }
 
 .card {
@@ -620,6 +752,20 @@ setQuick(range === 'all' ? 'all' : 'today')
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.metric-sub {
+  display: block;
+  font-size: 12px;
+  color: #999;
+  margin-top: 2px;
+}
+.metric-sub b {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+.sub-sep {
+  margin: 0 2px;
+  color: #ccc;
 }
 .delta {
   font-size: 12px;
@@ -702,6 +848,11 @@ setQuick(range === 'all' ? 'all' : 'today')
   font-size: 10px;
   color: #999;
   margin-top: 4px;
+  font-family: 'Inter', sans-serif;
+}
+.trend-weekday {
+  font-size: 9px;
+  color: #bbb;
   font-family: 'Inter', sans-serif;
 }
 
