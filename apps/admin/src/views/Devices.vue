@@ -1,7 +1,7 @@
 <template>
   <div class="devices-page">
     <div class="page-header">
-      <h2 class="page-title">设备管理</h2>
+      <h2 class="page-title">点餐机管理</h2>
       <div class="header-actions">
         <Button
           :label="filterUser ? '全部' : '仅用户设备'"

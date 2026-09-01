@@ -51,7 +51,7 @@
 
         <router-link to="/devices" class="nav-link">
           <span class="material-symbols-outlined">devices</span>
-          <span class="nav-text">设备管理</span>
+          <span class="nav-text">点餐机管理</span>
         </router-link>
         <router-link to="/kitchen-terminals" class="nav-link">
           <span class="material-symbols-outlined">point_of_sale</span>

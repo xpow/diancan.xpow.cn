@@ -611,7 +611,7 @@ onMounted(() => {
 .dish-promo-tag {
   display: inline-block;
   padding: 2px 8px;
-  border-radius: 4px;
+  border-radius: 40px;
   background: var(--primary-container);
   color: var(--on-primary);
   font-size: 11px;

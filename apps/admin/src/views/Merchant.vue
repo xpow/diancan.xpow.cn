@@ -116,7 +116,7 @@
     </Dialog>
 
     <div class="section-header" style="margin-top:24px">
-      <h3 class="card-title">设备管理</h3>
+      <h3 class="card-title">点餐机管理</h3>
     </div>
     <DataTable :value="adminDevices" striped-rows>
       <Column field="code" header="编号" style="width:60px" />

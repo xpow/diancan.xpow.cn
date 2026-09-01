@@ -548,7 +548,7 @@ onMounted(async () => {
 .dish-price-row { display: flex; align-items: center; gap: 8px; margin-top: auto; }
 .dish-price { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 800; color: #a04100; line-height: 1; }
 .dish-promo-tag {
-  padding: 1px 6px; border-radius: 4px; background: #ba1a1a; color: #fff;
+  padding: 1px 6px; border-radius: 40px; background: #ba1a1a; color: #fff;
   font-size: 10px; font-weight: 700; white-space: nowrap;
 }
 
