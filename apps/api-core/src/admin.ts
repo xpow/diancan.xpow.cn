@@ -1384,7 +1384,8 @@ async function getDishSales(req: any, filterAlliance: boolean | null) {
     const fullReduction = order.promotions
       .filter((p: any) => p.type === 'full_reduction')
       .reduce((s: number, p: any) => s + p.discount, 0)
-    totalFullReduction += fullReduction
+    // 联盟商品不参与满减，联盟商品统计时满减计 0
+    totalFullReduction += filterAlliance === true ? 0 : fullReduction
     for (const item of order.items) {
       if (filterAlliance === true && !item.alliance) continue
       if (filterAlliance === false && item.alliance) continue
@@ -1452,6 +1453,210 @@ router.get('/stats/overview', async (_req, res) => {
     pendingOrders: valid.filter((o) => o.status === 'pending' || o.status === 'paid').length,
     readyOrders: valid.filter((o) => o.status === 'ready').length,
     unpaidOrders: orders.filter((o) => !o.paidAt).length,
+  })
+})
+
+// 经营总览分析（含环比对比、趋势、分类占比、支付方式、时段客流、Top 排行）
+router.get('/stats/overview-analysis', async (req, res) => {
+  const { startDate, endDate } = req.query
+
+  const VALID = ['pending', 'paid', 'preparing', 'ready', 'completed']
+
+  // ------ 解析本期区间 ------
+  let start: Date | null = null
+  let end: Date | null = null
+  if (startDate) start = new Date(startDate as string)
+  if (endDate) end = new Date(endDate as string)
+  if (!start && !end) {
+    const now = new Date()
+    start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
+    end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
+  } else {
+    if (start && !end) end = new Date(start.getTime() + 24 * 3600 * 1000 - 1)
+    if (!start && end) start = new Date(end.getTime() - 24 * 3600 * 1000 + 1)
+  }
+  const startMs = start!.getTime()
+  const endMs = end!.getTime()
+
+  // ------ 上期区间（等长回退） ------
+  const spanMs = endMs - startMs
+  const prevStart = new Date(startMs - spanMs)
+  const prevEnd = new Date(startMs - 1)
+
+  const dayKey = (d: Date) => {
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}`
+  }
+
+  // ------ 拉取本期+上期订单 ------
+  const orders = await prisma.order.findMany({
+    where: { createdAt: { gte: new Date(prevStart.getTime()), lte: new Date(endMs) }, status: { not: 'cancelled' } },
+    select: {
+      createdAt: true,
+      status: true,
+      payableAmount: true,
+      paymentMethod: true,
+      orderType: true,
+      items: { select: { dishId: true, name: true, quantity: true, finalSubtotal: true, alliance: true } },
+      promotions: { select: { type: true, discount: true } },
+    },
+  })
+
+  // 分类名称映射
+  const dishes = await prisma.dish.findMany({
+    select: { id: true, categoryId: true, category: { select: { name: true } } },
+  })
+  const dishMap = new Map(dishes.map((d) => [d.id, d]))
+
+  // ------ 单周期聚合 ------
+  const build = (list: typeof orders) => {
+    const agg = {
+      orders: 0,
+      revenue: 0,
+      itemQty: 0,
+      allianceRevenue: 0,
+      normalRevenue: 0,
+      fullReductionNormal: 0,
+      topMap: new Map<string, { dishId: string; name: string; quantity: number; revenue: number; alliance: boolean }>(),
+      categoryMap: new Map<string, { name: string; revenue: number; count: number }>(),
+      paymentMap: new Map<string, { name: string; count: number; amount: number }>(),
+      hourlyMap: new Map<number, { hour: number; orderCount: number; revenue: number }>(),
+      typeMap: new Map<string, { name: string; count: number; amount: number }>(),
+      dayMap: new Map<string, { day: string; revenue: number; orderCount: number }>(),
+    }
+    for (const o of list) {
+      if (o.status === 'cancelled' || !VALID.includes(o.status)) continue
+      const revenue = o.payableAmount || 0
+      agg.orders += 1
+      agg.revenue += revenue
+
+      const ot = o.orderType || 'dine-in'
+      const tm = agg.typeMap.get(ot) ?? { name: ot, count: 0, amount: 0 }
+      tm.count += 1
+      tm.amount += revenue
+      agg.typeMap.set(ot, tm)
+
+      const h = new Date(o.createdAt).getHours()
+      const hm = agg.hourlyMap.get(h) ?? { hour: h, orderCount: 0, revenue: 0 }
+      hm.orderCount += 1
+      hm.revenue += revenue
+      agg.hourlyMap.set(h, hm)
+
+      const pm = agg.paymentMap.get(o.paymentMethod || '其他') ?? { name: o.paymentMethod || '其他', count: 0, amount: 0 }
+      pm.count += 1
+      pm.amount += revenue
+      agg.paymentMap.set(o.paymentMethod || '其他', pm)
+
+      const dk = dayKey(new Date(o.createdAt))
+      const dm = agg.dayMap.get(dk) ?? { day: dk, revenue: 0, orderCount: 0 }
+      dm.revenue += revenue
+      dm.orderCount += 1
+      agg.dayMap.set(dk, dm)
+
+      let orderFullRed = 0
+      for (const p of o.promotions) if (p.type === 'full_reduction') orderFullRed += p.discount || 0
+
+      for (const item of o.items) {
+        agg.itemQty += item.quantity
+        const cat = dishMap.get(item.dishId)?.category?.name
+        if (item.alliance) {
+          agg.allianceRevenue += item.finalSubtotal
+        } else {
+          agg.normalRevenue += item.finalSubtotal
+          if (cat) {
+            const cm = agg.categoryMap.get(cat) ?? { name: cat, revenue: 0, count: 0 }
+            cm.revenue += item.finalSubtotal
+            cm.count += item.quantity
+            agg.categoryMap.set(cat, cm)
+          }
+        }
+        const key = item.dishId || item.name
+        const tm = agg.topMap.get(key) ?? { dishId: item.dishId, name: item.name, quantity: 0, revenue: 0, alliance: item.alliance }
+        tm.quantity += item.quantity
+        tm.revenue += item.finalSubtotal
+        tm.alliance = item.alliance
+        agg.topMap.set(key, tm)
+      }
+      // 满减归属：联盟商品不参与满减，满减全额计入普通商品（与 getDishSales 口径一致）
+      agg.fullReductionNormal += orderFullRed
+    }
+    return agg
+  }
+
+  const curOrders = orders.filter((o) => {
+    const t = o.createdAt.getTime()
+    return t >= startMs && t <= endMs
+  })
+  const prevOrders = orders.filter((o) => {
+    const t = o.createdAt.getTime()
+    return t >= prevStart.getTime() && t <= prevEnd.getTime()
+  })
+
+  const cur = build(curOrders)
+  const prev = build(prevOrders)
+
+  const deltaPct = (curVal: number, prevVal: number) => {
+    if (!prevVal) return curVal > 0 ? null : 0
+    return Number((((curVal - prevVal) / prevVal) * 100).toFixed(1))
+  }
+
+  const avg = (r: number, n: number) => (n > 0 ? Number((r / n).toFixed(2)) : 0)
+
+  // 趋势：按天补齐本期区间所有日期
+  const trend: { day: string; revenue: number; orderCount: number }[] = []
+  for (let t = startMs; t <= endMs; t += 24 * 3600 * 1000) {
+    const dk = dayKey(new Date(t))
+    const dm = cur.dayMap.get(dk) ?? { day: dk, revenue: 0, orderCount: 0 }
+    trend.push({ day: dk.slice(5), revenue: Number(dm.revenue.toFixed(2)), orderCount: dm.orderCount })
+  }
+
+  const categoryShare = Array.from(cur.categoryMap.values())
+    .map((c) => ({
+      name: c.name,
+      revenue: Number(c.revenue.toFixed(2)),
+      count: c.count,
+      percent: cur.normalRevenue > 0 ? Number(((c.revenue / cur.normalRevenue) * 100).toFixed(1)) : 0,
+    }))
+    .sort((a, b) => b.revenue - a.revenue)
+
+  const paymentShare = Array.from(cur.paymentMap.values())
+    .map((p) => ({ name: p.name, count: p.count, amount: Number(p.amount.toFixed(2)) }))
+    .sort((a, b) => b.amount - a.amount)
+
+  const orderTypeShare = Array.from(cur.typeMap.values())
+    .map((t) => ({ name: t.name, count: t.count, amount: Number(t.amount.toFixed(2)) }))
+    .sort((a, b) => b.count - a.count)
+
+  const hourlyFlow = Array.from(cur.hourlyMap.values())
+    .sort((a, b) => a.hour - b.hour)
+    .map((v) => ({ hour: v.hour, orderCount: v.orderCount, revenue: Number(v.revenue.toFixed(2)) }))
+
+  const topDishes = Array.from(cur.topMap.values())
+    .sort((a, b) => b.quantity - a.quantity)
+    .slice(0, 10)
+    .map((d) => ({ dishId: d.dishId, name: d.name, quantity: d.quantity, revenue: Number(d.revenue.toFixed(2)), alliance: d.alliance }))
+
+  res.json({
+    summary: {
+      orderCount: cur.orders,
+      orderCountDelta: deltaPct(cur.orders, prev.orders),
+      revenue: Number(cur.revenue.toFixed(2)),
+      revenueDelta: deltaPct(cur.revenue, prev.revenue),
+      avgOrder: avg(cur.revenue, cur.orders),
+      avgOrderDelta: deltaPct(avg(cur.revenue, cur.orders), avg(prev.revenue, prev.orders)),
+      itemQty: cur.itemQty,
+      allianceRevenue: Number(cur.allianceRevenue.toFixed(2)),
+      normalRevenue: Number(cur.normalRevenue.toFixed(2)),
+      fullReductionNormal: Number(cur.fullReductionNormal.toFixed(2)),
+    },
+    trend,
+    categoryShare,
+    paymentShare,
+    orderTypeShare,
+    hourlyFlow,
+    topDishes,
   })
 })
 

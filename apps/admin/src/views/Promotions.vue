@@ -1,252 +1,273 @@
 <template>
   <div class="promo-page">
     <div class="page-header">
-      <h2 class="page-title">营销活动</h2>
-      <Button label="新增活动" icon="pi pi-plus" @click="openNew" />
+      <div>
+        <h2 class="page-title">营销活动</h2>
+        <p class="page-subtitle">管理满减、买赠、福利品等营销规则</p>
+      </div>
+      <button class="btn-add" @click="openNew">+ 新增活动</button>
     </div>
 
-    <DataTable :value="promotions" striped-rows class="p-mt-3">
-      <Column field="name" header="活动名称" />
-      <Column field="type" header="类型">
-        <template #body="{ data }">
-          <Tag :value="typeLabel(data.type)" />
-        </template>
-      </Column>
-      <Column field="status" header="状态">
-        <template #body="{ data }">
-          <div class="status-cell">
-            <Tag :value="statusLabel(data.status)" :severity="statusSeverity(data.status)" />
-            <Button
-              v-if="data.status === 'active'"
-              icon="pi pi-pause-circle"
-              severity="warn"
-              text
-              size="small"
-              @click="pausePromotion(data)"
-            />
-            <Button
-              v-else-if="data.status === 'paused' || data.status === 'draft' || data.status === 'inactive'"
-              icon="pi pi-play-circle"
-              severity="success"
-              text
-              size="small"
-              @click="setStatus(data.id, 'active')"
-            />
-          </div>
-        </template>
-      </Column>
-      <Column field="rules" header="规则" style="max-width:300px">
-        <template #body="{ data }">
-          <span class="rule-text">{{ ruleText(data) }}</span>
-        </template>
-      </Column>
-      <Column header="操作" style="width:160px">
-        <template #body="{ data }">
-          <Button icon="pi pi-pencil" label="编辑" severity="info" text size="small" :disabled="data.status === 'active'" @click="openEdit(data)" />
-          <Button icon="pi pi-trash" label="删除" severity="danger" size="small" @click="remove(data)" />
-        </template>
-      </Column>
-    </DataTable>
-
-    <Dialog v-model:visible="showDialog" :header="editing ? '编辑活动' : '新增活动'" style="width:680px">
-      <div class="form-group">
-        <label>活动名称</label>
-        <InputText v-model="form.name" class="w-full" placeholder="例：满50减5" />
+    <div class="card">
+      <div class="table-wrap">
+        <table class="promo-table" v-if="promotions.length">
+          <thead>
+            <tr>
+              <th>活动名称</th>
+              <th>类型</th>
+              <th>状态</th>
+              <th>规则</th>
+              <th style="text-align:right">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="p in promotions" :key="p.id">
+              <td class="col-name">{{ p.name }}</td>
+              <td><span :class="['type-chip', 'type-' + p.type]">{{ typeLabel(p.type) }}</span></td>
+              <td>
+                <span :class="['status-chip', 'status-' + p.status]">{{ statusLabel(p.status) }}</span>
+                <button
+                  v-if="p.status === 'active'"
+                  class="btn-toggle btn-toggle--pause"
+                  title="暂停"
+                  @click="pausePromotion(p)"
+                >⏸</button>
+                <button
+                  v-else-if="p.status === 'paused' || p.status === 'draft' || p.status === 'inactive'"
+                  class="btn-toggle btn-toggle--play"
+                  title="启用"
+                  @click="setStatus(p.id, 'active')"
+                >▶</button>
+              </td>
+              <td class="col-rule">{{ ruleText(p) }}</td>
+              <td class="col-actions">
+                <button class="btn-sm btn-edit" :disabled="p.status === 'active'" @click="openEdit(p)">编辑</button>
+                <button class="btn-sm btn-delete" @click="remove(p)">删除</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p v-else class="empty">暂无营销活动</p>
       </div>
-      <div class="form-group">
-        <label>活动类型</label>
-        <SelectButton v-model="form.type" :options="typeOptions" optionLabel="label" optionValue="value" class="w-full" :disabled="editing" />
-      </div>
+    </div>
 
-      <!-- 满减配置 -->
-      <template v-if="form.type === 'full_reduction'">
-        <div class="form-row">
-          <div class="form-group flex-1">
-            <label>满额门槛 (¥)</label>
-            <InputNumber v-model="form.rules.threshold" :min="0" class="w-full" placeholder="50" />
-          </div>
-          <div class="form-group flex-1">
-            <label>减免金额 (¥)</label>
-            <InputNumber v-model="form.rules.discount" :min="0" class="w-full" placeholder="5" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label>不参与满减的商品</label>
-          <MultiSelect v-model="form.rules.excludedDishIds" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="选择不参与满减的商品" filter class="w-full" />
-        </div>
-      </template>
-
-      <!-- 买赠配置 -->
-      <template v-if="form.type === 'buy_get'">
-        <div class="form-row">
-          <div class="form-group flex-1">
-            <label>满 X 件</label>
-            <InputNumber v-model="form.rules.threshold" :min="1" class="w-full" placeholder="10" />
-          </div>
-          <div class="form-group flex-1">
-            <label>送 Y 件</label>
-            <InputNumber v-model="form.rules.giftQty" :min="1" class="w-full" placeholder="2" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label>触发商品 <span class="text-muted">(不选则所有商品都参与)</span></label>
-          <MultiSelect v-model="form.rules.triggerDishIds" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="选择触发活动的商品" filter class="w-full" />
-        </div>
-        <div class="form-group">
-          <label>赠送商品</label>
-          <Select v-model="form.rules.giftDishId" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="选择赠送的菜品" filter showClear class="w-full" />
-        </div>
-        <div class="form-row">
-          <div class="form-group flex-1">
-            <label>赠送模式</label>
-            <Select v-model="form.rules.mode" :options="[{ label: '每满X件送Y件（可叠加）', value: 'repeat' }, { label: '满X件送Y件（仅一次）', value: 'once' }]" optionLabel="label" optionValue="value" class="w-full" />
-          </div>
-          <div class="form-group flex-1">
-            <label>最多赠送次数 <span class="text-muted">(0=不限)</span></label>
-            <InputNumber v-model="form.rules.maxGifts" :min="0" class="w-full" placeholder="0" />
-          </div>
-        </div>
-      </template>
-
-      <!-- 福利品配置 -->
-      <template v-if="form.type === 'welfare_item'">
-        <div v-for="(item, idx) in form.items" :key="idx" class="promo-item-card">
-          <div class="promo-item-header">
-            <span class="promo-item-label">福利品 {{ idx + 1 }}</span>
-            <Button v-if="form.items.length > 1" icon="pi pi-trash" severity="danger" text size="small" @click="removeItem(idx)" />
+    <Dialog v-model:visible="showDialog" :header="editing ? '编辑活动' : '新增活动'" style="width:680px" class="promo-dialog">
+      <div class="form-body">
+        <div class="form-section">
+          <div class="form-section-title">基本信息</div>
+          <div class="form-group">
+            <label>活动名称</label>
+            <input v-model="form.name" class="form-input" placeholder="例：满50减5" />
           </div>
           <div class="form-group">
-            <label>选择菜品</label>
-            <Select v-model="item.dishId" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="搜索并选择菜品" filter />
+            <label>活动类型</label>
+            <div class="type-selector">
+              <button
+                v-for="t in typeOptions"
+                :key="t.value"
+                :class="['type-btn', form.type === t.value && 'active']"
+                @click="form.type = t.value"
+              >{{ t.label }}</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 满减配置 -->
+        <div v-if="form.type === 'full_reduction'" class="form-section">
+          <div class="form-section-title">满减规则</div>
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>满额门槛 (¥)</label>
+              <input v-model.number="form.rules.threshold" type="number" min="0" class="form-input" placeholder="50" />
+            </div>
+            <div class="form-group flex-1">
+              <label>减免金额 (¥)</label>
+              <input v-model.number="form.rules.discount" type="number" min="0" class="form-input" placeholder="5" />
+            </div>
           </div>
           <div class="form-group">
-            <label>福利价 (¥)</label>
-            <InputNumber v-model="item.promoPrice" :min="0" :step="0.01" :minFractionDigits="1" placeholder="0.1" />
+            <label>不参与满减的商品</label>
+            <MultiSelect v-model="form.rules.excludedDishIds" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="选择不参与满减的商品" filter class="w-full" />
+          </div>
+        </div>
+
+        <!-- 买赠配置 -->
+        <div v-if="form.type === 'buy_get'" class="form-section">
+          <div class="form-section-title">买赠规则</div>
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>满 X 件</label>
+              <input v-model.number="form.rules.threshold" type="number" min="1" class="form-input" placeholder="10" />
+            </div>
+            <div class="form-group flex-1">
+              <label>送 Y 件</label>
+              <input v-model.number="form.rules.giftQty" type="number" min="1" class="form-input" placeholder="2" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>触发商品 <span class="text-muted">(不选则所有商品都参与)</span></label>
+            <MultiSelect v-model="form.rules.triggerDishIds" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="选择触发活动的商品" filter class="w-full" />
+          </div>
+          <div class="form-group">
+            <label>赠送商品</label>
+            <Select v-model="form.rules.giftDishId" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="选择赠送的菜品" filter showClear class="w-full" />
           </div>
           <div class="form-row">
-            <div class="form-group">
-              <label>限购类型</label>
-              <Select v-model="item.limitType" :options="limitOptions" optionLabel="label" optionValue="value" />
+            <div class="form-group flex-1">
+              <label>赠送模式</label>
+              <Select v-model="form.rules.mode" :options="[{ label: '每满X件送Y件（可叠加）', value: 'repeat' }, { label: '满X件送Y件（仅一次）', value: 'once' }]" optionLabel="label" optionValue="value" class="w-full" />
+            </div>
+            <div class="form-group flex-1">
+              <label>最多赠送次数 <span class="text-muted">(0=不限)</span></label>
+              <input v-model.number="form.rules.maxGifts" type="number" min="0" class="form-input" placeholder="0" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 福利品配置 -->
+        <div v-if="form.type === 'welfare_item'" class="form-section">
+          <div class="form-section-title">福利品配置</div>
+          <div v-for="(item, idx) in form.items" :key="idx" class="promo-item-card">
+            <div class="promo-item-header">
+              <span class="promo-item-label">福利品 {{ idx + 1 }}</span>
+              <button v-if="form.items.length > 1" class="btn-sm btn-delete" @click="removeItem(idx)">删除</button>
             </div>
             <div class="form-group">
-              <label>限购数量</label>
-              <InputNumber v-model="item.maxQty" :min="1" placeholder="1" :disabled="item.limitType === 'unlimited'" />
+              <label>选择菜品</label>
+              <Select v-model="item.dishId" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="搜索并选择菜品" filter />
+            </div>
+            <div class="form-group">
+              <label>福利价 (¥)</label>
+              <input v-model.number="item.promoPrice" type="number" min="0" step="0.01" class="form-input" placeholder="0.1" />
+            </div>
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label>限购类型</label>
+                <Select v-model="item.limitType" :options="limitOptions" optionLabel="label" optionValue="value" class="w-full" />
+              </div>
+              <div class="form-group flex-1">
+                <label>限购数量</label>
+                <input v-model.number="item.maxQty" type="number" min="1" class="form-input" placeholder="1" :disabled="item.limitType === 'unlimited'" />
+              </div>
+            </div>
+          </div>
+          <button class="btn-add-item" @click="addItem">+ 添加福利品</button>
+        </div>
+
+        <!-- 新人福利配置 -->
+        <div v-if="form.type === 'new_user'" class="form-section">
+          <div class="form-section-title">新人福利规则</div>
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>直减金额 (¥)</label>
+              <input v-model.number="form.rules.discount" type="number" min="0" class="form-input" placeholder="5" />
+            </div>
+            <div class="form-group flex-1">
+              <label>最低消费 (¥)</label>
+              <input v-model.number="form.rules.minAmount" type="number" min="0" class="form-input" placeholder="0" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>赠送菜品</label>
+              <Select v-model="form.rules.giftDishId" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="选择赠送的菜品" filter showClear class="w-full" />
+            </div>
+            <div class="form-group flex-1">
+              <label>赠送数量</label>
+              <input v-model.number="form.rules.giftQty" type="number" min="1" class="form-input" placeholder="1" />
             </div>
           </div>
         </div>
-        <Button label="+ 添加福利品" severity="secondary" text @click="addItem" class="p-mt-2" v-if="form.type !== 'welfare_item' && form.type !== 'total_discount'" />
-      </template>
 
-      <!-- 新人福利配置 -->
-      <template v-if="form.type === 'new_user'">
-        <div class="form-row">
-          <div class="form-group flex-1">
-            <label>直减金额 (¥)</label>
-            <InputNumber v-model="form.rules.discount" :min="0" class="w-full" placeholder="5" />
+        <!-- 节假日赠送单品 -->
+        <div v-if="form.type === 'holiday_gift'" class="form-section">
+          <div class="form-section-title">节假日赠送规则</div>
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>赠送菜品</label>
+              <Select v-model="form.rules.giftDishId" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="选择赠送的菜品" filter showClear class="w-full" />
+            </div>
+            <div class="form-group flex-1">
+              <label>赠送数量</label>
+              <input v-model.number="form.rules.giftQty" type="number" min="1" class="form-input" placeholder="1" />
+            </div>
           </div>
-          <div class="form-group flex-1">
-            <label>最低消费 (¥)</label>
-            <InputNumber v-model="form.rules.minAmount" :min="0" class="w-full" placeholder="0" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group flex-1">
-            <label>赠送菜品</label>
-            <Select v-model="form.rules.giftDishId" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="选择赠送的菜品" filter showClear class="w-full" />
-          </div>
-          <div class="form-group flex-1">
-            <label>赠送数量</label>
-            <InputNumber v-model="form.rules.giftQty" :min="1" class="w-full" placeholder="1" />
+          <div class="form-group">
+            <label>节假日名称</label>
+            <input v-model="form.rules.holiday" class="form-input" placeholder="例：端午节、中秋节" />
           </div>
         </div>
-      </template>
 
-      <!-- 节假日赠送单品 -->
-      <template v-if="form.type === 'holiday_gift'">
-        <div class="form-row">
-          <div class="form-group flex-1">
-            <label>赠送菜品</label>
-            <Select v-model="form.rules.giftDishId" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="选择赠送的菜品" filter showClear class="w-full" />
+        <!-- 限时折扣配置 -->
+        <div v-if="form.type === 'time_discount'" class="form-section">
+          <div class="form-section-title">限时折扣规则</div>
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>选择菜品</label>
+              <Select v-model="form.items[0].dishId" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="搜索并选择菜品" filter showClear class="w-full" />
+            </div>
+            <div class="form-group flex-1">
+              <label>折扣</label>
+              <Select v-model="form.rules.discountRate" :options="discountOptions" optionLabel="label" optionValue="value" placeholder="选择折扣" class="w-full" />
+            </div>
           </div>
-          <div class="form-group flex-1">
-            <label>赠送数量</label>
-            <InputNumber v-model="form.rules.giftQty" :min="1" class="w-full" placeholder="1" />
+          <div class="form-row">
+            <div class="form-group" style="width:200px">
+              <label>有效天数 <span class="text-muted">(留空不限)</span></label>
+              <input v-model.number="form.rules.durationDays" type="number" min="1" max="365" class="form-input" placeholder="不限" />
+            </div>
           </div>
         </div>
-        <div class="form-group">
-          <label>节假日名称</label>
-          <InputText v-model="form.rules.holiday" class="w-full" placeholder="例：端午节、中秋节" />
-        </div>
-      </template>
 
-      <!-- 限时折扣配置 -->
-      <template v-if="form.type === 'time_discount'">
-        <div class="form-row">
-          <div class="form-group flex-1">
-            <label>选择菜品</label>
-            <Select v-model="form.items[0].dishId" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="搜索并选择菜品" filter showClear class="w-full" />
+        <!-- 总价折扣配置 -->
+        <div v-if="form.type === 'total_discount'" class="form-section">
+          <div class="form-section-title">总价折扣规则</div>
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>折扣类型</label>
+              <Select v-model="form.rules.discountType" :options="discountTypeOptions" optionLabel="label" optionValue="value" class="w-full" />
+            </div>
+            <div class="form-group flex-1">
+              <label>折扣值</label>
+              <input v-model.number="form.rules.discountValue" type="number" min="0" step="0.01" class="form-input" :placeholder="form.rules.discountType === 'percentage' ? '例：10（10%）' : '例：5'" />
+            </div>
           </div>
-          <div class="form-group flex-1">
-            <label>折扣</label>
-            <Select v-model="form.rules.discountRate" :options="discountOptions" optionLabel="label" optionValue="value" placeholder="选择折扣" class="w-full" />
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>最高减免 (¥) <span class="text-muted">(可选)</span></label>
+              <input v-model.number="form.rules.maxDiscount" type="number" min="0" class="form-input" placeholder="不限" />
+            </div>
+            <div class="form-group flex-1">
+              <label>最低消费 (¥) <span class="text-muted">(可选)</span></label>
+              <input v-model.number="form.rules.minAmount" type="number" min="0" class="form-input" placeholder="不限" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>排除商品</label>
+            <MultiSelect v-model="form.rules.excludedDishIds" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="选择不参与折扣的商品" filter class="w-full" />
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group" style="width: 200px">
-            <label>有效天数 <span class="text-muted">(留空不限)</span></label>
-            <InputNumber v-model="form.rules.durationDays" :min="1" :max="365" class="w-full" placeholder="不限" />
-          </div>
-        </div>
-      </template>
 
-      <!-- 总价折扣配置 -->
-      <template v-if="form.type === 'total_discount'">
-        <div class="form-row">
-          <div class="form-group flex-1">
-            <label>折扣类型</label>
-            <Select v-model="form.rules.discountType" :options="discountTypeOptions" optionLabel="label" optionValue="value" class="w-full" />
+        <div class="form-section">
+          <div class="form-section-title">其他设置</div>
+          <div class="form-group">
+            <label>适用设备（选填，不选则全设备可用）</label>
+            <MultiSelect v-model="form.rules.deviceIds" :options="devices" optionLabel="label" optionValue="value" placeholder="选择适用设备" filter class="w-full" />
           </div>
-          <div class="form-group flex-1">
-            <label>折扣值</label>
-            <InputNumber v-model="form.rules.discountValue" :min="0" :step="0.01" class="w-full" :placeholder="form.rules.discountType === 'percentage' ? '例：10（10%）' : '例：5'" />
+          <div class="form-group">
+            <label>状态</label>
+            <Select v-model="form.status" :options="statusOptions" optionLabel="label" optionValue="value" class="w-full" />
           </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group flex-1">
-            <label>最高减免 (¥) <span class="text-muted">(可选)</span></label>
-            <InputNumber v-model="form.rules.maxDiscount" :min="0" class="w-full" placeholder="不限" />
+          <div class="stackable-row">
+            <label>可与其他活动叠加</label>
+            <ToggleSwitch v-model="form.stackable" />
           </div>
-          <div class="form-group flex-1">
-            <label>最低消费 (¥) <span class="text-muted">(可选)</span></label>
-            <InputNumber v-model="form.rules.minAmount" :min="0" class="w-full" placeholder="不限" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label>排除商品</label>
-          <MultiSelect v-model="form.rules.excludedDishIds" :options="activeDishes" optionLabel="name" optionValue="id" placeholder="选择不参与折扣的商品" filter class="w-full" />
-        </div>
-      </template>
-
-      <div class="form-group">
-        <label>适用设备（选填，不选则全设备可用）</label>
-        <MultiSelect v-model="form.rules.deviceIds" :options="devices" optionLabel="label" optionValue="value" placeholder="选择适用设备" filter class="w-full" />
-      </div>
-
-      <div class="form-group">
-        <label>状态</label>
-        <Select v-model="form.status" :options="statusOptions" optionLabel="label" optionValue="value" class="w-full" />
-      </div>
-
-      <div class="form-group">
-        <div class="stackable-row">
-          <label>可与其他活动叠加</label>
-          <ToggleSwitch v-model="form.stackable" />
         </div>
       </div>
 
       <template #footer>
-        <Button label="取消" severity="secondary" @click="showDialog = false" />
-        <Button label="保存" @click="save" />
+        <button class="btn-dialog btn-cancel" @click="showDialog = false">取消</button>
+        <button class="btn-dialog btn-save" @click="save">保存</button>
       </template>
     </Dialog>
   </div>
@@ -254,17 +275,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
-import Button from 'primevue/button'
-import DataTable from 'primevue/datatable'
-import Column from 'primevue/column'
 import Dialog from 'primevue/dialog'
-import InputText from 'primevue/inputtext'
-import InputNumber from 'primevue/inputnumber'
 import Select from 'primevue/select'
 import MultiSelect from 'primevue/multiselect'
-import SelectButton from 'primevue/selectbutton'
 import ToggleSwitch from 'primevue/toggleswitch'
-import Tag from 'primevue/tag'
 
 interface PromoItem {
   dishId: string
@@ -303,7 +317,7 @@ const typeOptions = [
     { label: '福利品', value: 'welfare_item' },
     { label: '限时折扣', value: 'time_discount' },
     { label: '新人福利', value: 'new_user' },
-    { label: '节假日赠送单品', value: 'holiday_gift' },
+    { label: '节假日赠送', value: 'holiday_gift' },
     { label: '总价折扣', value: 'total_discount' },
 ]
 const discountTypeOptions = [
@@ -397,8 +411,8 @@ function removeItem(idx: number) {
   form.value.items.splice(idx, 1)
 }
 
-// 自动生成标题
-function autoGenerateName(): string | undefined {  if (form.value.type === 'full_reduction') {
+function autoGenerateName(): string | undefined {
+  if (form.value.type === 'full_reduction') {
     const t = form.value.rules.threshold
     const d = form.value.rules.discount
     if (t && d) return `满¥${t}减¥${d}`
@@ -499,7 +513,6 @@ async function save() {
     ...form.value,
   }
   if (body.type === 'time_discount') {
-    // 限时折扣的价格由折扣率计算，不存固定的 promoPrice
     body.items = body.items?.map((i: any) => ({ ...i, promoPrice: null }))
     if (body.rules.durationDays) {
       body.startDate = new Date().toISOString()
@@ -564,18 +577,13 @@ async function remove(p: Promotion) {
 }
 
 function typeLabel(type: string): string {
-  const map: Record<string, string> = { full_reduction: '满减', welfare_item: '福利品', buy_get: '买赠', time_discount: '限时折扣', new_user: '新人福利', holiday_gift: '节假日赠送单品', total_discount: '总价折扣' }
+  const map: Record<string, string> = { full_reduction: '满减', welfare_item: '福利品', buy_get: '买赠', time_discount: '限时折扣', new_user: '新人福利', holiday_gift: '节假日赠送', total_discount: '总价折扣' }
   return map[type] || type
 }
 
 function statusLabel(status: string): string {
   const map: Record<string, string> = { draft: '草稿', active: '已启用', paused: '已暂停', ended: '已结束', inactive: '已下线' }
   return map[status] || status
-}
-
-function statusSeverity(status: string): string {
-  const map: Record<string, string> = { active: 'success', paused: 'warn', ended: 'secondary', draft: 'info', inactive: 'contrast' }
-  return map[status] || 'secondary'
 }
 
 function ruleText(p: Promotion): string {
@@ -639,9 +647,7 @@ async function fetchDishes() {
   try {
     const res = await fetch('/api/admin/dishes')
     dishes.value = await res.json()
-  } catch {
-    // 可能没有 /api/dishes 接口
-  }
+  } catch {}
 }
 
 async function fetchDevices() {
@@ -649,9 +655,7 @@ async function fetchDevices() {
     const res = await fetch('/api/admin/devices')
     const list: any[] = await res.json()
     devices.value = list.map((d) => ({ label: `${d.name} (${d.code || '无编号'})`, value: d.id }))
-  } catch {
-    // ignore
-  }
+  } catch {}
 }
 
 onMounted(() => {
@@ -662,21 +666,307 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.promo-page { max-width: none; }
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.page-title { margin: 0; font-size: 22px; font-weight: 700; }
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+
+.promo-page { font-family: 'Inter', sans-serif; }
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.page-title {
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+.page-subtitle {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #999;
+}
+.btn-add {
+  background: #ff6b00;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-add:hover { background: #e55f00; }
+
+/* ===== Card + Table ===== */
+.card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  border: 1px solid #e5e2e1;
+  overflow: hidden;
+}
+.table-wrap { overflow-x: auto; }
+.promo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.promo-table th {
+  text-align: left;
+  padding: 10px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: #f6f3f2;
+  border-bottom: 1px solid #e5e2e1;
+  white-space: nowrap;
+}
+.promo-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0eded;
+  vertical-align: middle;
+}
+.promo-table tbody tr:hover { background: #fdf8f5; }
+.col-name {
+  font-weight: 600;
+  color: #1a1a1a;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.col-rule {
+  font-size: 13px;
+  color: #666;
+  max-width: 280px;
+}
+.col-actions { white-space: nowrap; }
+
+/* ===== Type Chips ===== */
+.type-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  white-space: nowrap;
+}
+.type-full_reduction  { background: #fff3e8; color: #a04100; }
+.type-buy_get         { background: rgba(139,92,246,0.1); color: #7c3aed; }
+.type-welfare_item    { background: rgba(74,173,78,0.1); color: #4aad4e; }
+.type-time_discount   { background: rgba(59,130,246,0.1); color: #3b82f6; }
+.type-new_user        { background: rgba(236,72,153,0.1); color: #db2777; }
+.type-holiday_gift    { background: rgba(245,158,11,0.1); color: #d97706; }
+.type-total_discount  { background: rgba(20,184,166,0.1); color: #0d9488; }
+
+/* ===== Status Chips ===== */
+.status-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.status-active   { background: rgba(74,173,78,0.1); color: #4aad4e; }
+.status-paused   { background: rgba(255,107,0,0.1); color: #a04100; }
+.status-draft    { background: #e5e2e1; color: #666; }
+.status-ended    { background: #e5e2e1; color: #999; }
+.status-inactive { background: rgba(186,26,26,0.08); color: #999; }
+
+/* ===== Toggle Buttons ===== */
+.btn-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 4px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.btn-toggle--pause:hover { background: #fff3e8; }
+.btn-toggle--play:hover  { background: rgba(74,173,78,0.1); }
+
+/* ===== Small Buttons ===== */
+.btn-sm {
+  padding: 4px 14px;
+  border-radius: 20px;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: all 0.15s;
+}
+.btn-edit { background: #f6f3f2; color: #1a1a1a; }
+.btn-edit:hover { background: #e5e2e1; }
+.btn-edit:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-delete { background: transparent; color: #ba1a1a; border: 1px solid #ba1a1a; }
+.btn-delete:hover { background: rgba(186,26,26,0.08); }
+
+.empty { text-align: center; padding: 40px; color: #999; font-size: 14px; }
+
+/* ===== Dialog Form ===== */
+.promo-dialog :deep(.p-dialog-header) {
+  background: #f6f3f2;
+  border-bottom: 1px solid #e5e2e1;
+  border-radius: 16px 16px 0 0;
+  padding: 16px 20px;
+}
+.promo-dialog :deep(.p-dialog-content) {
+  padding: 0;
+  border-radius: 0 0 16px 16px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.promo-dialog :deep(.p-dialog-footer) {
+  border-top: 1px solid #e5e2e1;
+  padding: 12px 20px;
+}
+
+.form-body { padding: 20px; }
+.form-section {
+  background: #f6f3f2;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.form-section-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
 .form-group { margin-bottom: 12px; }
-.form-group label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 4px; }
-.form-row { display: flex; gap: 12px; min-width: 0; }
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 4px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.form-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e5e2e1;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+.form-input:focus {
+  outline: none;
+  border-color: #ff6b00;
+}
+.form-input:disabled {
+  background: #f0ebe5;
+  color: #999;
+}
+.form-row { display: flex; gap: 12px; }
 .form-row > .form-group { min-width: 0; }
 .flex-1 { flex: 1; }
-.w-full { width: 100%; }
-.rule-text { font-size: 13px; white-space: normal; }
-.promo-item-card { background: #f9f9f9; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
-.promo-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.promo-item-label { font-size: 13px; font-weight: 600; color: #666; }
-.stackable-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; }
-.stackable-row label { margin: 0; font-size: 14px; font-weight: 600; color: #333; }
-.status-cell { display: flex; align-items: center; gap: 4px; }
-:deep(.p-button.p-button-text:disabled) { color: #999 !important; }
+.text-muted { color: #999; font-weight: 400; }
+
+/* ===== Type Selector ===== */
+.type-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.type-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #e5e2e1;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.type-btn:hover { border-color: #ff6b00; }
+.type-btn.active {
+  background: #ff6b00;
+  color: #fff;
+  border-color: #ff6b00;
+}
+
+/* ===== Promo Item Card ===== */
+.promo-item-card {
+  background: #fff;
+  border: 1px solid #e5e2e1;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.promo-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.promo-item-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+.btn-add-item {
+  background: transparent;
+  border: 1px dashed #e5e2e1;
+  border-radius: 12px;
+  padding: 10px;
+  width: 100%;
+  font-size: 13px;
+  color: #ff6b00;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.btn-add-item:hover { border-color: #ff6b00; }
+
+/* ===== Stackable Row ===== */
+.stackable-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+.stackable-row label {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+/* ===== Dialog Footer Buttons ===== */
+.btn-dialog {
+  padding: 8px 20px;
+  border-radius: 20px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: all 0.15s;
+}
+.btn-cancel { background: #e5e2e1; color: #666; }
+.btn-cancel:hover { background: #d1ccc7; }
+.btn-save { background: #ff6b00; color: #fff; }
+.btn-save:hover { background: #e55f00; }
+
+@media (max-width: 768px) {
+  .page-header { flex-direction: column; gap: 12px; align-items: flex-start; }
+  .form-row { flex-direction: column; }
+}
 </style>

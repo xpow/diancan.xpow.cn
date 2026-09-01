@@ -1,262 +1,341 @@
 <template>
   <div class="menu-page">
+    <!-- Page Header & Actions -->
     <div class="page-header">
-      <h2 class="page-title">菜单管理</h2>
-      <div class="header-tabs">
-        <Button :severity="tab === 'dishes' ? 'primary' : 'secondary'" text @click="tab = 'dishes'">菜品</Button>
-        <Button :severity="tab === 'categories' ? 'primary' : 'secondary'" text @click="tab = 'categories'">分类</Button>
+      <div>
+        <h2 class="page-title">菜单管理</h2>
+        <p class="page-subtitle">管理菜品、价格和库存</p>
       </div>
+      <button class="btn-primary" @click="openDishDialog()">
+        <span class="material-symbols-outlined">add</span>
+        新增菜品
+      </button>
     </div>
 
-    <!-- Dishes -->
-    <div v-if="tab === 'dishes'">
-      <div class="section-header">
-        <span class="section-count">共 {{ filteredDishes.length }} 个菜品</span>
-        <div class="section-actions">
-          <Select v-model="selectedCategoryId" :options="categoryOptions" optionLabel="label" optionValue="value" class="category-filter" placeholder="全部分类" />
-          <Button label="生成菜单图片" icon="pi pi-image" severity="warning" @click="generateMenuImage" :loading="generating" />
-          <Button label="新增菜品" icon="pi pi-plus" @click="openDishDialog()" />
+    <!-- Tabs & Filters -->
+    <div class="tabs-container">
+      <div class="tabs">
+        <button :class="['tab-btn', tab === 'dishes' && 'active']" @click="tab = 'dishes'">
+          <span class="material-symbols-outlined">restaurant_menu</span>
+          菜品
+        </button>
+        <button :class="['tab-btn', tab === 'categories' && 'active']" @click="tab = 'categories'">
+          <span class="material-symbols-outlined">category</span>
+          分类
+        </button>
+      </div>
+      <div class="filters" v-if="tab === 'dishes'">
+        <div class="filter-tabs">
+          <button :class="['filter-tab', selectedCategoryId === '' && 'active']" @click="selectedCategoryId = ''">全部</button>
+          <button v-for="c in categories" :key="c.id" :class="['filter-tab', selectedCategoryId === c.id && 'active']" @click="selectedCategoryId = c.id">{{ c.name }}</button>
         </div>
+        <button class="btn-secondary" @click="generateMenuImage" :disabled="generating">
+          <span class="material-symbols-outlined">image</span>
+          {{ generating ? '生成中...' : '生成菜单图片' }}
+        </button>
       </div>
-      <DataTable :value="filteredDishes" striped-rows>
-        <Column header="排序" style="width:100px">
-          <template #body="{ data }">
-            <InputText v-model.number="data.sort" type="number" min="0" max="999" style="width:80px" @change="updateSort(data)" />
-          </template>
-        </Column>
-        <Column field="id" header="ID" style="width:180px" />
-        <Column field="name" header="名称" />
-        <Column field="categoryName" header="分类" />
-        <Column field="price" header="价格">
-          <template #body="{ data }">
-            <template v-if="data.portionSize">¥{{ data.price.toFixed(2) }}/{{ data.portionSize }}串</template>
-            <template v-else>¥{{ data.price.toFixed(2) }}</template>
-          </template>
-        </Column>
-        <Column field="specGroups" header="规格" style="width:120px">
-          <template #body="{ data }">
-            <span v-if="data.specGroups?.length" style="font-size:13px;color:#666">{{ data.specGroups.length }} 组</span>
-            <span v-else style="font-size:13px;color:#999">无</span>
-          </template>
-        </Column>
-        <Column field="stock" header="库存（快捷录入）" style="width:260px">
-          <template #body="{ data }">
-            <div class="stock-quick-edit">
-              <template v-if="data.stockEnabled">
-                <InputNumber
-                  v-model="data.stock"
-                  :min="0"
-                  class="stock-input"
-                  @value-change="quickSaveStock(data, $event)"
-                />
-                <Button label="取消" severity="danger" text size="small" @click="disableStock(data)" />
-              </template>
-              <template v-else>
-                <span style="color:#999;margin-right:6px">不限</span>
-                <Button label="启用" severity="success" size="small" @click="enableStock(data)" />
-              </template>
-            </div>
-          </template>
-        </Column>
-        <Column field="alliance" header="联盟" style="width:80px">
-          <template #body="{ data }">
-            <div @click.stop="toggleAlliance(data)" style="cursor:pointer">
-              <ToggleSwitch :modelValue="data.alliance" :binary="true" tabindex="-1" style="pointer-events:none" />
-            </div>
-          </template>
-        </Column>
-        <Column field="status" header="状态" style="width:100px">
-          <template #body="{ data }">
-            <Button :label="data.status === 'active' ? '下架' : '上架'" :severity="data.status === 'active' ? 'success' : 'danger'" size="small" @click="toggleStatus(data)" />
-          </template>
-        </Column>
-        <Column header="操作" style="width:160px">
-          <template #body="{ data }">
-            <Button icon="pi pi-pencil" label="编辑" severity="info" text size="small" @click="openDishDialog(data)" />
-            <Button icon="pi pi-trash" label="删除" severity="danger" size="small" @click="deleteDish(data.id)" />
-          </template>
-        </Column>
-      </DataTable>
     </div>
 
-    <!-- Categories -->
-    <div v-if="tab === 'categories'">
+    <!-- Dishes Table -->
+    <div v-if="tab === 'dishes'" class="card">
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="w-16">排序</th>
+              <th>菜品名称</th>
+              <th>分类</th>
+              <th>价格</th>
+              <th>库存</th>
+              <th>状态</th>
+              <th class="text-right">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="dish in filteredDishes" :key="dish.id" class="group">
+              <td>
+                <input type="number" v-model.number="dish.sort" min="0" max="999" class="sort-input" @change="updateSort(dish)" />
+              </td>
+              <td>
+                <div class="dish-info">
+                  <p class="dish-name">{{ dish.name }}</p>
+                  <p class="dish-desc" v-if="dish.desc">{{ dish.desc }}</p>
+                </div>
+              </td>
+              <td>
+                <span class="category-tag">{{ dish.categoryName }}</span>
+              </td>
+              <td>
+                <span class="price">¥{{ dish.price.toFixed(2) }}</span>
+                <span v-if="dish.portionSize" class="portion">/{{ dish.portionSize }}串</span>
+              </td>
+              <td>
+                <div class="stock-cell">
+                  <template v-if="dish.stockEnabled">
+                    <input type="number" v-model.number="dish.stock" min="0" class="stock-input" @change="quickSaveStock(dish, dish.stock)" />
+                    <button class="btn-text-danger" @click="disableStock(dish)">取消</button>
+                  </template>
+                  <template v-else>
+                    <span class="stock-unlimited">不限</span>
+                    <button class="btn-text-success" @click="enableStock(dish)">启用</button>
+                  </template>
+                </div>
+              </td>
+              <td>
+                <button :class="['status-badge', 'status-clickable', dish.status === 'active' ? 'status-active' : 'status-inactive']" @click="toggleStatus(dish)">
+                  {{ dish.status === 'active' ? '上架中' : '已下架' }}
+                </button>
+              </td>
+              <td>
+                <div class="action-btns">
+                  <button class="btn-icon" title="编辑" @click="openDishDialog(dish)">
+                    <span class="material-symbols-outlined">edit</span>
+                  </button>
+                  <button class="btn-icon btn-danger" title="删除" @click="deleteDish(dish.id)">
+                    <span class="material-symbols-outlined">delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div v-if="filteredDishes.length === 0" class="empty-state">
+        <span class="material-symbols-outlined">restaurant_menu</span>
+        <p>暂无菜品数据</p>
+      </div>
+    </div>
+
+    <!-- Categories Table -->
+    <div v-if="tab === 'categories'" class="card">
       <div class="section-header">
         <span class="section-count">共 {{ categories.length }} 个分类</span>
-        <Button label="新增分类" icon="pi pi-plus" @click="openCategoryDialog()" />
+        <button class="btn-primary" @click="openCategoryDialog()">
+          <span class="material-symbols-outlined">add</span>
+          新增分类
+        </button>
       </div>
-      <DataTable :value="categories" striped-rows>
-        <Column field="name" header="名称" />
-        <Column field="sort" header="排序" />
-        <Column header="状态灯" style="width:110px">
-          <template #body="{ data }">
-            <div class="ctl-switch">
-              <ToggleSwitch :modelValue="!!data.showStatusLight" binary @change="toggleCategoryLight(data)" />
-            </div>
-          </template>
-        </Column>
-        <Column header="操作" style="width:160px">
-          <template #body="{ data }">
-            <Button icon="pi pi-pencil" label="编辑" severity="info" text size="small" @click="openCategoryDialog(data)" />
-            <Button icon="pi pi-trash" label="删除" severity="danger" size="small" @click="deleteCategory(data.id)" />
-          </template>
-        </Column>
-      </DataTable>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>名称</th>
+              <th>排序</th>
+              <th>状态灯</th>
+              <th class="text-right">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="cat in categories" :key="cat.id" class="group">
+              <td class="font-semibold">{{ cat.name }}</td>
+              <td>{{ cat.sort }}</td>
+              <td>
+                <label class="toggle-switch">
+                  <input type="checkbox" :checked="cat.showStatusLight" @change="toggleCategoryLight(cat)" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </td>
+              <td>
+                <div class="action-btns">
+                  <button class="btn-icon" title="编辑" @click="openCategoryDialog(cat)">
+                    <span class="material-symbols-outlined">edit</span>
+                  </button>
+                  <button class="btn-icon btn-danger" title="删除" @click="deleteCategory(cat.id)">
+                    <span class="material-symbols-outlined">delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Dish Dialog -->
-    <Dialog v-model:visible="showDish" :header="editingDish ? '编辑菜品' : '新增菜品'" style="width:520px">
-      <div class="form-group">
-        <label>名称</label>
-        <InputText v-model="dishForm.name" class="w-full" placeholder="菜品名称" />
-      </div>
-      <div class="form-row">
-        <div class="form-group flex-1">
-          <label>价格 (¥)</label>
-          <InputNumber v-model="dishForm.price" :min="0" :step="0.5" mode="decimal" :minFractionDigits="2" :maxFractionDigits="2" class="w-full" />
+    <div v-if="showDish" class="modal-overlay" @click.self="showDish = false">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>{{ editingDish ? '编辑菜品' : '新增菜品' }}</h3>
+          <button class="btn-icon" @click="showDish = false">
+            <span class="material-symbols-outlined">close</span>
+          </button>
         </div>
-        <div class="form-group flex-1">
-          <label>分类</label>
-          <Select v-model="dishForm.categoryId" :options="categories" optionLabel="name" optionValue="id" class="w-full" />
-        </div>
-      </div>
-      <div class="option-group opt-full">
-        <span class="option-label">按份卖</span>
-        <ToggleSwitch v-model="dishForm.sellByPortion" />
-        <span class="option-hint">每份</span>
-        <InputNumber v-model="dishForm.portionSize" :min="1" class="stock-input" :disabled="!dishForm.sellByPortion" placeholder="数量" />
-        <Select
-          v-model="dishForm.unit"
-          :options="unitOptions"
-          optionLabel="label"
-          optionValue="value"
-          class="unit-select"
-          :disabled="!dishForm.sellByPortion"
-          placeholder="单位"
-        />
-      </div>
-      <div class="form-row" style="align-items: flex-end">
-        <div class="option-group">
-          <span class="option-label">启用库存</span>
-          <ToggleSwitch v-model="dishForm.stockEnabled" />
-          <span class="option-hint">数量</span>
-          <InputNumber v-model="dishForm.stock" :min="0" class="stock-input" :disabled="!dishForm.stockEnabled" placeholder="个" />
-        </div>
-      </div>
-      <div class="option-group">
-        <span class="option-label">联盟商品</span>
-        <ToggleSwitch v-model="dishForm.alliance" />
-        <span class="option-hint">不计入销量统计</span>
-      </div>
-
-      <div class="form-group">
-        <label>描述</label>
-        <InputText v-model="dishForm.desc" class="w-full" placeholder="选填" />
-      </div>
-      <div class="form-row">
-        <div class="form-group flex-1">
-          <label>图片 URL</label>
-          <InputText v-model="dishForm.image" class="w-full" placeholder="https://..." />
-        </div>
-        <div class="form-group flex-1">
-          <label>套用预设</label>
-          <Select v-model="selectedPreset" :options="specsOptions" optionLabel="label" optionValue="value" class="w-full" @change="applyPreset" />
-        </div>
-      </div>
-      <div class="form-group">
-        <label>规格组 <small style="color:#999;font-weight:400">（选预设后可按需修改）</small></label>
-        <div class="spec-editor">
-          <div v-for="(group, gi) in dishForm.specGroups" :key="gi" class="spec-group-card">
-            <div class="spec-group-header">
-              <div style="flex:1;min-width:0;overflow:hidden;display:flex;align-items:center;gap:6px">
-                <InputText v-model="group.name" placeholder="组名" style="width:160px;flex-shrink:0;box-sizing:border-box" />
-                <Button icon="pi pi-trash" severity="danger" text size="small" @click="removeSpecGroup(gi)" style="flex-shrink:0" />
-              </div>
-              <Select v-model="group.type" :options="[{label:'单选',value:'single'},{label:'多选',value:'multi'}]" optionLabel="label" optionValue="value" style="width:100px;flex-shrink:0;min-width:0" />
-            </div>
-            <div v-for="(opt, oi) in group.options" :key="oi" class="spec-option-row">
-              <InputText v-model="opt.label" placeholder="选项名" class="spec-option-name" />
-              <InputNumber v-model="opt.priceDelta" :min="0" placeholder="加价" class="spec-price-input">
-                <template #prefix>+¥</template>
-              </InputNumber>
-              <Button icon="pi pi-times" severity="danger" text size="small" @click="removeSpecOption(gi, oi)" style="flex-shrink:0" />
-            </div>
-            <Button label="添加选项" icon="pi pi-plus" severity="info" text size="small" @click="addSpecOption(gi)" />
+        <div class="modal-body">
+          <div class="form-group">
+            <label>名称</label>
+            <input type="text" v-model="dishForm.name" placeholder="菜品名称" />
           </div>
-          <Button label="添加规格组" icon="pi pi-plus" severity="info" outlined size="small" @click="addSpecGroup" class="add-group-btn" />
+          <div class="form-row">
+            <div class="form-group">
+              <label>价格 (¥)</label>
+              <input type="number" v-model.number="dishForm.price" min="0" step="0.5" />
+            </div>
+            <div class="form-group">
+              <label>分类</label>
+              <select v-model="dishForm.categoryId">
+                <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>描述</label>
+              <input type="text" v-model="dishForm.desc" placeholder="选填" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>图片 URL</label>
+              <input type="text" v-model="dishForm.image" placeholder="https://..." />
+            </div>
+          </div>
+          <div class="form-row options-row">
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="dishForm.sellByPortion" />
+              <span>按份卖</span>
+            </label>
+            <div v-if="dishForm.sellByPortion" class="inline-inputs">
+              <input type="number" v-model.number="dishForm.portionSize" min="1" placeholder="数量" />
+              <select v-model="dishForm.unit">
+                <option value="串">串</option>
+                <option value="斤">斤</option>
+                <option value="只">只</option>
+                <option value="份">份</option>
+                <option value="个">个</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row options-row">
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="dishForm.stockEnabled" />
+              <span>启用库存</span>
+            </label>
+            <input v-if="dishForm.stockEnabled" type="number" v-model.number="dishForm.stock" min="0" placeholder="库存数量" class="stock-input-inline" />
+          </div>
+          <div class="form-row options-row">
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="dishForm.alliance" />
+              <span>联盟商品</span>
+            </label>
+            <span class="hint-text">不计入销量统计</span>
+          </div>
+          <div class="form-group" v-if="editingDish">
+            <label>状态</label>
+            <select v-model="dishForm.status">
+              <option value="active">上架</option>
+              <option value="inactive">下架</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>规格组 <small>(可选)</small></label>
+            <select v-model="selectedPreset" @change="applyPreset" class="preset-select">
+              <option value="none">无规格</option>
+              <option value="bbq">烧烤（辣度+口味+串数）</option>
+              <option value="veg">素菜（辣度+串数）</option>
+              <option value="tea">茶饮（甜度+温度+加料）</option>
+              <option value="hotpot">火锅（锅底+蘸料）</option>
+              <option value="dessert">甜品（大小份+加料）</option>
+              <option value="drink">冷饮（温度）</option>
+            </select>
+            <div class="spec-editor" v-if="dishForm.specGroups.length">
+              <div v-for="(group, gi) in dishForm.specGroups" :key="gi" class="spec-group">
+                <div class="spec-group-header">
+                  <input type="text" v-model="group.name" placeholder="组名" />
+                  <select v-model="group.type">
+                    <option value="single">单选</option>
+                    <option value="multi">多选</option>
+                  </select>
+                  <button class="btn-icon btn-danger" @click="removeSpecGroup(gi)">
+                    <span class="material-symbols-outlined">delete</span>
+                  </button>
+                </div>
+                <div v-for="(opt, oi) in group.options" :key="oi" class="spec-option">
+                  <input type="text" v-model="opt.label" placeholder="选项名" />
+                  <input type="number" v-model.number="opt.priceDelta" min="0" placeholder="加价" />
+                  <button class="btn-icon-sm" @click="removeSpecOption(gi, oi)">×</button>
+                </div>
+                <button class="btn-text" @click="addSpecOption(gi)">+ 添加选项</button>
+              </div>
+            </div>
+            <button class="btn-text" @click="addSpecGroup" v-if="!dishForm.specGroups.length">+ 添加规格组</button>
+          </div>
+          <div class="form-group">
+            <label>标签 <small>(逗号分隔)</small></label>
+            <input type="text" v-model="dishForm.tagsText" placeholder="招牌, 新品, 热销" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" @click="showDish = false">取消</button>
+          <button class="btn-primary" @click="saveDish">保存</button>
         </div>
       </div>
-      <div class="form-group">
-        <label>标签（逗号分隔）</label>
-        <InputText v-model="dishForm.tagsText" class="w-full" placeholder="招牌, 新品, 热销" />
-      </div>
-      <div class="form-group" v-if="editingDish">
-        <label>状态</label>
-        <Select v-model="dishForm.status" :options="[{ label: '上架', value: 'active' }, { label: '下架', value: 'inactive' }]" optionLabel="label" optionValue="value" class="w-full" />
-      </div>
-      <template #footer>
-        <Button label="取消" severity="secondary" @click="showDish = false" />
-        <Button label="保存" @click="saveDish" />
-      </template>
-    </Dialog>
+    </div>
 
     <!-- Category Dialog -->
-    <Dialog v-model:visible="showCategory" :header="editingCategory ? '编辑分类' : '新增分类'" style="width:400px">
-      <div class="form-group">
-        <label>名称</label>
-        <InputText v-model="catForm.name" class="w-full" placeholder="分类名称" />
+    <div v-if="showCategory" class="modal-overlay" @click.self="showCategory = false">
+      <div class="modal modal-sm">
+        <div class="modal-header">
+          <h3>{{ editingCategory ? '编辑分类' : '新增分类' }}</h3>
+          <button class="btn-icon" @click="showCategory = false">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>名称</label>
+            <input type="text" v-model="catForm.name" placeholder="分类名称" />
+          </div>
+          <div class="form-group">
+            <label>排序</label>
+            <input type="number" v-model.number="catForm.sort" min="0" />
+          </div>
+          <div class="form-row options-row">
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="catForm.showStatusLight" />
+              <span>启用状态灯</span>
+            </label>
+          </div>
+          <p class="hint-block">启用后该分类菜品在取餐页显示制作/待取餐状态灯</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" @click="showCategory = false">取消</button>
+          <button class="btn-primary" @click="saveCategory">保存</button>
+        </div>
       </div>
-      <div class="form-group">
-        <label>排序</label>
-        <InputNumber v-model="catForm.sort" :min="0" class="w-full" />
-      </div>
-      <div class="option-group ctl-group">
-        <span class="option-label">启用状态灯</span>
-        <span class="ctl-switch">
-          <ToggleSwitch v-model="catForm.showStatusLight" />
-        </span>
-      </div>
-      <p class="option-hint ctl-hint">启用后该分类菜品在取餐页显示制作/待取餐状态灯</p>
-      <template #footer>
-        <Button label="取消" severity="secondary" @click="showCategory = false" />
-        <Button label="保存" @click="saveCategory" />
-      </template>
-    </Dialog>
+    </div>
 
     <!-- Menu Preview Dialog -->
-    <Dialog v-model:visible="showMenuPreview" header="菜单预览" :style="{ width: '500px' }" :modal="true">
-      <div style="display:flex;flex-direction:column;align-items:center;gap:16px">
-        <img v-if="menuPreviewUrl" :src="menuPreviewUrl" style="width:100%;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.1)" alt="菜单预览" />
-        <div style="font-size:13px;color:#999">生成时间：{{ menuPreviewTime }}</div>
+    <div v-if="showMenuPreview" class="modal-overlay" @click.self="showMenuPreview = false">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>菜单预览</h3>
+          <button class="btn-icon" @click="showMenuPreview = false">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="modal-body text-center">
+          <img v-if="menuPreviewUrl" :src="menuPreviewUrl" class="menu-preview-img" alt="菜单预览" />
+          <p class="preview-time">生成时间：{{ menuPreviewTime }}</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" @click="showMenuPreview = false">关闭</button>
+          <button class="btn-primary" @click="downloadMenuImage">
+            <span class="material-symbols-outlined">download</span>
+            下载图片
+          </button>
+        </div>
       </div>
-      <template #footer>
-        <Button label="关闭" severity="secondary" @click="showMenuPreview = false" />
-        <Button label="下载图片" icon="pi pi-download" @click="downloadMenuImage" />
-      </template>
-    </Dialog>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import Button from 'primevue/button'
-import DataTable from 'primevue/datatable'
-import Column from 'primevue/column'
-import Dialog from 'primevue/dialog'
-import InputText from 'primevue/inputtext'
-import InputNumber from 'primevue/inputnumber'
-import Select from 'primevue/select'
-import ToggleSwitch from 'primevue/toggleswitch'
 
 const tab = ref('dishes')
 const dishes = ref<any[]>([])
 const categories = ref<any[]>([])
 const selectedCategoryId = ref('')
-
-const categoryOptions = computed(() => [
-  { label: '全部分类', value: '' },
-  ...categories.value.map(c => ({ label: c.name, value: c.id })),
-])
 
 const filteredDishes = computed(() => {
   let list = selectedCategoryId.value
@@ -269,16 +348,6 @@ const filteredDishes = computed(() => {
 const showDish = ref(false)
 const editingDish = ref(false)
 const selectedPreset = ref('none')
-
-const specsOptions = [
-  { label: '无规格', value: 'none' },
-  { label: '烧烤（辣度+口味+串数）', value: 'bbq' },
-  { label: '素菜（辣度+串数）', value: 'veg' },
-  { label: '茶饮（甜度+温度+加料）', value: 'tea' },
-  { label: '火锅（锅底+蘸料）', value: 'hotpot' },
-  { label: '甜品（大小份+加料）', value: 'dessert' },
-  { label: '冷饮（温度）', value: 'drink' },
-]
 
 const SPECS_PRESETS: Record<string, any[]> = {
   none: [],
@@ -313,16 +382,6 @@ function applyPreset() {
   const preset = SPECS_PRESETS[selectedPreset.value]
   dishForm.value.specGroups = preset ? JSON.parse(JSON.stringify(preset)) : []
 }
-
-const unitOptions = [
-  { label: '串', value: '串' },
-  { label: '斤', value: '斤' },
-  { label: '只', value: '只' },
-  { label: '条', value: '条' },
-  { label: '份', value: '份' },
-  { label: '盒', value: '盒' },
-  { label: '个', value: '个' },
-]
 
 const dishForm = ref({ name: '', price: 0, categoryId: '', desc: '', image: '', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0, unit: '串', stockEnabled: false, stock: 0, alliance: false, specGroups: [] as any[] })
 
@@ -503,56 +562,11 @@ async function deleteCategory(id: string) {
   fetchCategories()
 }
 
-async function toggleAlliance(dish: any) {
-  if (!dish.alliance) {
-    if (!confirm(`确认将「${dish.name}」设为联盟商品？\n联盟商品将不计入菜品销量统计。`)) return
-  }
-  const res = await fetch(`/api/admin/dishes/${dish.id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ alliance: !dish.alliance }),
-  })
-  if (res.ok) fetchDishes()
-}
-
-async function toggleStatus(dish: any) {
-  const newStatus = dish.status === 'active' ? 'inactive' : 'active'
-
-  // 下架时检查关联的福利活动
-  if (newStatus === 'inactive') {
-    const promoRes = await fetch('/api/admin/promotions')
-    const promos = promoRes.ok ? await promoRes.json() : []
-    const related = promos.filter((p: any) =>
-      p.type === 'welfare_item' && p.status === 'active' && p.items.some((i: any) => i.dishId === dish.id),
-    )
-    if (related.length > 0) {
-      const names = related.map((p: any) => p.name).join('、')
-      if (!confirm(`该商品存在福利活动「${names}」，下架后该活动将自动停用，是否继续？`)) return
-      // 停用关联的福利活动
-      await Promise.all(related.map((p: any) =>
-        fetch(`/api/admin/promotions/${p.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'inactive' }),
-        }),
-      ))
-    }
-  }
-
-  const res = await fetch(`/api/admin/dishes/${dish.id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status: newStatus }),
-  })
-  if (res.ok) fetchDishes()
-}
-
 async function fetchDishes() {
   const res = await fetch('/api/admin/dishes')
   dishes.value = await res.json()
 }
 
-// 快捷录入库存：值提交（回车/失焦）即保存，仅更新库存字段
 async function quickSaveStock(dish: any, newValue: number | null) {
   const newStock = Math.max(0, Number(newValue) || 0)
   if (dish.__lastSavedStock === newStock) return
@@ -606,6 +620,37 @@ async function updateSort(dish: any) {
   else fetchDishes()
 }
 
+async function toggleStatus(dish: any) {
+  const newStatus = dish.status === 'active' ? 'inactive' : 'active'
+
+  // 下架时检查关联的福利活动
+  if (newStatus === 'inactive') {
+    const promoRes = await fetch('/api/admin/promotions')
+    const promos = promoRes.ok ? await promoRes.json() : []
+    const related = promos.filter((p: any) =>
+      p.type === 'welfare_item' && p.status === 'active' && p.items.some((i: any) => i.dishId === dish.id),
+    )
+    if (related.length > 0) {
+      const names = related.map((p: any) => p.name).join('、')
+      if (!confirm(`该商品存在福利活动「${names}」，下架后该活动将自动停用，是否继续？`)) return
+      await Promise.all(related.map((p: any) =>
+        fetch(`/api/admin/promotions/${p.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'inactive' }),
+        }),
+      ))
+    }
+  }
+
+  const res = await fetch(`/api/admin/dishes/${dish.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: newStatus }),
+  })
+  if (res.ok) fetchDishes()
+}
+
 async function fetchCategories() {
   const res = await fetch('/api/admin/categories')
   categories.value = await res.json()
@@ -618,49 +663,762 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.menu-page { }
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.page-title { margin: 0; font-size: 22px; font-weight: 700; }
-.header-tabs { display: flex; gap: 4px; }
-.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.section-actions { display: flex; align-items: center; gap: 8px; }
-.category-filter { min-width: 150px; }
-.section-count { font-size: 13px; color: #666; }
-.form-group { margin-bottom: 12px; }
-.form-group label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 4px; }
-.form-group :deep(.p-inputnumber-input),
-.form-group :deep(.p-select-label),
-.form-group :deep(.p-inputtext) { height: 36px; }
-.form-row { display: flex; gap: 12px; }
-.flex-1 { flex: 1; }
-.w-full { width: 100%; }
-.spec-editor { display: flex; flex-direction: column; gap: 8px; max-width: 100%; overflow: hidden; }
-.spec-group-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 10px 12px; background: #fafafa; overflow: hidden; max-width: 100%; box-sizing: border-box; }
-.spec-group-header { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; max-width: 100%; }
-.spec-group-header .p-inputtext { max-width: 100%; }
-.spec-option-row { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; max-width: 100%; }
-.spec-option-row .spec-option-name { flex: 1; min-width: 0; }
-.spec-option-row .spec-price-input { flex: 1; min-width: 0; }
-.spec-option-row .spec-price-input:deep(.p-inputtext) { width: 100%; text-align: center; }
-.add-group-btn { align-self: flex-start; margin-top: 4px; }
-.stock-quick-edit { display: flex; align-items: center; gap: 6px; }
-.stock-input { width: 80px; }
-.stock-input:deep(.p-inputtext) { width: 80px; text-align: center; font-weight: 600; height: 36px; box-sizing: border-box; }
-.option-group { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-.option-label { font-size: 13px; font-weight: 600; color: var(--text-color); white-space: nowrap; }
-.option-hint { font-size: 12px; color: var(--text-color-secondary); white-space: nowrap; }
-.opt-full { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; }
-.unit-select { width: 86px; }
-.unit-select:deep(.p-select),
-.unit-select:deep(.p-select-label) { height: 36px; box-sizing: border-box; }
-.unit-select:deep(.p-select-label) { display: flex; align-items: center; }
-.ctl-switch { display: inline-flex; align-items: center; }
-.ctl-group { margin-bottom: 4px; }
-.ctl-hint { margin: 0 0 12px; white-space: normal; line-height: 1.5; }
-.ctl-switch :deep(.p-switch.p-switch-checked) {
-  --p-switch-checked-background: #22c55e;
-  --p-switch-checked-border-color: #22c55e;
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
+.menu-page {
+  padding: 0;
 }
-.spec-price-input { width: 80px; }
-.spec-price-input:deep(.p-inputtext) { width: 80px; text-align: center; }
+
+/* Page Header */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1c1b1b;
+}
+
+.page-subtitle {
+  margin: 4px 0 0;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #5a4136;
+}
+
+/* Buttons */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #ff6b00;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 24px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 0 2px 8px rgba(255, 107, 0, 0.2);
+}
+
+.btn-primary:hover {
+  background: #e65c00;
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  color: #1c1b1b;
+  border: 1px solid #e5e2e1;
+  padding: 10px 20px;
+  border-radius: 24px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-secondary:hover {
+  border-color: #ff6b00;
+  color: #ff6b00;
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #5a4136;
+  transition: all 0.15s;
+}
+
+.btn-icon:hover {
+  background: rgba(255, 107, 0, 0.1);
+  color: #ff6b00;
+}
+
+.btn-icon.btn-danger:hover {
+  background: rgba(186, 26, 26, 0.1);
+  color: #ba1a1a;
+}
+
+.btn-icon-sm {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: #f5f5f5;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  color: #999;
+  transition: all 0.15s;
+}
+
+.btn-icon-sm:hover {
+  background: #ffdad6;
+  color: #ba1a1a;
+}
+
+.btn-text {
+  background: none;
+  border: none;
+  color: #ff6b00;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.btn-text:hover {
+  text-decoration: underline;
+}
+
+.btn-text-success {
+  background: none;
+  border: none;
+  color: #4aad4e;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.btn-text-danger {
+  background: none;
+  border: none;
+  color: #ba1a1a;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-size: 20px;
+  font-variation-settings: 'wght' 500;
+}
+
+/* Tabs */
+.tabs-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid #e5e2e1;
+  border-radius: 20px;
+  background: #fff;
+  color: #666;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tab-btn.active {
+  background: #ff6b00;
+  color: #fff;
+  border-color: #ff6b00;
+}
+
+.tab-btn:hover:not(.active) {
+  border-color: #ff6b00;
+  color: #ff6b00;
+}
+
+.filters {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.filter-tab {
+  padding: 8px 16px;
+  border: 1px solid #e5e2e1;
+  border-radius: 20px;
+  background: #fff;
+  color: #5a4136;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.filter-tab:hover {
+  border-color: #ff6b00;
+  color: #ff6b00;
+}
+
+.filter-tab.active {
+  background: #ff6b00;
+  color: #fff;
+  border-color: #ff6b00;
+}
+
+/* Card */
+.card {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e5e2e1;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e2e1;
+}
+
+.section-count {
+  font-size: 13px;
+  color: #5a4136;
+}
+
+/* Table */
+.table-container {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #5a4136;
+  background: #f6f3f2;
+  border-bottom: 1px solid #e5e2e1;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.data-table td {
+  padding: 16px;
+  border-bottom: 1px solid #f0eded;
+  vertical-align: middle;
+}
+
+.data-table tbody tr {
+  transition: background 0.1s;
+}
+
+.data-table tbody tr:hover {
+  background: #fdf8f5;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.w-16 {
+  width: 64px;
+}
+
+/* Dish Info */
+.dish-info {
+  min-width: 180px;
+}
+
+.dish-name {
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1c1b1b;
+}
+
+.dish-desc {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #5a4136;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+/* Tags & Badges */
+.category-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  background: #f0eded;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1c1b1b;
+}
+
+.price {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #ff6b00;
+}
+
+.portion {
+  font-size: 12px;
+  color: #5a4136;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  cursor: default;
+}
+
+.status-clickable {
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.status-clickable:hover {
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.status-active {
+  background: rgba(74, 173, 78, 0.15);
+  color: #006e1c;
+}
+
+.status-active::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4aad4e;
+}
+
+.status-inactive {
+  background: rgba(186, 26, 26, 0.1);
+  color: #ba1a1a;
+}
+
+.status-inactive::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ba1a1a;
+}
+
+/* Stock Cell */
+.stock-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stock-input {
+  width: 70px;
+  padding: 6px 10px;
+  border: 1px solid #e5e2e1;
+  border-radius: 8px;
+  font-size: 13px;
+  text-align: center;
+}
+
+.stock-unlimited {
+  color: #999;
+  font-size: 13px;
+}
+
+/* Sort Input */
+.sort-input {
+  width: 60px;
+  padding: 6px 8px;
+  border: 1px solid #e5e2e1;
+  border-radius: 8px;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* Action Buttons */
+.action-btns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #e5e2e1;
+  transition: 0.2s;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.2s;
+  border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: #4aad4e;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.modal-sm {
+  max-width: 400px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e5e2e1;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1c1b1b;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid #e5e2e1;
+}
+
+/* Form */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #5a4136;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #e5e2e1;
+  border-radius: 12px;
+  font-size: 14px;
+  transition: border-color 0.15s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #ff6b00;
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+.options-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1c1b1b;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #ff6b00;
+}
+
+.inline-inputs {
+  display: flex;
+  gap: 8px;
+}
+
+.inline-inputs input,
+.inline-inputs select {
+  width: auto;
+  min-width: 80px;
+  padding: 6px 10px;
+  border: 1px solid #e5e2e1;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.stock-input-inline {
+  width: 100px !important;
+  padding: 6px 10px;
+  border: 1px solid #e5e2e1;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.hint-text {
+  font-size: 12px;
+  color: #999;
+}
+
+.hint-block {
+  margin: 0 0 16px;
+  font-size: 12px;
+  color: #999;
+  line-height: 1.5;
+}
+
+/* Spec Editor */
+.preset-select {
+  margin-bottom: 12px;
+}
+
+.spec-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.spec-group {
+  border: 1px solid #e5e2e1;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fdfbf9;
+}
+
+.spec-group-header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.spec-group-header input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #e5e2e1;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.spec-group-header select {
+  width: 80px;
+  padding: 8px;
+  border: 1px solid #e5e2e1;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.spec-option {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.spec-option input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #e5e2e1;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+/* Empty State */
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+  color: #999;
+}
+
+.empty-state .material-symbols-outlined {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Menu Preview */
+.text-center {
+  text-align: center;
+}
+
+.menu-preview-img {
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.preview-time {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #999;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .tabs-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters {
+    flex-wrap: wrap;
+  }
+
+  .form-row {
+    flex-direction: column;
+  }
+
+  .action-btns {
+    opacity: 1;
+  }
+}
 </style>

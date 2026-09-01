@@ -1,92 +1,149 @@
 <template>
   <div class="review-page">
     <div class="page-header">
-      <h1 class="page-title">评价管理</h1>
+      <div>
+        <h2 class="page-title">评价管理</h2>
+        <p class="page-subtitle">管理评价收集、赠品池和兑换码核销</p>
+      </div>
     </div>
 
     <p v-if="error" class="error-msg">{{ error }}</p>
     <p v-if="loading" class="loading-msg">加载中...</p>
 
-    <!-- 设置 -->
-    <section class="section">
-      <h2>基本设置</h2>
-      <div class="settings-row">
-        <label>开启评价收集</label>
-        <button :class="['toggle', settings.enabled && 'toggle-on']" @click="toggleEnabled">
-          <span class="toggle-knob"></span>
-        </button>
+    <!-- 基本设置 -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">基本设置</h3>
       </div>
-    </section>
+      <div class="card-body">
+        <div class="settings-row">
+          <div class="settings-info">
+            <span class="settings-label">开启评价收集</span>
+            <span class="settings-desc">开启后顾客可在取餐后进行评价</span>
+          </div>
+          <button :class="['toggle', settings.enabled && 'toggle-on']" @click="toggleEnabled">
+            <span class="toggle-knob"></span>
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- 赠品池 -->
-    <section class="section">
-      <h2>赠品菜品池</h2>
-      <p class="section-desc">选择顾客评价后可选的赠品菜品</p>
-      <div class="gift-controls">
-        <MultiSelect v-model="selectedDishIds" :options="availableDishes" optionLabel="name" optionValue="id" placeholder="选择菜品" filter class="dish-select" />
-        <InputNumber v-model="giftQuantity" :min="1" :max="99" class="qty-input" placeholder="数量" />
-        <Button label="批量添加" @click="addGiftDishes" :disabled="selectedDishIds.length === 0" />
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">赠品菜品池</h3>
+        <span class="card-subtitle">选择顾客评价后可选的赠品菜品</span>
       </div>
-      <DataTable :value="settings.giftDishes" stripedRows class="gift-table">
-        <Column field="name" header="菜品名" />
-        <Column field="price" header="价格">
-          <template #body="{ data }">¥{{ data.price.toFixed(2) }}</template>
-        </Column>
-        <Column header="数量">
-          <template #body="{ data }">
-            <InputNumber v-model="data.quantity" :min="1" :max="99" class="qty-inline" @blur="updateQuantity(data)" />
-          </template>
-        </Column>
-        <Column header="操作">
-          <template #body="{ data }">
-            <Button icon="pi pi-trash" severity="danger" text @click="removeGiftDish(data.dishId)" />
-          </template>
-        </Column>
-      </DataTable>
-    </section>
-
-    <!-- 核销 -->
-    <section class="section">
-      <h2>兑换码核销</h2>
-      <div class="redeem-row">
-        <InputText v-model="redeemCode" placeholder="输入6位兑换码" maxlength="6" class="code-input" />
-        <Button label="核销" @click="redeem" :disabled="!redeemCode" />
+      <div class="card-body">
+        <div class="gift-controls">
+          <div class="gift-select-wrap">
+            <MultiSelect v-model="selectedDishIds" :options="availableDishes" optionLabel="name" optionValue="id" placeholder="选择菜品" filter display="chip" class="gift-select" />
+          </div>
+          <input v-model.number="giftQuantity" type="number" min="1" max="99" class="form-input qty-input" placeholder="数量" />
+          <button class="btn-action" @click="addGiftDishes" :disabled="selectedDishIds.length === 0">批量添加</button>
+        </div>
+        <div class="table-wrap" v-if="settings.giftDishes.length">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>菜品名</th>
+                <th>价格</th>
+                <th>数量</th>
+                <th style="text-align:right">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="d in settings.giftDishes" :key="d.dishId">
+                <td class="col-name">{{ d.name }}</td>
+                <td class="col-price">¥{{ d.price.toFixed(2) }}</td>
+                <td>
+                  <input v-model.number="d.quantity" type="number" min="1" max="99" class="form-input qty-inline" @blur="updateQuantity(d)" />
+                </td>
+                <td class="col-actions">
+                  <button class="btn-icon btn-danger-icon" @click="removeGiftDish(d.dishId)">删除</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p v-else class="empty-sm">暂无赠品，请在上方添加</p>
       </div>
-      <p v-if="redeemMsg" :class="['redeem-msg', redeemOk && 'redeem-ok']">{{ redeemMsg }}</p>
-    </section>
+    </div>
 
-    <!-- 评价列表 -->
-    <section class="section">
-      <h2>评价记录</h2>
-      <DataTable :value="reviews" stripedRows paginator :rows="20" :totalRecords="total" :lazy="true" @page="onPage" class="review-table">
-        <Column field="createdAt" header="时间">
-          <template #body="{ data }">{{ formatTime(data.createdAt) }}</template>
-        </Column>
-        <Column header="总体评价">
-          <template #body="{ data }">{{ data.overallStats.good }}好 / {{ data.overallStats.okay }}中 / {{ data.overallStats.bad }}差</template>
-        </Column>
-        <Column header="评价明细">
-          <template #body="{ data }">
-            <div v-for="item in data.items" :key="item.dishName" class="review-detail-item">
-              <span class="detail-dish">{{ item.dishName }}</span>
-              <span :class="['detail-badge', 'badge-' + item.overall]">
-                {{ item.overall === 'good' ? '好吃' : item.overall === 'okay' ? '还行' : '不好' }}
-              </span>
-              <span v-if="item.overall !== 'good'">
-                <span v-if="item.spiciness" class="detail-tag">辣{{ ['','不够','刚好','太辣'][item.spiciness] }}</span>
-                <span v-if="item.texture" class="detail-tag">口感{{ ['','太老','刚好','不好吃'][item.texture] }}</span>
-                <span v-if="item.portion" class="detail-tag">份量{{ ['','太少','刚好','太多'][item.portion] }}</span>
-              </span>
-              <span v-if="item.price" class="detail-tag">价格{{ ['','太贵','适中','便宜'][item.price] }}</span>
-              <span v-if="item.comment" class="detail-comment">"{{ item.comment }}"</span>
-            </div>
-          </template>
-        </Column>
-        <Column header="赠品">
-          <template #body="{ data }">{{ data.code ? data.code.dishName + (data.code.status === 'redeemed' ? '(已核销)' : '') : '未领取' }}</template>
-        </Column>
-      </DataTable>
-    </section>
+    <!-- 兑换码核销 -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">兑换码核销</h3>
+      </div>
+      <div class="card-body">
+        <div class="redeem-row">
+          <input v-model="redeemCode" class="form-input code-input" placeholder="输入6位兑换码" maxlength="6" />
+          <button class="btn-action" @click="redeem" :disabled="!redeemCode">核销</button>
+        </div>
+        <p v-if="redeemMsg" :class="['redeem-msg', redeemOk && 'redeem-ok']">{{ redeemMsg }}</p>
+      </div>
+    </div>
+
+    <!-- 评价记录 -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">评价记录</h3>
+        <span class="card-subtitle">共 {{ total }} 条</span>
+      </div>
+      <div class="table-wrap" v-if="reviews.length">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>时间</th>
+              <th>总体评价</th>
+              <th>评价明细</th>
+              <th>赠品</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="r in reviews" :key="r.id">
+              <td class="col-time">{{ formatTime(r.createdAt) }}</td>
+              <td>
+                <span class="eval-summary">
+                  <span class="eval-good">{{ r.overallStats.good }}好</span>
+                  <span class="eval-okay">{{ r.overallStats.okay }}中</span>
+                  <span class="eval-bad">{{ r.overallStats.bad }}差</span>
+                </span>
+              </td>
+              <td class="col-detail">
+                <div v-for="item in r.items" :key="item.dishName" class="review-detail-item">
+                  <span class="detail-dish">{{ item.dishName }}</span>
+                  <span :class="['detail-badge', 'badge-' + item.overall]">
+                    {{ item.overall === 'good' ? '好吃' : item.overall === 'okay' ? '还行' : '不好' }}
+                  </span>
+                  <span v-if="item.overall !== 'good'">
+                    <span v-if="item.spiciness" class="detail-tag">辣{{ ['','不够','刚好','太辣'][item.spiciness] }}</span>
+                    <span v-if="item.texture" class="detail-tag">口感{{ ['','太老','刚好','不好吃'][item.texture] }}</span>
+                    <span v-if="item.portion" class="detail-tag">份量{{ ['','太少','刚好','太多'][item.portion] }}</span>
+                  </span>
+                  <span v-if="item.price" class="detail-tag">价格{{ ['','太贵','适中','便宜'][item.price] }}</span>
+                  <span v-if="item.comment" class="detail-comment">"{{ item.comment }}"</span>
+                </div>
+              </td>
+              <td class="col-gift">
+                <template v-if="r.code">
+                  <span :class="['gift-chip', r.code.status === 'redeemed' && 'gift-redeemed']">
+                    {{ r.code.dishName }}{{ r.code.status === 'redeemed' ? ' (已核销)' : '' }}
+                  </span>
+                </template>
+                <span v-else class="gift-none">未领取</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p v-else class="empty-sm">暂无评价记录</p>
+      <div class="pager" v-if="total > 20">
+        <button class="btn-page" :disabled="page <= 1" @click="page--; loadReviews()">上一页</button>
+        <span class="page-info">第 {{ page }} / {{ Math.ceil(total / 20) }} 页</span>
+        <button class="btn-page" :disabled="page >= Math.ceil(total / 20)" @click="page++; loadReviews()">下一页</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -178,11 +235,6 @@ async function loadReviews() {
   } catch {}
 }
 
-function onPage(e: any) {
-  page.value = e.page + 1
-  loadReviews()
-}
-
 async function redeem() {
   redeemMsg.value = ''
   if (!redeemCode.value) return
@@ -218,36 +270,264 @@ onMounted(() => { loadSettings(); loadReviews() })
 </script>
 
 <style scoped>
-.review-page { max-width: 900px; }
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.page-title { margin: 0; font-size: 24px; font-weight: 700; }
-.section { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-.section h2 { margin: 0 0 12px; font-size: 16px; font-weight: 700; }
-.section-desc { margin: -8px 0 16px; font-size: 13px; color: #666; }
-.settings-row { display: flex; align-items: center; gap: 16px; }
-.toggle { width: 44px; height: 24px; border-radius: 12px; border: none; background: #ccc; cursor: pointer; position: relative; transition: background 0.2s; padding: 0; }
-.toggle-on { background: #22c55e; }
-.toggle-knob { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+
+.review-page {
+  font-family: 'Inter', sans-serif;
+}
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.page-title {
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+.page-subtitle {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #999;
+}
+
+.error-msg { color: #ba1a1a; font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+.loading-msg { color: #666; font-size: 14px; margin-bottom: 16px; }
+
+/* ===== Card ===== */
+.card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  border: 1px solid #e5e2e1;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #f6f3f2;
+  border-bottom: 1px solid #e5e2e1;
+}
+.card-title {
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+.card-subtitle {
+  font-size: 12px;
+  color: #999;
+}
+.card-body {
+  padding: 20px;
+}
+
+/* ===== Settings ===== */
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.settings-info { display: flex; flex-direction: column; gap: 2px; }
+.settings-label { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+.settings-desc { font-size: 12px; color: #999; }
+.toggle {
+  width: 48px;
+  height: 28px;
+  border-radius: 14px;
+  border: none;
+  background: #d1ccc7;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s;
+  padding: 0;
+  flex-shrink: 0;
+}
+.toggle-on { background: #4aad4e; }
+.toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
 .toggle-on .toggle-knob { transform: translateX(20px); }
-.gift-controls { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-.dish-select { flex: 1; min-width: 200px; }
+
+/* ===== Gift Controls ===== */
+.gift-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.gift-select-wrap { flex: 1; min-width: 200px; }
+.gift-select { width: 100%; }
 .qty-input { width: 80px; }
 .qty-inline { width: 70px; }
-.gift-table { margin-top: 8px; }
-.redeem-row { display: flex; gap: 8px; }
-.code-input { width: 180px; text-transform: uppercase; }
-.redeem-msg { margin: 8px 0 0; font-size: 14px; font-weight: 600; color: #dc2626; }
-.redeem-ok { color: #16a34a; }
-.p-datatable .p-datatable-tbody > tr > td,
-.p-datatable .p-datatable-thead > tr > th { white-space: nowrap; }
-.error-msg { color: #dc2626; font-size: 14px; font-weight: 600; margin-bottom: 16px; }
-.loading-msg { color: #666; font-size: 14px; margin-bottom: 16px; }
-.review-detail-item { margin-bottom: 6px; line-height: 1.6; }
+
+.form-input {
+  padding: 8px 12px;
+  border: 1px solid #e5e2e1;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+.form-input:focus { outline: none; border-color: #ff6b00; }
+
+.btn-action {
+  background: #ff6b00;
+  color: #fff;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.btn-action:hover { background: #e55f00; }
+.btn-action:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ===== Table ===== */
+.table-wrap { overflow-x: auto; }
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.data-table th {
+  text-align: left;
+  padding: 10px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: #f6f3f2;
+  border-bottom: 1px solid #e5e2e1;
+  white-space: nowrap;
+}
+.data-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid #f0eded;
+  vertical-align: middle;
+}
+.data-table tbody tr:hover { background: #fdf8f5; }
+.col-name { font-weight: 600; color: #1a1a1a; }
+.col-price { font-weight: 600; color: #1a1a1a; font-family: 'Plus Jakarta Sans', sans-serif; }
+.col-time { white-space: nowrap; color: #666; font-size: 12px; }
+.col-actions { text-align: right; white-space: nowrap; }
+.col-detail { max-width: 400px; }
+.col-gift { white-space: nowrap; }
+
+.btn-icon {
+  background: none;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: all 0.15s;
+}
+.btn-danger-icon { color: #ba1a1a; }
+.btn-danger-icon:hover { background: rgba(186,26,26,0.08); }
+
+/* ===== Eval Summary ===== */
+.eval-summary { display: flex; gap: 8px; font-size: 12px; font-weight: 600; }
+.eval-good { color: #4aad4e; }
+.eval-okay { color: #d97706; }
+.eval-bad { color: #ba1a1a; }
+
+/* ===== Review Detail ===== */
+.review-detail-item { margin-bottom: 4px; line-height: 1.6; font-size: 13px; }
 .detail-dish { font-weight: 600; margin-right: 6px; }
-.detail-badge { display: inline-block; padding: 0 6px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-right: 4px; }
-.badge-good { background: #f0fdf4; color: #15803d; }
-.badge-okay { background: #fffbeb; color: #92400e; }
-.badge-bad { background: #fef2f2; color: #b91c1c; }
-.detail-tag { display: inline-block; padding: 0 6px; border-radius: 4px; background: #f5f5f5; font-size: 11px; color: #666; margin-right: 4px; }
-.detail-comment { display: block; font-size: 12px; color: #999; font-style: italic; margin-top: 2px; }
+.detail-badge {
+  display: inline-block;
+  padding: 0 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-right: 4px;
+}
+.badge-good { background: rgba(74,173,78,0.1); color: #4aad4e; }
+.badge-okay { background: rgba(255,107,0,0.1); color: #a04100; }
+.badge-bad  { background: rgba(186,26,26,0.1); color: #ba1a1a; }
+.detail-tag {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: #f0ebe5;
+  font-size: 11px;
+  color: #666;
+  margin-right: 4px;
+}
+.detail-comment {
+  display: block;
+  font-size: 12px;
+  color: #999;
+  font-style: italic;
+  margin-top: 2px;
+}
+
+/* ===== Gift Chips ===== */
+.gift-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(74,173,78,0.1);
+  color: #4aad4e;
+}
+.gift-redeemed { background: #e5e2e1; color: #999; }
+.gift-none { color: #ccc; font-size: 12px; }
+
+/* ===== Pager ===== */
+.pager {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-top: 1px solid #f0eded;
+}
+.btn-page {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid #e5e2e1;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: all 0.15s;
+}
+.btn-page:hover:not(:disabled) { border-color: #ff6b00; color: #ff6b00; }
+.btn-page:disabled { opacity: 0.3; cursor: not-allowed; }
+.page-info { font-size: 13px; color: #666; }
+
+.empty-sm { text-align: center; padding: 24px; color: #bbb; font-size: 13px; }
+
+@media (max-width: 768px) {
+  .page-header { flex-direction: column; gap: 12px; align-items: flex-start; }
+}
 </style>
