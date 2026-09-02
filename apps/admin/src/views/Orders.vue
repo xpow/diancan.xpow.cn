@@ -17,102 +17,49 @@
     <!-- Status Filters -->
     <div class="filter-tabs">
       <button :class="['filter-tab', statusFilter === 'all' && 'active']" @click="setStatusFilter('all')">
+        <span class="material-symbols-outlined">list</span>
         全部
         <span v-if="statusCounts.all" class="count">{{ statusCounts.all }}</span>
       </button>
+      <button :class="['filter-tab', statusFilter === 'unpaid' && 'active']" @click="setStatusFilter('unpaid')">
+        <span class="material-symbols-outlined">payment</span>
+        待付款
+        <span v-if="statusCounts.unpaid" class="count danger">{{ statusCounts.unpaid }}</span>
+      </button>
       <button :class="['filter-tab', statusFilter === 'pending' && 'active']" @click="setStatusFilter('pending')">
+        <span class="material-symbols-outlined">hourglass_empty</span>
         待处理
         <span v-if="statusCounts.pending" class="count warning">{{ statusCounts.pending }}</span>
       </button>
       <button :class="['filter-tab', statusFilter === 'preparing' && 'active']" @click="setStatusFilter('preparing')">
+        <span class="material-symbols-outlined">local_fire_department</span>
         制作中
         <span v-if="statusCounts.preparing" class="count info">{{ statusCounts.preparing }}</span>
       </button>
       <button :class="['filter-tab', statusFilter === 'ready' && 'active']" @click="setStatusFilter('ready')">
+        <span class="material-symbols-outlined">check_circle</span>
         可取餐
         <span v-if="statusCounts.ready" class="count success">{{ statusCounts.ready }}</span>
       </button>
       <button :class="['filter-tab', statusFilter === 'completed' && 'active']" @click="setStatusFilter('completed')">
+        <span class="material-symbols-outlined">done_all</span>
         已完成
       </button>
       <button :class="['filter-tab', statusFilter === 'cancelled' && 'active']" @click="setStatusFilter('cancelled')">
+        <span class="material-symbols-outlined">cancel</span>
         已取消
       </button>
     </div>
 
     <!-- Orders Grid -->
     <div class="orders-grid" v-if="orders.length">
-      <div v-for="order in orders" :key="order.id" class="order-card">
-        <!-- Card Header -->
-        <div class="order-header">
-          <div class="order-info">
-            <span class="pickup-code">{{ order.pickupCode }}</span>
-            <span class="order-no">#{{ order.orderNo.slice(-6) }}</span>
-          </div>
-          <span :class="['order-status', 'status-' + order.status]">
-            <span class="material-symbols-outlined status-icon">{{ statusIcon(order.status) }}</span>
-            {{ statusLabel(order.status) }}
-          </span>
-        </div>
-
-        <!-- Order Items -->
-        <div class="order-items">
-          <div v-for="item in order.items" :key="item.id" class="order-item">
-            <div class="item-info">
-              <span class="item-name">{{ item.name }}</span>
-              <span v-if="item.specs" class="item-specs">{{ item.specs }}</span>
-            </div>
-            <span class="item-qty">x{{ item.quantity }}</span>
-            <span v-if="item.promotionLabel" class="item-promo">{{ item.promotionLabel }}</span>
-          </div>
-        </div>
-
-        <!-- Order Meta -->
-        <div class="order-meta">
-          <div class="meta-row meta-row--bold">
-            <span class="meta-label">下单时间</span>
-            <span class="meta-value">{{ formatTime(order.createdAt) }}</span>
-          </div>
-          <div class="meta-row">
-            <span class="meta-label">类型</span>
-            <span class="meta-value">{{ order.orderType === 'dine-in' ? '堂食' : '自取' }}</span>
-          </div>
-          <div class="meta-row" v-if="order.paymentMethod">
-            <span class="meta-label">支付</span>
-            <span class="meta-value">{{ payLabel(order.paymentMethod) }}</span>
-          </div>
-          <div class="meta-row" v-if="order.cancelReason">
-            <span class="meta-label">取消原因</span>
-            <span class="meta-value cancel-reason">{{ order.cancelReason }}</span>
-          </div>
-        </div>
-
-        <!-- Order Footer -->
-        <div class="order-footer">
-          <div class="order-amount">
-            <span class="amount-label">实付</span>
-            <span class="amount-value">¥{{ order.totals.payableAmount?.toFixed(2) }}</span>
-          </div>
-          <div class="order-actions">
-            <button v-if="order.status === 'unpaid' || order.status === 'pending' || order.status === 'paid'" class="btn-action btn-primary-sm" @click="updateStatus(order.id, 'preparing')">
-              <span class="material-symbols-outlined">play_arrow</span>
-              开始制作
-            </button>
-            <button v-if="order.status === 'preparing'" class="btn-action btn-success-sm" @click="updateStatus(order.id, 'ready')">
-              <span class="material-symbols-outlined">check</span>
-              制作完成
-            </button>
-            <button v-if="order.status === 'ready'" class="btn-action btn-warning-sm" @click="updateStatus(order.id, 'completed')">
-              <span class="material-symbols-outlined">check_circle</span>
-              取餐
-            </button>
-            <button v-if="canCancel(order.status)" class="btn-action btn-danger-sm" @click="openCancelDialog(order.id)">
-              <span class="material-symbols-outlined">cancel</span>
-              取消
-            </button>
-          </div>
-        </div>
-      </div>
+      <OrderCard
+        v-for="order in orders"
+        :key="order.id"
+        :order="order"
+        @action="updateStatus"
+        @cancel="openCancelDialog"
+      />
     </div>
 
     <!-- Empty State -->
@@ -167,6 +114,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import OrderCard from '../components/OrderCard.vue'
 
 interface OrderItem {
   id: string
@@ -194,9 +142,6 @@ interface Order {
   cancelledAt?: string
 }
 
-const payLabels: Record<string, string> = { wechat: '微信', alipay: '支付宝', cash: '现金' }
-function payLabel(m: string): string { return payLabels[m] || m }
-
 const orders = ref<Order[]>([])
 const statusFilter = ref<string>(new URLSearchParams(location.search).get('status') || 'all')
 const searchKeyword = ref('')
@@ -206,39 +151,13 @@ const total = ref(0)
 
 const statusCounts = reactive({
   all: 0,
+  unpaid: 0,
   pending: 0,
   preparing: 0,
   ready: 0,
   completed: 0,
   cancelled: 0
 })
-
-function statusLabel(s: string): string {
-  const map: Record<string, string> = { unpaid: '待付款', pending: '待处理', paid: '待处理', preparing: '制作中', ready: '可取餐', completed: '已完成', cancelled: '已取消' }
-  return map[s] || s
-}
-
-function statusIcon(s: string): string {
-  const map: Record<string, string> = { 
-    unpaid: 'hourglass_empty', 
-    pending: 'hourglass_empty', 
-    paid: 'hourglass_empty', 
-    preparing: 'local_fire_department', 
-    ready: 'check_circle', 
-    completed: 'done_all', 
-    cancelled: 'cancel' 
-  }
-  return map[s] || 'info'
-}
-
-function formatTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleString('zh-CN', {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
 
 function canCancel(status: string): boolean {
   return ['unpaid', 'pending', 'paid', 'preparing', 'ready'].includes(status)
@@ -264,6 +183,8 @@ async function fetchOrders() {
   const params = new URLSearchParams()
   if (statusFilter.value === 'pending') {
     params.set('status', 'pending,paid')
+  } else if (statusFilter.value === 'unpaid') {
+    params.set('status', 'unpaid')
   } else if (statusFilter.value && statusFilter.value !== 'all') {
     params.set('status', statusFilter.value)
   }
@@ -413,6 +334,9 @@ async function confirmCancel() {
 .filter-tab .count.warning { background: rgba(245, 158, 11, 0.2); }
 .filter-tab .count.info { background: rgba(59, 130, 246, 0.2); }
 .filter-tab .count.success { background: rgba(74, 173, 78, 0.2); }
+.filter-tab .count.danger { background: rgba(186, 26, 26, 0.15); }
+
+.filter-tab .material-symbols-outlined { font-size: 16px; }
 
 .filter-tab.active .count {
   background: rgba(255, 255, 255, 0.3);
@@ -423,274 +347,6 @@ async function confirmCancel() {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 16px;
-}
-
-/* Order Card */
-.order-card {
-  background: #fff;
-  border: 1px solid #e5e2e1;
-  border-radius: 16px;
-  overflow: hidden;
-  transition: box-shadow 0.15s;
-  display: flex;
-  flex-direction: column;
-}
-
-.order-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.order-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid #f0eded;
-}
-
-.order-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.pickup-code {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 20px;
-  font-weight: 800;
-  color: #ff6b00;
-}
-
-.order-no {
-  font-size: 13px;
-  color: #999;
-}
-
-/* Order Status */
-.order-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.status-icon {
-  font-size: 14px;
-}
-
-.status-pending, .status-unpaid, .status-paid {
-  background: rgba(245, 158, 11, 0.15);
-  color: #b45309;
-}
-.status-pending .status-dot, .status-unpaid .status-dot, .status-paid .status-dot { background: #f59e0b; }
-
-.status-preparing {
-  background: rgba(255, 107, 0, 0.15);
-  color: #a04100;
-}
-.status-preparing .status-dot { background: #ff6b00; }
-
-.status-ready {
-  background: rgba(74, 173, 78, 0.15);
-  color: #006e1c;
-}
-.status-ready .status-dot { background: #4aad4e; }
-
-.status-completed {
-  background: rgba(94, 94, 92, 0.15);
-  color: #5e5e5c;
-}
-.status-completed .status-dot { background: #5e5e5c; }
-
-.status-cancelled {
-  background: rgba(186, 26, 26, 0.15);
-  color: #ba1a1a;
-}
-.status-cancelled .status-dot { background: #ba1a1a; }
-
-/* Order Items */
-.order-items {
-  padding: 12px 16px;
-  border-bottom: 1px solid #f0eded;
-  flex: 1;
-}
-
-.order-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 0;
-  font-size: 13px;
-}
-
-.item-info {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.item-name {
-  color: #1c1b1b;
-  font-weight: 600;
-}
-
-.item-specs {
-  font-size: 12px;
-  color: #5a4136;
-  background: #f5f0eb;
-  padding: 2px 8px;
-  border-radius: 4px;
-  white-space: nowrap;
-}
-
-.item-qty {
-  font-weight: 700;
-  color: #ff6b00;
-  flex-shrink: 0;
-}
-
-.item-promo {
-  background: rgba(255, 107, 0, 0.1);
-  color: #ff6b00;
-  font-size: 11px;
-  padding: 1px 6px;
-  border-radius: 4px;
-}
-
-/* Order Meta */
-.order-meta {
-  padding: 12px 16px;
-  background: #fdfbf9;
-  font-size: 12px;
-}
-
-.meta-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 0;
-}
-.meta-row--bold,
-.meta-row--bold .meta-label,
-.meta-row--bold .meta-value {
-  font-weight: 700;
-}
-
-.meta-label {
-  color: #999;
-}
-
-.meta-value {
-  color: #5a4136;
-  font-weight: 500;
-}
-
-.cancel-reason {
-  color: #ba1a1a;
-}
-
-/* Order Footer */
-.order-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-top: 1px solid #f0eded;
-  margin-top: auto;
-  background: #fff;
-}
-
-.order-amount {
-  display: flex;
-  flex-direction: column;
-}
-
-.amount-label {
-  font-size: 11px;
-  color: #999;
-}
-
-.amount-value {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  color: #1c1b1b;
-}
-
-.order-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-/* Small Action Buttons */
-.btn-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 16px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.btn-action .material-symbols-outlined {
-  font-size: 16px;
-}
-
-.btn-primary-sm {
-  background: #ff6b00;
-  color: #fff;
-}
-
-.btn-primary-sm:hover {
-  background: #e65c00;
-}
-
-.btn-success-sm {
-  background: #4aad4e;
-  color: #fff;
-}
-
-.btn-success-sm:hover {
-  background: #3d9441;
-}
-
-.btn-warning-sm {
-  background: #f59e0b;
-  color: #fff;
-}
-
-.btn-warning-sm:hover {
-  background: #d97706;
-}
-
-.btn-info-sm {
-  background: #5e5e5c;
-  color: #fff;
-}
-
-.btn-info-sm:hover {
-  background: #4a4a48;
-}
-
-.btn-danger-sm {
-  background: transparent;
-  color: #ba1a1a;
-  border: 1px solid #e5e2e1;
-}
-
-.btn-danger-sm:hover {
-  background: rgba(186, 26, 26, 0.1);
-  border-color: #ba1a1a;
 }
 
 /* Material Icons */
