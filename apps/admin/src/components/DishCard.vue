@@ -89,12 +89,15 @@ const localSort = ref(props.dish.sort)
 const localStock = ref(props.dish.stock)
 const imgError = ref(false)
 
+const isDev = import.meta.env.DEV
+const IMAGE_BASE = isDev ? 'http://localhost:5180' : ''
+
 watch(() => props.dish.sort, (v) => { localSort.value = v })
 watch(() => props.dish.stock, (v) => { localStock.value = v })
 
 function getDishThumbUrl(dish: Dish): string {
   if (dish.image) return dish.image
-  return `/src/assets/images/products/${dish.id}_s.jpg`
+  return `${IMAGE_BASE}/src/assets/images/products/${dish.id}_s.jpg`
 }
 </script>
 

@@ -81,7 +81,8 @@ import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const merchantName = ref('商家后台')
-const logoUrl = '/src/assets/images/pages/logo.jpg'
+const isDev = import.meta.env.DEV
+const logoUrl = isDev ? 'http://localhost:5180/src/assets/images/pages/logo.jpg' : '/src/assets/images/pages/logo.jpg'
 
 onMounted(async () => {
   try {
