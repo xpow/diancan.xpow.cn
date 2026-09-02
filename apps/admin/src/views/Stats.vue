@@ -32,6 +32,7 @@
     <template v-if="activeTab === 'overview'">
       <div class="metric-grid">
         <div class="metric-card">
+          <div class="metric-icon mi-revenue">💰</div>
           <div class="metric-body">
             <span class="metric-label">总营收</span>
             <span class="metric-value">¥{{ fmtNum(overview?.summary.revenue) }}</span>
@@ -47,6 +48,7 @@
           <span v-else class="delta neutral">—</span>
         </div>
         <div class="metric-card">
+          <div class="metric-icon mi-orders">📋</div>
           <div class="metric-body">
             <span class="metric-label">订单数</span>
             <span class="metric-value">{{ overview?.summary.orderCount ?? '—' }}</span>
@@ -57,6 +59,7 @@
           <span v-else class="delta neutral">—</span>
         </div>
         <div class="metric-card">
+          <div class="metric-icon mi-avg">🧾</div>
           <div class="metric-body">
             <span class="metric-label">客单价</span>
             <span class="metric-value">¥{{ fmtNum(overview?.summary.avgOrder) }}</span>
@@ -67,6 +70,7 @@
           <span v-else class="delta neutral">—</span>
         </div>
         <div class="metric-card">
+          <div class="metric-icon mi-fr">🏷️</div>
           <div class="metric-body">
             <span class="metric-label">满减总额</span>
             <span class="metric-value">-¥{{ fmtNum(overview?.summary.fullReductionNormal) }}</span>
@@ -166,6 +170,7 @@
     <template v-if="activeTab === 'orders'">
       <div class="metric-grid">
         <div class="metric-card">
+          <div class="metric-icon mi-revenue">💰</div>
           <div class="metric-body">
             <span class="metric-label">总营收</span>
             <span class="metric-value">¥{{ fmtNum(overview?.summary.revenue) }}</span>
@@ -176,18 +181,21 @@
           <span v-else class="delta neutral">—</span>
         </div>
         <div class="metric-card">
+          <div class="metric-icon mi-orders">📋</div>
           <div class="metric-body">
             <span class="metric-label">订单数</span>
             <span class="metric-value">{{ overview?.summary.orderCount ?? '—' }}</span>
           </div>
         </div>
         <div class="metric-card">
+          <div class="metric-icon mi-dinein">🍽️</div>
           <div class="metric-body">
             <span class="metric-label">堂食占比</span>
             <span class="metric-value">{{ dineInPct }}%</span>
           </div>
         </div>
         <div class="metric-card">
+          <div class="metric-icon mi-takeaway">🥡</div>
           <div class="metric-body">
             <span class="metric-label">外带占比</span>
             <span class="metric-value">{{ takeawayPct }}%</span>
@@ -283,7 +291,7 @@ interface OverviewData {
 
 const COLORS = ['#ff6b00', '#4aad4e', '#3b82f6', '#a04100', '#8b5cf6', '#f59e0b', '#ba1a1a']
 
-const activeTab = ref<'overview' | 'normal' | 'alliance' | 'orders'>('normal')
+const activeTab = ref<'overview' | 'normal' | 'alliance' | 'orders'>('overview')
 const overview = ref<OverviewData | null>(null)
 const items = ref<DishSales[]>([])
 const summary = ref<{ totalFullReduction: number }>({ totalFullReduction: 0 })
@@ -559,15 +567,15 @@ setQuick(range === 'all' ? 'all' : 'today')
 .page-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 24px;
+  align-items: center;
+  margin-bottom: 16px;
 }
 .page-title {
   margin: 0;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
-  color: #1c1b1b;
+  color: #1a1a1a;
 }
 .header-tabs {
   display: flex;
@@ -710,10 +718,23 @@ setQuick(range === 'all' ? 'all' : 'today')
   display: flex;
   align-items: center;
   gap: 12px;
-  min-width: 0;
-  height: 100%;
-  box-sizing: border-box;
 }
+.metric-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.mi-revenue { background: rgba(74,173,78,0.1); }
+.mi-orders  { background: rgba(59,130,246,0.1); }
+.mi-avg     { background: rgba(139,92,246,0.1); }
+.mi-fr      { background: rgba(255,107,0,0.1); }
+.mi-dinein  { background: rgba(59,130,246,0.1); }
+.mi-takeaway{ background: rgba(245,158,11,0.1); }
 .metric-body { flex: 1; min-width: 0; }
 .metric-label {
   display: block;
@@ -1029,24 +1050,9 @@ setQuick(range === 'all' ? 'all' : 'today')
 .fr-row .col-qty { color: #999; font-weight: 400; }
 
 @media (max-width: 768px) {
-  .metric-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  .metric-grid { grid-template-columns: repeat(2, 1fr); }
   .row-2col { grid-template-columns: 1fr; }
   .page-header { flex-direction: column; gap: 12px; align-items: flex-start; }
   .header-tabs { flex-wrap: wrap; }
-  .filter-bar { flex-direction: column; align-items: flex-start; }
-  .quick-btns { flex-wrap: wrap; }
-  .date-display { width: 100%; }
-  .chart-scroll { max-width: calc(100vw - 32px); }
-}
-
-@media (max-width: 480px) {
-  .metric-grid {
-    grid-template-columns: 1fr;
-  }
-  .metric-card {
-    padding: 12px 16px;
-  }
 }
 </style>

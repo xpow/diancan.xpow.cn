@@ -5,60 +5,51 @@
         <h2 class="page-title">营销活动</h2>
         <p class="page-subtitle">管理满减、买赠、福利品等营销规则</p>
       </div>
-      <button class="btn-add" @click="openNew">
-        <span class="material-symbols-outlined">add</span>
-        新增活动
-      </button>
+      <button class="btn-add" @click="openNew">+ 新增活动</button>
     </div>
 
-    <!-- Filters -->
-    <div class="filters-section">
-      <div class="filter-group">
-        <span class="filter-label">类型</span>
-        <div class="filter-pills">
-          <button :class="['filter-pill', typeFilter === '' && 'active']" @click="typeFilter = ''">
-            全部 <span class="pill-count">{{ promotions.length }}</span>
-          </button>
-          <button v-for="t in typeOptions" :key="t.value" :class="['filter-pill', typeFilter === t.value && 'active']" @click="typeFilter = t.value">
-            {{ t.label }} <span class="pill-count">{{ countByType(t.value) }}</span>
-          </button>
-        </div>
-      </div>
-      <div class="filter-group">
-        <span class="filter-label">状态</span>
-        <div class="filter-pills">
-          <button :class="['filter-pill', statusFilter === '' && 'active']" @click="statusFilter = ''">
-            全部 <span class="pill-count">{{ promotions.length }}</span>
-          </button>
-          <button :class="['filter-pill', statusFilter === 'active' && 'active']" @click="statusFilter = 'active'">
-            进行中 <span class="pill-count">{{ countByStatus('active') }}</span>
-          </button>
-          <button :class="['filter-pill', statusFilter === 'paused' && 'active']" @click="statusFilter = 'paused'">
-            已暂停 <span class="pill-count">{{ countByStatus('paused') }}</span>
-          </button>
-          <button :class="['filter-pill', statusFilter === 'draft' && 'active']" @click="statusFilter = 'draft'">
-            草稿 <span class="pill-count">{{ countByStatus('draft') }}</span>
-          </button>
-          <button :class="['filter-pill', statusFilter === 'inactive' && 'active']" @click="statusFilter = 'inactive'">
-            已下线 <span class="pill-count">{{ countByStatus('inactive') }}</span>
-          </button>
-        </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table class="promo-table" v-if="promotions.length">
+          <thead>
+            <tr>
+              <th>活动名称</th>
+              <th>类型</th>
+              <th>状态</th>
+              <th>规则</th>
+              <th style="text-align:right">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="p in promotions" :key="p.id">
+              <td class="col-name">{{ p.name }}</td>
+              <td><span :class="['type-chip', 'type-' + p.type]">{{ typeLabel(p.type) }}</span></td>
+              <td>
+                <span :class="['status-chip', 'status-' + p.status]">{{ statusLabel(p.status) }}</span>
+                <button
+                  v-if="p.status === 'active'"
+                  class="btn-toggle btn-toggle--pause"
+                  title="暂停"
+                  @click="pausePromotion(p)"
+                >⏸</button>
+                <button
+                  v-else-if="p.status === 'paused' || p.status === 'draft' || p.status === 'inactive'"
+                  class="btn-toggle btn-toggle--play"
+                  title="启用"
+                  @click="setStatus(p.id, 'active')"
+                >▶</button>
+              </td>
+              <td class="col-rule">{{ ruleText(p) }}</td>
+              <td class="col-actions">
+                <button class="btn-sm btn-edit" :disabled="p.status === 'active'" @click="openEdit(p)">编辑</button>
+                <button class="btn-sm btn-delete" @click="remove(p)">删除</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p v-else class="empty">暂无营销活动</p>
       </div>
     </div>
-
-    <div class="promos-grid" v-if="filteredPromotions.length">
-      <PromoCard
-        v-for="p in filteredPromotions"
-        :key="p.id"
-        :promotion="p"
-        :devices="devices"
-        @edit="openEdit"
-        @delete="remove"
-        @pause="pausePromotion"
-        @activate="(id) => setStatus(id, 'active')"
-      />
-    </div>
-    <p v-else class="empty">暂无营销活动</p>
 
     <Dialog v-model:visible="showDialog" :header="editing ? '编辑活动' : '新增活动'" style="width:680px" class="promo-dialog">
       <div class="form-body">
@@ -288,7 +279,6 @@ import Dialog from 'primevue/dialog'
 import Select from 'primevue/select'
 import MultiSelect from 'primevue/multiselect'
 import ToggleSwitch from 'primevue/toggleswitch'
-import PromoCard from '../components/PromoCard.vue'
 
 interface PromoItem {
   dishId: string
@@ -320,24 +310,6 @@ const activeDishes = computed(() => dishes.value.filter((d) => d.status === 'act
 const showDialog = ref(false)
 const editing = ref(false)
 const editingId = ref('')
-const typeFilter = ref('')
-const statusFilter = ref('')
-
-const filteredPromotions = computed(() => {
-  return promotions.value.filter(p => {
-    if (typeFilter.value && p.type !== typeFilter.value) return false
-    if (statusFilter.value && p.status !== statusFilter.value) return false
-    return true
-  })
-})
-
-function countByType(type: string): number {
-  return promotions.value.filter(p => p.type === type).length
-}
-
-function countByStatus(status: string): number {
-  return promotions.value.filter(p => p.status === status).length
-}
 
 const typeOptions = [
     { label: '满减', value: 'full_reduction' },
@@ -701,26 +673,22 @@ onMounted(() => {
 .page-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 24px;
+  align-items: center;
+  margin-bottom: 16px;
 }
 .page-title {
   margin: 0;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
-  color: #1c1b1b;
+  color: #1a1a1a;
 }
 .page-subtitle {
-  margin: 4px 0 0;
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  color: #5a4136;
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #999;
 }
 .btn-add {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
   background: #ff6b00;
   color: #fff;
   border: none;
@@ -730,10 +698,9 @@ onMounted(() => {
   font-weight: 600;
   font-family: 'Plus Jakarta Sans', sans-serif;
   cursor: pointer;
-  transition: all 0.15s;
-  box-shadow: 0 2px 8px rgba(255, 107, 0, 0.2);
+  transition: background 0.15s;
 }
-.btn-add:hover { background: #e65c00; transform: scale(0.98); }
+.btn-add:hover { background: #e55f00; }
 
 /* ===== Card + Table ===== */
 .card {
@@ -744,72 +711,6 @@ onMounted(() => {
   overflow: hidden;
 }
 .table-wrap { overflow-x: auto; }
-/* Filters */
-.filters-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.filter-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.filter-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #999;
-  min-width: 36px;
-}
-
-.filter-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.filter-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 14px;
-  border: 1px solid #e5e2e1;
-  border-radius: 20px;
-  background: #fff;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  color: #5a4136;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.filter-pill:hover {
-  border-color: #ff6b00;
-  color: #ff6b00;
-}
-
-.filter-pill.active {
-  background: #ff6b00;
-  border-color: #ff6b00;
-  color: #fff;
-}
-
-.pill-count {
-  font-size: 11px;
-  opacity: 0.7;
-}
-
-/* Promos Grid */
-.promos-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 16px;
-}
-
 .promo-table {
   width: 100%;
   border-collapse: collapse;

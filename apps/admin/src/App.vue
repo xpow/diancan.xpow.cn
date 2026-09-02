@@ -8,7 +8,7 @@
       <!-- Brand -->
       <div class="sidebar-brand">
         <div class="brand-avatar">
-          <img :src="logoUrl" alt="Logo" />
+          <span class="material-symbols-outlined">storefront</span>
         </div>
         <div class="brand-info">
           <h2 class="brand-name">{{ merchantName }}</h2>
@@ -81,7 +81,6 @@ import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const merchantName = ref('商家后台')
-const logoUrl = '/src/assets/images/pages/logo.jpg'
 
 onMounted(async () => {
   try {
@@ -141,13 +140,10 @@ onMounted(async () => {
   justify-content: center;
   color: #fff;
   flex-shrink: 0;
-  overflow: hidden;
 }
 
-.brand-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.brand-avatar .material-symbols-outlined {
+  font-size: 24px;
 }
 
 .brand-info {

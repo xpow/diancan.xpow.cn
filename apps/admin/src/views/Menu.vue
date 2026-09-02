@@ -36,23 +36,71 @@
       </div>
     </div>
 
-    <!-- Dishes Grid -->
-    <div v-if="tab === 'dishes'" class="dishes-section">
-      <div class="dishes-grid" v-if="filteredDishes.length">
-        <DishCard
-          v-for="dish in filteredDishes"
-          :key="dish.id"
-          :dish="dish"
-          @edit="openDishDialog"
-          @delete="deleteDish"
-          @toggleStatus="toggleStatus"
-          @updateSort="updateSort"
-          @updateStock="quickSaveStock"
-          @enableStock="enableStock"
-          @disableStock="disableStock"
-        />
+    <!-- Dishes Table -->
+    <div v-if="tab === 'dishes'" class="card">
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="w-16">排序</th>
+              <th>菜品名称</th>
+              <th>分类</th>
+              <th>价格</th>
+              <th>库存</th>
+              <th>状态</th>
+              <th class="text-right">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="dish in filteredDishes" :key="dish.id" class="group">
+              <td>
+                <input type="number" v-model.number="dish.sort" min="0" max="999" class="sort-input" @change="updateSort(dish)" />
+              </td>
+              <td>
+                <div class="dish-info">
+                  <p class="dish-name">{{ dish.name }}</p>
+                  <p class="dish-desc" v-if="dish.desc">{{ dish.desc }}</p>
+                </div>
+              </td>
+              <td>
+                <span class="category-tag">{{ dish.categoryName }}</span>
+              </td>
+              <td>
+                <span class="price">¥{{ dish.price.toFixed(2) }}</span>
+                <span v-if="dish.portionSize" class="portion">/{{ dish.portionSize }}串</span>
+              </td>
+              <td>
+                <div class="stock-cell">
+                  <template v-if="dish.stockEnabled">
+                    <input type="number" v-model.number="dish.stock" min="0" class="stock-input" @change="quickSaveStock(dish, dish.stock)" />
+                    <button class="btn-text-danger" @click="disableStock(dish)">取消</button>
+                  </template>
+                  <template v-else>
+                    <span class="stock-unlimited">不限</span>
+                    <button class="btn-text-success" @click="enableStock(dish)">启用</button>
+                  </template>
+                </div>
+              </td>
+              <td>
+                <button :class="['status-badge', 'status-clickable', dish.status === 'active' ? 'status-active' : 'status-inactive']" @click="toggleStatus(dish)">
+                  {{ dish.status === 'active' ? '上架中' : '已下架' }}
+                </button>
+              </td>
+              <td>
+                <div class="action-btns">
+                  <button class="btn-icon" title="编辑" @click="openDishDialog(dish)">
+                    <span class="material-symbols-outlined">edit</span>
+                  </button>
+                  <button class="btn-icon btn-danger" title="删除" @click="deleteDish(dish.id)">
+                    <span class="material-symbols-outlined">delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <div v-else class="empty-state">
+      <div v-if="filteredDishes.length === 0" class="empty-state">
         <span class="material-symbols-outlined">restaurant_menu</span>
         <p>暂无菜品数据</p>
       </div>
@@ -283,7 +331,6 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import DishCard from '../components/DishCard.vue'
 
 const tab = ref('dishes')
 const dishes = ref<any[]>([])
@@ -563,12 +610,11 @@ async function disableStock(dish: any) {
   }
 }
 
-async function updateSort(dish: any, newSort?: number) {
-  const sortValue = newSort !== undefined ? newSort : dish.sort
+async function updateSort(dish: any) {
   const res = await fetch(`/api/admin/dishes/${dish.id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sort: sortValue }),
+    body: JSON.stringify({ sort: dish.sort }),
   })
   if (!res.ok) console.error('sort update failed', await res.text())
   else fetchDishes()
@@ -872,13 +918,6 @@ onMounted(() => {
 .section-count {
   font-size: 13px;
   color: #5a4136;
-}
-
-/* Dishes Grid */
-.dishes-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
 }
 
 /* Table */
@@ -1210,7 +1249,6 @@ onMounted(() => {
   gap: 12px;
   margin-bottom: 12px;
   flex-wrap: wrap;
-  justify-content: flex-start;
 }
 
 .checkbox-label {
@@ -1221,8 +1259,6 @@ onMounted(() => {
   font-size: 13px;
   font-weight: 600;
   color: #1c1b1b;
-  white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .checkbox-label input[type="checkbox"] {
@@ -1234,17 +1270,16 @@ onMounted(() => {
 .inline-inputs {
   display: flex;
   gap: 8px;
-  flex-shrink: 0;
 }
 
 .inline-inputs input,
 .inline-inputs select {
-  width: 80px;
+  width: auto;
+  min-width: 80px;
   padding: 6px 10px;
   border: 1px solid #e5e2e1;
   border-radius: 8px;
   font-size: 13px;
-  flex-shrink: 0;
 }
 
 .stock-input-inline {
@@ -1380,10 +1415,6 @@ onMounted(() => {
 
   .form-row {
     flex-direction: column;
-  }
-
-  .options-row {
-    align-items: flex-start;
   }
 
   .action-btns {
