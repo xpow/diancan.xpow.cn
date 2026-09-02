@@ -2,7 +2,7 @@
   <div class="dish-card">
     <div class="dish-card-header">
       <div class="dish-thumb" v-if="!imgError">
-        <img :src="getDishThumbUrl(dish)" :alt="dish.name" @error="imgError = true" />
+        <img :src="getDishThumbUrl(dish)" :alt="dish.name" @error="handleThumbFallback(dish, $event)" />
       </div>
       <div class="dish-main">
         <div class="dish-title-row">
@@ -97,6 +97,20 @@ watch(() => props.dish.stock, (v) => { localStock.value = v })
 function getDishThumbUrl(dish: Dish): string {
   if (dish.image) return dish.image
   return `${IMAGE_BASE}/src/assets/images/products/${dish.id}_s.jpg`
+}
+
+function handleImgError() {
+  imgError.value = true
+}
+
+function handleThumbFallback(dish: Dish, e: Event) {
+  const img = e.target as HTMLImageElement
+  if (img.src.includes('_s.jpg')) {
+    img.src = `${IMAGE_BASE}/src/assets/images/products/${dish.id}.jpg`
+    img.onerror = () => { imgError.value = true }
+  } else {
+    imgError.value = true
+  }
 }
 </script>
 
