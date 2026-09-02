@@ -369,6 +369,17 @@ router.get('/orders', async (_req, res) => {
     prisma.order.count({ where }),
   ])
 
+  // 计算各状态数量
+  const [allCount, unpaidCount, pendingCount, preparingCount, readyCount, completedCount, cancelledCount] = await Promise.all([
+    prisma.order.count({}),
+    prisma.order.count({ where: { status: 'unpaid' } }),
+    prisma.order.count({ where: { status: { in: ['pending', 'paid'] } } }),
+    prisma.order.count({ where: { status: 'preparing' } }),
+    prisma.order.count({ where: { status: 'ready' } }),
+    prisma.order.count({ where: { status: 'completed' } }),
+    prisma.order.count({ where: { status: 'cancelled' } }),
+  ])
+
   res.json({
     items: items.map((o) => ({
       id: o.id,
@@ -410,6 +421,15 @@ router.get('/orders', async (_req, res) => {
     total,
     page: Number(page),
     limit: take,
+    counts: {
+      all: allCount,
+      unpaid: unpaidCount,
+      pending: pendingCount,
+      preparing: preparingCount,
+      ready: readyCount,
+      completed: completedCount,
+      cancelled: cancelledCount,
+    },
   })
 })
 
