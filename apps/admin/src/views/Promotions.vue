@@ -960,7 +960,8 @@ onMounted(() => {
   border: 1px solid #e5e2e1;
   border-radius: 8px;
   font-size: 14px;
-  background: #fff;
+  background: field;
+  color: fieldtext;
   transition: border-color 0.15s;
   box-sizing: border-box;
 }
@@ -969,8 +970,9 @@ onMounted(() => {
   border-color: #ff6b00;
 }
 .form-input:disabled {
-  background: #f0ebe5;
+  background: field; /* 跟随系统，避免深色下白底白字 */
   color: #999;
+  opacity: 0.7;
 }
 .form-row { display: flex; gap: 12px; }
 .form-row > .form-group { min-width: 0; }
@@ -987,7 +989,8 @@ onMounted(() => {
   padding: 6px 14px;
   border-radius: 20px;
   border: 1px solid #e5e2e1;
-  background: #fff;
+  background: field;
+  color: fieldtext;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;

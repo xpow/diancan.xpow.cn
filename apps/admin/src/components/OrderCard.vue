@@ -98,8 +98,8 @@
             </div>
           </div>
           <div class="group-amount-box">
-            <span v-if="(g.fullReduction ?? 0) > 0" class="group-fr">满减 -¥{{ g.fullReduction.toFixed(2) }}</span>
             <div class="group-amount">¥{{ (g.totals?.payableAmount ?? 0).toFixed(2) }}</div>
+            <span v-if="(g.fullReduction ?? 0) > 0" class="group-fr">满减 -¥{{ g.fullReduction.toFixed(2) }}</span>
           </div>
         </div>
         <div v-if="expandedSet[g.id]" class="group-order-body">

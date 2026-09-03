@@ -320,6 +320,7 @@ async function confirmCancel() {
   font-size: 14px;
   width: 100%;
   background: transparent;
+  color: #1c1b1b;
 }
 
 .search-box .material-symbols-outlined {

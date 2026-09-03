@@ -382,7 +382,8 @@ onMounted(() => { loadSettings(); loadReviews() })
   border: 1px solid #e5e2e1;
   border-radius: 8px;
   font-size: 14px;
-  background: #fff;
+  background: field;
+  color: fieldtext;
   transition: border-color 0.15s;
   box-sizing: border-box;
 }
