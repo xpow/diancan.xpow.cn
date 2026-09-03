@@ -978,7 +978,7 @@ onUnmounted(() => {
 .status-ready { background: var(--tertiary-container); color: var(--on-tertiary-container); }
 .status-completed { background: var(--surface-variant); color: var(--on-surface-variant); }
 .ticket-number { font-family: var(--font-display); font-size: 64px; font-weight: 800; color: var(--primary-container); letter-spacing: -0.04em; line-height: 1; }
-.dishout-line { position: absolute; bottom: -14px; left: 50%; transform: translateX(-50%); z-index: 1; display: flex; align-items: center; gap: 4px; padding: 2px 14px; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; white-space: nowrap; border-radius: var(--radius-full); background: var(--surface); }
+.dishout-line { position: absolute; bottom: -14px; left: 50%; transform: translateX(-50%); z-index: 1; display: flex; align-items: center; gap: 4px; padding: 2px 14px; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; white-space: nowrap; border-radius: var(--radius-full); background: var(--surface-container-highest); }
 .dishout-line .material-icons { font-size: 16px; }
 .dishout-pending { background: #ff6d00; color: #fff; cursor: pointer; }
 .dishout-pending:active { background: #e65100; }
