@@ -142,6 +142,7 @@ interface Order {
     orderType: string
     paymentMethod?: string
     totals: { originalAmount: number; discountAmount: number; payableAmount: number }
+    fullReduction?: number
     itemCount: number
     items: {
       id: string
@@ -151,6 +152,7 @@ interface Order {
       finalSubtotal: number
       specs?: string
       unit?: string
+      promotionLabel?: string
     }[]
     createdAt: string
     paidAt?: string

@@ -390,7 +390,8 @@ router.get('/orders', async (_req, res) => {
         createdAt: true,
         paidAt: true,
         dishOutAt: true,
-        items: { select: { id: true, name: true, quantity: true, finalSubtotal: true, unitPrice: true, specs: true, unit: true } },
+        promotions: { select: { type: true, discount: true, name: true } },
+        items: { select: { id: true, name: true, quantity: true, finalSubtotal: true, unitPrice: true, specs: true, unit: true, promotionLabel: true } },
       },
       orderBy: { createdAt: 'asc' },
     })
@@ -409,6 +410,9 @@ router.get('/orders', async (_req, res) => {
           discountAmount: m.discountAmount,
           payableAmount: m.payableAmount,
         },
+        fullReduction: m.promotions
+          .filter((p) => p.type === 'full_reduction')
+          .reduce((s, p) => s + (p.discount || 0), 0),
         itemCount: m.items.reduce((s, i) => s + i.quantity, 0),
         items: m.items.map((i) => ({
           id: i.id,
@@ -418,6 +422,7 @@ router.get('/orders', async (_req, res) => {
           finalSubtotal: i.finalSubtotal,
           specs: i.specs || undefined,
           unit: i.unit || '串',
+          promotionLabel: i.promotionLabel || undefined,
         })),
         createdAt: m.createdAt.toISOString(),
         paidAt: m.paidAt?.toISOString() || undefined,

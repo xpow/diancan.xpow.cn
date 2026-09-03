@@ -80,6 +80,7 @@
             <div v-for="item in g.items" :key="item.id" class="group-order-item">
               <div class="group-item-info">
                 <span class="group-item-name">{{ item.name }}</span>
+                <span v-if="item.promotionLabel" class="group-item-promo">{{ item.promotionLabel }}</span>
                 <span v-if="item.specs" class="group-item-specs">{{ item.specs }}</span>
               </div>
               <span class="group-item-qty">x{{ item.quantity }}</span>
@@ -92,14 +93,18 @@
 
 
     <!-- Order Meta -->
-    <div class="order-meta">
-      <div class="meta-row">
+    <div class="order-meta" v-if="!isGroup || groupFullReduction > 0 || order.cancelReason">
+      <div class="meta-row" v-if="!isGroup">
         <span class="meta-label">类型</span>
         <span class="meta-value">{{ order.orderType === 'dine-in' ? '堂食' : '自取' }}</span>
       </div>
-      <div class="meta-row">
+      <div class="meta-row" v-if="!isGroup">
         <span class="meta-label">支付</span>
         <span class="meta-value">{{ order.status === 'unpaid' ? '待付款' : payLabel(order.paymentMethod) }}</span>
+      </div>
+      <div class="meta-row" v-if="isGroup && groupFullReduction > 0">
+        <span class="meta-label">满减优惠</span>
+        <span class="meta-value promo-value">-¥{{ groupFullReduction.toFixed(2) }}</span>
       </div>
       <div class="meta-row" v-if="order.cancelReason">
         <span class="meta-label">取消原因</span>
@@ -183,6 +188,9 @@ const allGroupOrders = computed<any[]>(() => {
 })
 const groupTotal = computed<number>(() =>
   allGroupOrders.value.reduce((s, g) => s + (g.totals?.payableAmount ?? 0), 0)
+)
+const groupFullReduction = computed<number>(() =>
+  allGroupOrders.value.reduce((s, g) => s + (g.fullReduction ?? 0), 0)
 )
 const isUnpaidOrder = (g: any) => !g.paidAt || g.status === 'unpaid'
 const unpaidGroupOrders = computed<any[]>(() =>
@@ -325,6 +333,7 @@ function formatTime(t: string) {
 .group-item-info { flex: 1; display: flex; align-items: center; gap: 6px; min-width: 0; }
 .group-item-name { color: #1c1b1b; font-weight: 600; }
 .group-item-specs { font-size: 11px; color: #5a4136; background: #f5f0eb; padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
+.group-item-promo { background: rgba(255, 107, 0, 0.12); color: #ff6b00; font-size: 11px; padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
 .group-item-qty { font-weight: 700; color: #ff6b00; flex-shrink: 0; }
 .group-item-subtotal { color: #5a4136; flex-shrink: 0; }
 .group-amount { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 700; color: #1c1b1b; text-align: right; }
@@ -335,6 +344,7 @@ function formatTime(t: string) {
 .meta-label { color: #999; }
 .meta-value { color: #5a4136; font-weight: 500; }
 .cancel-reason { color: #ba1a1a; }
+.promo-value { color: #ff6b00; font-weight: 600; }
 
 /* Footer */
 .order-footer {
