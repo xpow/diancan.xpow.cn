@@ -20,7 +20,15 @@
           <span class="material-symbols-outlined status-icon">restaurant</span>
           可取餐
         </span>
-        <span v-if="!orderUnpaid && !orderHasReady" :class="['order-status', 'status-' + order.status]">
+        <span v-if="order.status === 'completed'" class="order-status status-completed">
+          <span class="material-symbols-outlined status-icon">done_all</span>
+          已完成
+        </span>
+        <span v-if="order.status === 'cancelled'" class="order-status status-cancelled">
+          <span class="material-symbols-outlined status-icon">cancel</span>
+          已取消
+        </span>
+        <span v-if="showFallbackStatus" :class="['order-status', 'status-' + order.status]">
           <span class="material-symbols-outlined status-icon">{{ statusIcon(order.status) }}</span>
           {{ statusLabel(order.status) }}
         </span>
@@ -247,6 +255,13 @@ const hasUnpaidFlag = computed<boolean>(() => (isGroup.value ? unpaidGroupCount.
 const canTake = computed<boolean>(() => !hasUnpaidFlag.value && !isPickedUp.value && showAction('completed'))
 // 取消：只要未取餐就显示
 const canCancel = computed<boolean>(() => !isPickedUp.value)
+// 通用状态徽标：待付款/可取餐/已完成/已取消 之外的剩余状态才显示
+const showFallbackStatus = computed<boolean>(() =>
+  !orderUnpaid.value &&
+  !orderHasReady.value &&
+  props.order.status !== 'completed' &&
+  props.order.status !== 'cancelled'
+)
 
 function toggleGroup(id: string) {
   expandedSet.value = { ...expandedSet.value, [id]: !expandedSet.value[id] }
