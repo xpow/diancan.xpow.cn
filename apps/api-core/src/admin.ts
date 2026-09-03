@@ -446,7 +446,7 @@ router.get('/orders', async (_req, res) => {
       status: o.status,
       orderType: o.orderType,
       groupId: o.groupId || undefined,
-      group: o.groupId ? (groupOrdersById.get(o.groupId) ?? []).filter((g) => g.id !== o.id) : undefined,
+      group: o.groupId ? (groupOrdersById.get(o.groupId) ?? []) : undefined,
       paymentMethod: o.paymentMethod || undefined,
       totals: {
         originalAmount: o.originalAmount,
