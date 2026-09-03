@@ -1,7 +1,7 @@
 <template>
   <div class="order-card">
     <!-- Card Header -->
-    <div class="order-header">
+    <div v-if="!isGroup" class="order-header">
       <div class="order-info">
         <div class="pickup-group">
           <div class="pickup-row">
@@ -15,6 +15,25 @@
         <span class="material-symbols-outlined status-icon">{{ statusIcon(order.status) }}</span>
         {{ statusLabel(order.status) }}
       </span>
+    </div>
+
+    <!-- Merged Card Header -->
+    <div v-else class="order-header merged-header">
+      <div class="order-info">
+        <div class="pickup-group">
+          <div class="merged-title-row">
+            <span class="material-symbols-outlined merged-icon">group</span>
+            <span class="merged-title">{{ allGroupOrders.length }} 个订单合并</span>
+          </div>
+          <span class="merged-sub">共 {{ allGroupTotalItemCount }} 项</span>
+        </div>
+      </div>
+      <div class="merged-badges">
+        <span v-if="unpaidGroupCount > 0" class="merged-unpaid-badge">
+          <span class="material-symbols-outlined">schedule</span>
+          {{ unpaidGroupCount }} 单待付款
+        </span>
+      </div>
     </div>
 
     <!-- Order Items -->
@@ -31,13 +50,6 @@
 
     <!-- Merged Group Orders: one fold box per member order -->
     <div v-if="isGroup" class="order-group">
-      <div class="group-title-bar">
-        <span class="group-title-label">{{ allGroupOrders.length }} 个订单合并</span>
-        <span v-if="unpaidGroupCount > 0" class="group-unpaid-badge">
-          <span class="material-symbols-outlined">schedule</span>
-          {{ unpaidGroupCount }} 单待付款
-        </span>
-      </div>
       <div v-for="g in allGroupOrders" :key="g.id" class="group-order">
         <div class="group-order-head" @click="toggleGroup(g.id)">
           <div class="group-order-head-left">
@@ -150,17 +162,6 @@ const groupExpanded = ref(false)
 const expandedSet = ref<Record<string, boolean>>({})
 const isGroup = computed<boolean>(() => !!props.order.groupId)
 const groupOrders = computed<any[]>(() => props.order.group ?? [])
-const groupTotal = computed<number>(() =>
-  groupOrders.value.reduce((s, g) => s + (g.totals?.payableAmount ?? 0), 0)
-)
-const isUnpaidOrder = (g: any) => !g.paidAt || g.status === 'unpaid'
-const unpaidGroupOrders = computed<any[]>(() =>
-  groupOrders.value.filter(isUnpaidOrder)
-)
-const unpaidGroupTotal = computed<number>(() =>
-  unpaidGroupOrders.value.reduce((s, g) => s + (g.totals?.payableAmount ?? 0), 0)
-)
-const unpaidGroupCount = computed<number>(() => unpaidGroupOrders.value.length)
 const allGroupOrders = computed<any[]>(() => {
   const siblings = groupOrders.value.filter((g) => g.id !== props.order.id)
   if (groupOrders.value.some((g) => g.id === props.order.id)) return groupOrders.value
@@ -180,6 +181,20 @@ const allGroupOrders = computed<any[]>(() => {
   }
   return [selfItem, ...siblings]
 })
+const groupTotal = computed<number>(() =>
+  allGroupOrders.value.reduce((s, g) => s + (g.totals?.payableAmount ?? 0), 0)
+)
+const isUnpaidOrder = (g: any) => !g.paidAt || g.status === 'unpaid'
+const unpaidGroupOrders = computed<any[]>(() =>
+  allGroupOrders.value.filter(isUnpaidOrder)
+)
+const unpaidGroupTotal = computed<number>(() =>
+  unpaidGroupOrders.value.reduce((s, g) => s + (g.totals?.payableAmount ?? 0), 0)
+)
+const unpaidGroupCount = computed<number>(() => unpaidGroupOrders.value.length)
+const allGroupTotalItemCount = computed<number>(() =>
+  allGroupOrders.value.reduce((s, g) => s + ((g.items ?? []).reduce((x: number, i: any) => x + i.quantity, 0)), 0)
+)
 
 function toggleGroup(id: string) {
   expandedSet.value = { ...expandedSet.value, [id]: !expandedSet.value[id] }
@@ -248,6 +263,16 @@ function formatTime(t: string) {
 .order-time { font-size: 13px; color: #999; white-space: nowrap; }
 .order-no { font-size: 11px; color: #bbb; }
 
+/* Merged Header */
+.merged-header { align-items: center; background: #fff8f2; }
+.merged-title-row { display: flex; align-items: center; gap: 6px; }
+.merged-icon { font-size: 18px; color: #ff6b00; }
+.merged-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 800; color: #a04100; }
+.merged-sub { font-size: 12px; color: #999; }
+.merged-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.merged-unpaid-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 12px; background: rgba(186, 26, 26, 0.12); color: #ba1a1a; font-size: 11px; font-weight: 700; }
+.merged-unpaid-badge .material-symbols-outlined { font-size: 13px; }
+
 /* Status */
 .order-status {
   display: inline-flex;
@@ -278,10 +303,6 @@ function formatTime(t: string) {
 
 /* Merged group section: one fold box per member order */
 .order-group { border-bottom: 1px solid #f0eded; background: #fff8f2; display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; }
-.group-title-bar { display: flex; align-items: center; gap: 10px; }
-.group-title-label { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 800; color: #a04100; }
-.group-unpaid-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 12px; background: rgba(186, 26, 26, 0.12); color: #ba1a1a; font-size: 11px; font-weight: 700; }
-.group-unpaid-badge .material-symbols-outlined { font-size: 13px; }
 .group-order { border: 1px solid #ffd9bd; border-radius: 10px; background: #fff; overflow: hidden; }
 .group-order-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; cursor: pointer; }
 .group-order-head:hover { background: #fff0e3; }
