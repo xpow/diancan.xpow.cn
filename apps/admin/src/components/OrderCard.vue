@@ -388,8 +388,8 @@ function formatTime(t: string) {
 .group-flag { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: #bbb; }
 .group-flag .material-symbols-outlined { font-size: 13px; }
 .group-flag.flag-active { color: #4aad4e; }
-.group-order-items { margin-bottom: 4px; }
-.group-order-item { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 12px; }
+.group-order-items { padding-top: 6px; margin-bottom: 2px; }
+.group-order-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 12px; }
 .group-item-info { flex: 1; display: flex; align-items: center; gap: 6px; min-width: 0; }
 .group-item-name { color: #1c1b1b; font-weight: 600; }
 .group-item-specs { font-size: 11px; color: #5a4136; background: #f5f0eb; padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
