@@ -111,17 +111,19 @@ const avgOrder = computed(() => {
 })
 
 async function fetchData() {
-  const [pendingRes, paidRes, unpaidRes] = await Promise.all([
-    fetch('/api/admin/orders?status=pending&limit=20'),
-    fetch('/api/admin/orders?status=paid&limit=20'),
-    fetch('/api/admin/orders?status=unpaid&limit=20'),
-  ])
-  const pendingOrders = (await pendingRes.json()).items ?? []
-  const paidOrders = (await paidRes.json()).items ?? []
-  const unpaidOrders = (await unpaidRes.json()).items ?? []
-
-  recentOrders.value = [...pendingOrders, ...paidOrders, ...unpaidOrders]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  // 总览页订单只显示进行中的（active：unpaid/paid/preparing/ready），与前端取餐页一致
+  const ordersRes = await fetch('/api/admin/orders?scope=active&limit=15')
+  const orders = (await ordersRes.json()).items ?? []
+  // 同合并订单仅保留一个代表，避免重复显示（与取餐页一致）
+  const seenGroup = new Set<string>()
+  recentOrders.value = orders
+    .filter((o: any) => {
+      if (!o.groupId) return true
+      if (seenGroup.has(o.groupId)) return false
+      seenGroup.add(o.groupId)
+      return true
+    })
+    .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 15)
 
   const overviewRes = await fetch('/api/admin/stats/overview')
