@@ -383,10 +383,13 @@ router.get('/orders', async (_req, res) => {
         pickupCode: true,
         status: true,
         orderType: true,
+        paymentMethod: true,
         originalAmount: true,
         discountAmount: true,
         payableAmount: true,
         createdAt: true,
+        paidAt: true,
+        dishOutAt: true,
         items: { select: { id: true, name: true, quantity: true, finalSubtotal: true } },
       },
       orderBy: { createdAt: 'asc' },
@@ -400,6 +403,7 @@ router.get('/orders', async (_req, res) => {
         pickupCode: m.pickupCode,
         status: m.status,
         orderType: m.orderType,
+        paymentMethod: m.paymentMethod || undefined,
         totals: {
           originalAmount: m.originalAmount,
           discountAmount: m.discountAmount,
@@ -407,6 +411,8 @@ router.get('/orders', async (_req, res) => {
         },
         itemCount: m.items.reduce((s, i) => s + i.quantity, 0),
         createdAt: m.createdAt.toISOString(),
+        paidAt: m.paidAt?.toISOString() || undefined,
+        dishOutAt: m.dishOutAt?.toISOString() || undefined,
       })
       groupOrdersById.set(m.groupId, list)
     }

@@ -140,9 +140,12 @@ interface Order {
     pickupCode: string
     status: string
     orderType: string
+    paymentMethod?: string
     totals: { originalAmount: number; discountAmount: number; payableAmount: number }
     itemCount: number
     createdAt: string
+    paidAt?: string
+    dishOutAt?: string
   }[]
   paymentMethod?: string
   totals: { originalAmount: number; discountAmount: number; payableAmount: number }
