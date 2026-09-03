@@ -11,10 +11,20 @@
           <span class="order-no">{{ order.orderNo }}</span>
         </div>
       </div>
-      <span :class="['order-status', 'status-' + order.status]">
-        <span class="material-symbols-outlined status-icon">{{ statusIcon(order.status) }}</span>
-        {{ statusLabel(order.status) }}
-      </span>
+      <div class="order-badges">
+        <span v-if="orderUnpaid" class="order-status status-unpaid">
+          <span class="material-symbols-outlined status-icon">schedule</span>
+          待付款
+        </span>
+        <span v-if="orderHasReady" class="order-status status-ready">
+          <span class="material-symbols-outlined status-icon">restaurant</span>
+          可取餐
+        </span>
+        <span v-if="!orderUnpaid && !orderHasReady" :class="['order-status', 'status-' + order.status]">
+          <span class="material-symbols-outlined status-icon">{{ statusIcon(order.status) }}</span>
+          {{ statusLabel(order.status) }}
+        </span>
+      </div>
     </div>
 
     <!-- Merged Card Header -->
@@ -29,6 +39,10 @@
         </div>
       </div>
       <div class="merged-badges">
+        <span v-if="groupHasReady" class="order-status status-ready">
+          <span class="material-symbols-outlined status-icon">restaurant</span>
+          可取餐
+        </span>
         <span v-if="unpaidGroupCount > 0" class="merged-unpaid-badge">
           <span class="material-symbols-outlined">schedule</span>
           {{ unpaidGroupCount }} 单待付款
@@ -204,6 +218,13 @@ const allGroupTotalItemCount = computed<number>(() =>
   allGroupOrders.value.reduce((s, g) => s + ((g.items ?? []).reduce((x: number, i: any) => x + i.quantity, 0)), 0)
 )
 
+// 单订单标识：待付款与可取餐需同时显示（复用原状态徽标样式，不重复）
+const orderUnpaid = computed<boolean>(() => !props.order.paidAt || props.order.status === 'unpaid')
+const orderHasReady = computed<boolean>(() => (props.order.items ?? []).some((i: any) => i.status === 'ready'))
+const groupHasReady = computed<boolean>(() =>
+  allGroupOrders.value.some((g: any) => (g.items ?? []).some((i: any) => i.status === 'ready'))
+)
+
 function toggleGroup(id: string) {
   expandedSet.value = { ...expandedSet.value, [id]: !expandedSet.value[id] }
 }
@@ -277,6 +298,7 @@ function formatTime(t: string) {
 .merged-icon { font-size: 18px; color: #ff6b00; }
 .merged-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 800; color: #a04100; }
 .merged-sub { font-size: 12px; color: #999; }
+.order-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 .merged-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 .merged-unpaid-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 12px; background: rgba(186, 26, 26, 0.12); color: #ba1a1a; font-size: 11px; font-weight: 700; }
 .merged-unpaid-badge .material-symbols-outlined { font-size: 13px; }
