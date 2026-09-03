@@ -29,6 +29,22 @@
       </div>
     </div>
 
+    <!-- Merged Group Orders -->
+    <div v-if="order.group && order.group.length" class="order-group">
+      <div class="group-title">
+        <span class="material-symbols-outlined">group</span>
+        合并订单（{{ order.group.length }} 单）
+      </div>
+      <div v-for="g in order.group" :key="g.id" class="group-order">
+        <div class="group-order-head">
+          <span class="group-pickup">{{ g.pickupCode }}</span>
+          <span :class="['group-status', 'status-' + g.status]">{{ statusLabel(g.status) }}</span>
+        </div>
+        <div class="group-order-no">{{ g.orderNo }} · {{ g.orderType === 'dine-in' ? '堂食' : '自取' }} · {{ g.itemCount }} 项</div>
+        <div class="group-amount">¥{{ (g.totals?.payableAmount ?? 0).toFixed(2) }}</div>
+      </div>
+    </div>
+
     <!-- Order Meta -->
     <div class="order-meta">
       <div class="meta-row">
@@ -174,6 +190,18 @@ function formatTime(t: string) {
 .item-specs { font-size: 12px; color: #5a4136; background: #f5f0eb; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
 .item-qty { font-weight: 700; color: #ff6b00; flex-shrink: 0; }
 .item-promo { background: rgba(255, 107, 0, 0.1); color: #ff6b00; font-size: 11px; padding: 1px 6px; border-radius: 4px; }
+
+/* Merged group section */
+.order-group { padding: 12px 16px; border-bottom: 1px solid #f0eded; background: #fff8f2; }
+.group-title { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #ff6b00; margin-bottom: 8px; }
+.group-title .material-symbols-outlined { font-size: 16px; }
+.group-order { border: 1px dashed #ffd9bd; border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; }
+.group-order:last-child { margin-bottom: 0; }
+.group-order-head { display: flex; justify-content: space-between; align-items: center; }
+.group-pickup { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 800; color: #ff6b00; }
+.group-status { padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.group-order-no { font-size: 11px; color: #999; margin: 2px 0 4px; }
+.group-amount { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 700; color: #1c1b1b; }
 
 /* Meta - pushed to bottom */
 .order-meta { padding: 12px 16px; background: #fdfbf9; font-size: 12px; margin-top: auto; }

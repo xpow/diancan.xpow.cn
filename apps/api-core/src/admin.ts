@@ -370,6 +370,48 @@ router.get('/orders', async (_req, res) => {
     prisma.order.count({ where }),
   ])
 
+  // 收集同组分组的唯一 groupId，用于批量查询同组成员
+  const groupIds = Array.from(new Set(items.map((o) => o.groupId).filter(Boolean))) as string[]
+  const groupOrdersById = new Map<string, any[]>()
+  if (groupIds.length) {
+    const groupMembers = await prisma.order.findMany({
+      where: { groupId: { in: groupIds } },
+      select: {
+        id: true,
+        groupId: true,
+        orderNo: true,
+        pickupCode: true,
+        status: true,
+        orderType: true,
+        originalAmount: true,
+        discountAmount: true,
+        payableAmount: true,
+        createdAt: true,
+        items: { select: { id: true, name: true, quantity: true, finalSubtotal: true } },
+      },
+      orderBy: { createdAt: 'asc' },
+    })
+    for (const m of groupMembers) {
+      if (!m.groupId) continue
+      const list = groupOrdersById.get(m.groupId) ?? []
+      list.push({
+        id: m.id,
+        orderNo: m.orderNo,
+        pickupCode: m.pickupCode,
+        status: m.status,
+        orderType: m.orderType,
+        totals: {
+          originalAmount: m.originalAmount,
+          discountAmount: m.discountAmount,
+          payableAmount: m.payableAmount,
+        },
+        itemCount: m.items.reduce((s, i) => s + i.quantity, 0),
+        createdAt: m.createdAt.toISOString(),
+      })
+      groupOrdersById.set(m.groupId, list)
+    }
+  }
+
   // 计算各状态数量
   const [allCount, unpaidCount, pendingCount, preparingCount, readyCount, completedCount, cancelledCount] = await Promise.all([
     prisma.order.count({}),
@@ -389,6 +431,7 @@ router.get('/orders', async (_req, res) => {
       status: o.status,
       orderType: o.orderType,
       groupId: o.groupId || undefined,
+      group: o.groupId ? (groupOrdersById.get(o.groupId) ?? []).filter((g) => g.id !== o.id) : undefined,
       paymentMethod: o.paymentMethod || undefined,
       totals: {
         originalAmount: o.originalAmount,

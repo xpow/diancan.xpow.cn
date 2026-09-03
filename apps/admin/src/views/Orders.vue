@@ -133,6 +133,17 @@ interface Order {
   pickupCode: string
   status: string
   orderType: string
+  groupId?: string
+  group?: {
+    id: string
+    orderNo: string
+    pickupCode: string
+    status: string
+    orderType: string
+    totals: { originalAmount: number; discountAmount: number; payableAmount: number }
+    itemCount: number
+    createdAt: string
+  }[]
   paymentMethod?: string
   totals: { originalAmount: number; discountAmount: number; payableAmount: number }
   fullReduction?: number
