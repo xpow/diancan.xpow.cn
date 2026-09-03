@@ -146,7 +146,7 @@
           <span class="amount-label">总金额</span>
           <span class="amount-value">¥{{ groupTotal.toFixed(2) }}</span>
         </div>
-        <div class="amount-row">
+        <div class="amount-row" v-if="unpaidGroupTotal > 0">
           <span class="amount-label">待付金额</span>
           <span :class="['amount-value', 'amount-unpaid']">¥{{ unpaidGroupTotal.toFixed(2) }}</span>
         </div>
