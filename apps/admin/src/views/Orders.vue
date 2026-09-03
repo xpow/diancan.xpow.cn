@@ -143,6 +143,15 @@ interface Order {
     paymentMethod?: string
     totals: { originalAmount: number; discountAmount: number; payableAmount: number }
     itemCount: number
+    items: {
+      id: string
+      name: string
+      quantity: number
+      finalUnitPrice: number
+      finalSubtotal: number
+      specs?: string
+      unit?: string
+    }[]
     createdAt: string
     paidAt?: string
     dishOutAt?: string

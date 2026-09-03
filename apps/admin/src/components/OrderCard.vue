@@ -18,7 +18,7 @@
     </div>
 
     <!-- Order Items -->
-    <div class="order-items">
+    <div v-if="!isGroup" class="order-items">
       <div v-for="item in order.items" :key="item.id" class="order-item">
         <div class="item-info">
           <span class="item-name">{{ item.name }}</span>
@@ -30,17 +30,17 @@
     </div>
 
     <!-- Merged Group Orders -->
-    <div v-if="groupOrders.length" class="order-group">
+    <div v-if="isGroup" class="order-group">
       <div class="group-summary" @click="groupExpanded = !groupExpanded">
         <div class="group-summary-left">
           <span class="material-symbols-outlined">group</span>
-          <span class="group-summary-label">合并订单（{{ groupOrders.length }} 单）</span>
-          <span class="group-summary-total">合计 ¥{{ groupTotal.toFixed(2) }}</span>
+          <span class="group-summary-label">合并订单（{{ groupOrders.length + 1 }} 单）</span>
+          <span class="group-summary-total">合计 ¥{{ groupAllTotal.toFixed(2) }}</span>
         </div>
         <span :class="['material-symbols-outlined', 'group-chevron', groupExpanded && 'expanded']">expand_more</span>
       </div>
       <div v-if="groupExpanded" class="group-detail">
-        <div v-for="g in groupOrders" :key="g.id" class="group-order">
+        <div v-for="g in allGroupOrders" :key="g.id" class="group-order">
           <div class="group-order-top">
             <span class="group-pickup">{{ g.pickupCode }}</span>
             <span :class="['group-status', 'status-' + g.status]">{{ statusLabel(g.status) }}</span>
@@ -55,6 +55,17 @@
               <span class="material-symbols-outlined">{{ (g.dishOutAt || g.status === 'ready' || g.status === 'completed') ? 'restaurant' : 'timer' }}</span>
               {{ (g.dishOutAt || g.status === 'ready' || g.status === 'completed') ? '已出菜' : '未出菜' }}
             </span>
+          </div>
+          <!-- Order items inside each group fold box -->
+          <div class="group-order-items" v-if="g.items && g.items.length">
+            <div v-for="item in g.items" :key="item.id" class="group-order-item">
+              <div class="group-item-info">
+                <span class="group-item-name">{{ item.name }}</span>
+                <span v-if="item.specs" class="group-item-specs">{{ item.specs }}</span>
+              </div>
+              <span class="group-item-qty">x{{ item.quantity }}</span>
+              <span class="group-item-subtotal">¥{{ (item.finalSubtotal ?? 0).toFixed(2) }}</span>
+            </div>
           </div>
           <div class="group-amount">¥{{ (g.totals?.payableAmount ?? 0).toFixed(2) }}</div>
         </div>
@@ -80,8 +91,8 @@
     <!-- Order Footer -->
     <div class="order-footer">
       <div class="order-amount">
-        <span class="amount-label">{{ order.status === 'unpaid' ? '待支付' : '实付' }}</span>
-        <span :class="['amount-value', order.status === 'unpaid' && 'amount-unpaid']">¥{{ order.totals.payableAmount?.toFixed(2) }}</span>
+        <span class="amount-label">{{ isGroup ? '合并实付' : (order.status === 'unpaid' ? '待支付' : '实付') }}</span>
+        <span :class="['amount-value', order.status === 'unpaid' && 'amount-unpaid']">¥{{ (isGroup ? groupTotal : order.totals.payableAmount)?.toFixed(2) }}</span>
       </div>
       <div class="order-actions">
         <button v-if="showAction('preparing')" class="btn-action btn-primary-sm" @click="$emit('action', order.id, 'preparing')">
@@ -119,10 +130,32 @@ defineEmits<{
 }>()
 
 const groupExpanded = ref(false)
+const isGroup = computed<boolean>(() => !!props.order.groupId && (props.order.group?.length ?? 0) > 0)
 const groupOrders = computed<any[]>(() => props.order.group ?? [])
 const groupTotal = computed<number>(() =>
   groupOrders.value.reduce((s, g) => s + (g.totals?.payableAmount ?? 0), 0)
+  + (props.order.totals?.payableAmount ?? 0)
 )
+const allGroupOrders = computed<any[]>(() => {
+  const self = groupOrders.value.some((g) => g.id === props.order.id)
+  const selfItem: any = {
+    id: props.order.id,
+    orderNo: props.order.orderNo,
+    pickupCode: props.order.pickupCode,
+    status: props.order.status,
+    orderType: props.order.orderType,
+    paymentMethod: props.order.paymentMethod,
+    totals: props.order.totals,
+    itemCount: (props.order.items ?? []).reduce((s: number, i: any) => s + i.quantity, 0),
+    items: props.order.items ?? [],
+    createdAt: props.order.createdAt,
+    paidAt: !!props.order.paidAt,
+    dishOutAt: props.order.dishOutAt,
+  }
+  const siblings = groupOrders.value.filter((g) => g.id !== props.order.id)
+  const combined = groupOrders.value.some((g) => g.id === props.order.id) ? groupOrders.value : [selfItem, ...siblings]
+  return combined
+})
 
 function showAction(action: string): boolean {
   const s = props.order.status
@@ -235,6 +268,13 @@ function formatTime(t: string) {
 .group-flag { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: #bbb; }
 .group-flag .material-symbols-outlined { font-size: 13px; }
 .group-flag.flag-active { color: #4aad4e; }
+.group-order-items { margin: 6px 0; padding-top: 6px; border-top: 1px solid #f6e5d8; }
+.group-order-item { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 12px; }
+.group-item-info { flex: 1; display: flex; align-items: center; gap: 6px; min-width: 0; }
+.group-item-name { color: #1c1b1b; font-weight: 600; }
+.group-item-specs { font-size: 11px; color: #5a4136; background: #f5f0eb; padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
+.group-item-qty { font-weight: 700; color: #ff6b00; flex-shrink: 0; }
+.group-item-subtotal { color: #5a4136; flex-shrink: 0; }
 .group-amount { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 700; color: #1c1b1b; text-align: right; }
 
 /* Meta - pushed to bottom */
