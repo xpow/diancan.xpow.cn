@@ -340,11 +340,12 @@ router.get('/backup.sql', async (_req, res) => {
 /* ===== Orders ===== */
 
 router.get('/orders', async (_req, res) => {
-  const { status, scope, branchId, page = '1', limit = '50' } = _req.query as Record<string, string>
+  const { status, scope, branchId, groupId, page = '1', limit = '50' } = _req.query as Record<string, string>
   const where: any = {}
   if (scope === 'active') where.status = { in: ['unpaid', 'paid', 'preparing', 'ready'] }
   else if (status) where.status = status.includes(',') ? { in: status.split(',') } : status
   if (branchId) where.branchId = branchId
+  if (groupId) where.groupId = groupId
 
   const skip = (Math.max(1, Number(page)) - 1) * Number(limit)
   const take = Math.min(200, Math.max(1, Number(limit)))
@@ -387,6 +388,7 @@ router.get('/orders', async (_req, res) => {
       pickupCode: o.pickupCode,
       status: o.status,
       orderType: o.orderType,
+      groupId: o.groupId || undefined,
       paymentMethod: o.paymentMethod || undefined,
       totals: {
         originalAmount: o.originalAmount,
