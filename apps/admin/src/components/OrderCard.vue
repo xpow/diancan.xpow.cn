@@ -221,9 +221,17 @@ const allGroupTotalItemCount = computed<number>(() =>
 
 // 单订单标识：待付款与可取餐需同时显示（复用原状态徽标样式，不重复）
 const orderUnpaid = computed<boolean>(() => !props.order.paidAt || props.order.status === 'unpaid')
-const orderHasReady = computed<boolean>(() => (props.order.items ?? []).some((i: any) => i.status === 'ready'))
+const orderHasReady = computed<boolean>(() =>
+  props.order.status !== 'completed' &&
+  props.order.status !== 'cancelled' &&
+  (props.order.items ?? []).some((i: any) => i.status === 'ready')
+)
 const groupHasReady = computed<boolean>(() =>
-  allGroupOrders.value.some((g: any) => (g.items ?? []).some((i: any) => i.status === 'ready'))
+  allGroupOrders.value.some((g: any) =>
+    g.status !== 'completed' &&
+    g.status !== 'cancelled' &&
+    (g.items ?? []).some((i: any) => i.status === 'ready')
+  )
 )
 
 function toggleGroup(id: string) {
@@ -312,6 +320,7 @@ function formatTime(t: string) {
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
+  line-height: 18px;
 }
 .status-icon { font-size: 14px; }
 .status-unpaid { background: rgba(186, 26, 26, 0.15); color: #ba1a1a; }
