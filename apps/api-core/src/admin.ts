@@ -395,7 +395,7 @@ router.get('/orders', async (_req, res) => {
         paidAt: true,
         dishOutAt: true,
         promotions: { select: { type: true, discount: true, name: true } },
-        items: { select: { id: true, name: true, quantity: true, finalSubtotal: true, unitPrice: true, specs: true, unit: true, promotionLabel: true } },
+        items: { select: { id: true, name: true, quantity: true, finalSubtotal: true, unitPrice: true, specs: true, unit: true, promotionLabel: true, status: true } },
       },
       orderBy: { createdAt: 'asc' },
     })
@@ -427,6 +427,7 @@ router.get('/orders', async (_req, res) => {
           specs: i.specs || undefined,
           unit: i.unit || '串',
           promotionLabel: i.promotionLabel || undefined,
+          status: i.status,
         })),
         createdAt: m.createdAt.toISOString(),
         paidAt: m.paidAt?.toISOString() || undefined,

@@ -153,6 +153,7 @@ interface Order {
       specs?: string
       unit?: string
       promotionLabel?: string
+      status?: string
     }[]
     createdAt: string
     paidAt?: string
