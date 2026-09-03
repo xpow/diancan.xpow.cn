@@ -100,7 +100,7 @@
                       </div>
                     </div>
                     <div class="ticket-total">
-                      <span class="ticket-total-label">{{ (order.items || []).length }} 项</span>
+                      <span class="ticket-total-label"><span class="ticket-time">{{ formatTime(order.createdAt) }}</span> {{ (order.items || []).length }} 项</span>
                       <div class="ticket-total-right">
                         <span class="ticket-total-price"><small class="c-sign">¥</small>{{ (order.totals?.payableAmount || 0).toFixed(2) }}</span>
                       </div>
