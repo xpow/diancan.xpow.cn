@@ -13,7 +13,7 @@
       </div>
       <div class="order-badges">
         <span v-if="orderUnpaid" class="order-status status-unpaid">
-          <span class="material-symbols-outlined status-icon">schedule</span>
+          <span class="material-symbols-outlined status-icon">credit_card</span>
           待付款
         </span>
         <span v-if="orderHasReady" class="order-status status-ready">
@@ -44,7 +44,7 @@
           可取餐
         </span>
         <span v-if="unpaidGroupCount > 0" class="merged-unpaid-badge">
-          <span class="material-symbols-outlined">schedule</span>
+          <span class="material-symbols-outlined">credit_card</span>
           {{ unpaidGroupCount }} 单待付款
         </span>
       </div>
@@ -298,7 +298,7 @@ function formatTime(t: string) {
 .merged-icon { font-size: 18px; color: #ff6b00; }
 .merged-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 800; color: #a04100; }
 .merged-sub { font-size: 12px; color: #999; }
-.order-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.order-badges { display: flex; flex-direction: row; align-items: center; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
 .merged-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 .merged-unpaid-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 12px; background: rgba(186, 26, 26, 0.12); color: #ba1a1a; font-size: 11px; font-weight: 700; }
 .merged-unpaid-badge .material-symbols-outlined { font-size: 13px; }
