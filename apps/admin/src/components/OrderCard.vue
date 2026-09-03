@@ -31,6 +31,13 @@
 
     <!-- Merged Group Orders: one fold box per member order -->
     <div v-if="isGroup" class="order-group">
+      <div class="group-title-bar">
+        <span class="group-title-label">{{ allGroupOrders.length }} 个订单合并</span>
+        <span v-if="unpaidGroupCount > 0" class="group-unpaid-badge">
+          <span class="material-symbols-outlined">schedule</span>
+          {{ unpaidGroupCount }} 单待付款
+        </span>
+      </div>
       <div v-for="g in allGroupOrders" :key="g.id" class="group-order">
         <div class="group-order-head" @click="toggleGroup(g.id)">
           <div class="group-order-head-left">
@@ -39,6 +46,7 @@
               <div class="group-order-top">
                 <span class="group-pickup">{{ g.pickupCode }}</span>
                 <span :class="['group-status', 'status-' + g.status]">{{ statusLabel(g.status) }}</span>
+                <span class="group-order-time">{{ formatTime(g.createdAt) }}</span>
               </div>
               <div class="group-order-no">{{ g.orderNo }} · {{ g.orderType === 'dine-in' ? '堂食' : '自取' }}</div>
               <div class="group-order-flags">
@@ -89,9 +97,19 @@
 
     <!-- Order Footer -->
     <div class="order-footer">
-      <div class="order-amount">
-        <span class="amount-label">{{ isGroup ? '合并实付' : (order.status === 'unpaid' ? '待支付' : '实付') }}</span>
-        <span :class="['amount-value', order.status === 'unpaid' && 'amount-unpaid']">¥{{ (isGroup ? groupTotal : order.totals.payableAmount)?.toFixed(2) }}</span>
+      <div class="order-amount" v-if="!isGroup">
+        <span class="amount-label">{{ order.status === 'unpaid' ? '待支付' : '实付' }}</span>
+        <span :class="['amount-value', order.status === 'unpaid' && 'amount-unpaid']">¥{{ order.totals.payableAmount?.toFixed(2) }}</span>
+      </div>
+      <div class="order-amount-group" v-else>
+        <div class="amount-row" v-if="unpaidGroupTotal < groupTotal">
+          <span class="amount-label">总金额</span>
+          <span class="amount-value">¥{{ groupTotal.toFixed(2) }}</span>
+        </div>
+        <div class="amount-row">
+          <span class="amount-label">待付金额</span>
+          <span :class="['amount-value', 'amount-unpaid']">¥{{ unpaidGroupTotal.toFixed(2) }}</span>
+        </div>
       </div>
       <div class="order-actions">
         <button v-if="showAction('preparing')" class="btn-action btn-primary-sm" @click="$emit('action', order.id, 'preparing')">
@@ -135,6 +153,14 @@ const groupOrders = computed<any[]>(() => props.order.group ?? [])
 const groupTotal = computed<number>(() =>
   groupOrders.value.reduce((s, g) => s + (g.totals?.payableAmount ?? 0), 0)
 )
+const isUnpaidOrder = (g: any) => !g.paidAt || g.status === 'unpaid'
+const unpaidGroupOrders = computed<any[]>(() =>
+  groupOrders.value.filter(isUnpaidOrder)
+)
+const unpaidGroupTotal = computed<number>(() =>
+  unpaidGroupOrders.value.reduce((s, g) => s + (g.totals?.payableAmount ?? 0), 0)
+)
+const unpaidGroupCount = computed<number>(() => unpaidGroupOrders.value.length)
 const allGroupOrders = computed<any[]>(() => {
   const siblings = groupOrders.value.filter((g) => g.id !== props.order.id)
   if (groupOrders.value.some((g) => g.id === props.order.id)) return groupOrders.value
@@ -252,6 +278,10 @@ function formatTime(t: string) {
 
 /* Merged group section: one fold box per member order */
 .order-group { border-bottom: 1px solid #f0eded; background: #fff8f2; display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; }
+.group-title-bar { display: flex; align-items: center; gap: 10px; }
+.group-title-label { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 800; color: #a04100; }
+.group-unpaid-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 12px; background: rgba(186, 26, 26, 0.12); color: #ba1a1a; font-size: 11px; font-weight: 700; }
+.group-unpaid-badge .material-symbols-outlined { font-size: 13px; }
 .group-order { border: 1px solid #ffd9bd; border-radius: 10px; background: #fff; overflow: hidden; }
 .group-order-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; cursor: pointer; }
 .group-order-head:hover { background: #fff0e3; }
@@ -261,6 +291,7 @@ function formatTime(t: string) {
 .group-order-top { display: flex; align-items: center; gap: 8px; }
 .group-pickup { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 800; color: #ff6b00; }
 .group-status { padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.group-order-time { font-size: 11px; color: #999; white-space: nowrap; }
 .group-order-no { font-size: 11px; color: #999; margin-top: 2px; }
 .group-amount { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 700; color: #1c1b1b; flex-shrink: 0; }
 .group-order-body { padding: 0 12px 10px; border-top: 1px solid #f6e5d8; }
@@ -297,6 +328,9 @@ function formatTime(t: string) {
 .amount-label { font-size: 11px; color: #999; }
 .amount-value { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 700; color: #1c1b1b; }
 .amount-unpaid { color: #ba1a1a; }
+.order-amount-group { display: flex; flex-direction: column; gap: 2px; }
+.amount-row { display: flex; align-items: baseline; gap: 8px; }
+.amount-row .amount-value { font-size: 16px; }
 
 /* Actions */
 .order-actions { display: flex; gap: 8px; flex-wrap: wrap; }
