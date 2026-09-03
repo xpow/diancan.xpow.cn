@@ -217,7 +217,10 @@ async function fetchOrders() {
   params.set('limit', String(pageSize))
   const res = await fetch(`/api/admin/orders?${params}`)
   const data = await res.json()
-  orders.value = data.items ?? []
+  // 参考取餐端（kiosk PickupPage）排序：按 createdAt 降序，新单在前
+  orders.value = (data.items ?? []).slice().sort(
+    (a: Order, b: Order) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  )
   total.value = data.total ?? 0
   
   // Update counts
