@@ -45,7 +45,7 @@
         </span>
         <span v-if="unpaidGroupCount > 0" class="merged-unpaid-badge">
           <span class="material-symbols-outlined">credit_card</span>
-          {{ unpaidGroupCount }} 单待付款
+          待付款（{{ unpaidGroupCount }}）
         </span>
       </div>
     </div>
