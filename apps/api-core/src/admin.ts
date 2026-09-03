@@ -342,8 +342,11 @@ router.get('/backup.sql', async (_req, res) => {
 router.get('/orders', async (_req, res) => {
   const { status, scope, branchId, groupId, unpaid, page = '1', limit = '50' } = _req.query as Record<string, string>
   const where: any = {}
-  if (unpaid === '1') where.paidAt = null
-  else if (scope === 'active') where.status = { in: ['unpaid', 'paid', 'preparing', 'ready'] }
+  if (unpaid === '1') {
+    // 待付款：对齐取餐端，先限定 active 状态范围，再按未支付(paidAt为空)
+    where.status = { in: ['unpaid', 'paid', 'preparing', 'ready'] }
+    where.paidAt = null
+  } else if (scope === 'active') where.status = { in: ['unpaid', 'paid', 'preparing', 'ready'] }
   else if (status) where.status = status.includes(',') ? { in: status.split(',') } : status
   if (branchId) where.branchId = branchId
   if (groupId) where.groupId = groupId
@@ -436,7 +439,7 @@ router.get('/orders', async (_req, res) => {
   // 计算各状态数量
   const [allCount, unpaidCount, pendingCount, preparingCount, readyCount, completedCount, cancelledCount] = await Promise.all([
     prisma.order.count({}),
-    prisma.order.count({ where: { paidAt: null } }),
+    prisma.order.count({ where: { status: { in: ['unpaid', 'paid', 'preparing', 'ready'] }, paidAt: null } }),
     prisma.order.count({ where: { status: { in: ['pending', 'paid'] } } }),
     prisma.order.count({ where: { status: 'preparing' } }),
     prisma.order.count({ where: { status: 'ready' } }),
