@@ -34,8 +34,8 @@
           <div class="merged-title-row">
             <span class="material-symbols-outlined merged-icon">group</span>
             <span class="merged-title">{{ allGroupOrders.length }} 个订单合并</span>
+            <span class="merged-sub">共 {{ allGroupTotalItemCount }} 项</span>
           </div>
-          <span class="merged-sub">共 {{ allGroupTotalItemCount }} 项</span>
         </div>
       </div>
       <div class="merged-badges">
@@ -45,7 +45,8 @@
         </span>
         <span v-if="unpaidGroupCount > 0" class="order-status status-unpaid">
           <span class="material-symbols-outlined status-icon">credit_card</span>
-          待付款（{{ unpaidGroupCount }}）
+          待付款
+          <span class="order-count-num">{{ unpaidGroupCount }}</span>
         </span>
       </div>
     </div>
@@ -317,6 +318,7 @@ function formatTime(t: string) {
 .status-pending, .status-paid { background: rgba(245, 158, 11, 0.15); color: #b45309; }
 .status-preparing { background: rgba(255, 107, 0, 0.15); color: #a04100; }
 .status-ready { background: rgba(74, 173, 78, 0.15); color: #006e1c; }
+.order-count-num { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9999px; background: rgba(186, 26, 26, 0.15); color: #ba1a1a; font-size: 11px; font-weight: 700; }
 .status-completed { background: rgba(94, 94, 92, 0.15); color: #5e5e5c; }
 .status-cancelled { background: rgba(186, 26, 26, 0.15); color: #ba1a1a; }
 
