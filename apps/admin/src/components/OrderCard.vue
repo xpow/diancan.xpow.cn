@@ -152,11 +152,11 @@
           <span class="material-symbols-outlined">check</span>
           制作完成
         </button>
-        <button v-if="showAction('completed')" class="btn-action btn-warning-sm" @click="$emit('action', order.id, 'completed')">
+        <button v-if="canTake" class="btn-action btn-warning-sm" @click="$emit('action', order.id, 'completed')">
           <span class="material-symbols-outlined">check_circle</span>
           取餐
         </button>
-        <button v-if="showAction('cancel')" class="btn-action btn-danger-sm" @click="$emit('cancel', order.id)">
+        <button v-if="canCancel" class="btn-action btn-danger-sm" @click="$emit('cancel', order.id)">
           <span class="material-symbols-outlined">cancel</span>
           取消
         </button>
@@ -233,6 +233,20 @@ const groupHasReady = computed<boolean>(() =>
     (g.items ?? []).some((i: any) => i.status === 'ready')
   )
 )
+
+// 未取餐判断
+const isPickedUp = computed<boolean>(() => {
+  if (isGroup.value) {
+    return allGroupOrders.value.length > 0 && allGroupOrders.value.every((g: any) => g.status === 'completed')
+  }
+  return props.order.status === 'completed' || props.order.status === 'cancelled'
+})
+// 是否存在未付款（单订单 或 合并组）
+const hasUnpaidFlag = computed<boolean>(() => (isGroup.value ? unpaidGroupCount.value > 0 : orderUnpaid.value))
+// 取餐：无未付款且未完成时显示（有未付款则不显示取餐）
+const canTake = computed<boolean>(() => !hasUnpaidFlag.value && !isPickedUp.value && showAction('completed'))
+// 取消：只要未取餐就显示
+const canCancel = computed<boolean>(() => !isPickedUp.value)
 
 function toggleGroup(id: string) {
   expandedSet.value = { ...expandedSet.value, [id]: !expandedSet.value[id] }
