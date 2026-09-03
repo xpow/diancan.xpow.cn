@@ -96,7 +96,10 @@
               </div>
             </div>
           </div>
-          <div class="group-amount">¥{{ (g.totals?.payableAmount ?? 0).toFixed(2) }}</div>
+          <div class="group-amount-box">
+            <span v-if="(g.fullReduction ?? 0) > 0" class="group-fr">满减 -¥{{ g.fullReduction.toFixed(2) }}</span>
+            <div class="group-amount">¥{{ (g.totals?.payableAmount ?? 0).toFixed(2) }}</div>
+          </div>
         </div>
         <div v-if="expandedSet[g.id]" class="group-order-body">
           <div class="group-order-items" v-if="g.items && g.items.length">
@@ -116,7 +119,7 @@
 
 
     <!-- Order Meta -->
-    <div class="order-meta" v-if="!isGroup || groupFullReduction > 0 || order.cancelReason">
+    <div class="order-meta" v-if="!isGroup || order.cancelReason">
       <div class="meta-row" v-if="!isGroup">
         <span class="meta-label">类型</span>
         <span class="meta-value">{{ order.orderType === 'dine-in' ? '堂食' : '自取' }}</span>
@@ -124,10 +127,6 @@
       <div class="meta-row" v-if="!isGroup">
         <span class="meta-label">支付</span>
         <span class="meta-value">{{ order.status === 'unpaid' ? '待付款' : payLabel(order.paymentMethod) }}</span>
-      </div>
-      <div class="meta-row" v-if="isGroup && groupFullReduction > 0">
-        <span class="meta-label">满减优惠</span>
-        <span class="meta-value promo-value">-¥{{ groupFullReduction.toFixed(2) }}</span>
       </div>
       <div class="meta-row" v-if="order.cancelReason">
         <span class="meta-label">取消原因</span>
@@ -211,9 +210,6 @@ const allGroupOrders = computed<any[]>(() => {
 })
 const groupTotal = computed<number>(() =>
   allGroupOrders.value.reduce((s, g) => s + (g.totals?.payableAmount ?? 0), 0)
-)
-const groupFullReduction = computed<number>(() =>
-  allGroupOrders.value.reduce((s, g) => s + (g.fullReduction ?? 0), 0)
 )
 const isUnpaidOrder = (g: any) => !g.paidAt || g.status === 'unpaid'
 const unpaidGroupOrders = computed<any[]>(() =>
@@ -397,6 +393,8 @@ function formatTime(t: string) {
 .group-item-qty { font-weight: 700; color: #ff6b00; flex-shrink: 0; }
 .group-item-subtotal { color: #5a4136; flex-shrink: 0; }
 .group-amount { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 700; color: #1c1b1b; text-align: right; }
+.group-amount-box { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+.group-fr { display: inline-flex; align-items: center; font-size: 10px; line-height: 1; font-weight: 700; color: #ff6b00; background: rgba(255, 107, 0, 0.1); padding: 2px 6px; border-radius: 9999px; white-space: nowrap; }
 
 /* Meta - pushed to bottom */
 .order-meta { padding: 12px 16px; background: #fdfbf9; font-size: 12px; margin-top: auto; }
