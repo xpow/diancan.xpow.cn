@@ -986,7 +986,7 @@ onUnmounted(() => {
 .dishout-done { color: #ff6d00; border: 1px dashed #ff6d00; }
 .ticket-header-unpaid .ticket-number { color: #ef5350; }
 
-.ticket-hole-left, .ticket-hole-right { position: absolute; bottom: -12px; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-hole); }
+.ticket-hole-left, .ticket-hole-right { position: absolute; bottom: -12px; width: 24px; height: 24px; border-radius: 50%; }
 .ticket-hole-left { left: -12px; }
 .ticket-hole-right { right: -12px; }
 
@@ -1024,7 +1024,7 @@ onUnmounted(() => {
 .ticket-total-fr { display: block; font-size: var(--text-body-sm); font-weight: 700; color: #e53935; margin-bottom: 2px; }
 .ticket-total-price { font-family: var(--font-display); font-size: 32px; font-weight: 800; color: var(--on-surface); line-height: 1; }
 
-.ticket-footer { background: var(--surface-container-low); padding: var(--spacing-md); text-align: center; border-radius: 0 0 var(--radius-xl) var(--radius-xl); }
+.ticket-footer { background: var(--card-container-footer); padding: var(--spacing-md); text-align: center; border-radius: 0 0 var(--radius-xl) var(--radius-xl); }
 .ticket-thanks { font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 600; color: var(--primary-container); margin: 0 0 var(--spacing-xs); }
 .ticket-hint { display: flex; align-items: center; justify-content: center; gap: 4px; font-size: var(--text-label-sm); font-weight: 600; color: var(--secondary); margin: 0; letter-spacing: 0.02em; }
 .hint-icon { font-size: 14px !important; }

@@ -55,6 +55,7 @@
   --surface-container: #f0eded;
   --surface-container-high: #eae7e7;
   --surface-container-highest: #ffffff00;
+  --card-container-footer: #ffebd682;
   --on-surface: #1c1b1b;
   --on-surface-variant: #5a4136;
   --surface-variant: #e5e2e1;
@@ -176,6 +177,7 @@
   --on-background: #f3f0ef;
   --outline: #a08d80;
   --outline-variant: #a6650c8f;
+  --card-container-footer: #e4d9d0;
 
   /* 卡片暖色边框 */
   --card-border-light: #a06a1985;
