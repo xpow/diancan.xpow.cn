@@ -127,7 +127,7 @@
       </div>
       <div class="meta-row" v-if="!isGroup">
         <span class="meta-label">支付</span>
-        <span class="meta-value">{{ order.status === 'unpaid' ? '待付款' : payLabel(order.paymentMethod) }}</span>
+        <span class="meta-value">{{ orderUnpaid ? '待付款' : payLabel(order.paymentMethod) }}</span>
       </div>
       <div class="meta-row" v-if="order.cancelReason">
         <span class="meta-label">取消原因</span>
@@ -138,8 +138,8 @@
     <!-- Order Footer -->
     <div class="order-footer">
       <div class="order-amount" v-if="!isGroup">
-        <span class="amount-label">{{ order.status === 'unpaid' ? '待支付' : '实付' }}</span>
-        <span :class="['amount-value', order.status === 'unpaid' && 'amount-unpaid']">¥{{ order.totals.payableAmount?.toFixed(2) }}</span>
+        <span class="amount-label">{{ orderUnpaid ? '待付金额' : '实付' }}</span>
+        <span :class="['amount-value', orderUnpaid && 'amount-unpaid']">¥{{ order.totals.payableAmount?.toFixed(2) }}</span>
       </div>
       <div class="order-amount-group" v-else>
         <div class="amount-row" v-if="unpaidGroupTotal < groupTotal">
