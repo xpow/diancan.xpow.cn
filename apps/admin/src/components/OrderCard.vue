@@ -11,20 +11,10 @@
           <span class="order-no">{{ order.orderNo }}</span>
         </div>
       </div>
-      <div class="order-badges">
-        <span v-if="orderUnpaid" class="flag-badge badge-unpaid">
-          <span class="material-symbols-outlined">schedule</span>
-          待付款
-        </span>
-        <span v-if="orderHasReady" class="flag-badge badge-ready">
-          <span class="material-symbols-outlined">check_circle</span>
-          可取餐
-        </span>
-        <span :class="['order-status', 'status-' + order.status]">
-          <span class="material-symbols-outlined status-icon">{{ statusIcon(order.status) }}</span>
-          {{ statusLabel(order.status) }}
-        </span>
-      </div>
+      <span :class="['order-status', 'status-' + order.status]">
+        <span class="material-symbols-outlined status-icon">{{ statusIcon(order.status) }}</span>
+        {{ statusLabel(order.status) }}
+      </span>
     </div>
 
     <!-- Merged Card Header -->
@@ -39,10 +29,6 @@
         </div>
       </div>
       <div class="merged-badges">
-        <span v-if="groupHasReady" class="flag-badge badge-ready">
-          <span class="material-symbols-outlined">check_circle</span>
-          可取餐
-        </span>
         <span v-if="unpaidGroupCount > 0" class="merged-unpaid-badge">
           <span class="material-symbols-outlined">schedule</span>
           {{ unpaidGroupCount }} 单待付款
@@ -218,13 +204,6 @@ const allGroupTotalItemCount = computed<number>(() =>
   allGroupOrders.value.reduce((s, g) => s + ((g.items ?? []).reduce((x: number, i: any) => x + i.quantity, 0)), 0)
 )
 
-// 单订单标识：可取餐 / 待付款 同时显示
-const orderUnpaid = computed<boolean>(() => !props.order.paidAt || props.order.status === 'unpaid')
-const orderHasReady = computed<boolean>(() => (props.order.items ?? []).some((i: any) => i.status === 'ready'))
-const groupHasReady = computed<boolean>(() =>
-  allGroupOrders.value.some((g: any) => (g.items ?? []).some((i: any) => i.status === 'ready'))
-)
-
 function toggleGroup(id: string) {
   expandedSet.value = { ...expandedSet.value, [id]: !expandedSet.value[id] }
 }
@@ -298,14 +277,9 @@ function formatTime(t: string) {
 .merged-icon { font-size: 18px; color: #ff6b00; }
 .merged-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 800; color: #a04100; }
 .merged-sub { font-size: 12px; color: #999; }
-.order-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
-.flag-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
-.flag-badge .material-symbols-outlined { font-size: 15px; }
-.badge-unpaid { background: rgba(186, 26, 26, 0.15); color: #ba1a1a; }
-.badge-ready { background: rgba(74, 173, 78, 0.15); color: #006e1c; }
 .merged-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
-.merged-unpaid-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 20px; background: rgba(186, 26, 26, 0.15); color: #ba1a1a; font-size: 12px; font-weight: 600; white-space: nowrap; }
-.merged-unpaid-badge .material-symbols-outlined { font-size: 15px; }
+.merged-unpaid-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 12px; background: rgba(186, 26, 26, 0.12); color: #ba1a1a; font-size: 11px; font-weight: 700; }
+.merged-unpaid-badge .material-symbols-outlined { font-size: 13px; }
 
 /* Status */
 .order-status {
