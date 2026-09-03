@@ -67,6 +67,7 @@
           <span v-if="item.specs" class="item-specs">{{ item.specs }}</span>
         </div>
         <span class="item-qty">x{{ item.quantity }}</span>
+        <span class="item-subtotal">¥{{ (item.finalSubtotal ?? 0).toFixed(2) }}</span>
         <span v-if="item.promotionLabel" class="item-promo">{{ item.promotionLabel }}</span>
       </div>
     </div>
@@ -363,6 +364,7 @@ function formatTime(t: string) {
 .item-name { color: #1c1b1b; font-weight: 600; }
 .item-specs { font-size: 12px; color: #5a4136; background: #f5f0eb; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
 .item-qty { font-weight: 700; color: #ff6b00; flex-shrink: 0; }
+.item-subtotal { color: #5a4136; flex-shrink: 0; font-size: 12px; }
 .item-promo { background: rgba(255, 107, 0, 0.1); color: #ff6b00; font-size: 11px; padding: 1px 6px; border-radius: 4px; }
 
 /* Merged group section: one fold box per member order */
