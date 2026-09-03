@@ -35,7 +35,7 @@
         <div class="group-summary-left">
           <span class="material-symbols-outlined">group</span>
           <span class="group-summary-label">合并订单（{{ groupOrders.length + 1 }} 单）</span>
-          <span class="group-summary-total">合计 ¥{{ groupAllTotal.toFixed(2) }}</span>
+            <span class="group-summary-total">合计 ¥{{ groupTotal.toFixed(2) }}</span>
         </div>
         <span :class="['material-symbols-outlined', 'group-chevron', groupExpanded && 'expanded']">expand_more</span>
       </div>
