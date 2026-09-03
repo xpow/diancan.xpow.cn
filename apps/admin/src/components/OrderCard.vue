@@ -41,21 +41,21 @@
                 <span :class="['group-status', 'status-' + g.status]">{{ statusLabel(g.status) }}</span>
               </div>
               <div class="group-order-no">{{ g.orderNo }} · {{ g.orderType === 'dine-in' ? '堂食' : '自取' }}</div>
+              <div class="group-order-flags">
+                <span class="group-flag" :class="{ 'flag-active': g.paidAt }">
+                  <span class="material-symbols-outlined">{{ g.paidAt ? 'check_circle' : 'schedule' }}</span>
+                  {{ g.paidAt ? '已支付' : '待支付' }}
+                </span>
+                <span class="group-flag" :class="{ 'flag-active': g.dishOutAt || g.status === 'ready' || g.status === 'completed' }">
+                  <span class="material-symbols-outlined">{{ (g.dishOutAt || g.status === 'ready' || g.status === 'completed') ? 'restaurant' : 'timer' }}</span>
+                  {{ (g.dishOutAt || g.status === 'ready' || g.status === 'completed') ? '已出菜' : '未出菜' }}
+                </span>
+              </div>
             </div>
           </div>
           <div class="group-amount">¥{{ (g.totals?.payableAmount ?? 0).toFixed(2) }}</div>
         </div>
         <div v-if="expandedSet[g.id]" class="group-order-body">
-          <div class="group-order-flags">
-            <span class="group-flag" :class="{ 'flag-active': g.paidAt }">
-              <span class="material-symbols-outlined">{{ g.paidAt ? 'check_circle' : 'schedule' }}</span>
-              {{ g.paidAt ? '已支付' : '待支付' }}
-            </span>
-            <span class="group-flag" :class="{ 'flag-active': g.dishOutAt || g.status === 'ready' || g.status === 'completed' }">
-              <span class="material-symbols-outlined">{{ (g.dishOutAt || g.status === 'ready' || g.status === 'completed') ? 'restaurant' : 'timer' }}</span>
-              {{ (g.dishOutAt || g.status === 'ready' || g.status === 'completed') ? '已出菜' : '未出菜' }}
-            </span>
-          </div>
           <div class="group-order-items" v-if="g.items && g.items.length">
             <div v-for="item in g.items" :key="item.id" class="group-order-item">
               <div class="group-item-info">
@@ -264,7 +264,7 @@ function formatTime(t: string) {
 .group-order-no { font-size: 11px; color: #999; margin-top: 2px; }
 .group-amount { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 700; color: #1c1b1b; flex-shrink: 0; }
 .group-order-body { padding: 0 12px 10px; border-top: 1px solid #f6e5d8; }
-.group-order-flags { display: flex; gap: 12px; padding: 8px 0 4px; }
+.group-order-flags { display: flex; gap: 12px; margin-top: 4px; }
 .group-flag { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: #bbb; }
 .group-flag .material-symbols-outlined { font-size: 13px; }
 .group-flag.flag-active { color: #4aad4e; }
