@@ -209,7 +209,8 @@ async function fetchOrders() {
   if (statusFilter.value === 'pending') {
     params.set('status', 'pending,paid')
   } else if (statusFilter.value === 'unpaid') {
-    params.set('status', 'unpaid')
+    // 待付款：对齐取餐端（kiosk）按未支付(!paidAt)筛选，而非 status
+    params.set('unpaid', '1')
   } else if (statusFilter.value && statusFilter.value !== 'all') {
     params.set('status', statusFilter.value)
   }
