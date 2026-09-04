@@ -755,7 +755,7 @@ setQuick(range === 'all' ? 'all' : 'today')
   flex-shrink: 0;
 }
 .delta.up { background: rgba(74,173,78,0.1); color: #4aad4e; }
-.delta.down { background: rgba(186,26,26,0.1); color: #ba1a1a; }
+.delta.down { background: rgba(186,26,26,0.1); color: #f87171; }
 .delta.neutral { background: var(--surface-container-low); color: var(--text-disabled); }
 
 /* ===== Trend Chart ===== */
@@ -1024,7 +1024,7 @@ setQuick(range === 'all' ? 'all' : 'today')
 .col-rank { width: 48px; color: var(--text-disabled); }
 .col-qty { width: 80px; font-weight: 700; color: #ff6b00; }
 .col-revenue { width: 120px; font-weight: 600; }
-.fr-row td { color: #ba1a1a; background: var(--error-soft); }
+.fr-row td { color: #f87171; background: var(--error-soft); }
 .fr-row .col-name { font-weight: 600; }
 .fr-row .col-qty { color: var(--text-disabled); font-weight: 400; }
 

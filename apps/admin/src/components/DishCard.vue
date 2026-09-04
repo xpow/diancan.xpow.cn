@@ -238,7 +238,7 @@ function handleThumbFallback(dish: Dish, e: Event) {
 .status-badge:hover { transform: scale(0.97); }
 .status-active {
   background: var(--tertiary-soft);
-  color: #006e1c;
+  color: #4ade80;
 }
 .status-active::before {
   content: '';
@@ -249,7 +249,7 @@ function handleThumbFallback(dish: Dish, e: Event) {
 }
 .status-inactive {
   background: var(--error-soft);
-  color: #ba1a1a;
+  color: var(--error);
 }
 .status-inactive::before {
   content: '';
@@ -319,7 +319,7 @@ function handleThumbFallback(dish: Dish, e: Event) {
 }
 .btn-text-success { color: #4aad4e; border-color: #4aad4e; }
 .btn-text-success:hover { background: var(--tertiary-soft); }
-.btn-text-danger { color: #ba1a1a; border-color: #ba1a1a; }
+.btn-text-danger { color: var(--error); border-color: var(--error); }
 .btn-text-danger:hover { background: var(--error-soft); }
 
 /* Footer */
@@ -378,7 +378,7 @@ function handleThumbFallback(dish: Dish, e: Event) {
 .btn-edit:hover { background: rgba(255, 107, 0, 0.2); }
 .btn-delete {
   background: var(--error-soft);
-  color: #ba1a1a;
+  color: var(--error);
 }
 .btn-delete:hover { background: rgba(186, 26, 26, 0.15); }
 </style>

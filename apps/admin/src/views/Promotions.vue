@@ -906,7 +906,7 @@ onMounted(() => {
 .btn-edit { background: var(--surface-container-low); color: var(--on-surface); }
 .btn-edit:hover { background: var(--surface-container-high); }
 .btn-edit:disabled { opacity: 0.4; cursor: not-allowed; }
-.btn-delete { background: transparent; color: #ba1a1a; border: 1px solid #ba1a1a; }
+.btn-delete { background: transparent; color: #f87171; border: 1px solid #f87171; }
 .btn-delete:hover { background: rgba(186,26,26,0.08); }
 
 .empty { text-align: center; padding: 40px; color: var(--text-disabled); font-size: 14px; }

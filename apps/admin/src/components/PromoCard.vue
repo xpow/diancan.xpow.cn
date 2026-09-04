@@ -379,7 +379,7 @@ function formatTime(t?: string): string {
 .btn-edit:hover:not(:disabled) { background: rgba(255, 107, 0, 0.2); }
 .btn-delete {
   background: var(--error-soft);
-  color: #ba1a1a;
+  color: var(--error);
 }
 .btn-delete:hover { background: rgba(186, 26, 26, 0.15); }
 </style>

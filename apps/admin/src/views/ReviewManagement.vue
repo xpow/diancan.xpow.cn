@@ -294,7 +294,7 @@ onMounted(() => { loadSettings(); loadReviews() })
   color: var(--text-disabled);
 }
 
-.error-msg { color: #ba1a1a; font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+.error-msg { color: #f87171; font-size: 14px; font-weight: 600; margin-bottom: 16px; }
 .loading-msg { color: var(--text-secondary); font-size: 14px; margin-bottom: 16px; }
 
 /* ===== Card ===== */
@@ -449,14 +449,14 @@ onMounted(() => { loadSettings(); loadReviews() })
   font-family: 'Plus Jakarta Sans', sans-serif;
   transition: all 0.15s;
 }
-.btn-danger-icon { color: #ba1a1a; }
+.btn-danger-icon { color: #f87171; }
 .btn-danger-icon:hover { background: var(--error-soft); }
 
 /* ===== Eval Summary ===== */
 .eval-summary { display: flex; gap: 8px; font-size: 12px; font-weight: 600; }
 .eval-good { color: #4aad4e; }
 .eval-okay { color: #d97706; }
-.eval-bad { color: #ba1a1a; }
+.eval-bad { color: #f87171; }
 
 /* ===== Review Detail ===== */
 .review-detail-item { margin-bottom: 4px; line-height: 1.6; font-size: 13px; }
@@ -471,7 +471,7 @@ onMounted(() => { loadSettings(); loadReviews() })
 }
 .badge-good { background: var(--tertiary-soft); color: #4aad4e; }
 .badge-okay { background: var(--primary-soft); color: #a04100; }
-.badge-bad  { background: var(--error-soft); color: #ba1a1a; }
+.badge-bad  { background: var(--error-soft); color: #f87171; }
 .detail-tag {
   display: inline-block;
   padding: 0 6px;

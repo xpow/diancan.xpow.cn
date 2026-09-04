@@ -309,7 +309,7 @@ onMounted(async () => {
 .summary-value { font-size: 24px; font-weight: 700; }
 .summary-card.rev .summary-value { color: var(--p-primary-color, #FF6B00); }
 .summary-card.cost .summary-value { color: #e74c3c; }
-.summary-card.profit .summary-value { color: #27ae60; }
+.summary-card.profit .summary-value { color: #4ade80; }
 .summary-card.margin .summary-value { font-size: 28px; color: var(--p-primary-color, #FF6B00); }
 .summary-card.waste .summary-value { font-size: 20px; }
 .summary-card.waste .summary-value small { font-size: 14px; color: #e74c3c; margin-left: 4px; }
