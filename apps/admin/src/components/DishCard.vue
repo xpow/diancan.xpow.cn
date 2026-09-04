@@ -248,8 +248,8 @@ function handleThumbFallback(dish: Dish, e: Event) {
   background: #4aad4e;
 }
 .status-inactive {
-  background: var(--error-soft);
-  color: var(--error);
+  background: rgb(255 76 55 / 16%);
+  color: #f74e22;
 }
 .status-inactive::before {
   content: '';
@@ -319,8 +319,8 @@ function handleThumbFallback(dish: Dish, e: Event) {
 }
 .btn-text-success { color: #4aad4e; border-color: #4aad4e; }
 .btn-text-success:hover { background: var(--tertiary-soft); }
-.btn-text-danger { color: var(--error); border-color: var(--error); }
-.btn-text-danger:hover { background: var(--error-soft); }
+.btn-text-danger { color: #f74e22; border-color: #f74e22; }
+.btn-text-danger:hover { background: rgb(255 76 55 / 16%); }
 
 /* Footer */
 .dish-card-footer {
@@ -377,8 +377,8 @@ function handleThumbFallback(dish: Dish, e: Event) {
 }
 .btn-edit:hover { background: rgba(255, 107, 0, 0.2); }
 .btn-delete {
-  background: var(--error-soft);
-  color: var(--error);
+  background: rgb(255 76 55 / 16%);
+  color: #f74e22;
 }
 .btn-delete:hover { background: rgba(186, 26, 26, 0.15); }
 </style>

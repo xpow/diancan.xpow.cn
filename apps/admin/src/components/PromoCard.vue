@@ -245,7 +245,7 @@ function formatTime(t?: string): string {
 .status-paused   { background: var(--primary-soft); color: #a04100; }
 .status-draft    { background: var(--border); color: var(--text-secondary); }
 .status-ended    { background: var(--border); color: var(--text-disabled); }
-.status-inactive { background: var(--error-soft); color: var(--text-disabled); }
+.status-inactive { background: rgb(255 76 55 / 16%); color: var(--text-disabled); }
 
 /* Toggle */
 .toggle-btn {
@@ -378,8 +378,8 @@ function formatTime(t?: string): string {
 }
 .btn-edit:hover:not(:disabled) { background: rgba(255, 107, 0, 0.2); }
 .btn-delete {
-  background: var(--error-soft);
-  color: var(--error);
+  background: rgb(255 76 55 / 16%);
+  color: #f74e22;
 }
 .btn-delete:hover { background: rgba(186, 26, 26, 0.15); }
 </style>

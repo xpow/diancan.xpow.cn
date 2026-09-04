@@ -712,7 +712,7 @@ onMounted(() => {
 
 .btn-icon.btn-danger:hover {
   background: rgba(186, 26, 26, 0.1);
-  color: #f87171;
+  color: #f74e22;
 }
 
 .btn-icon-sm {
@@ -729,7 +729,7 @@ onMounted(() => {
 
 .btn-icon-sm:hover {
   background: #ffdad6;
-  color: #f87171;
+  color: #f74e22;
 }
 
 .btn-text {
@@ -759,7 +759,7 @@ onMounted(() => {
 .btn-text-danger {
   background: none;
   border: none;
-  color: #f87171;
+  color: #f74e22;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -1013,7 +1013,7 @@ onMounted(() => {
 
 .status-inactive {
   background: rgba(186, 26, 26, 0.1);
-  color: #f87171;
+  color: #f74e22;
 }
 
 .status-inactive::before {
