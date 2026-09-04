@@ -367,7 +367,7 @@ import { ref, computed, onMounted } from 'vue'
 
 const form = ref({ name: '', slogan: '', statusText: '', logoUrl: '' })
 const showRestReason = ref(false)
-const restReasons = ['已打烊', '天气原因', '市政管理', '停业']
+const restReasons = ['已打烊', '天气原因', '市政管理', '短期休假中', '停业']
 const restTarget = ref<any>(null)
 const restFormReason = ref('')
 
