@@ -328,7 +328,7 @@ function formatTime(t: string) {
 .order-no { font-size: 11px; color: var(--text-disabled); }
 
 /* Merged Header */
-.merged-header { align-items: center; background: var(--primary-soft); }
+.merged-header { align-items: center; background: var(--surface); }
 .merged-title-row { display: flex; align-items: center; gap: 6px; }
 .merged-icon { font-size: 18px; color: var(--on-surface); }
 .merged-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 800; color: var(--on-surface); }

@@ -12,8 +12,9 @@
       <div class="metric-card">
         <div class="metric-icon mi-sales">💰</div>
         <div class="metric-body">
-          <span class="metric-label">总营收（今日）</span>
-          <span class="metric-value">¥{{ stats.todayEstimatedRevenue.toFixed(2) }}</span>
+          <span class="metric-label">今日营收</span>
+          <span class="metric-value">¥{{ stats.todayNormalRevenue.toFixed(2) }}</span>
+          <span v-if="stats.todayAllianceRevenue > 0" class="metric-sub">联盟 ¥{{ stats.todayAllianceRevenue.toFixed(2) }}</span>
         </div>
       </div>
       <div class="metric-card">
@@ -98,7 +99,7 @@ import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import OrderCard from '../components/OrderCard.vue'
 
-const stats = ref({ todayOrders: 0, todayCompletedRevenue: 0, todayEstimatedRevenue: 0, totalOrders: 0, completedRevenue: 0, estimatedRevenue: 0, pendingOrders: 0, readyOrders: 0, unpaidOrders: 0 })
+const stats = ref({ todayOrders: 0, todayRevenue: 0, todayNormalRevenue: 0, todayAllianceRevenue: 0, totalOrders: 0, completedRevenue: 0, pendingOrders: 0, readyOrders: 0, unpaidOrders: 0 })
 const recentOrders = ref<any[]>([])
 const showCancel = ref(false)
 const cancelOrderId = ref('')
@@ -107,7 +108,7 @@ const cancelReasons = ['等待时间过长，客户不要了', '客户有事不�
 
 const avgOrder = computed(() => {
   if (!stats.value.todayOrders) return '0.00'
-  return (stats.value.todayEstimatedRevenue / stats.value.todayOrders).toFixed(2)
+  return (stats.value.todayNormalRevenue / stats.value.todayOrders).toFixed(2)
 })
 
 async function fetchData() {
@@ -131,11 +132,11 @@ async function fetchData() {
     const s = await overviewRes.json()
     stats.value = {
       todayOrders: s.todayOrders ?? 0,
-      todayCompletedRevenue: s.todayCompletedRevenue ?? 0,
-      todayEstimatedRevenue: s.todayEstimatedRevenue ?? 0,
+      todayRevenue: s.todayRevenue ?? 0,
+      todayNormalRevenue: s.todayNormalRevenue ?? 0,
+      todayAllianceRevenue: s.todayAllianceRevenue ?? 0,
       totalOrders: s.totalOrders ?? 0,
       completedRevenue: s.completedRevenue ?? 0,
-      estimatedRevenue: s.estimatedRevenue ?? 0,
       pendingOrders: s.pendingOrders ?? 0,
       readyOrders: s.readyOrders ?? 0,
       unpaidOrders: s.unpaidOrders ?? 0,
@@ -262,6 +263,12 @@ onMounted(fetchData)
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.metric-sub {
+  display: block;
+  font-size: 12px;
+  color: var(--text-disabled);
+  margin-top: 2px;
 }
 
 /* ===== Quick Bar ===== */
