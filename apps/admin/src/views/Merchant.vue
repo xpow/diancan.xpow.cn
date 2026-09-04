@@ -159,10 +159,6 @@
         </div>
 
         <div class="card-actions">
-          <button class="chip-btn status-toggle" :class="device.status === 'active' ? 'off' : 'on'" @click="device.status === 'active' ? offlineDevice(device) : setDeviceStatus(device.id, 'active')">
-            <span class="material-symbols-outlined">{{ device.status === 'active' ? 'power_settings_new' : 'power_off' }}</span>
-            {{ device.status === 'active' ? '下线' : '上线' }}
-          </button>
           <button v-if="device.sn" class="chip-btn" @click="copySN(device.sn)">
             <span class="material-symbols-outlined">content_copy</span>复制
           </button>
@@ -174,6 +170,13 @@
           </button>
           <button class="chip-btn" @click="openCommandDialog(device)">
             <span class="material-symbols-outlined">build</span>指令
+          </button>
+        </div>
+
+        <div class="device-danger-row">
+          <button class="chip-btn status-toggle" :class="device.status === 'active' ? 'off' : 'on'" @click="device.status === 'active' ? offlineDevice(device) : setDeviceStatus(device.id, 'active')">
+            <span class="material-symbols-outlined">{{ device.status === 'active' ? 'power_settings_new' : 'power_off' }}</span>
+            {{ device.status === 'active' ? '下线' : '上线' }}
           </button>
           <button class="chip-btn danger" @click="deleteDevice(device.id)">
             <span class="material-symbols-outlined">delete</span>删除
@@ -675,6 +678,7 @@ onMounted(() => {
 .stat-label { font-size: 11px; color: var(--text-disabled); }
 
 .card-actions { display: flex; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--divider); padding-top: 12px; }
+.device-danger-row { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
 .chip-btn {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 6px 12px; border: 1px solid var(--border); border-radius: 20px;

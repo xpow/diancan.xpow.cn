@@ -49,20 +49,6 @@
           <div class="status-row">
             <span class="status-dot" :class="device.status === 'active' ? 'on' : 'off'"></span>
             <span class="status-text">{{ device.status === 'active' ? '在线' : '离线' }}</span>
-            <button
-              v-if="device.status === 'active'"
-              class="status-btn offline"
-              @click="offlineDevice(device)"
-            >
-              <span class="material-symbols-outlined">power_settings_new</span>下线
-            </button>
-            <button
-              v-else
-              class="status-btn online"
-              @click="setDeviceStatus(device.id, 'active')"
-            >
-              <span class="material-symbols-outlined">power_off</span>上线
-            </button>
           </div>
         </div>
 
@@ -87,6 +73,23 @@
           </button>
           <button class="chip-btn" @click="openCommandDialog(device)">
             <span class="material-symbols-outlined">build</span>指令
+          </button>
+        </div>
+
+        <div class="danger-row">
+          <button
+            v-if="device.status === 'active'"
+            class="chip-btn" :class="'warn'"
+            @click="offlineDevice(device)"
+          >
+            <span class="material-symbols-outlined">power_settings_new</span>下线
+          </button>
+          <button
+            v-else
+            class="chip-btn good"
+            @click="setDeviceStatus(device.id, 'active')"
+          >
+            <span class="material-symbols-outlined">power_off</span>上线
           </button>
           <button class="chip-btn danger" @click="deleteDevice(device.id)">
             <span class="material-symbols-outlined">delete</span>删除
@@ -446,6 +449,7 @@ onMounted(() => {
 .status-btn.online:hover { background: rgba(74, 173, 78, 0.25); }
 
 .device-actions { display: flex; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--divider); padding-top: 12px; }
+.danger-row { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
 .chip-btn {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 6px 12px; border: 1px solid var(--border); border-radius: 20px;
@@ -456,6 +460,10 @@ onMounted(() => {
 .chip-btn:hover { border-color: #ff6b00; color: #ff6b00; background: var(--primary-soft); }
 .chip-btn.danger:hover { border-color: var(--error); color: #f74e22; background: rgb(255 76 55 / 16%); }
 .chip-btn.share-on { border-color: #4ade80; color: #4ade80; background: rgba(74, 173, 78, 0.15); }
+.chip-btn.warn { border-color: #d97706; color: #d97706; background: rgba(217, 119, 6, 0.15); }
+.chip-btn.warn:hover { border-color: #d97706; color: #d97706; background: rgba(217, 119, 6, 0.25); }
+.chip-btn.good { border-color: #4ade80; color: #4ade80; background: rgba(74, 173, 78, 0.15); }
+.chip-btn.good:hover { border-color: #4ade80; color: #4ade80; background: rgba(74, 173, 78, 0.25); }
 
 /* Empty State */
 .empty-state { padding: 80px 20px; text-align: center; color: var(--text-disabled); }
