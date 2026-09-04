@@ -62,5 +62,5 @@ onMounted(fetchUsers)
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .page-title { margin: 0; font-size: 22px; font-weight: 700; }
 .avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
-.no-avatar { color: #999; }
+.no-avatar { color: var(--text-disabled); }
 </style>

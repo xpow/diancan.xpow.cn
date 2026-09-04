@@ -315,9 +315,9 @@ onMounted(() => {
 .page-title { margin: 0; font-size: 22px; font-weight: 700; }
 .header-actions { display: flex; gap: 8px; }
 .form-group { margin-bottom: 12px; }
-.form-group label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 4px; }
+.form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
 .w-full { width: 100%; }
 .sn-text { font-family: monospace; font-size: 13px; letter-spacing: 1px; }
-.sn-empty { color: #999; }
+.sn-empty { color: var(--text-disabled); }
 .device-status-cell { display: flex; align-items: center; gap: 4px; }
 </style>

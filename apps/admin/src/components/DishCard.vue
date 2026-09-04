@@ -116,8 +116,8 @@ function handleThumbFallback(dish: Dish, e: Event) {
 
 <style scoped>
 .dish-card {
-  background: #fff;
-  border: 1px solid #e5e2e1;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 16px;
   overflow: hidden;
   transition: box-shadow 0.15s;
@@ -133,7 +133,7 @@ function handleThumbFallback(dish: Dish, e: Event) {
   display: flex;
   gap: 12px;
   padding: 16px;
-  border-bottom: 1px solid #f0eded;
+  border-bottom: 1px solid var(--divider);
 }
 
 .dish-thumb {
@@ -142,7 +142,7 @@ function handleThumbFallback(dish: Dish, e: Event) {
   border-radius: 12px;
   overflow: hidden;
   flex-shrink: 0;
-  background: #f6f3f2;
+  background: var(--surface-container-low);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -173,7 +173,7 @@ function handleThumbFallback(dish: Dish, e: Event) {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 15px;
   font-weight: 700;
-  color: #1c1b1b;
+  color: var(--on-surface);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -182,14 +182,14 @@ function handleThumbFallback(dish: Dish, e: Event) {
 .dish-id {
   display: block;
   font-size: 11px;
-  color: #bbb;
+  color: var(--text-disabled);
   margin-top: 2px;
 }
 
 .dish-desc {
   margin: 4px 0 0;
   font-size: 12px;
-  color: #5a4136;
+  color: var(--on-surface-variant);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -204,17 +204,17 @@ function handleThumbFallback(dish: Dish, e: Event) {
 .category-tag {
   display: inline-block;
   padding: 2px 8px;
-  background: #f0eded;
+  background: var(--surface-container);
   border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
-  color: #1c1b1b;
+  color: var(--on-surface);
 }
 
 .portion-tag {
   display: inline-block;
   padding: 2px 8px;
-  background: #fff3e8;
+  background: var(--primary-soft);
   border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
@@ -237,7 +237,7 @@ function handleThumbFallback(dish: Dish, e: Event) {
 }
 .status-badge:hover { transform: scale(0.97); }
 .status-active {
-  background: rgba(74, 173, 78, 0.15);
+  background: var(--tertiary-soft);
   color: #006e1c;
 }
 .status-active::before {
@@ -248,7 +248,7 @@ function handleThumbFallback(dish: Dish, e: Event) {
   background: #4aad4e;
 }
 .status-inactive {
-  background: rgba(186, 26, 26, 0.1);
+  background: var(--error-soft);
   color: #ba1a1a;
 }
 .status-inactive::before {
@@ -281,7 +281,7 @@ function handleThumbFallback(dish: Dish, e: Event) {
 }
 .price-unit {
   font-size: 12px;
-  color: #999;
+  color: var(--text-disabled);
 }
 
 .dish-stock {
@@ -293,7 +293,7 @@ function handleThumbFallback(dish: Dish, e: Event) {
 .stock-input {
   width: 60px;
   padding: 4px 8px;
-  border: 1px solid #e5e2e1;
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 12px;
   text-align: center;
@@ -305,7 +305,7 @@ function handleThumbFallback(dish: Dish, e: Event) {
 
 .stock-unlimited {
   font-size: 12px;
-  color: #999;
+  color: var(--text-disabled);
 }
 
 .btn-text-success, .btn-text-danger {
@@ -318,9 +318,9 @@ function handleThumbFallback(dish: Dish, e: Event) {
   transition: all 0.15s;
 }
 .btn-text-success { color: #4aad4e; border-color: #4aad4e; }
-.btn-text-success:hover { background: rgba(74, 173, 78, 0.1); }
+.btn-text-success:hover { background: var(--tertiary-soft); }
 .btn-text-danger { color: #ba1a1a; border-color: #ba1a1a; }
-.btn-text-danger:hover { background: rgba(186, 26, 26, 0.08); }
+.btn-text-danger:hover { background: var(--error-soft); }
 
 /* Footer */
 .dish-card-footer {
@@ -328,8 +328,8 @@ function handleThumbFallback(dish: Dish, e: Event) {
   align-items: center;
   justify-content: space-between;
   padding: 10px 16px;
-  border-top: 1px solid #f0eded;
-  background: #fdfbf9;
+  border-top: 1px solid var(--divider);
+  background: var(--surface-container-low);
 }
 
 .sort-control {
@@ -339,12 +339,12 @@ function handleThumbFallback(dish: Dish, e: Event) {
 }
 .sort-label {
   font-size: 11px;
-  color: #999;
+  color: var(--text-disabled);
 }
 .sort-input {
   width: 48px;
   padding: 4px 6px;
-  border: 1px solid #e5e2e1;
+  border: 1px solid var(--border);
   border-radius: 6px;
   font-size: 12px;
   text-align: center;
@@ -372,12 +372,12 @@ function handleThumbFallback(dish: Dish, e: Event) {
 }
 .btn-action .material-symbols-outlined { font-size: 18px; }
 .btn-edit {
-  background: rgba(255, 107, 0, 0.1);
+  background: var(--primary-soft);
   color: #ff6b00;
 }
 .btn-edit:hover { background: rgba(255, 107, 0, 0.2); }
 .btn-delete {
-  background: rgba(186, 26, 26, 0.08);
+  background: var(--error-soft);
   color: #ba1a1a;
 }
 .btn-delete:hover { background: rgba(186, 26, 26, 0.15); }

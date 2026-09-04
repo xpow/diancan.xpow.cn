@@ -192,16 +192,16 @@ onMounted(fetchData)
 }
 .page-title {
   margin: 0;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: var(--font-display);
   font-size: 24px;
   font-weight: 700;
-  color: #1c1b1b;
+  color: var(--on-surface);
 }
 .page-subtitle {
   margin: 4px 0 0;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
   font-size: 14px;
-  color: #5a4136;
+  color: var(--on-surface-variant);
 }
 
 /* ===== Metric Cards ===== */
@@ -212,11 +212,11 @@ onMounted(fetchData)
   margin-bottom: 16px;
 }
 .metric-card {
-  background: #fff;
+  background: var(--surface);
   border-radius: 16px;
   padding: 16px 20px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-  border: 1px solid #e5e2e1;
+  border: 1px solid var(--border);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -242,23 +242,23 @@ onMounted(fetchData)
 .mi-sales  { background: rgba(74,173,78,0.1); }
 .mi-orders { background: rgba(59,130,246,0.1); }
 .mi-avg    { background: rgba(139,92,246,0.1); }
-.mi-pending{ background: rgba(255,107,0,0.1); }
+.mi-pending{ background: var(--primary-soft); }
 .metric-body { flex: 1; min-width: 0; }
 .metric-label {
   display: block;
   font-size: 12px;
-  color: #999;
+  color: var(--text-disabled);
   margin-bottom: 2px;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
 .metric-value {
   display: block;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: var(--font-display);
   font-size: 22px;
   font-weight: 800;
-  color: #1a1a1a;
+  color: var(--on-surface);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -276,19 +276,19 @@ onMounted(fetchData)
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: #fff;
-  border: 1px solid #e5e2e1;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 20px;
   font-size: 13px;
   font-weight: 500;
-  color: #1a1a1a;
+  color: var(--on-surface);
   text-decoration: none;
   transition: all 0.15s;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: var(--font-display);
 }
 .quick-btn-link:hover { border-color: #ff6b00; color: #ff6b00; }
 .quick-btn-link b { color: #ff6b00; margin-left: 2px; }
-.quick-btn-link .material-symbols-outlined { font-size: 18px; color: #666; }
+.quick-btn-link .material-symbols-outlined { font-size: 18px; color: var(--text-secondary); }
 .quick-btn-link:hover .material-symbols-outlined { color: #ff6b00; }
 
 /* ===== Orders Grid ===== */
@@ -299,7 +299,7 @@ onMounted(fetchData)
 }
 
 /* ===== Misc ===== */
-.empty { text-align: center; padding: 40px; color: #999; font-size: 14px; }
+.empty { text-align: center; padding: 40px; color: var(--text-disabled); font-size: 14px; }
 
 @media (max-width: 768px) {
   .metric-grid { grid-template-columns: repeat(2, 1fr); }
@@ -309,9 +309,9 @@ onMounted(fetchData)
 </style>
 
 <style>
-.cancel-hint { margin: 0 0 12px; font-size: 14px; color: #666; }
+.cancel-hint { margin: 0 0 12px; font-size: 14px; color: var(--text-secondary); }
 .cancel-options { display: flex; flex-direction: column; gap: 8px; }
-.cancel-option { padding: 10px 14px; border: 1px solid #e5e2e1; border-radius: 12px; cursor: pointer; font-size: 14px; transition: all 0.15s; }
+.cancel-option { padding: 10px 14px; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; font-size: 14px; transition: all 0.15s; }
 .cancel-option:hover { border-color: #ff6b00; }
 .cancel-option.selected { border-color: #ff6b00; background: #fff3e8; font-weight: 600; }
 </style>

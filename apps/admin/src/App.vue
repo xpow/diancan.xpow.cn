@@ -65,7 +65,15 @@
           <span class="material-symbols-outlined">manage_accounts</span>
           <span class="nav-text">用户管理</span>
         </router-link>
-      </nav>
+        </nav>
+
+      <!-- Theme Toggle -->
+      <div class="theme-controls">
+        <button class="theme-toggle" @click="cycleTheme" :title="themeLabel">
+          <span class="material-symbols-outlined">{{ themeIcon }}</span>
+          <span class="theme-label">{{ themeLabel }}</span>
+        </button>
+      </div>
     </aside>
 
     <!-- Main Content -->
@@ -76,12 +84,53 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const merchantName = ref('商家后台')
 const logoUrl = 'https://diancan.xpow.cn/src/assets/images/pages/logo.jpg'
+
+type ThemeChoice = 'light' | 'dark' | 'system'
+const themeChoice = ref<ThemeChoice>((localStorage.getItem('admin-theme') as ThemeChoice) || 'system')
+
+const themeIcon = computed(() => {
+  const map: Record<ThemeChoice, string> = { light: 'light_mode', dark: 'dark_mode', system: 'contrast' }
+  return map[themeChoice.value]
+})
+const themeLabel = computed(() => {
+  const map: Record<ThemeChoice, string> = { light: '浅色', dark: '深色', system: '跟随系统' }
+  return map[themeChoice.value]
+})
+
+function applyTheme(choice: ThemeChoice) {
+  const isDark = choice === 'dark' || (choice === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light')
+  document.documentElement.classList.toggle('p-dark', isDark)
+}
+
+function cycleTheme() {
+  const order: ThemeChoice[] = ['light', 'dark', 'system']
+  const idx = order.indexOf(themeChoice.value)
+  themeChoice.value = order[(idx + 1) % order.length]
+  localStorage.setItem('admin-theme', themeChoice.value)
+  applyTheme(themeChoice.value)
+}
+
+let mqListener: ((e: MediaQueryListEvent) => void) | null = null
+
+onMounted(() => {
+  applyTheme(themeChoice.value)
+  const mq = window.matchMedia('(prefers-color-scheme: dark)')
+  mqListener = (e: MediaQueryListEvent) => {
+    if (themeChoice.value === 'system') applyTheme('system')
+  }
+  mq.addEventListener('change', mqListener)
+})
+
+onUnmounted(() => {
+  if (mqListener) window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', mqListener)
+})
 
 onMounted(async () => {
   try {
@@ -102,15 +151,15 @@ onMounted(async () => {
 .layout {
   display: flex;
   min-height: 100vh;
-  background: #fcf9f8;
+  background: var(--bg);
 }
 
 /* Sidebar */
 .sidebar {
   width: 240px;
   flex-shrink: 0;
-  background: #fff;
-  border-right: 1px solid #e5e2e1;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
   padding: 20px 12px;
   display: flex;
   flex-direction: column;
@@ -139,7 +188,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--on-primary);
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -157,10 +206,10 @@ onMounted(async () => {
 
 .brand-name {
   margin: 0;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: var(--font-display);
   font-size: 16px;
   font-weight: 700;
-  color: #1c1b1b;
+  color: var(--on-surface);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -168,9 +217,9 @@ onMounted(async () => {
 
 .brand-subtitle {
   margin: 2px 0 0;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
   font-size: 12px;
-  color: #5a4136;
+  color: var(--on-surface-variant);
 }
 
 /* Navigation */
@@ -186,10 +235,10 @@ onMounted(async () => {
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
-  color: #5a4136;
+  color: var(--on-surface-variant);
   text-decoration: none;
   border-radius: 12px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: var(--font-display);
   font-size: 14px;
   font-weight: 600;
   transition: all 0.15s;
@@ -201,13 +250,13 @@ onMounted(async () => {
 }
 
 .nav-link:hover {
-  background: #f6f3f2;
-  color: #1c1b1b;
+  background: var(--surface-container-low);
+  color: var(--on-surface);
 }
 
 .nav-link.router-link-active {
-  background: rgba(255, 107, 0, 0.1);
-  color: #ff6b00;
+  background: var(--primary-soft);
+  color: var(--primary-container);
 }
 
 .nav-link.router-link-active .material-symbols-outlined {
@@ -220,8 +269,41 @@ onMounted(async () => {
 
 .nav-divider {
   height: 1px;
-  background: #e5e2e1;
+  background: var(--divider);
   margin: 12px 8px;
+}
+
+/* Theme Toggle */
+.theme-controls {
+  padding: 12px 8px 4px;
+  border-top: 1px solid var(--divider);
+  margin-top: 12px;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--on-surface-variant);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.theme-toggle:hover {
+  background: var(--surface-container-low);
+  color: var(--on-surface);
+}
+
+.theme-toggle .material-symbols-outlined {
+  font-size: 20px;
 }
 
 /* Content */
@@ -266,6 +348,21 @@ onMounted(async () => {
 
   .nav-text {
     display: none;
+  }
+
+  .theme-label {
+    display: none;
+  }
+
+  .theme-toggle {
+    justify-content: center;
+    padding: 10px;
+  }
+
+  .theme-controls {
+    padding: 8px 0;
+    border-top: 1px solid var(--divider);
+    margin-top: 8px;
   }
 
   .nav-divider {

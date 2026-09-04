@@ -175,8 +175,8 @@ function formatTime(t?: string): string {
 
 <style scoped>
 .promo-card {
-  background: #fff;
-  border: 1px solid #e5e2e1;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 16px;
   overflow: hidden;
   transition: box-shadow 0.15s;
@@ -193,7 +193,7 @@ function formatTime(t?: string): string {
   justify-content: space-between;
   align-items: flex-start;
   padding: 16px;
-  border-bottom: 1px solid #f0eded;
+  border-bottom: 1px solid var(--divider);
 }
 
 .promo-info {
@@ -205,7 +205,7 @@ function formatTime(t?: string): string {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 15px;
   font-weight: 700;
-  color: #1c1b1b;
+  color: var(--on-surface);
   display: block;
   margin-bottom: 8px;
 }
@@ -224,7 +224,7 @@ function formatTime(t?: string): string {
   font-weight: 600;
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
-.type-full_reduction  { background: #fff3e8; color: #a04100; }
+.type-full_reduction  { background: var(--primary-soft); color: #a04100; }
 .type-buy_get         { background: rgba(139,92,246,0.1); color: #7c3aed; }
 .type-welfare_item    { background: rgba(74,173,78,0.1); color: #4aad4e; }
 .type-time_discount   { background: rgba(59,130,246,0.1); color: #3b82f6; }
@@ -242,10 +242,10 @@ function formatTime(t?: string): string {
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
 .status-active   { background: rgba(74,173,78,0.1); color: #4aad4e; }
-.status-paused   { background: rgba(255,107,0,0.1); color: #a04100; }
-.status-draft    { background: #e5e2e1; color: #666; }
-.status-ended    { background: #e5e2e1; color: #999; }
-.status-inactive { background: rgba(186,26,26,0.08); color: #999; }
+.status-paused   { background: var(--primary-soft); color: #a04100; }
+.status-draft    { background: var(--border); color: var(--text-secondary); }
+.status-ended    { background: var(--border); color: var(--text-disabled); }
+.status-inactive { background: var(--error-soft); color: var(--text-disabled); }
 
 /* Toggle */
 .toggle-btn {
@@ -261,12 +261,12 @@ function formatTime(t?: string): string {
 }
 .toggle-btn .material-symbols-outlined { font-size: 20px; }
 .toggle-btn--pause {
-  background: rgba(255, 107, 0, 0.1);
+  background: var(--primary-soft);
   color: #ff6b00;
 }
 .toggle-btn--pause:hover { background: rgba(255, 107, 0, 0.2); }
 .toggle-btn--play {
-  background: rgba(74, 173, 78, 0.1);
+  background: var(--tertiary-soft);
   color: #4aad4e;
 }
 .toggle-btn--play:hover { background: rgba(74, 173, 78, 0.2); }
@@ -285,14 +285,14 @@ function formatTime(t?: string): string {
 
 .rule-label {
   font-size: 11px;
-  color: #999;
+  color: var(--text-disabled);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .rule-text {
   font-size: 13px;
-  color: #5a4136;
+  color: var(--on-surface-variant);
   line-height: 1.5;
 }
 
@@ -305,7 +305,7 @@ function formatTime(t?: string): string {
 
 .device-label {
   font-size: 11px;
-  color: #999;
+  color: var(--text-disabled);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -319,11 +319,11 @@ function formatTime(t?: string): string {
 .device-tag {
   display: inline-block;
   padding: 2px 8px;
-  background: #f0eded;
+  background: var(--surface-container);
   border-radius: 6px;
   font-size: 11px;
   font-weight: 500;
-  color: #5a4136;
+  color: var(--on-surface-variant);
 }
 
 /* Footer */
@@ -332,8 +332,8 @@ function formatTime(t?: string): string {
   align-items: center;
   justify-content: space-between;
   padding: 10px 16px;
-  border-top: 1px solid #f0eded;
-  background: #fdfbf9;
+  border-top: 1px solid var(--divider);
+  background: var(--surface-container-low);
 }
 
 .promo-meta {
@@ -346,7 +346,7 @@ function formatTime(t?: string): string {
   align-items: center;
   gap: 4px;
   font-size: 11px;
-  color: #999;
+  color: var(--text-disabled);
 }
 .meta-item .material-symbols-outlined { font-size: 14px; }
 
@@ -373,12 +373,12 @@ function formatTime(t?: string): string {
   cursor: not-allowed;
 }
 .btn-edit {
-  background: rgba(255, 107, 0, 0.1);
+  background: var(--primary-soft);
   color: #ff6b00;
 }
 .btn-edit:hover:not(:disabled) { background: rgba(255, 107, 0, 0.2); }
 .btn-delete {
-  background: rgba(186, 26, 26, 0.08);
+  background: var(--error-soft);
   color: #ba1a1a;
 }
 .btn-delete:hover { background: rgba(186, 26, 26, 0.15); }

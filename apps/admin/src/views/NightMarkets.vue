@@ -165,14 +165,14 @@ onMounted(fetchMarkets)
 .header-actions { display: flex; gap: 8px; align-items: center; }
 .key-input { width: 200px; }
 .form-group { margin-bottom: 12px; }
-.form-group label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 4px; }
+.form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
 .form-row { display: flex; gap: 12px; }
 .flex-1 { flex: 1; }
 .w-full { width: 100%; }
 .search-row { display: flex; gap: 8px; }
-.poi-list { margin-top: 8px; max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 6px; }
+.poi-list { margin-top: 8px; max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; }
 .poi-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #f0f0f0; display: flex; flex-direction: column; gap: 2px; }
 .poi-item:hover { background: #f0f0f0; }
-.poi-addr { font-size: 12px; color: #666; }
-.poi-loc { font-size: 11px; color: #999; }
+.poi-addr { font-size: 12px; color: var(--text-secondary); }
+.poi-loc { font-size: 11px; color: var(--text-disabled); }
 </style>

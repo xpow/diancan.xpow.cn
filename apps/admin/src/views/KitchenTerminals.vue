@@ -203,9 +203,9 @@ onMounted(() => {
   --p-switch-checked-background: #22c55e;
   --p-switch-checked-border-color: #22c55e;
 }
-.empty-text { color: #999; }
+.empty-text { color: var(--text-disabled); }
 .form-group { margin-bottom: 14px; }
-.form-group label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 6px; }
+.form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
 .w-full { width: 100%; }
 .url-hint { font-size: 12px; color: #888; margin: 4px 0 0; }
 </style>

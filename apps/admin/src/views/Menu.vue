@@ -637,14 +637,14 @@ onMounted(() => {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 24px;
   font-weight: 700;
-  color: #1c1b1b;
+  color: var(--on-surface);
 }
 
 .page-subtitle {
   margin: 4px 0 0;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #5a4136;
+  color: var(--on-surface-variant);
 }
 
 /* Buttons */
@@ -652,8 +652,8 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #ff6b00;
-  color: #fff;
+  background: var(--surface);
+  color: var(--on-primary);
   border: none;
   padding: 10px 20px;
   border-radius: 24px;
@@ -674,9 +674,9 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #fff;
-  color: #1c1b1b;
-  border: 1px solid #e5e2e1;
+  background: var(--surface);
+  color: var(--on-surface);
+  border: 1px solid var(--border);
   padding: 10px 20px;
   border-radius: 24px;
   font-family: 'Plus Jakarta Sans', sans-serif;
@@ -701,7 +701,7 @@ onMounted(() => {
   background: transparent;
   border-radius: 50%;
   cursor: pointer;
-  color: #5a4136;
+  color: var(--on-surface-variant);
   transition: all 0.15s;
 }
 
@@ -719,11 +719,11 @@ onMounted(() => {
   width: 24px;
   height: 24px;
   border: none;
-  background: #f5f5f5;
+  background: var(--surface-container-low);
   border-radius: 50%;
   cursor: pointer;
   font-size: 16px;
-  color: #999;
+  color: var(--text-disabled);
   transition: all 0.15s;
 }
 
@@ -792,10 +792,10 @@ onMounted(() => {
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  border: 1px solid #e5e2e1;
+  border: 1px solid var(--border);
   border-radius: 20px;
-  background: #fff;
-  color: #666;
+  background: var(--surface);
+  color: var(--text-secondary);
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 13px;
   font-weight: 600;
@@ -805,7 +805,7 @@ onMounted(() => {
 
 .tab-btn.active {
   background: #ff6b00;
-  color: #fff;
+  color: var(--on-primary);
   border-color: #ff6b00;
 }
 
@@ -829,10 +829,10 @@ onMounted(() => {
 
 .filter-tab {
   padding: 8px 16px;
-  border: 1px solid #e5e2e1;
+  border: 1px solid var(--border);
   border-radius: 20px;
-  background: #fff;
-  color: #5a4136;
+  background: var(--surface);
+  color: var(--on-surface-variant);
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 13px;
   font-weight: 600;
@@ -848,15 +848,15 @@ onMounted(() => {
 
 .filter-tab.active {
   background: #ff6b00;
-  color: #fff;
+  color: var(--on-primary);
   border-color: #ff6b00;
 }
 
 /* Card */
 .card {
-  background: #fff;
+  background: var(--surface);
   border-radius: 16px;
-  border: 1px solid #e5e2e1;
+  border: 1px solid var(--border);
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
@@ -866,12 +866,12 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  border-bottom: 1px solid #e5e2e1;
+  border-bottom: 1px solid var(--border);
 }
 
 .section-count {
   font-size: 13px;
-  color: #5a4136;
+  color: var(--on-surface-variant);
 }
 
 /* Dishes Grid */
@@ -897,16 +897,16 @@ onMounted(() => {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 12px;
   font-weight: 600;
-  color: #5a4136;
-  background: #f6f3f2;
-  border-bottom: 1px solid #e5e2e1;
+  color: var(--on-surface-variant);
+  background: var(--surface-container-low);
+  border-bottom: 1px solid var(--border);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .data-table td {
   padding: 16px;
-  border-bottom: 1px solid #f0eded;
+  border-bottom: 1px solid var(--divider);
   vertical-align: middle;
 }
 
@@ -915,7 +915,7 @@ onMounted(() => {
 }
 
 .data-table tbody tr:hover {
-  background: #fdf8f5;
+  background: var(--surface-container-low);
 }
 
 .data-table tbody tr:last-child td {
@@ -940,13 +940,13 @@ onMounted(() => {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 14px;
   font-weight: 600;
-  color: #1c1b1b;
+  color: var(--on-surface);
 }
 
 .dish-desc {
   margin: 4px 0 0;
   font-size: 12px;
-  color: #5a4136;
+  color: var(--on-surface-variant);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -957,11 +957,11 @@ onMounted(() => {
 .category-tag {
   display: inline-block;
   padding: 4px 10px;
-  background: #f0eded;
+  background: var(--surface-container);
   border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
-  color: #1c1b1b;
+  color: var(--on-surface);
 }
 
 .price {
@@ -973,7 +973,7 @@ onMounted(() => {
 
 .portion {
   font-size: 12px;
-  color: #5a4136;
+  color: var(--on-surface-variant);
 }
 
 .status-badge {
@@ -1034,14 +1034,14 @@ onMounted(() => {
 .stock-input {
   width: 70px;
   padding: 6px 10px;
-  border: 1px solid #e5e2e1;
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 13px;
   text-align: center;
 }
 
 .stock-unlimited {
-  color: #999;
+  color: var(--text-disabled);
   font-size: 13px;
 }
 
@@ -1049,7 +1049,7 @@ onMounted(() => {
 .sort-input {
   width: 60px;
   padding: 6px 8px;
-  border: 1px solid #e5e2e1;
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 13px;
   text-align: center;
@@ -1083,7 +1083,7 @@ onMounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #e5e2e1;
+  background-color: var(--border);
   transition: 0.2s;
   border-radius: 24px;
 }
@@ -1124,7 +1124,7 @@ onMounted(() => {
 }
 
 .modal {
-  background: #fff;
+  background: var(--surface);
   border-radius: 16px;
   width: 100%;
   max-width: 520px;
@@ -1142,7 +1142,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  border-bottom: 1px solid #e5e2e1;
+  border-bottom: 1px solid var(--border);
 }
 
 .modal-header h3 {
@@ -1150,7 +1150,7 @@ onMounted(() => {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 18px;
   font-weight: 700;
-  color: #1c1b1b;
+  color: var(--on-surface);
 }
 
 .modal-body {
@@ -1162,7 +1162,7 @@ onMounted(() => {
   justify-content: flex-end;
   gap: 12px;
   padding: 16px 20px;
-  border-top: 1px solid #e5e2e1;
+  border-top: 1px solid var(--border);
 }
 
 /* Form */
@@ -1176,14 +1176,14 @@ onMounted(() => {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 12px;
   font-weight: 600;
-  color: #5a4136;
+  color: var(--on-surface-variant);
 }
 
 .form-group input,
 .form-group select {
   width: 100%;
   padding: 10px 14px;
-  border: 1px solid #e5e2e1;
+  border: 1px solid var(--border);
   border-radius: 12px;
   font-size: 14px;
   transition: border-color 0.15s;
@@ -1220,7 +1220,7 @@ onMounted(() => {
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
-  color: #1c1b1b;
+  color: var(--on-surface);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -1241,7 +1241,7 @@ onMounted(() => {
 .inline-inputs select {
   width: 80px;
   padding: 6px 10px;
-  border: 1px solid #e5e2e1;
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 13px;
   flex-shrink: 0;
@@ -1250,20 +1250,20 @@ onMounted(() => {
 .stock-input-inline {
   width: 100px !important;
   padding: 6px 10px;
-  border: 1px solid #e5e2e1;
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 13px;
 }
 
 .hint-text {
   font-size: 12px;
-  color: #999;
+  color: var(--text-disabled);
 }
 
 .hint-block {
   margin: 0 0 16px;
   font-size: 12px;
-  color: #999;
+  color: var(--text-disabled);
   line-height: 1.5;
 }
 
@@ -1279,10 +1279,10 @@ onMounted(() => {
 }
 
 .spec-group {
-  border: 1px solid #e5e2e1;
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px;
-  background: #fdfbf9;
+  background: var(--surface-container-low);
 }
 
 .spec-group-header {
@@ -1295,7 +1295,7 @@ onMounted(() => {
 .spec-group-header input {
   flex: 1;
   padding: 8px 12px;
-  border: 1px solid #e5e2e1;
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 13px;
 }
@@ -1303,7 +1303,7 @@ onMounted(() => {
 .spec-group-header select {
   width: 80px;
   padding: 8px;
-  border: 1px solid #e5e2e1;
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 13px;
 }
@@ -1318,7 +1318,7 @@ onMounted(() => {
 .spec-option input {
   flex: 1;
   padding: 6px 10px;
-  border: 1px solid #e5e2e1;
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 13px;
 }
@@ -1327,7 +1327,7 @@ onMounted(() => {
 .empty-state {
   padding: 60px 20px;
   text-align: center;
-  color: #999;
+  color: var(--text-disabled);
 }
 
 .empty-state .material-symbols-outlined {
@@ -1355,7 +1355,7 @@ onMounted(() => {
 .preview-time {
   margin-top: 12px;
   font-size: 12px;
-  color: #999;
+  color: var(--text-disabled);
 }
 
 .font-semibold {

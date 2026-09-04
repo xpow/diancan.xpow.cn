@@ -288,14 +288,14 @@ async function confirmCancel() {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 24px;
   font-weight: 700;
-  color: #1c1b1b;
+  color: var(--on-surface);
 }
 
 .page-subtitle {
   margin: 4px 0 0;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #5a4136;
+  color: var(--on-surface-variant);
 }
 
 .header-actions {
@@ -308,8 +308,8 @@ async function confirmCancel() {
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: #fff;
-  border: 1px solid #e5e2e1;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 24px;
   min-width: 240px;
 }
@@ -320,11 +320,11 @@ async function confirmCancel() {
   font-size: 14px;
   width: 100%;
   background: transparent;
-  color: #1c1b1b;
+  color: var(--on-surface);
 }
 
 .search-box .material-symbols-outlined {
-  color: #5a4136;
+  color: var(--on-surface-variant);
 }
 
 /* Filter Tabs */
@@ -340,10 +340,10 @@ async function confirmCancel() {
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  border: 1px solid #e5e2e1;
+  border: 1px solid var(--border);
   border-radius: 20px;
-  background: #fff;
-  color: #5a4136;
+  background: var(--surface);
+  color: var(--on-surface-variant);
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 13px;
   font-weight: 600;
@@ -358,7 +358,7 @@ async function confirmCancel() {
 
 .filter-tab.active {
   background: #ff6b00;
-  color: #fff;
+  color: var(--on-primary);
   border-color: #ff6b00;
 }
 
@@ -405,12 +405,12 @@ async function confirmCancel() {
   background: transparent;
   border-radius: 50%;
   cursor: pointer;
-  color: #5a4136;
+  color: var(--on-surface-variant);
   transition: all 0.15s;
 }
 
 .btn-icon:hover {
-  background: rgba(255, 107, 0, 0.1);
+  background: var(--primary-soft);
   color: #ff6b00;
 }
 
@@ -418,9 +418,9 @@ async function confirmCancel() {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #fff;
-  color: #1c1b1b;
-  border: 1px solid #e5e2e1;
+  background: var(--surface);
+  color: var(--on-surface);
+  border: 1px solid var(--border);
   padding: 10px 20px;
   border-radius: 24px;
   font-family: 'Plus Jakarta Sans', sans-serif;
@@ -440,7 +440,7 @@ async function confirmCancel() {
   align-items: center;
   gap: 8px;
   background: #ba1a1a;
-  color: #fff;
+  color: var(--on-primary);
   border: none;
   padding: 10px 20px;
   border-radius: 24px;
@@ -476,7 +476,7 @@ async function confirmCancel() {
 }
 
 .modal {
-  background: #fff;
+  background: var(--surface);
   border-radius: 16px;
   width: 100%;
   max-width: 520px;
@@ -494,7 +494,7 @@ async function confirmCancel() {
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  border-bottom: 1px solid #e5e2e1;
+  border-bottom: 1px solid var(--border);
 }
 
 .modal-header h3 {
@@ -502,7 +502,7 @@ async function confirmCancel() {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 18px;
   font-weight: 700;
-  color: #1c1b1b;
+  color: var(--on-surface);
 }
 
 .modal-body {
@@ -514,14 +514,14 @@ async function confirmCancel() {
   justify-content: flex-end;
   gap: 12px;
   padding: 16px 20px;
-  border-top: 1px solid #e5e2e1;
+  border-top: 1px solid var(--border);
 }
 
 /* Cancel Dialog */
 .cancel-hint {
   margin: 0 0 16px;
   font-size: 14px;
-  color: #5a4136;
+  color: var(--on-surface-variant);
 }
 
 .cancel-options {
@@ -535,7 +535,7 @@ async function confirmCancel() {
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  border: 1px solid #e5e2e1;
+  border: 1px solid var(--border);
   border-radius: 12px;
   cursor: pointer;
   font-size: 14px;
@@ -544,12 +544,12 @@ async function confirmCancel() {
 
 .cancel-option:hover {
   border-color: #ff6b00;
-  background: #fdf8f5;
+  background: var(--surface-container-low);
 }
 
 .cancel-option.selected {
   border-color: #ff6b00;
-  background: #fff3e8;
+  background: var(--primary-soft);
   font-weight: 600;
 }
 
@@ -578,9 +578,9 @@ async function confirmCancel() {
   justify-content: center;
   width: 36px;
   height: 36px;
-  border: 1px solid #e5e2e1;
+  border: 1px solid var(--border);
   border-radius: 50%;
-  background: #fff;
+  background: var(--surface);
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -597,14 +597,14 @@ async function confirmCancel() {
 
 .page-info {
   font-size: 13px;
-  color: #5a4136;
+  color: var(--on-surface-variant);
 }
 
 /* Empty State */
 .empty-state {
   padding: 80px 20px;
   text-align: center;
-  color: #999;
+  color: var(--text-disabled);
 }
 
 .empty-state .material-symbols-outlined {

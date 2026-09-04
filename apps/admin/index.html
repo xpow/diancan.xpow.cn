@@ -8,33 +8,95 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <script>
+    (function() {
+      var saved = localStorage.getItem('admin-theme') || 'system';
+      var dark = saved === 'dark' || (saved === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+      if (dark) document.documentElement.classList.add('p-dark');
+    })();
+  </script>
   <style>
     :root {
-      color-scheme: light dark;
-      --primary: #a04100;
-      --primary-container: #ff6b00;
-      --on-primary: #ffffff;
-      --on-primary-container: #572000;
+      color-scheme: light;
+      /* === MD3 Semantic Tokens — Light === */
       --bg: #fcf9f8;
       --surface: #ffffff;
       --surface-container-lowest: #ffffff;
       --surface-container-low: #f6f3f2;
       --surface-container: #f0eded;
       --surface-container-high: #eae7e7;
+      --surface-overlay: rgba(0, 0, 0, 0.04);
       --on-surface: #1c1b1b;
       --on-surface-variant: #5a4136;
+      --primary: #a04100;
+      --primary-container: #ff6b00;
+      --primary-soft: rgba(255, 107, 0, 0.08);
+      --primary-on-soft: #a04100;
+      --on-primary: #ffffff;
+      --on-primary-container: #572000;
       --secondary: #5e5e5c;
       --secondary-container: #e1dfdc;
       --tertiary: #006e1c;
       --tertiary-container: #4aad4e;
+      --tertiary-soft: rgba(74, 173, 78, 0.08);
       --error: #ba1a1a;
       --error-container: #ffdad6;
+      --error-soft: rgba(186, 26, 26, 0.08);
+      --warning: #d97706;
+      --warning-soft: rgba(217, 119, 6, 0.08);
+      --info: #3b82f6;
+      --info-soft: rgba(59, 130, 246, 0.08);
       --outline: #8e7164;
-      --outline-variant: #e2bfb0;
+      --outline-variant: #e5e2e1;
+      --border: #e5e2e1;
+      --divider: #f0eded;
       --text: #1c1b1b;
       --text-secondary: #5e5e5c;
+      --text-disabled: #999999;
+      --bg-input: field;
+      --text-input: fieldtext;
       --font-display: 'Plus Jakarta Sans', sans-serif;
       --font-body: 'Inter', sans-serif;
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #141211;
+      --surface: #201d1c;
+      --surface-container-lowest: #1b1918;
+      --surface-container-low: #262322;
+      --surface-container: #2b2827;
+      --surface-container-high: #33302f;
+      --surface-overlay: rgba(255, 255, 255, 0.05);
+      --on-surface: #ecdfd6;
+      --on-surface-variant: #c9b5a8;
+      --primary: #ffb382;
+      --primary-container: #ff6b00;
+      --primary-soft: rgba(255, 107, 0, 0.16);
+      --primary-on-soft: #ffb382;
+      --on-primary: #3c1500;
+      --on-primary-container: #ffdcc2;
+      --secondary: #c9c8c4;
+      --secondary-container: #44423f;
+      --tertiary: #7fd98d;
+      --tertiary-container: #2e7a3a;
+      --tertiary-soft: rgba(127, 217, 141, 0.16);
+      --error: #ffb4ab;
+      --error-container: #93000a;
+      --error-soft: rgba(255, 180, 171, 0.16);
+      --warning: #f0b731;
+      --warning-soft: rgba(240, 183, 49, 0.16);
+      --info: #7aadff;
+      --info-soft: rgba(122, 173, 255, 0.16);
+      --outline: #9c8575;
+      --outline-variant: #4d3f37;
+      --border: #3a3533;
+      --divider: #2b2827;
+      --text: #ecdfd6;
+      --text-secondary: #c9b5a8;
+      --text-disabled: #666666;
+      --bg-input: #2b2827;
+      --text-input: #ecdfd6;
     }
     body { margin: 0; font-family: var(--font-body); font-size: 14px; background: var(--bg); color: var(--on-surface); -webkit-font-smoothing: antialiased; }
     * { box-sizing: border-box; }

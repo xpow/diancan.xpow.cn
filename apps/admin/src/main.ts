@@ -16,7 +16,15 @@ import App from './App.vue'
 import router from './router'
 
 const app = createApp(App)
-app.use(PrimeVue, { theme: { preset: Aura } })
+app.use(PrimeVue, {
+  theme: {
+    preset: Aura,
+    options: {
+      darkModeSelector: '.p-dark',
+      cssLayer: false
+    }
+  }
+})
 app.component('Button', Button)
 app.component('DataTable', DataTable)
 app.component('Column', Column)

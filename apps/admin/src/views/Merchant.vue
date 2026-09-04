@@ -457,11 +457,11 @@ onMounted(() => {
 .merchant-page { max-width: none; }
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .page-title { margin: 0; font-size: 22px; font-weight: 700; }
-.card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.card { background: var(--surface); border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
 .card-title { margin: 0 0 16px; font-size: 16px; font-weight: 700; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .form-group { margin-bottom: 12px; }
-.form-group label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 4px; }
+.form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
 .form-row { display: flex; gap: 12px; }
 .flex-1 { flex: 1; }
 .w-full { width: 100%; }
@@ -469,11 +469,11 @@ onMounted(() => {
 .rest-reason-text { margin: 4px 0 0; font-size: 13px; color: #e74c3c; display: flex; align-items: center; gap: 4px; }
 .reason-list { display: flex; flex-direction: column; gap: 8px; }
 .reason-option { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; border: 1px solid #e0e0e0; cursor: pointer; font-size: 14px; transition: all 0.2s; }
-.reason-option:hover { border-color: #ff6b00; background: #fff8f0; }
-.reason-option-active { border-color: #ff6b00; background: #fff8f0; color: #ff6b00; font-weight: 600; }
+.reason-option:hover { border-color: #ff6b00; background: var(--primary-soft); }
+.reason-option-active { border-color: #ff6b00; background: var(--primary-soft); color: #ff6b00; font-weight: 600; }
 .reason-radio { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #ccc; display: inline-block; transition: all 0.2s; }
 .reason-radio-checked { border-color: #ff6b00; background: #ff6b00; box-shadow: inset 0 0 0 3px #fff; }
 .sn-text { font-family: monospace; font-size: 13px; letter-spacing: 1px; }
-.sn-empty { color: #999; }
+.sn-empty { color: var(--text-disabled); }
 .device-status-cell { display: flex; align-items: center; gap: 4px; }
 </style>
