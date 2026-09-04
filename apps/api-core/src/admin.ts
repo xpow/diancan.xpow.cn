@@ -1524,8 +1524,8 @@ router.get('/stats/overview', async (_req, res) => {
 
   const valid = orders.filter((o) => VALID.includes(o.status))
   const completed = valid.filter((o) => o.status === 'completed')
-  const paid = valid.filter((o) => o.paidAt)
-  const todayPaid = paid.filter((o) => o.createdAt >= today)
+  const todayValid = valid.filter((o) => o.createdAt >= today)
+  const todayPaid = todayValid.filter((o) => o.paidAt)
   const todayAlliancePaid = todayPaid.filter((o) => o.items.some((i) => i.alliance))
   const todayNormalPaid = todayPaid.filter((o) => !o.items.some((i) => i.alliance))
 
@@ -1534,7 +1534,7 @@ router.get('/stats/overview', async (_req, res) => {
   res.json({
     totalOrders: valid.length,
     completedRevenue: sum(completed),
-    todayOrders: todayPaid.length,
+    todayOrders: todayValid.length,
     todayRevenue: sum(todayPaid),
     todayAllianceRevenue: Number(todayAlliancePaid.reduce((s, o) => s + (o.payableAmount || 0), 0).toFixed(2)),
     todayNormalRevenue: Number(todayNormalPaid.reduce((s, o) => s + (o.payableAmount || 0), 0).toFixed(2)),
