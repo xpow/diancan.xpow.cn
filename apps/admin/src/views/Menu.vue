@@ -652,7 +652,7 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: var(--surface);
+  background: var(--primary-container);
   color: var(--on-primary);
   border: none;
   padding: 10px 20px;
