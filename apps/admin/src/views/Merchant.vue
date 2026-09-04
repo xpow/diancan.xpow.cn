@@ -173,7 +173,7 @@
             <span class="material-symbols-outlined">edit</span>编辑
           </button>
           <button class="chip-btn" @click="openCommandDialog(device)">
-            <span class="material-symbols-outlined">wrench</span>指令
+            <span class="material-symbols-outlined">build</span>指令
           </button>
           <button class="chip-btn danger" @click="deleteDevice(device.id)">
             <span class="material-symbols-outlined">delete</span>删除
