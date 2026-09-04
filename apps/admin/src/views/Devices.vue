@@ -1,165 +1,219 @@
 <template>
   <div class="devices-page">
+    <!-- Page Header -->
     <div class="page-header">
-      <h2 class="page-title">点餐机管理</h2>
+      <div>
+        <h2 class="page-title">点餐机管理</h2>
+        <p class="page-subtitle">管理和监控点餐设备</p>
+      </div>
       <div class="header-actions">
-        <Button
-          :label="filterUser ? '全部' : '仅用户设备'"
-          :icon="filterUser ? 'pi pi-list' : 'pi pi-user'"
-          severity="secondary"
-          @click="filterUser = !filterUser"
-        />
-        <Button label="新增设备" icon="pi pi-plus" @click="openDeviceDialog()" />
+        <button :class="['btn-secondary', !filterUser && 'active']" @click="filterUser = !filterUser">
+          <span class="material-symbols-outlined">{{ filterUser ? 'contract_delete' : 'group' }}</span>
+          {{ filterUser ? '全部设备' : '仅用户设备' }}
+        </button>
+        <button class="btn-primary" @click="openDeviceDialog()">
+          <span class="material-symbols-outlined">add</span>
+          新增设备
+        </button>
       </div>
     </div>
 
-    <DataTable :value="filteredDevices" striped-rows>
-      <Column field="code" header="编号" style="width:60px" />
-      <Column field="name" header="名称" />
-      <Column field="role" header="角色">
-        <template #body="{ data }">
-          <Tag :value="data.role === 'admin' ? '管理员' : '用户'" :severity="data.role === 'admin' ? 'warn' : 'info'" />
-        </template>
-      </Column>
-      <Column field="contact" header="联系方式" />
-      <Column field="mode" header="模式">
-        <template #body="{ data }">
-          <Tag :value="data.mode === 'kiosk' ? '自助点餐' : 'H5点单'" :severity="data.mode === 'kiosk' ? 'info' : 'contrast'" />
-        </template>
-      </Column>
-      <Column header="设备码" style="width:160px">
-        <template #body="{ data }">
-          <span v-if="data.sn" class="sn-text">{{ data.sn }}</span>
-          <span v-else class="sn-empty">-</span>
-        </template>
-      </Column>
-      <Column field="branchName" header="所属分店" />
-      <Column field="authCount" header="关联设备">
-        <template #body="{ data }">
-          <Button v-if="data.authCount > 0" :label="String(data.authCount)" severity="info" text size="small" @click="showAuthLogs(data)" />
-          <span v-else class="sn-empty">0</span>
-        </template>
-      </Column>
-      <Column field="status" header="状态">
-        <template #body="{ data }">
-          <div class="device-status-cell">
-            <Tag :value="data.status === 'active' ? '在线' : '离线'" :severity="data.status === 'active' ? 'success' : 'danger'" />
-            <Button
-              v-if="data.status === 'active'"
-              icon="pi pi-power-off"
-              label="下线"
-              severity="warn"
-              text
-              size="small"
-              @click="offlineDevice(data)"
-            />
-            <Button
-              v-else
-              icon="pi pi-sync"
-              label="上线"
-              severity="success"
-              text
-              size="small"
-              @click="setDeviceStatus(data.id, 'active')"
-            />
+    <!-- Devices Grid -->
+    <div class="devices-grid" v-if="filteredDevices.length">
+      <div v-for="device in filteredDevices" :key="device.id" class="device-card">
+        <div class="device-head">
+          <div class="device-avatar" :class="device.status === 'active' ? 'online' : 'offline'">
+            <span class="material-symbols-outlined">{{ device.mode === 'kiosk' ? 'point_of_sale' : 'smartphone' }}</span>
           </div>
-        </template>
-      </Column>
-      <Column header="分享" style="width:100px">
-        <template #body="{ data }">
-          <Button
-            :label="data.shared ? '已分享' : '启用分享'"
-            :severity="data.shared ? 'success' : 'contrast'"
-            :icon="data.shared ? 'pi pi-check-circle' : 'pi pi-share-alt'"
-            text
-            size="small"
-            @click="toggleShare(data)"
-          />
-        </template>
-      </Column>
-      <Column header="操作" style="width:360px">
-        <template #body="{ data }">
-          <Button v-if="data.sn" icon="pi pi-copy" label="复制" severity="info" text size="small" @click="copySN(data.sn)" />
-          <Button v-if="data.sn" icon="pi pi-qrcode" label="扫码链接" severity="info" text size="small" @click="copyQRUrl(data.id)" />
-          <Button icon="pi pi-refresh" label="重置" severity="info" text size="small" @click="regenerateSN(data.id)" />
-          <Button icon="pi pi-pencil" label="编辑" severity="info" text size="small" @click="openDeviceDialog(data)" />
-          <Button icon="pi pi-trash" label="删除" severity="danger" size="small" @click="deleteDevice(data.id)" />
-          <Button icon="pi pi-wrench" label="指令" severity="help" text size="small" @click="openCommandDialog(data)" />
-        </template>
-      </Column>
-    </DataTable>
+          <div class="device-info">
+            <div class="device-name-row">
+              <span class="device-name">{{ device.name }}</span>
+              <span class="role-tag" :class="device.role === 'admin' ? 'admin' : 'user'">
+                {{ device.role === 'admin' ? '管理员' : '用户' }}
+              </span>
+            </div>
+            <div class="device-meta">
+              <span class="meta-item"><span class="material-symbols-outlined">pin</span>{{ device.code || '—' }}</span>
+              <span class="meta-item"><span class="material-symbols-outlined">category</span>{{ device.mode === 'kiosk' ? '自助点餐' : 'H5点单' }}</span>
+              <span class="meta-item"><span class="material-symbols-outlined">storefront</span>{{ device.branchName || '未分配' }}</span>
+            </div>
+          </div>
+        </div>
 
-    <Dialog v-model:visible="showDevice" :header="editingDevice ? '编辑设备' : '新增设备'" style="width:400px">
-      <div class="form-group">
-        <label>编号（2位）</label>
-        <InputText v-model="deviceForm.code" class="w-full" maxlength="2" placeholder="不填自动递增" />
-      </div>
-      <div class="form-group">
-        <label>设备名称</label>
-        <InputText v-model="deviceForm.name" class="w-full" placeholder="不填自动生成" />
-      </div>
-      <div class="form-group">
-        <label>联系方式</label>
-        <InputText v-model="deviceForm.contact" class="w-full" placeholder="手机号/微信号" />
-      </div>
-      <div class="form-group">
-        <label>模式</label>
-        <Select v-model="deviceForm.mode" :options="[{ label: '自助点餐机', value: 'kiosk' }, { label: 'H5 扫码点单', value: 'h5' }]" optionLabel="label" optionValue="value" class="w-full" />
-      </div>
-      <div class="form-group">
-        <label>角色</label>
-        <Select v-model="deviceForm.role" :options="[{ label: '用户', value: 'user' }, { label: '管理员', value: 'admin' }]" optionLabel="label" optionValue="value" class="w-full" />
-      </div>
-      <div class="form-group">
-        <label>所属分店</label>
-        <Select v-model="deviceForm.branchId" :options="branches" optionLabel="name" optionValue="id" class="w-full" />
-      </div>
-      <template #footer>
-        <Button label="取消" severity="secondary" @click="showDevice = false" />
-        <Button label="保存" @click="saveDevice" />
-      </template>
-    </Dialog>
+        <div class="device-body">
+          <div class="sn-row">
+            <span class="sn-label">设备码</span>
+            <span v-if="device.sn" class="sn-text">{{ device.sn }}</span>
+            <span v-else class="sn-empty">-</span>
+          </div>
+          <div class="status-row">
+            <span class="status-dot" :class="device.status === 'active' ? 'on' : 'off'"></span>
+            <span class="status-text">{{ device.status === 'active' ? '在线' : '离线' }}</span>
+            <button
+              v-if="device.status === 'active'"
+              class="status-btn offline"
+              @click="offlineDevice(device)"
+            >
+              <span class="material-symbols-outlined">power_settings_new</span>下线
+            </button>
+            <button
+              v-else
+              class="status-btn online"
+              @click="setDeviceStatus(device.id, 'active')"
+            >
+              <span class="material-symbols-outlined">power_off</span>上线
+            </button>
+          </div>
+        </div>
 
-    <Dialog v-model:visible="showCommand" :header="`设备指令 - ${commandTarget?.name || ''}`" style="width:400px">
-      <div class="form-group">
-        <label>指令类型</label>
-        <Select v-model="commandForm.command" :options="commandOptions" optionLabel="label" optionValue="value" class="w-full" />
+        <div class="device-actions">
+          <button v-if="device.authCount > 0" class="chip-btn" @click="showAuthLogs(device)">
+            <span class="material-symbols-outlined">devices_other</span>关联{{ device.authCount }}
+          </button>
+          <button v-if="device.sn" class="chip-btn" @click="copySN(device.sn)">
+            <span class="material-symbols-outlined">content_copy</span>复制
+          </button>
+          <button v-if="device.sn" class="chip-btn" @click="copyQRUrl(device.id)">
+            <span class="material-symbols-outlined">qr_code</span>扫码
+          </button>
+          <button class="chip-btn" :class="{ 'share-on': device.shared }" @click="toggleShare(device)">
+            <span class="material-symbols-outlined">{{ device.shared ? 'share' : 'share' }}</span>{{ device.shared ? '已分享' : '分享' }}
+          </button>
+          <button v-if="device.sn" class="chip-btn" @click="regenerateSN(device.id)">
+            <span class="material-symbols-outlined">refresh</span>重置
+          </button>
+          <button class="chip-btn" @click="openDeviceDialog(device)">
+            <span class="material-symbols-outlined">edit</span>编辑
+          </button>
+          <button class="chip-btn" @click="openCommandDialog(device)">
+            <span class="material-symbols-outlined">wrench</span>指令
+          </button>
+          <button class="chip-btn danger" @click="deleteDevice(device.id)">
+            <span class="material-symbols-outlined">delete</span>删除
+          </button>
+        </div>
       </div>
-      <template #footer>
-        <Button label="取消" severity="secondary" @click="showCommand = false" />
-        <Button label="发送" @click="sendCommand" />
-      </template>
-    </Dialog>
+    </div>
 
-    <Dialog v-model:visible="showAuthLog" header="关联设备列表" style="width:600px">
-      <DataTable v-if="authLogs.length" :value="authLogs">
-        <Column field="deviceType" header="设备类型" />
-        <Column field="lastAuthAt" header="最近认证时间">
-          <template #body="{ data }">
-            {{ new Date(data.lastAuthAt).toLocaleString() }}
-          </template>
-        </Column>
-        <Column field="ip" header="IP" />
-        <Column field="userAgent" header="User-Agent" style="max-width:300px">
-          <template #body="{ data }">
-            <span class="ua-text">{{ data.userAgent || '-' }}</span>
-          </template>
-        </Column>
-      </DataTable>
-      <p v-else class="empty-hint">暂无记录</p>
-    </Dialog>
+    <!-- Empty State -->
+    <div v-else class="empty-state">
+      <span class="material-symbols-outlined">devices</span>
+      <p>暂无设备</p>
+    </div>
+
+    <!-- Add/Edit Device Modal -->
+    <div v-if="showDevice" class="modal-overlay" @click.self="showDevice = false">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>{{ editingDevice ? '编辑设备' : '新增设备' }}</h3>
+          <button class="btn-icon" @click="showDevice = false">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>编号（2位）</label>
+            <input v-model="deviceForm.code" maxlength="2" placeholder="不填自动递增" />
+          </div>
+          <div class="form-group">
+            <label>设备名称</label>
+            <input v-model="deviceForm.name" placeholder="不填自动生成" />
+          </div>
+          <div class="form-group">
+            <label>联系方式</label>
+            <input v-model="deviceForm.contact" placeholder="手机号/微信号" />
+          </div>
+          <div class="form-group">
+            <label>模式</label>
+            <div class="select-wrap">
+              <select v-model="deviceForm.mode">
+                <option value="kiosk">自助点餐机</option>
+                <option value="h5">H5 扫码点单</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>角色</label>
+            <div class="select-wrap">
+              <select v-model="deviceForm.role">
+                <option value="user">用户</option>
+                <option value="admin">管理员</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>所属分店</label>
+            <div class="select-wrap">
+              <select v-model="deviceForm.branchId">
+                <option v-for="b in branches" :key="b.id" :value="b.id">{{ b.name }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" @click="showDevice = false">取消</button>
+          <button class="btn-primary" @click="saveDevice">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Command Modal -->
+    <div v-if="showCommand" class="modal-overlay" @click.self="showCommand = false">
+      <div class="modal modal-sm">
+        <div class="modal-header">
+          <h3>设备指令 - {{ commandTarget?.name || '' }}</h3>
+          <button class="btn-icon" @click="showCommand = false">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>指令类型</label>
+            <div class="select-wrap">
+              <select v-model="commandForm.command">
+                <option v-for="opt in commandOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" @click="showCommand = false">取消</button>
+          <button class="btn-primary" @click="sendCommand">发送</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auth Log Modal -->
+    <div v-if="showAuthLog" class="modal-overlay" @click.self="showAuthLog = false">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>关联设备列表</h3>
+          <button class="btn-icon" @click="showAuthLog = false">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div v-if="authLogs.length" class="auth-table">
+            <div class="auth-row" v-for="log in authLogs" :key="log.id ?? log.lastAuthAt">
+              <div class="auth-cell">
+                <span class="auth-type">{{ log.deviceType }}</span>
+                <span class="auth-ip">{{ log.ip || '—' }}</span>
+              </div>
+              <span class="auth-time">{{ new Date(log.lastAuthAt).toLocaleString() }}</span>
+            </div>
+          </div>
+          <p v-else class="empty-hint">暂无记录</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" @click="showAuthLog = false">关闭</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import Button from 'primevue/button'
-import DataTable from 'primevue/datatable'
-import Column from 'primevue/column'
-import Dialog from 'primevue/dialog'
-import InputText from 'primevue/inputtext'
-import Select from 'primevue/select'
-import Tag from 'primevue/tag'
 
 const devices = ref<any[]>([])
 const branches = ref<any[]>([])
@@ -278,10 +332,8 @@ function openCommandDialog(device: any) {
 
 const showAuthLog = ref(false)
 const authLogs = ref<any[]>([])
-const authTargetName = ref('')
 
 async function showAuthLogs(device: any) {
-  authTargetName.value = device.name
   const res = await fetch(`/api/admin/devices/${device.id}/auth-logs`)
   const data = await res.json()
   authLogs.value = data.list || []
@@ -311,13 +363,150 @@ onMounted(() => {
 
 <style scoped>
 .devices-page { max-width: none; }
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.page-title { margin: 0; font-size: 22px; font-weight: 700; }
-.header-actions { display: flex; gap: 8px; }
-.form-group { margin-bottom: 12px; }
-.form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
-.w-full { width: 100%; }
-.sn-text { font-family: monospace; font-size: 13px; letter-spacing: 1px; }
+
+/* Page Header */
+.page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; gap: 16px; }
+.page-title { margin: 0; font-family: var(--font-display); font-size: 24px; font-weight: 700; color: var(--on-surface); }
+.page-subtitle { margin: 4px 0 0; font-family: var(--font-body); font-size: 14px; color: var(--on-surface-variant); }
+.header-actions { display: flex; gap: 12px; }
+
+/* Buttons */
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--primary-container); color: var(--on-primary);
+  border: none; padding: 10px 20px; border-radius: 24px;
+  font-family: var(--font-display); font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s; box-shadow: 0 2px 8px rgba(255, 107, 0, 0.2);
+}
+.btn-primary:hover { background: #e65c00; transform: scale(0.98); }
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--surface); color: var(--on-surface);
+  border: 1px solid var(--border); padding: 10px 20px; border-radius: 24px;
+  font-family: var(--font-display); font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-secondary:hover { border-color: #ff6b00; color: #ff6b00; }
+.btn-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border: none; background: transparent; border-radius: 50%;
+  cursor: pointer; color: var(--on-surface-variant); transition: all 0.15s;
+}
+.btn-icon:hover { background: var(--primary-soft); color: #ff6b00; }
+
+/* Devices Grid */
+.devices-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+.device-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  padding: 16px; display: flex; flex-direction: column; gap: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.15s;
+}
+.device-card:hover { border-color: #ffd9bd; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+
+.device-head { display: flex; align-items: center; gap: 12px; }
+.device-avatar {
+  width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.device-avatar .material-symbols-outlined { font-size: 22px; }
+.device-avatar.online { background: var(--tertiary-soft); color: #4ade80; }
+.device-avatar.offline { background: var(--surface-container-low); color: var(--text-disabled); }
+.device-info { flex: 1; min-width: 0; }
+.device-name-row { display: flex; align-items: center; gap: 8px; }
+.device-name { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--on-surface); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.role-tag {
+  padding: 1px 8px; border-radius: 8px; font-size: 11px; font-weight: 600; flex-shrink: 0;
+}
+.role-tag.admin { background: rgba(217, 119, 6, 0.15); color: #d97706; }
+.role-tag.user { background: rgba(59, 130, 246, 0.15); color: var(--info); }
+
+.device-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+.meta-item { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; color: var(--on-surface-variant); }
+.meta-item .material-symbols-outlined { font-size: 13px; }
+
+.device-body { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--surface-container-low); border-radius: 10px; }
+.sn-row { display: flex; flex-direction: column; gap: 2px; }
+.sn-label { font-size: 11px; color: var(--text-disabled); }
+.sn-text { font-family: monospace; font-size: 13px; letter-spacing: 1px; color: var(--on-surface); }
 .sn-empty { color: var(--text-disabled); }
-.device-status-cell { display: flex; align-items: center; gap: 4px; }
+
+.status-row { display: flex; align-items: center; gap: 6px; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; }
+.status-dot.on { background: #4ade80; }
+.status-dot.off { background: var(--text-disabled); }
+.status-text { font-size: 13px; font-weight: 600; color: var(--on-surface); }
+.status-btn {
+  display: inline-flex; align-items: center; gap: 4px; margin-left: 8px;
+  border: none; border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.status-btn .material-symbols-outlined { font-size: 15px; }
+.status-btn.offline { background: rgba(217, 119, 6, 0.15); color: #d97706; }
+.status-btn.offline:hover { background: rgba(217, 119, 6, 0.25); }
+.status-btn.online { background: rgba(74, 173, 78, 0.15); color: #4ade80; }
+.status-btn.online:hover { background: rgba(74, 173, 78, 0.25); }
+
+.device-actions { display: flex; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--divider); padding-top: 12px; }
+.chip-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 6px 12px; border: 1px solid var(--border); border-radius: 20px;
+  background: var(--surface); color: var(--on-surface-variant);
+  font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s;
+}
+.chip-btn .material-symbols-outlined { font-size: 15px; }
+.chip-btn:hover { border-color: #ff6b00; color: #ff6b00; background: var(--primary-soft); }
+.chip-btn.danger:hover { border-color: var(--error); color: #f74e22; background: rgb(255 76 55 / 16%); }
+.chip-btn.share-on { border-color: #4ade80; color: #4ade80; background: rgba(74, 173, 78, 0.15); }
+
+/* Empty State */
+.empty-state { padding: 80px 20px; text-align: center; color: var(--text-disabled); }
+.empty-state .material-symbols-outlined { font-size: 64px; margin-bottom: 16px; opacity: 0.4; }
+.empty-state p { margin: 0; font-size: 15px; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 20px;
+}
+.modal {
+  background: var(--surface); border-radius: 16px; width: 100%; max-width: 480px;
+  max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+.modal-sm { max-width: 420px; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--border); }
+.modal-header h3 { margin: 0; font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--on-surface); }
+.modal-body { padding: 20px; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 12px; padding: 16px 20px; border-top: 1px solid var(--border); }
+
+/* Form */
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+.form-group input {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px;
+  font-size: 14px; background: var(--bg-input); color: var(--text-input); box-sizing: border-box;
+}
+.form-group input:focus { outline: none; border-color: #ff6b00; }
+.select-wrap { position: relative; }
+.select-wrap select {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px;
+  font-size: 14px; background: var(--bg-input); color: var(--text-input); appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center;
+}
+
+/* Auth Table */
+.auth-table { display: flex; flex-direction: column; }
+.auth-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--divider); }
+.auth-row:last-child { border-bottom: none; }
+.auth-cell { display: flex; flex-direction: column; gap: 2px; }
+.auth-type { font-size: 13px; font-weight: 600; color: var(--on-surface); }
+.auth-ip { font-size: 12px; color: var(--text-disabled); }
+.auth-time { font-size: 12px; color: var(--on-surface-variant); }
+.empty-hint { text-align: center; color: var(--text-disabled); padding: 20px 0; margin: 0; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-header { flex-direction: column; }
+  .devices-grid { grid-template-columns: 1fr; }
+}
 </style>
