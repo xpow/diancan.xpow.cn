@@ -353,17 +353,17 @@ const SPEC_BLOCKS: { key: string; cat: 'common' | 'coffee'; label: string; group
   { key: 'topping', cat: 'common', label: '加料', group: { name: '加料', type: 'multi', options: [{ label: '不加料' }, { label: '珍珠', priceDelta: 2 }, { label: '椰果', priceDelta: 2 }, { label: '布丁', priceDelta: 3 }, { label: '奶盖', priceDelta: 4 }] } },
   { key: 'cup', cat: 'common', label: '大小杯', group: { name: '大小杯', type: 'single', options: [{ label: '小杯', priceDelta: 0 }, { label: '中杯', priceDelta: 2 }, { label: '大杯', priceDelta: 4 }] } },
   { key: 'size', cat: 'common', label: '大小份', group: { name: '大小份', type: 'single', options: [{ label: '小份', priceDelta: 0 }, { label: '大份', priceDelta: 5 }] } },
+  { key: 'cupSize', cat: 'common', label: '杯型', group: { name: '杯型', type: 'single', options: [{ label: '中杯' }, { label: '大杯' }, { label: '超大杯' }] } },
+  { key: 'sugarSwap', cat: 'common', label: '可换糖', group: { name: '可换糖', type: 'single', options: [{ label: '经典糖' }, { label: '0热量代糖' }] } },
+  { key: 'qty', cat: 'common', label: '份数', group: { name: '份数', type: 'single', options: [{ label: 'x1' }, { label: 'x2' }, { label: 'x3' }] } },
   { key: 'hotpotBase', cat: 'common', label: '锅底', group: { name: '锅底', type: 'single', options: [{ label: '麻辣锅底' }, { label: '番茄锅底' }, { label: '菌菇锅底' }, { label: '清汤锅底' }] } },
   { key: 'dip', cat: 'common', label: '蘸料', group: { name: '蘸料', type: 'single', options: [{ label: '油碟' }, { label: '麻酱' }, { label: '干碟' }] } },
   { key: 'coffeeBase', cat: 'coffee', label: '咖啡液', group: { name: '咖啡液', type: 'single', options: [{ label: '经典浓缩' }, { label: '金烘浓缩' }, { label: '低因咖啡' }] } },
-  { key: 'coffeeCup', cat: 'coffee', label: '杯型', group: { name: '杯型', type: 'single', options: [{ label: '中杯' }, { label: '大杯' }, { label: '超大杯' }] } },
   { key: 'coffeeExtract', cat: 'coffee', label: '萃取方式', group: { name: '萃取方式', type: 'single', options: [{ label: '原萃浓缩' }, { label: '精萃浓缩' }, { label: '满萃浓缩' }] } },
   { key: 'coffeeShots', cat: 'coffee', label: '浓缩份数', group: { name: '浓缩份数', type: 'single', options: [{ label: '1份' }, { label: '2份', default: true }, { label: '3份' }, { label: '4份' }] } },
   { key: 'coffeeMilk', cat: 'coffee', label: '加料', group: { name: '奶料', type: 'multi', options: [{ label: '牛奶' }, { label: '燕麦奶' }] } },
   { key: 'coffeeFoam', cat: 'coffee', label: '奶泡', group: { name: '奶泡', type: 'single', options: [{ label: '去奶泡' }] } },
-  { key: 'coffeeSugar', cat: 'coffee', label: '可换糖', group: { name: '可换糖', type: 'single', options: [{ label: '经典糖' }, { label: '0热量代糖' }] } },
   { key: 'coffeeSweet', cat: 'coffee', label: '甜度', group: { name: '咖啡甜度', type: 'single', options: [{ label: '标准甜' }, { label: '加甜' }] } },
-  { key: 'coffeeQty', cat: 'coffee', label: '份数', group: { name: '份数', type: 'single', options: [{ label: 'x1' }, { label: 'x2' }, { label: 'x3' }] } },
 ]
 
 const commonBlocks = computed(() => SPEC_BLOCKS.filter((b) => b.cat === 'common'))
@@ -1351,6 +1351,7 @@ onMounted(() => {
 }
 
 .preset-block {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1373,10 +1374,36 @@ onMounted(() => {
 }
 
 .preset-block input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
   width: 16px;
   height: 16px;
-  accent-color: #ff6b00;
+  flex-shrink: 0;
   margin: 0;
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.preset-block input[type="checkbox"]:checked {
+  background: #ff6b00;
+  border-color: #ff6b00;
+}
+
+.preset-block input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 1px;
+  width: 3px;
+  height: 7px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
 }
 
 .preset-cat {
