@@ -194,17 +194,17 @@
             <label>规格组 <small>(可选)</small></label>
             <div class="preset-cat">通用</div>
             <div class="preset-blocks">
-              <label class="preset-block" v-for="block in commonBlocks" :key="block.key">
-                <input type="checkbox" :checked="selectedPresets.includes(block.key)" @change="togglePresetBlock(block.key)" />
-                <span>{{ block.label }}</span>
-              </label>
+              <div class="preset-block" v-for="block in commonBlocks" :key="block.key">
+                <Checkbox v-model="selectedPresets" :value="block.key" :inputId="'preset-' + block.key" @change="onPresetToggle(block.key)" />
+                <label :for="'preset-' + block.key" class="preset-label">{{ block.label }}</label>
+              </div>
             </div>
             <div class="preset-cat">咖啡</div>
             <div class="preset-blocks">
-              <label class="preset-block" v-for="block in coffeeBlocks" :key="block.key">
-                <input type="checkbox" :checked="selectedPresets.includes(block.key)" @change="togglePresetBlock(block.key)" />
-                <span>{{ block.label }}</span>
-              </label>
+              <div class="preset-block" v-for="block in coffeeBlocks" :key="block.key">
+                <Checkbox v-model="selectedPresets" :value="block.key" :inputId="'preset-' + block.key" @change="onPresetToggle(block.key)" />
+                <label :for="'preset-' + block.key" class="preset-label">{{ block.label }}</label>
+              </div>
             </div>
             <div class="helper-hint">勾选需要的规格块自由组合，可搭配下方「+ 添加自定义规格组」</div>
             <div class="spec-editor" v-if="dishForm.specGroups.length">
@@ -369,17 +369,14 @@ const SPEC_BLOCKS: { key: string; cat: 'common' | 'coffee'; label: string; group
 const commonBlocks = computed(() => SPEC_BLOCKS.filter((b) => b.cat === 'common'))
 const coffeeBlocks = computed(() => SPEC_BLOCKS.filter((b) => b.cat === 'coffee'))
 
-function togglePresetBlock(key: string) {
+function onPresetToggle(key: string) {
   const block = SPEC_BLOCKS.find((b) => b.key === key)
   if (!block) return
-  const idx = selectedPresets.value.indexOf(key)
-  if (idx >= 0) {
-    selectedPresets.value.splice(idx, 1)
-    const gi = dishForm.value.specGroups.findIndex((g: any) => g.name === block.group.name)
-    if (gi >= 0) dishForm.value.specGroups.splice(gi, 1)
-  } else {
-    selectedPresets.value.push(key)
-    dishForm.value.specGroups.push(JSON.parse(JSON.stringify(block.group)))
+  const gi = dishForm.value.specGroups.findIndex((g: any) => g.name === block.group.name)
+  if (selectedPresets.value.includes(key)) {
+    if (gi < 0) dishForm.value.specGroups.push(JSON.parse(JSON.stringify(block.group)))
+  } else if (gi >= 0) {
+    dishForm.value.specGroups.splice(gi, 1)
   }
 }
 
@@ -461,6 +458,18 @@ function openDishDialog(dish?: any) {
 }
 
 async function saveDish() {
+  if (!dishForm.value.name?.trim()) {
+    alert('请输入菜品名称')
+    return
+  }
+  if (dishForm.value.price === null || dishForm.value.price === undefined || isNaN(dishForm.value.price) || dishForm.value.price < 0) {
+    alert('请输入有效的菜品价格')
+    return
+  }
+  if (!dishForm.value.categoryId) {
+    alert('请选择菜品分类')
+    return
+  }
   const body = {
     name: dishForm.value.name,
     price: dishForm.value.price,
@@ -1254,7 +1263,7 @@ onMounted(() => {
   color: var(--on-surface-variant);
 }
 
-.form-group input,
+.form-group input:not([type="checkbox"]),
 .form-group select {
   width: 100%;
   padding: 10px 14px;
@@ -1264,7 +1273,7 @@ onMounted(() => {
   transition: border-color 0.15s;
 }
 
-.form-group input:focus,
+.form-group input:not([type="checkbox"]):focus,
 .form-group select:focus {
   outline: none;
   border-color: #ff6b00;
@@ -1373,37 +1382,18 @@ onMounted(() => {
   color: #ff6b00;
 }
 
-.preset-block input[type="checkbox"] {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
+.preset-block :deep(.p-checkbox-box) {
+  width: 18px;
+  height: 18px;
+}
+
+.preset-block label {
   margin: 0;
-  border: 1.5px solid var(--border);
-  border-radius: 4px;
-  background: var(--surface);
-  display: inline-block;
-  position: relative;
+}
+
+.preset-label {
+  line-height: 18px;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.preset-block input[type="checkbox"]:checked {
-  background: #ff6b00;
-  border-color: #ff6b00;
-}
-
-.preset-block input[type="checkbox"]:checked::after {
-  content: '';
-  position: absolute;
-  left: 5px;
-  top: 1px;
-  width: 3px;
-  height: 7px;
-  border: solid #fff;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
 }
 
 .preset-cat {
@@ -1422,6 +1412,10 @@ onMounted(() => {
   font-size: 12px;
   color: var(--text-disabled);
   margin: -4px 0 12px;
+}
+
+.spec-option label {
+  margin: 0;
 }
 
 .default-radio {

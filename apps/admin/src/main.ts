@@ -12,6 +12,7 @@ import InputNumber from 'primevue/inputnumber'
 import Select from 'primevue/select'
 import Dialog from 'primevue/dialog'
 import DatePicker from 'primevue/datepicker'
+import Checkbox from 'primevue/checkbox'
 import App from './App.vue'
 import router from './router'
 
@@ -35,5 +36,6 @@ app.component('InputNumber', InputNumber)
 app.component('Select', Select)
 app.component('Dialog', Dialog)
 app.component('DatePicker', DatePicker)
+app.component('Checkbox', Checkbox)
 app.use(router)
 app.mount('#app')
