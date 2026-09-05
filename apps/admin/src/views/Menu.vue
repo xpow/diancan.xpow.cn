@@ -192,15 +192,13 @@
           </div>
           <div class="form-group">
             <label>规格组 <small>(可选)</small></label>
-            <select v-model="selectedPreset" @change="applyPreset" class="preset-select">
-              <option value="none">无规格</option>
-              <option value="bbq">烧烤（辣度+口味+串数）</option>
-              <option value="veg">素菜（辣度+串数）</option>
-              <option value="tea">茶饮（甜度+温度+加料）</option>
-              <option value="hotpot">火锅（锅底+蘸料）</option>
-              <option value="dessert">甜品（大小份+加料）</option>
-              <option value="drink">冷饮（温度）</option>
-            </select>
+            <div class="preset-blocks">
+              <label class="preset-block" v-for="block in SPEC_BLOCKS" :key="block.key">
+                <input type="checkbox" :checked="selectedPresets.includes(block.key)" @change="togglePresetBlock(block.key)" />
+                <span>{{ block.label }}</span>
+              </label>
+            </div>
+            <div class="helper-hint">勾选需要的规格块自由组合，可搭配下方「+ 添加自定义规格组」</div>
             <div class="spec-editor" v-if="dishForm.specGroups.length">
               <div v-for="(group, gi) in dishForm.specGroups" :key="gi" class="spec-group">
                 <div class="spec-group-header">
@@ -221,7 +219,7 @@
                 <button class="btn-text" @click="addSpecOption(gi)">+ 添加选项</button>
               </div>
             </div>
-            <button class="btn-text" @click="addSpecGroup" v-if="!dishForm.specGroups.length">+ 添加规格组</button>
+            <button class="btn-text" @click="addSpecGroup">+ 添加自定义规格组</button>
           </div>
           <div class="form-group">
             <label>标签 <small>(逗号分隔)</small></label>
@@ -333,40 +331,33 @@ const filteredDishes = computed(() => {
 /* Dish */
 const showDish = ref(false)
 const editingDish = ref(false)
-const selectedPreset = ref('none')
+const selectedPresets = ref<string[]>([])
 
-const SPECS_PRESETS: Record<string, any[]> = {
-  none: [],
-  bbq: [
-    { name: '辣度', type: 'single', options: [{ label: '不辣' }, { label: '微辣' }, { label: '中辣' }, { label: '特辣' }] },
-    { name: '口味', type: 'multi', options: [{ label: '原味' }, { label: '蒜香' }, { label: '黑胡椒' }] },
-    { name: '串数', type: 'single', options: [{ label: 'x1' }, { label: 'x2' }, { label: 'x3' }, { label: 'x4' }, { label: 'x5' }, { label: 'x6' }, { label: 'x8' }, { label: 'x10' }] },
-  ],
-  veg: [
-    { name: '辣度', type: 'single', options: [{ label: '不辣' }, { label: '微辣' }, { label: '中辣' }, { label: '特辣' }] },
-    { name: '串数', type: 'single', options: [{ label: 'x1' }, { label: 'x2' }, { label: 'x3' }, { label: 'x4' }, { label: 'x5' }, { label: 'x6' }, { label: 'x8' }, { label: 'x10' }] },
-  ],
-  tea: [
-    { name: '甜度', type: 'single', options: [{ label: '全糖' }, { label: '七分糖' }, { label: '三分糖' }, { label: '无糖' }] },
-    { name: '温度', type: 'single', options: [{ label: '冰镇' }, { label: '常温' }] },
-    { name: '加料', type: 'multi', options: [{ label: '不加料' }, { label: '珍珠', priceDelta: 2 }, { label: '椰果', priceDelta: 2 }, { label: '布丁', priceDelta: 3 }, { label: '奶盖', priceDelta: 4 }] },
-  ],
-  hotpot: [
-    { name: '锅底', type: 'single', options: [{ label: '麻辣锅底' }, { label: '番茄锅底' }, { label: '菌菇锅底' }, { label: '清汤锅底' }] },
-    { name: '蘸料', type: 'single', options: [{ label: '油碟' }, { label: '麻酱' }, { label: '干碟' }] },
-  ],
-  dessert: [
-    { name: '大小份', type: 'single', options: [{ label: '小份', priceDelta: 0 }, { label: '大份', priceDelta: 5 }] },
-    { name: '加料', type: 'multi', options: [{ label: '不加料' }, { label: '芒果', priceDelta: 5 }, { label: '草莓', priceDelta: 5 }, { label: '红豆', priceDelta: 3 }, { label: '芋圆', priceDelta: 4 }] },
-  ],
-  drink: [
-    { name: '温度', type: 'single', options: [{ label: '冰镇' }, { label: '常温' }] },
-  ],
-}
+const SPEC_BLOCKS: { key: string; label: string; group: any }[] = [
+  { key: 'spice', label: '辣度', group: { name: '辣度', type: 'single', options: [{ label: '不辣' }, { label: '微辣' }, { label: '中辣' }, { label: '特辣' }] } },
+  { key: 'flavor', label: '口味', group: { name: '口味', type: 'multi', options: [{ label: '原味' }, { label: '蒜香' }, { label: '黑胡椒' }] } },
+  { key: 'count', label: '串数', group: { name: '串数', type: 'single', options: [{ label: 'x1' }, { label: 'x2' }, { label: 'x3' }, { label: 'x4' }, { label: 'x5' }, { label: 'x6' }, { label: 'x8' }, { label: 'x10' }] } },
+  { key: 'sweetness', label: '甜度', group: { name: '甜度', type: 'single', options: [{ label: '全糖' }, { label: '七分糖' }, { label: '三分糖' }, { label: '无糖' }] } },
+  { key: 'temp', label: '温度', group: { name: '温度', type: 'single', options: [{ label: '冰镇' }, { label: '常温' }] } },
+  { key: 'topping', label: '加料', group: { name: '加料', type: 'multi', options: [{ label: '不加料' }, { label: '珍珠', priceDelta: 2 }, { label: '椰果', priceDelta: 2 }, { label: '布丁', priceDelta: 3 }, { label: '奶盖', priceDelta: 4 }] } },
+  { key: 'cup', label: '大小杯', group: { name: '大小杯', type: 'single', options: [{ label: '小杯', priceDelta: 0 }, { label: '中杯', priceDelta: 2 }, { label: '大杯', priceDelta: 4 }] } },
+  { key: 'size', label: '大小份', group: { name: '大小份', type: 'single', options: [{ label: '小份', priceDelta: 0 }, { label: '大份', priceDelta: 5 }] } },
+  { key: 'hotpotBase', label: '锅底', group: { name: '锅底', type: 'single', options: [{ label: '麻辣锅底' }, { label: '番茄锅底' }, { label: '菌菇锅底' }, { label: '清汤锅底' }] } },
+  { key: 'dip', label: '蘸料', group: { name: '蘸料', type: 'single', options: [{ label: '油碟' }, { label: '麻酱' }, { label: '干碟' }] } },
+]
 
-function applyPreset() {
-  const preset = SPECS_PRESETS[selectedPreset.value]
-  dishForm.value.specGroups = preset ? JSON.parse(JSON.stringify(preset)) : []
+function togglePresetBlock(key: string) {
+  const block = SPEC_BLOCKS.find((b) => b.key === key)
+  if (!block) return
+  const idx = selectedPresets.value.indexOf(key)
+  if (idx >= 0) {
+    selectedPresets.value.splice(idx, 1)
+    const gi = dishForm.value.specGroups.findIndex((g: any) => g.name === block.group.name)
+    if (gi >= 0) dishForm.value.specGroups.splice(gi, 1)
+  } else {
+    selectedPresets.value.push(key)
+    dishForm.value.specGroups.push(JSON.parse(JSON.stringify(block.group)))
+  }
 }
 
 const dishForm = ref({ name: '', price: 0, categoryId: '', desc: '', image: '', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0, unit: '串', stockEnabled: false, stock: 0, alliance: false, specGroups: [] as any[] })
@@ -378,7 +369,13 @@ function addSpecOption(gi: number) {
   dishForm.value.specGroups[gi].options.push({ label: '', priceDelta: 0 })
 }
 function removeSpecGroup(gi: number) {
+  const g = dishForm.value.specGroups[gi]
   dishForm.value.specGroups.splice(gi, 1)
+  const block = SPEC_BLOCKS.find((b) => b.group.name === g?.name)
+  if (block) {
+    const idx = selectedPresets.value.indexOf(block.key)
+    if (idx >= 0) selectedPresets.value.splice(idx, 1)
+  }
 }
 function removeSpecOption(gi: number, oi: number) {
   dishForm.value.specGroups[gi].options.splice(oi, 1)
@@ -386,20 +383,20 @@ function removeSpecOption(gi: number, oi: number) {
 
 const originalName = ref('')
 
-function matchPreset(groups: any[]): string {
-  for (const [key, preset] of Object.entries(SPECS_PRESETS)) {
-    if (key === 'none') continue
-    if (groups.length !== preset.length) continue
-    const match = preset.every((pg: any, i: number) => {
-      const g = groups[i]
-      if (!g) return false
-      if (g.name !== pg.name || g.type !== pg.type) return false
-      if (g.options.length !== pg.options.length) return false
-      return pg.options.every((po: any) => g.options.some((go: any) => go.label === po.label))
-    })
-    if (match) return key
-  }
-  return 'none'
+function presetOf(group: any): string {
+  const block = SPEC_BLOCKS.find((b) => {
+    if (b.group.name !== group?.name || b.group.type !== group?.type) return false
+    if (b.group.options.length !== group.options?.length) return false
+    return b.group.options.every((po: any) => group.options.some((go: any) => go.label === po.label))
+  })
+  return block ? block.key : ''
+}
+
+function applyPresetsToForm(groups: any[]) {
+  const matched = groups.filter((g) => presetOf(g))
+  const rest = groups.filter((g) => !presetOf(g))
+  dishForm.value.specGroups = [...matched, ...rest]
+  selectedPresets.value = matched.map((g) => presetOf(g))
 }
 
 function openDishDialog(dish?: any) {
@@ -407,7 +404,6 @@ function openDishDialog(dish?: any) {
     editingDish.value = true
     originalName.value = dish.name
     const specGroups = dish.specGroups?.length ? JSON.parse(JSON.stringify(dish.specGroups)) : []
-    selectedPreset.value = matchPreset(specGroups)
     dishForm.value = {
       name: dish.name,
       price: dish.price,
@@ -424,10 +420,11 @@ function openDishDialog(dish?: any) {
       alliance: !!dish.alliance,
       specGroups,
     }
+    applyPresetsToForm(specGroups)
   } else {
     editingDish.value = false
     originalName.value = ''
-    selectedPreset.value = 'none'
+    selectedPresets.value = []
     dishForm.value = { name: '', price: 0, categoryId: categories.value[0]?.id || '', desc: '', image: '', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0, unit: '串', stockEnabled: false, stock: 0, alliance: false, specGroups: [] }
   }
   showDish.value = true
@@ -1316,8 +1313,46 @@ onMounted(() => {
 }
 
 /* Spec Editor */
-.preset-select {
+.preset-blocks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 12px;
+}
+
+.preset-block {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--on-surface);
+  background: var(--surface);
+  transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+}
+
+.preset-block:has(input:checked) {
+  border-color: #ff6b00;
+  background: rgba(255, 107, 0, 0.08);
+  color: #ff6b00;
+}
+
+.preset-block input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #ff6b00;
+  margin: 0;
+}
+
+.helper-hint {
+  font-size: 12px;
+  color: var(--text-disabled);
+  margin: -4px 0 12px;
 }
 
 .spec-editor {
