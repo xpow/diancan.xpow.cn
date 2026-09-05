@@ -1,5 +1,5 @@
 <template>
-  <div class="dish-card">
+  <div class="dish-card" :class="{ 'dish-sold-out': isSoldOut }">
     <div class="dish-card-header">
       <div class="dish-thumb" v-if="!imgError">
         <img :src="getDishThumbUrl(dish)" :alt="dish.name" @error="handleThumbFallback(dish, $event)" />
@@ -55,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 interface Dish {
   id: string
@@ -85,6 +85,7 @@ const emit = defineEmits<{
   disableStock: [dish: Dish]
 }>()
 
+const isSoldOut = computed(() => !!props.dish.stockEnabled && props.dish.stock <= 0)
 const localSort = ref(props.dish.sort)
 const localStock = ref(props.dish.stock)
 const imgError = ref(false)
@@ -126,6 +127,11 @@ function handleThumbFallback(dish: Dish, e: Event) {
 }
 .dish-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.dish-sold-out {
+  border-color: #f74e22 !important;
+  box-shadow: 0 1px 6px rgba(247, 78, 34, 0.15);
 }
 
 /* Header */
@@ -226,7 +232,7 @@ function handleThumbFallback(dish: Dish, e: Event) {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 10px;
+  padding: 4px 10px;
   border-radius: 20px;
   font-size: 11px;
   font-weight: 600;
@@ -234,8 +240,10 @@ function handleThumbFallback(dish: Dish, e: Event) {
   cursor: pointer;
   flex-shrink: 0;
   transition: all 0.15s;
+  border: 1px solid ;
+
 }
-.status-badge:hover { transform: scale(0.97); }
+
 .status-active {
   background: var(--tertiary-soft);
   color: #4ade80;
@@ -258,7 +266,8 @@ function handleThumbFallback(dish: Dish, e: Event) {
   border-radius: 50%;
   background: #ba1a1a;
 }
-
+.status-badge:hover { border-color: #4adede; background-color:#4adede ; color: antiquewhite; }
+.status-badge:hover .status-active::before { background-color: #4adede; color: antiquewhite; }
 /* Body */
 .dish-card-body {
   padding: 12px 16px;
@@ -311,11 +320,13 @@ function handleThumbFallback(dish: Dish, e: Event) {
 .btn-text-success, .btn-text-danger {
   background: none;
   border: 1px solid;
-  font-size: 11px;
+  font-size: 12px;
   cursor: pointer;
-  padding: 3px 8px;
-  border-radius: 6px;
+  padding: 4px 8px;
+  border-radius: 66px;
   transition: all 0.15s;
+  font-weight: 600;
+  line-height: 16px;
 }
 .btn-text-success { color: #4aad4e; border-color: #4aad4e; }
 .btn-text-success:hover { background: var(--tertiary-soft); }
