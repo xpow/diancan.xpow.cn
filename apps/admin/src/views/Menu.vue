@@ -26,18 +26,20 @@
         <button :class="['tab-btn', tab === 'soldout' && 'active']" @click="tab = 'soldout'">
           <span class="material-symbols-outlined">inventory_2</span>
           已售罄
+          <span v-if="soldoutCount" class="tab-count">{{ soldoutCount }}</span>
         </button>
         <button :class="['tab-btn', tab === 'inactive' && 'active']" @click="tab = 'inactive'">
           <span class="material-symbols-outlined">unpublished</span>
           已下架
+          <span v-if="inactiveCount" class="tab-count">{{ inactiveCount }}</span>
         </button>
       </div>
-      <div class="filters" v-if="tab !== 'categories'">
+      <div class="filters" v-if="tab === 'dishes'">
         <div class="filter-tabs">
           <button :class="['filter-tab', selectedCategoryId === '' && 'active']" @click="selectedCategoryId = ''">全部</button>
           <button v-for="c in categories" :key="c.id" :class="['filter-tab', selectedCategoryId === c.id && 'active']" @click="selectedCategoryId = c.id">{{ c.name }}</button>
         </div>
-        <button v-if="tab === 'dishes'" class="btn-secondary" @click="generateMenuImage" :disabled="generating">
+        <button class="btn-secondary" @click="generateMenuImage" :disabled="generating">
           <span class="material-symbols-outlined">image</span>
           {{ generating ? '生成中...' : '生成菜单图片' }}
         </button>
@@ -298,16 +300,32 @@ const dishes = ref<any[]>([])
 const categories = ref<any[]>([])
 const selectedCategoryId = ref('')
 
+const categorySortMap = computed(() => {
+  const map: Record<string, number> = {}
+  categories.value.forEach((c, i) => { map[c.id] = c.sort ?? i })
+  return map
+})
+
+const soldoutCount = computed(() => dishes.value.filter(d => d.stockEnabled && d.stock <= 0).length)
+const inactiveCount = computed(() => dishes.value.filter(d => d.status !== 'active').length)
+
 const filteredDishes = computed(() => {
-  let list = selectedCategoryId.value
-    ? dishes.value.filter(d => d.categoryId === selectedCategoryId.value)
-    : dishes.value
-  if (tab.value === 'soldout') {
+  let list = dishes.value
+  if (tab.value === 'dishes') {
+    list = selectedCategoryId.value
+      ? list.filter(d => d.categoryId === selectedCategoryId.value)
+      : list
+  } else if (tab.value === 'soldout') {
     list = list.filter(d => d.stockEnabled && d.stock <= 0)
   } else if (tab.value === 'inactive') {
     list = list.filter(d => d.status !== 'active')
   }
-  return [...list].sort((a, b) => (a.status === 'active' ? -1 : 1) - (b.status === 'active' ? -1 : 1))
+  return [...list].sort((a, b) => {
+    const ca = categorySortMap.value[a.categoryId] ?? Number.MAX_SAFE_INTEGER
+    const cb = categorySortMap.value[b.categoryId] ?? Number.MAX_SAFE_INTEGER
+    if (ca !== cb) return ca - cb
+    return (a.status === 'active' ? -1 : 1) - (b.status === 'active' ? -1 : 1)
+  })
 })
 
 /* Dish */
@@ -621,10 +639,6 @@ async function toggleStatus(dish: any) {
 async function fetchCategories() {
   const res = await fetch('/api/admin/categories')
   categories.value = await res.json()
-  if (selectedCategoryId.value === '') {
-    const meat = categories.value.find((c) => c.name.includes('肉串'))
-    if (meat) selectedCategoryId.value = meat.id
-  }
 }
 
 onMounted(() => {
@@ -829,6 +843,20 @@ onMounted(() => {
 .tab-btn:hover:not(.active) {
   border-color: #ff6b00;
   color: #ff6b00;
+}
+
+.tab-count {
+  padding: 1px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(245, 158, 11, 0.2);
+  color: #d97706;
+}
+
+.tab-btn.active .tab-count {
+  background: rgba(255, 255, 255, 0.3);
+  color: var(--on-primary);
 }
 
 .filters {
