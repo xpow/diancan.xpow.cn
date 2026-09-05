@@ -187,7 +187,7 @@
     <div v-else class="empty-inline">暂无设备</div>
 
     <!-- 休息原因 Modal -->
-    <div v-if="showRestReason" class="modal-overlay" @click.self="showRestReason = false">
+    <div v-if="showRestReason" class="modal-overlay">
       <div class="modal modal-sm">
         <div class="modal-header">
           <h3>休息原因 - {{ restTarget?.name || '' }}</h3>
@@ -217,7 +217,7 @@
     </div>
 
     <!-- 新增/编辑分店 Modal -->
-    <div v-if="showBranch" class="modal-overlay" @click.self="showBranch = false">
+    <div v-if="showBranch" class="modal-overlay">
       <div class="modal">
         <div class="modal-header">
           <h3>{{ editingBranch ? '编辑分店' : '新增分店' }}</h3>
@@ -261,7 +261,7 @@
     </div>
 
     <!-- 新增/编辑设备 Modal -->
-    <div v-if="showDevice" class="modal-overlay" @click.self="showDevice = false">
+    <div v-if="showDevice" class="modal-overlay">
       <div class="modal modal-sm">
         <div class="modal-header">
           <h3>{{ editingDevice ? '编辑设备' : '新增设备' }}</h3>
@@ -308,7 +308,7 @@
     </div>
 
     <!-- 指令 Modal -->
-    <div v-if="showCommand" class="modal-overlay" @click.self="showCommand = false">
+    <div v-if="showCommand" class="modal-overlay">
       <div class="modal modal-sm">
         <div class="modal-header">
           <h3>设备指令 - {{ commandTarget?.name || '' }}</h3>

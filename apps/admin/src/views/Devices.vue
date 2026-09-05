@@ -105,7 +105,7 @@
     </div>
 
     <!-- Add/Edit Device Modal -->
-    <div v-if="showDevice" class="modal-overlay" @click.self="showDevice = false">
+    <div v-if="showDevice" class="modal-overlay">
       <div class="modal">
         <div class="modal-header">
           <h3>{{ editingDevice ? '编辑设备' : '新增设备' }}</h3>
@@ -161,7 +161,7 @@
     </div>
 
     <!-- Command Modal -->
-    <div v-if="showCommand" class="modal-overlay" @click.self="showCommand = false">
+    <div v-if="showCommand" class="modal-overlay">
       <div class="modal modal-sm">
         <div class="modal-header">
           <h3>设备指令 - {{ commandTarget?.name || '' }}</h3>

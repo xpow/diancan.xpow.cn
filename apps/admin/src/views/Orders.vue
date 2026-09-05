@@ -80,7 +80,7 @@
     </div>
 
     <!-- Cancel Dialog -->
-    <div v-if="showCancel" class="modal-overlay" @click.self="showCancel = false">
+    <div v-if="showCancel" class="modal-overlay">
       <div class="modal modal-sm">
         <div class="modal-header">
           <h3>取消订单</h3>

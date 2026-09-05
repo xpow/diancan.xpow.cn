@@ -78,7 +78,7 @@
     </div>
 
     <!-- Add/Edit Modal -->
-    <div v-if="showDialog" class="modal-overlay" @click.self="showDialog = false">
+    <div v-if="showDialog" class="modal-overlay">
       <div class="modal modal-sm">
         <div class="modal-header">
           <h3>{{ editing ? '编辑出餐机' : '新增出餐机' }}</h3>

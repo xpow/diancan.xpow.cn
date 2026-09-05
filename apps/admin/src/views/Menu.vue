@@ -116,7 +116,7 @@
     </div>
 
     <!-- Dish Dialog -->
-    <div v-if="showDish" class="modal-overlay" @click.self="showDish = false">
+    <div v-if="showDish" class="modal-overlay">
       <div class="modal">
         <div class="modal-header">
           <h3>{{ editingDish ? '编辑菜品' : '新增菜品' }}</h3>
@@ -236,7 +236,7 @@
     </div>
 
     <!-- Category Dialog -->
-    <div v-if="showCategory" class="modal-overlay" @click.self="showCategory = false">
+    <div v-if="showCategory" class="modal-overlay">
       <div class="modal modal-sm">
         <div class="modal-header">
           <h3>{{ editingCategory ? '编辑分类' : '新增分类' }}</h3>
