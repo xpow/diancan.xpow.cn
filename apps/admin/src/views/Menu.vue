@@ -23,13 +23,21 @@
           <span class="material-symbols-outlined">category</span>
           分类
         </button>
+        <button :class="['tab-btn', tab === 'soldout' && 'active']" @click="tab = 'soldout'">
+          <span class="material-symbols-outlined">inventory_2</span>
+          已售罄
+        </button>
+        <button :class="['tab-btn', tab === 'inactive' && 'active']" @click="tab = 'inactive'">
+          <span class="material-symbols-outlined">unpublished</span>
+          已下架
+        </button>
       </div>
-      <div class="filters" v-if="tab === 'dishes'">
+      <div class="filters" v-if="tab !== 'categories'">
         <div class="filter-tabs">
           <button :class="['filter-tab', selectedCategoryId === '' && 'active']" @click="selectedCategoryId = ''">全部</button>
           <button v-for="c in categories" :key="c.id" :class="['filter-tab', selectedCategoryId === c.id && 'active']" @click="selectedCategoryId = c.id">{{ c.name }}</button>
         </div>
-        <button class="btn-secondary" @click="generateMenuImage" :disabled="generating">
+        <button v-if="tab === 'dishes'" class="btn-secondary" @click="generateMenuImage" :disabled="generating">
           <span class="material-symbols-outlined">image</span>
           {{ generating ? '生成中...' : '生成菜单图片' }}
         </button>
@@ -37,7 +45,7 @@
     </div>
 
     <!-- Dishes Grid -->
-    <div v-if="tab === 'dishes'" class="dishes-section">
+    <div v-if="tab !== 'categories'" class="dishes-section">
       <div class="dishes-grid" v-if="filteredDishes.length">
         <DishCard
           v-for="dish in filteredDishes"
@@ -54,7 +62,7 @@
       </div>
       <div v-else class="empty-state">
         <span class="material-symbols-outlined">restaurant_menu</span>
-        <p>暂无菜品数据</p>
+        <p>{{ tab === 'soldout' ? '暂无已售罄菜品' : tab === 'inactive' ? '暂无已下架菜品' : '暂无菜品数据' }}</p>
       </div>
     </div>
 
@@ -294,6 +302,11 @@ const filteredDishes = computed(() => {
   let list = selectedCategoryId.value
     ? dishes.value.filter(d => d.categoryId === selectedCategoryId.value)
     : dishes.value
+  if (tab.value === 'soldout') {
+    list = list.filter(d => d.stockEnabled && d.stock <= 0)
+  } else if (tab.value === 'inactive') {
+    list = list.filter(d => d.status !== 'active')
+  }
   return [...list].sort((a, b) => (a.status === 'active' ? -1 : 1) - (b.status === 'active' ? -1 : 1))
 })
 
@@ -608,6 +621,10 @@ async function toggleStatus(dish: any) {
 async function fetchCategories() {
   const res = await fetch('/api/admin/categories')
   categories.value = await res.json()
+  if (selectedCategoryId.value === '') {
+    const meat = categories.value.find((c) => c.name.includes('肉串'))
+    if (meat) selectedCategoryId.value = meat.id
+  }
 }
 
 onMounted(() => {
