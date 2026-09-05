@@ -1,3 +1,5 @@
+// 加载项目配置，必须在所有读取 process.env 的模块之前
+import './env.js'
 import cors from 'cors'
 import express from 'express'
 import type { Request, Response, NextFunction } from 'express'

@@ -1,5 +1,6 @@
 {
   "name": "diancan",
+  "siteName": "diancan.xpow.cn",
   "private": true,
   "scripts": {
     "dev": "pnpm -r run dev",
