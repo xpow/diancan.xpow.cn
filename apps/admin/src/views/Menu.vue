@@ -18,10 +18,12 @@
         <button :class="['tab-btn', tab === 'dishes' && 'active']" @click="tab = 'dishes'">
           <span class="material-symbols-outlined">restaurant_menu</span>
           菜品
+          <span v-if="dishes.length" class="tab-count">{{ dishes.length }}</span>
         </button>
         <button :class="['tab-btn', tab === 'categories' && 'active']" @click="tab = 'categories'">
           <span class="material-symbols-outlined">category</span>
           分类
+          <span v-if="categories.length" class="tab-count">{{ categories.length }}</span>
         </button>
         <button :class="['tab-btn', tab === 'soldout' && 'active']" @click="tab = 'soldout'">
           <span class="material-symbols-outlined">inventory_2</span>
