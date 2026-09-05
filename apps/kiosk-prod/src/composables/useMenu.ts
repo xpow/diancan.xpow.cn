@@ -66,7 +66,12 @@ const restReason = ref('')
     const defs = specGroups?.length ? specGroups : (preset ? SPECS_PRESETS[preset] : null)
     if (!defs || defs.length === 0) return null
     const defaults = defs.map((g) => {
-      if (g.type === 'multi') return [g.options[0]?.label ?? ''].filter(Boolean)
+      const defOpt = g.options.find((o) => o.default)
+      if (g.type === 'multi') {
+        const checked = g.options.filter((o) => o.default)
+        return checked.length ? checked.map((o) => o.label) : [g.options[0]?.label ?? ''].filter(Boolean)
+      }
+      if (defOpt) return defOpt.label
       if (g.name === '辣度') return g.options[1]?.label ?? g.options[0]?.label ?? ''
       return g.options[0]?.label ?? ''
     })

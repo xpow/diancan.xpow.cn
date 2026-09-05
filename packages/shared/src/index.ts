@@ -11,6 +11,7 @@ export type OrderStatus =
 export interface SpecOption {
   label: string
   priceDelta?: number
+  default?: boolean
 }
 
 export interface SpecGroup {
