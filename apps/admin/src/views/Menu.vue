@@ -125,20 +125,24 @@
           </button>
         </div>
         <div class="modal-body">
-          <div class="form-group">
+          <div class="form-group" :class="{ 'has-error': dishErrors.name }">
             <label>名称</label>
             <input type="text" v-model="dishForm.name" placeholder="菜品名称" />
+            <span class="field-error" v-if="dishErrors.name">{{ dishErrors.name }}</span>
           </div>
           <div class="form-row">
-            <div class="form-group">
+            <div class="form-group" :class="{ 'has-error': dishErrors.price }">
               <label>价格 (¥)</label>
               <input type="number" v-model.number="dishForm.price" min="0" step="0.5" />
+              <span class="field-error" v-if="dishErrors.price">{{ dishErrors.price }}</span>
             </div>
-            <div class="form-group">
+            <div class="form-group" :class="{ 'has-error': dishErrors.categoryId }">
               <label>分类</label>
               <select v-model="dishForm.categoryId">
+                <option value="" disabled>请选择分类</option>
                 <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
               </select>
+              <span class="field-error" v-if="dishErrors.categoryId">{{ dishErrors.categoryId }}</span>
             </div>
           </div>
           <div class="form-row">
@@ -303,7 +307,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import DishCard from '../components/DishCard.vue'
 
 const tab = ref('dishes')
@@ -381,6 +385,7 @@ function onPresetToggle(key: string) {
 }
 
 const dishForm = ref({ name: '', price: 0, categoryId: '', desc: '', image: '', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0, unit: '串', stockEnabled: false, stock: 0, alliance: false, specGroups: [] as any[] })
+const dishErrors = reactive({ name: '', price: '', categoryId: '' })
 
 function addSpecGroup() {
   dishForm.value.specGroups.push({ name: '', type: 'single', options: [{ label: '', priceDelta: 0 }] })
@@ -427,6 +432,9 @@ function applyPresetsToForm(groups: any[]) {
 }
 
 function openDishDialog(dish?: any) {
+  dishErrors.name = ''
+  dishErrors.price = ''
+  dishErrors.categoryId = ''
   if (dish) {
     editingDish.value = true
     originalName.value = dish.name
@@ -458,18 +466,13 @@ function openDishDialog(dish?: any) {
 }
 
 async function saveDish() {
-  if (!dishForm.value.name?.trim()) {
-    alert('请输入菜品名称')
-    return
-  }
-  if (dishForm.value.price === null || dishForm.value.price === undefined || isNaN(dishForm.value.price) || dishForm.value.price < 0) {
-    alert('请输入有效的菜品价格')
-    return
-  }
-  if (!dishForm.value.categoryId) {
-    alert('请选择菜品分类')
-    return
-  }
+  dishErrors.name = ''
+  dishErrors.price = ''
+  dishErrors.categoryId = ''
+  if (!dishForm.value.name?.trim()) dishErrors.name = '请输入菜品名称'
+  if (dishForm.value.price === null || dishForm.value.price === undefined || isNaN(dishForm.value.price) || dishForm.value.price < 0) dishErrors.price = '请输入有效的菜品价格'
+  if (!dishForm.value.categoryId) dishErrors.categoryId = '请选择菜品分类'
+  if (dishErrors.name || dishErrors.price || dishErrors.categoryId) return
   const body = {
     name: dishForm.value.name,
     price: dishForm.value.price,
@@ -1277,6 +1280,20 @@ onMounted(() => {
 .form-group select:focus {
   outline: none;
   border-color: #ff6b00;
+}
+
+.form-group.has-error input:not([type="checkbox"]),
+.form-group.has-error select {
+  border-color: var(--error);
+  background: var(--error-soft);
+}
+
+.field-error {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--error);
 }
 
 .form-row {
