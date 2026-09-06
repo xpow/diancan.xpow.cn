@@ -24,6 +24,7 @@
         v-for="device in filteredDevices"
         :key="device.id"
         :device="device"
+        show-share
         @auth="showAuthLogs"
         @qr="copyQRUrl"
         @share="toggleShare"
