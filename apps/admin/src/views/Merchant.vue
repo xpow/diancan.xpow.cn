@@ -121,68 +121,21 @@
       </button>
     </div>
     <div class="cards-grid" v-if="adminDevices.length">
-      <div v-for="device in adminDevices" :key="device.id" class="data-card device-card">
-        <div class="card-top">
-          <div class="branch-avatar" :class="device.status === 'active' ? 'active' : 'offline'">
-            <span class="material-symbols-outlined">{{ device.mode === 'kiosk' ? 'point_of_sale' : 'smartphone' }}</span>
-          </div>
-          <div class="branch-title">
-            <div class="branch-name-row">
-              <span class="card-name">{{ device.name }}</span>
-              <span class="status-tag" :class="device.status === 'active' ? 'on' : 'off'">
-                {{ device.status === 'active' ? '在线' : '离线' }}
-              </span>
-            </div>
-            <div class="device-sub">
-              <span class="mode-tag" :class="device.mode === 'kiosk' ? 'kiosk' : 'h5'">
-                {{ device.mode === 'kiosk' ? '自助点餐' : 'H5点单' }}
-              </span>
-              <span class="device-sn" v-if="device.sn">{{ device.sn }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="branch-info">
-          <div class="info-item">
-            <span class="material-symbols-outlined">storefront</span>
-            <span>{{ device.branchName || '未分配' }}</span>
-          </div>
-          <div class="info-item" v-if="device.contact">
-            <span class="material-symbols-outlined">call</span>
-            <span>{{ device.contact }}</span>
-          </div>
-          <div class="info-item">
-            <span class="material-symbols-outlined">devices_other</span>
-            <button v-if="device.authCount > 0" class="link-btn" @click="showAuthLogs(device)">关联 {{ device.authCount }}</button>
-            <span v-else>关联 {{ device.authCount ?? 0 }}</span>
-          </div>
-        </div>
-
-        <div class="card-actions">
-          <button v-if="device.sn" class="chip-btn" @click="copySN(device.sn)">
-            <span class="material-symbols-outlined">content_copy</span>复制
-          </button>
-          <button v-if="device.sn" class="chip-btn" @click="regenerateSN(device.id)">
-            <span class="material-symbols-outlined">refresh</span>重置
-          </button>
-          <button class="chip-btn" @click="openDeviceDialog(device)">
-            <span class="material-symbols-outlined">edit</span>编辑
-          </button>
-          <button class="chip-btn" @click="openCommandDialog(device)">
-            <span class="material-symbols-outlined">build</span>指令
-          </button>
-        </div>
-
-        <div class="device-danger-row">
-          <button class="chip-btn status-toggle" :class="device.status === 'active' ? 'off' : 'on'" @click="device.status === 'active' ? offlineDevice(device) : setDeviceStatus(device.id, 'active')">
-            <span class="material-symbols-outlined">{{ device.status === 'active' ? 'power_settings_new' : 'power_off' }}</span>
-            {{ device.status === 'active' ? '下线' : '上线' }}
-          </button>
-          <button class="chip-btn danger" @click="deleteDevice(device.id)">
-            <span class="material-symbols-outlined">delete</span>删除
-          </button>
-        </div>
-      </div>
+      <DeviceCard
+        v-for="device in adminDevices"
+        :key="device.id"
+        :device="device"
+        :show-qr="false"
+        :show-share="false"
+        :show-auth-inline="true"
+        @auth="showAuthLogs"
+        @reset="handleReset"
+        @edit="openDeviceDialog"
+        @command="openCommandDialog"
+        @offline="offlineDevice"
+        @online="handleOnline"
+        @remove="handleRemove"
+      />
     </div>
     <div v-else class="empty-inline">暂无设备</div>
 
@@ -364,6 +317,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import DeviceCard from '../components/DeviceCard.vue'
 
 const form = ref({ name: '', slogan: '', statusText: '', logoUrl: '' })
 const showRestReason = ref(false)
@@ -506,13 +460,16 @@ async function deleteDevice(id: string) {
   fetchDevices()
 }
 
-async function copySN(sn: string) {
-  try {
-    await navigator.clipboard.writeText(sn)
-    alert('已复制设备码：' + sn)
-  } catch {
-    alert('设备码：' + sn)
-  }
+async function handleReset(device: any) {
+  regenerateSN(device.id)
+}
+
+async function handleOnline(device: any) {
+  setDeviceStatus(device.id, 'active')
+}
+
+async function handleRemove(device: any) {
+  deleteDevice(device.id)
 }
 
 async function regenerateSN(id: string) {
@@ -653,19 +610,11 @@ onMounted(() => {
 .status-tag.on { background: rgba(74, 173, 78, 0.15); color: #4ade80; }
 .status-tag.off { background: rgb(255 76 55 / 16%); color: #f74e22; }
 
-.device-sub { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-.mode-tag { padding: 1px 8px; border-radius: 8px; font-size: 11px; font-weight: 600; }
-.mode-tag.kiosk { background: rgba(59, 130, 246, 0.15); color: var(--info); }
-.mode-tag.h5 { background: rgba(217, 119, 6, 0.15); color: #d97706; }
-.device-sn { font-family: monospace; font-size: 12px; color: var(--on-surface-variant); letter-spacing: 1px; }
-
 .rest-reason-text { margin: 6px 0 0; font-size: 13px; color: #f74e22; display: flex; align-items: center; gap: 4px; }
 
 .branch-info { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; background: var(--surface-container-low); border-radius: 10px; }
 .info-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--on-surface-variant); }
 .info-item .material-symbols-outlined { font-size: 16px; color: var(--text-disabled); }
-.link-btn { border: none; background: none; padding: 0; color: var(--info); cursor: pointer; font-size: 13px; }
-.link-btn:hover { text-decoration: underline; }
 
 .branch-stats { display: flex; gap: 10px; }
 .stat-box {
@@ -678,7 +627,6 @@ onMounted(() => {
 .stat-label { font-size: 11px; color: var(--text-disabled); }
 
 .card-actions { display: flex; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--divider); padding-top: 12px; }
-.device-danger-row { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
 .chip-btn {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 6px 12px; border: 1px solid var(--border); border-radius: 20px;
@@ -690,8 +638,6 @@ onMounted(() => {
 .chip-btn.danger:hover { border-color: var(--error); color: #f74e22; background: rgb(255 76 55 / 16%); }
 .chip-btn.toggle-off:hover { border-color: #f74e22; color: #f74e22; background: rgb(255 76 55 / 16%); }
 .chip-btn.toggle-on { border-color: #4ade80; color: #4ade80; background: rgba(74, 173, 78, 0.15); }
-.chip-btn.status-toggle.off:hover { border-color: #d97706; color: #d97706; background: rgba(217, 119, 6, 0.15); }
-.chip-btn.status-toggle.on { border-color: #4ade80; color: #4ade80; background: rgba(74, 173, 78, 0.15); }
 
 .empty-inline { padding: 16px; text-align: center; color: var(--text-disabled); background: var(--surface); border: 1px dashed var(--border); border-radius: 12px; }
 
