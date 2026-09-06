@@ -8,6 +8,7 @@
     "build": "vue-tsc -b && vite build"
   },
   "dependencies": {
+    "@diancan/shared": "workspace:*",
     "primeicons": "^7.0.0",
     "primevue": "^4.2.0",
     "@primevue/themes": "^4.2.0",

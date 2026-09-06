@@ -165,11 +165,7 @@
             <div v-if="dishForm.sellByPortion" class="inline-inputs">
               <input type="number" v-model.number="dishForm.portionSize" min="1" placeholder="数量" />
               <select v-model="dishForm.unit">
-                <option value="串">串</option>
-                <option value="斤">斤</option>
-                <option value="只">只</option>
-                <option value="份">份</option>
-                <option value="个">个</option>
+                <option v-for="u in DISH_UNITS" :key="u" :value="u">{{ u }}</option>
               </select>
             </div>
           </div>
@@ -308,6 +304,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
+import { SPEC_BLOCKS, DISH_UNITS, DEFAULT_DISH_UNIT } from '@diancan/shared'
 import DishCard from '../components/DishCard.vue'
 
 const tab = ref('dishes')
@@ -348,28 +345,6 @@ const showDish = ref(false)
 const editingDish = ref(false)
 const selectedPresets = ref<string[]>([])
 
-const SPEC_BLOCKS: { key: string; cat: 'common' | 'coffee'; label: string; group: any }[] = [
-  { key: 'spice', cat: 'common', label: '辣度', group: { name: '辣度', type: 'single', options: [{ label: '不辣' }, { label: '微辣' }, { label: '中辣' }, { label: '特辣' }] } },
-  { key: 'flavor', cat: 'common', label: '口味', group: { name: '口味', type: 'multi', options: [{ label: '原味' }, { label: '蒜香' }, { label: '黑胡椒' }] } },
-  { key: 'count', cat: 'common', label: '串数', group: { name: '串数', type: 'single', options: [{ label: 'x1' }, { label: 'x2' }, { label: 'x3' }, { label: 'x4' }, { label: 'x5' }, { label: 'x6' }, { label: 'x8' }, { label: 'x10' }] } },
-  { key: 'sweetness', cat: 'common', label: '甜度', group: { name: '甜度', type: 'single', options: [{ label: '全糖' }, { label: '七分糖' }, { label: '三分糖' }, { label: '无糖' }] } },
-  { key: 'temp', cat: 'common', label: '温度', group: { name: '温度', type: 'single', options: [{ label: '冰镇' }, { label: '常温' }] } },
-  { key: 'topping', cat: 'common', label: '加料', group: { name: '加料', type: 'multi', options: [{ label: '不加料' }, { label: '珍珠', priceDelta: 2 }, { label: '椰果', priceDelta: 2 }, { label: '布丁', priceDelta: 3 }, { label: '奶盖', priceDelta: 4 }] } },
-  { key: 'cup', cat: 'common', label: '大小杯', group: { name: '大小杯', type: 'single', options: [{ label: '小杯', priceDelta: 0 }, { label: '中杯', priceDelta: 2 }, { label: '大杯', priceDelta: 4 }] } },
-  { key: 'size', cat: 'common', label: '大小份', group: { name: '大小份', type: 'single', options: [{ label: '小份', priceDelta: 0 }, { label: '大份', priceDelta: 5 }] } },
-  { key: 'cupSize', cat: 'common', label: '杯型', group: { name: '杯型', type: 'single', options: [{ label: '中杯' }, { label: '大杯' }, { label: '超大杯' }] } },
-  { key: 'sugarSwap', cat: 'common', label: '可换糖', group: { name: '可换糖', type: 'single', options: [{ label: '经典糖' }, { label: '0热量代糖' }] } },
-  { key: 'qty', cat: 'common', label: '份数', group: { name: '份数', type: 'single', options: [{ label: 'x1' }, { label: 'x2' }, { label: 'x3' }] } },
-  { key: 'hotpotBase', cat: 'common', label: '锅底', group: { name: '锅底', type: 'single', options: [{ label: '麻辣锅底' }, { label: '番茄锅底' }, { label: '菌菇锅底' }, { label: '清汤锅底' }] } },
-  { key: 'dip', cat: 'common', label: '蘸料', group: { name: '蘸料', type: 'single', options: [{ label: '油碟' }, { label: '麻酱' }, { label: '干碟' }] } },
-  { key: 'coffeeBase', cat: 'coffee', label: '咖啡液', group: { name: '咖啡液', type: 'single', options: [{ label: '经典浓缩' }, { label: '金烘浓缩' }, { label: '低因咖啡' }] } },
-  { key: 'coffeeExtract', cat: 'coffee', label: '萃取方式', group: { name: '萃取方式', type: 'single', options: [{ label: '原萃浓缩' }, { label: '精萃浓缩' }, { label: '满萃浓缩' }] } },
-  { key: 'coffeeShots', cat: 'coffee', label: '浓缩份数', group: { name: '浓缩份数', type: 'single', options: [{ label: '1份' }, { label: '2份', default: true }, { label: '3份' }, { label: '4份' }] } },
-  { key: 'coffeeMilk', cat: 'coffee', label: '加料', group: { name: '奶料', type: 'multi', options: [{ label: '牛奶' }, { label: '燕麦奶' }] } },
-  { key: 'coffeeFoam', cat: 'coffee', label: '奶泡', group: { name: '奶泡', type: 'single', options: [{ label: '去奶泡' }] } },
-  { key: 'coffeeSweet', cat: 'coffee', label: '甜度', group: { name: '咖啡甜度', type: 'single', options: [{ label: '标准甜' }, { label: '加甜' }] } },
-]
-
 const commonBlocks = computed(() => SPEC_BLOCKS.filter((b) => b.cat === 'common'))
 const coffeeBlocks = computed(() => SPEC_BLOCKS.filter((b) => b.cat === 'coffee'))
 
@@ -384,7 +359,7 @@ function onPresetToggle(key: string) {
   }
 }
 
-const dishForm = ref({ name: '', price: 0, categoryId: '', desc: '', image: '', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0, unit: '串', stockEnabled: false, stock: 0, alliance: false, specGroups: [] as any[] })
+const dishForm = ref({ name: '', price: 0, categoryId: '', desc: '', image: '', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0, unit: DEFAULT_DISH_UNIT, stockEnabled: false, stock: 0, alliance: false, specGroups: [] as any[] })
 const dishErrors = reactive({ name: '', price: '', categoryId: '' })
 
 function addSpecGroup() {
@@ -449,7 +424,7 @@ function openDishDialog(dish?: any) {
       status: dish.status || 'active',
       sellByPortion: (dish.portionSize ?? 0) > 0,
       portionSize: dish.portionSize ?? 0,
-      unit: dish.unit || '串',
+      unit: dish.unit || DEFAULT_DISH_UNIT,
       stockEnabled: !!dish.stockEnabled,
       stock: dish.stock ?? 0,
       alliance: !!dish.alliance,
@@ -460,7 +435,7 @@ function openDishDialog(dish?: any) {
     editingDish.value = false
     originalName.value = ''
     selectedPresets.value = []
-    dishForm.value = { name: '', price: 0, categoryId: categories.value[0]?.id || '', desc: '', image: '', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0, unit: '串', stockEnabled: false, stock: 0, alliance: false, specGroups: [] }
+    dishForm.value = { name: '', price: 0, categoryId: categories.value[0]?.id || '', desc: '', image: '', tagsText: '', status: 'active', sellByPortion: false, portionSize: 0, unit: DEFAULT_DISH_UNIT, stockEnabled: false, stock: 0, alliance: false, specGroups: [] }
   }
   showDish.value = true
 }
@@ -483,7 +458,7 @@ async function saveDish() {
     tags: dishForm.value.tagsText ? dishForm.value.tagsText.split(/[，,]\s*/).filter(Boolean) : [],
     status: dishForm.value.status,
     portionSize: dishForm.value.sellByPortion ? dishForm.value.portionSize : 0,
-    unit: dishForm.value.sellByPortion ? dishForm.value.unit : '串',
+    unit: dishForm.value.sellByPortion ? dishForm.value.unit : DEFAULT_DISH_UNIT,
     stockEnabled: dishForm.value.stockEnabled,
     stock: dishForm.value.stockEnabled ? dishForm.value.stock : 0,
     alliance: dishForm.value.alliance,

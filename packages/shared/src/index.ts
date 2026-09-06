@@ -199,3 +199,5 @@ export interface PromotionRule {
   minAmount?: number
   excludedDishIds?: string[]
 }
+
+export * from './site-config.js'
