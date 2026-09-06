@@ -1,0 +1,1 @@
+ALTER TABLE "Merchant" ADD COLUMN "footerSlogan" TEXT NOT NULL DEFAULT '';

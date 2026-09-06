@@ -6,6 +6,7 @@ export interface BootstrapConfig {
   deviceId: string
   deviceMode: 'kiosk'
   slogan: string
+  footerSlogan: string
   businessHours: string
   todayLocation: string
   locationHint: string
@@ -121,6 +122,7 @@ export const bootstrapConfig: BootstrapConfig = {
   deviceId: 'kiosk-a01',
   deviceMode: 'kiosk',
   slogan: '地道炭火 · 鲜嫩多汁 · 现烤现卖',
+  footerSlogan: '用心做好每一串，传递市井烟火气',
   businessHours: '17:00 - 02:00',
   todayLocation: '东阳市振兴路夜市 A 区 08 号',
   locationHint: '该位置由商家后台每日预设，不使用 GPS。',

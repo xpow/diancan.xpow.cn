@@ -17,6 +17,7 @@ export interface GlobalCache {
     id: string
     name: string
     slogan: string
+    footerSlogan: string
     businessHours: string
     statusText: string
     restReason: string
@@ -82,6 +83,7 @@ export async function buildGlobalCache(): Promise<GlobalCache> {
       id: merchant.id,
       name: merchant.name,
       slogan: merchant.slogan ?? '',
+      footerSlogan: merchant.footerSlogan ?? '',
       businessHours: merchant.businessHours ?? '',
       statusText: merchant.statusText ?? '',
       restReason: merchant.restReason ?? '',

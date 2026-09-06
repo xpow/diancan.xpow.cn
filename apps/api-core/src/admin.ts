@@ -236,6 +236,7 @@ router.get('/merchant', async (_req, res) => {
       data: {
         name: '典韦烤串',
         slogan: '地道炭火 · 鲜嫩多汁 · 现烤现卖',
+        footerSlogan: '用心做好每一串，传递市井烟火气',
         businessHours: '17:00 - 02:00',
         statusText: '营业中',
         features: JSON.stringify({ quote: true, payment: false, pickup: false }),
@@ -249,6 +250,7 @@ router.get('/merchant', async (_req, res) => {
     id: merchant.id,
     name: merchant.name,
     slogan: merchant.slogan,
+    footerSlogan: merchant.footerSlogan ?? '',
     businessHours: merchant.businessHours,
     statusText: merchant.statusText,
     restReason: merchant.restReason,
@@ -1063,10 +1065,11 @@ router.put('/merchant', async (req, res) => {
   const merchant = await prisma.merchant.findFirst()
   if (!merchant) return res.status(404).json({ message: 'merchant not found' })
 
-  const { name, slogan, statusText, logoUrl, features } = req.body ?? {}
+  const { name, slogan, footerSlogan, statusText, logoUrl, features } = req.body ?? {}
   const data: any = {}
   if (name !== undefined) data.name = name
   if (slogan !== undefined) data.slogan = slogan
+  if (footerSlogan !== undefined) data.footerSlogan = footerSlogan
   if (statusText !== undefined) data.statusText = statusText
   if (logoUrl !== undefined) data.logoUrl = logoUrl
   if (features !== undefined) data.features = JSON.stringify(features)

@@ -11,6 +11,7 @@ model Merchant {
   id        String   @id @default(cuid())
   name      String
   slogan    String   @default("")
+  footerSlogan String @default("") // 首页底部标语
   businessHours String @default("")
   statusText String  @default("营业中")
   restReason String  @default("")   // 休息原因：天气原因/市政管理/停业休息

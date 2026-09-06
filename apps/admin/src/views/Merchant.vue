@@ -29,6 +29,10 @@
           <input v-model="form.slogan" placeholder="标语" />
         </div>
         <div class="form-group">
+          <label>底部标语</label>
+          <input v-model="form.footerSlogan" placeholder="首页底部显示的文字" />
+        </div>
+        <div class="form-group">
           <label>Logo URL</label>
           <input v-model="form.logoUrl" placeholder="https://..." />
         </div>
@@ -319,7 +323,7 @@
 import { ref, computed, onMounted } from 'vue'
 import DeviceCard from '../components/DeviceCard.vue'
 
-const form = ref({ name: '', slogan: '', statusText: '', logoUrl: '' })
+const form = ref({ name: '', slogan: '', footerSlogan: '', statusText: '', logoUrl: '' })
 const showRestReason = ref(false)
 const restReasons = ['已打烊', '天气原因', '市政管理', '短期休假中', '停业']
 const restTarget = ref<any>(null)
@@ -352,6 +356,7 @@ async function fetchMerchant() {
   form.value = {
     name: data.name || '',
     slogan: data.slogan || '',
+    footerSlogan: data.footerSlogan || '',
     statusText: data.statusText || '',
     logoUrl: data.logoUrl || '',
   }

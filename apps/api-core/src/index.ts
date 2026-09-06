@@ -210,6 +210,7 @@ app.get('/api/system/bootstrap', generalLimiter, async (req, res) => {
     deviceRole: device?.role ?? 'user',
     deviceActive: device?.status === 'active',
     slogan: merchant.slogan,
+    footerSlogan: merchant.footerSlogan ?? '',
     businessHours: branch?.businessHours || merchant.businessHours,
     todayLocation: branch?.todayLocation ?? '',
     locationHint: branch?.locationHint ?? '',
