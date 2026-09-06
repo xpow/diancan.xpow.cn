@@ -43,8 +43,13 @@
         <div class="device-body">
           <div class="sn-row">
             <span class="sn-label">设备码</span>
-            <span v-if="device.sn" class="sn-text">{{ device.sn }}</span>
-            <span v-else class="sn-empty">-</span>
+            <div class="sn-copy-row">
+              <span v-if="device.sn" class="sn-text">{{ device.sn }}</span>
+              <span v-else class="sn-empty">-</span>
+              <button v-if="device.sn" class="sn-copy" title="复制设备码" @click="copySN(device.sn)">
+                <span class="material-symbols-outlined">content_copy</span>
+              </button>
+            </div>
           </div>
           <div class="status-row">
             <span class="status-dot" :class="device.status === 'active' ? 'on' : 'off'"></span>
@@ -55,9 +60,6 @@
         <div class="device-actions">
           <button v-if="device.authCount > 0" class="chip-btn" @click="showAuthLogs(device)">
             <span class="material-symbols-outlined">devices_other</span>关联{{ device.authCount }}
-          </button>
-          <button v-if="device.sn" class="chip-btn" @click="copySN(device.sn)">
-            <span class="material-symbols-outlined">content_copy</span>复制
           </button>
           <button v-if="device.sn" class="chip-btn" @click="copyQRUrl(device.id)">
             <span class="material-symbols-outlined">qr_code</span>扫码
@@ -212,6 +214,10 @@
         </div>
       </div>
     </div>
+
+    <transition name="copy-tip">
+      <div v-show="copyTip" class="copy-tip">{{ copyTipText }}</div>
+    </transition>
   </div>
 </template>
 
@@ -237,6 +243,10 @@ const commandForm = ref({ command: 'clear_storage' })
 const commandOptions = [
   { label: '清除缓存和 Cookies', value: 'clear_storage' },
 ]
+
+const copyTip = ref(false)
+const copyTipText = ref('已复制设备码')
+let copyTipTimer: ReturnType<typeof setTimeout> | null = null
 
 async function fetchDevices() {
   const res = await fetch('/api/admin/devices')
@@ -286,10 +296,13 @@ async function deleteDevice(id: string) {
 async function copySN(sn: string) {
   try {
     await navigator.clipboard.writeText(sn)
-    alert('已复制设备码：' + sn)
+    copyTipText.value = '已复制设备码'
   } catch {
-    alert('设备码：' + sn)
+    copyTipText.value = '设备码：' + sn
   }
+  copyTip.value = true
+  if (copyTipTimer) clearTimeout(copyTipTimer)
+  copyTipTimer = setTimeout(() => (copyTip.value = false), 1800)
 }
 
 async function regenerateSN(id: string) {
@@ -430,8 +443,26 @@ onMounted(() => {
 .device-body { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--surface-container-low); border-radius: 10px; }
 .sn-row { display: flex; flex-direction: column; gap: 2px; }
 .sn-label { font-size: 11px; color: var(--text-disabled); }
+.sn-copy-row { display: flex; align-items: center; gap: 4px; }
+.sn-copy {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border: 1px solid var(--border); border-radius: 6px;
+  background: transparent; color: var(--text-disabled); cursor: pointer;
+  padding: 0; transition: all 0.15s;
+}
+.sn-copy .material-symbols-outlined { font-size: 14px; }
+.sn-copy:hover { border-color: #ff6b00; color: #ff6b00; background: var(--primary-soft); }
 .sn-text { font-family: monospace; font-size: 13px; letter-spacing: 1px; color: var(--on-surface); }
 .sn-empty { color: var(--text-disabled); }
+
+.copy-tip {
+  position: fixed; left: 50%; top: 72px; transform: translateX(-50%);
+  padding: 8px 18px; border-radius: 20px; background: var(--on-surface); color: var(--surface);
+  font-size: 13px; font-weight: 600; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  z-index: 999;
+}
+.copy-tip-enter-active, .copy-tip-leave-active { transition: opacity 0.2s, transform 0.2s; }
+.copy-tip-enter-from, .copy-tip-leave-to { opacity: 0; transform: translate(-50%, -6px); }
 
 .status-row { display: flex; align-items: center; gap: 6px; }
 .status-dot { width: 8px; height: 8px; border-radius: 50%; }
