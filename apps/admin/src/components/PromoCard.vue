@@ -156,11 +156,20 @@ function ruleText(p: Promotion): string {
     }
   }
   if (p.type === 'time_discount' || p.type === 'total_discount') {
+    if (p.rules?.discountType !== undefined && p.rules.discountValue !== undefined) {
+      const val = p.rules.discountType === 'percentage' ? `${p.rules.discountValue}%` : `¥${p.rules.discountValue}`
+      let text = `总价${val}减免`
+      if (p.rules.minAmount) text += `（满¥${p.rules.minAmount}）`
+      if (p.rules.maxDiscount) text += `（最高减¥${p.rules.maxDiscount}）`
+      const excludedCount = Array.isArray(p.rules.excludedDishIds) ? p.rules.excludedDishIds.length : 0
+      if (excludedCount) text += `（不含${excludedCount}个商品）`
+      return text
+    }
     if (p.rules?.discountRate !== undefined) {
       return `${p.rules.discountRate * 10}折`
     }
     if (p.rules?.discount !== undefined) {
-      return `${p.rules.discount}折`
+      return `${p.rules.discount * 10}折`
     }
   }
   return JSON.stringify(p.rules || {})
