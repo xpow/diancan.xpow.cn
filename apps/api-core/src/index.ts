@@ -945,6 +945,7 @@ app.post('/api/orders/:orderNo/pay', orderLimiter, authMiddleware, async (req, r
       status: order.status === 'unpaid' ? 'paid' : undefined,
       paidAt: new Date(),
       paymentMethod: typeof pm === 'string' && pm ? pm : '',
+      items: { updateMany: { where: {}, data: { status: 'preparing' } } },
     },
   })
   res.json({ orderNo: updated.orderNo, status: updated.status })
@@ -953,11 +954,18 @@ app.post('/api/orders/:orderNo/pay', orderLimiter, authMiddleware, async (req, r
 app.post('/api/orders/:orderNo/dish-out', orderLimiter, authMiddleware, async (req, res) => {
   const { orderNo } = req.params
   if (req.authDevice?.role !== 'admin') return res.status(403).json({ message: '仅管理员可操作' })
-  const order = await prisma.order.findUnique({ where: { orderNo }, select: { id: true, dishOutAt: true } })
+  const order = await prisma.order.findUnique({ where: { orderNo }, select: { id: true, status: true, dishOutAt: true } })
   if (!order) return res.status(404).json({ message: '订单不存在' })
   if (order.dishOutAt) return res.status(400).json({ message: '已出过菜' })
-  const updated = await prisma.order.update({ where: { id: order.id }, data: { dishOutAt: new Date() } })
-  res.json({ orderNo: updated.orderNo, dishOutAt: updated.dishOutAt })
+  await prisma.order.update({
+    where: { id: order.id },
+    data: {
+      dishOutAt: new Date(),
+      ...(order.status !== 'unpaid' && order.status !== 'completed' && order.status !== 'cancelled' ? { status: 'ready' } : {}),
+      items: { updateMany: { where: {}, data: { status: 'ready' } } },
+    },
+  })
+  res.json({ orderNo, dishOutAt: new Date().toISOString() })
 })
 
 app.post('/api/orders/:orderNo/complete', orderLimiter, authMiddleware, async (req, res) => {

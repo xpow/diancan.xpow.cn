@@ -551,6 +551,14 @@ router.put('/orders/:id/status', async (req, res) => {
     data.paidAt = new Date()
   }
 
+  // 同步菜品状态到取餐屏状态灯：订单进入制作/可取餐时，同步其订单项状态
+  if (status === 'preparing' && order.status !== 'preparing' && order.status !== 'paid') {
+    await prisma.orderItem.updateMany({ where: { orderId: id }, data: { status: 'preparing' } })
+  }
+  if (status === 'ready') {
+    await prisma.orderItem.updateMany({ where: { orderId: id }, data: { status: 'ready' } })
+  }
+
   const updated = await prisma.order.update({
     where: { id },
     data,

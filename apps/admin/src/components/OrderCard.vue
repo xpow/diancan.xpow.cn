@@ -266,8 +266,9 @@ function toggleGroup(id: string) {
 
 function showAction(action: string): boolean {
   const s = props.order.status
-  if (action === 'preparing') return s === 'unpaid' || s === 'pending' || s === 'paid'
-  if (action === 'ready') return s === 'preparing'
+  const groupBlocked = isGroup.value ? unpaidGroupCount.value > 0 : false
+  if (action === 'preparing') return !groupBlocked && !orderUnpaid.value && (s === 'pending' || s === 'paid')
+  if (action === 'ready') return !groupBlocked && !orderUnpaid.value && s === 'preparing'
   if (action === 'completed') return s === 'ready'
   if (action === 'cancel') return s === 'unpaid' || s === 'pending' || s === 'paid' || s === 'preparing'
   return false
