@@ -432,6 +432,12 @@ async function reloadQuote() {
 async function openPaymentPopup() {
   if (!quote.value || !cartItems.value.length || submitting.value) return
 
+  // 结算保护：订单金额为 0 或负数时禁止提交
+  if (quote.value.totals.payableAmount <= 0) {
+    orderError.value = '订单金额无效，无法提交'
+    return
+  }
+
   // 已选择继续下单（忽略库存）则直接弹付款码
   if (forceStock.value) {
     showPaymentPopup.value = true
@@ -470,6 +476,12 @@ function continueOrdering() {
 
 async function submitOrder(payLater = false) {
   if (!quote.value || !cartItems.value.length || submitting.value) return
+
+  // 结算保护：订单金额为 0 或负数时禁止提交
+  if (quote.value.totals.payableAmount <= 0) {
+    orderError.value = '订单金额无效，无法提交'
+    return
+  }
 
   submitting.value = true
   orderError.value = ''

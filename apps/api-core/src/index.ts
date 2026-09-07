@@ -784,6 +784,11 @@ app.post('/api/orders', orderLimiter, authMiddleware, async (req, res) => {
   }
   const quote = await quoteRes.json()
 
+  // 结算保护：订单金额为 0 或负数时禁止下单（满减/优惠超限等场景）
+  if (!(quote.totals?.payableAmount > 0)) {
+    return res.status(400).json({ message: '订单金额无效，无法提交' })
+  }
+
   // 取餐号: branchCode(字母) + deviceCode(2位数字) + 当日流水(3位)
   const branch = await prisma.branch.findUnique({ where: { id: branchId } })
   const device = await prisma.device.findUnique({ where: { id: deviceId } })
