@@ -73,10 +73,15 @@
                 <p class="featured-desc">{{ item.dish.desc }}</p>
               </div>
               <div class="featured-bottom">
-                <span class="featured-price">¥{{ item.dish.price.toFixed(2) }}<span v-if="item.dish.portionSize" class="featured-portion"> / {{ item.dish.portionSize }}{{ item.dish.unit || '串' }}</span></span>
+                <template v-if="promoPrice(item.dish)">
+                  <span class="featured-price featured-price-original">¥{{ item.dish.price.toFixed(2) }}<span v-if="item.dish.portionSize" class="featured-portion"> / {{ item.dish.portionSize }}{{ item.dish.unit || '串' }}</span></span>
+                  <span class="featured-price featured-price-promo">¥{{ promoPrice(item.dish)!.toFixed(2) }}<span v-if="item.dish.portionSize" class="featured-portion"> / {{ item.dish.portionSize }}{{ item.dish.unit || '串' }}</span></span>
+                </template>
+                <span v-else class="featured-price">¥{{ item.dish.price.toFixed(2) }}<span v-if="item.dish.portionSize" class="featured-portion"> / {{ item.dish.portionSize }}{{ item.dish.unit || '串' }}</span></span>
               </div>
             </div>
             <div class="featured-thumb">
+              <span v-if="promoPrice(item.dish)" class="featured-promo-tag">{{ promoDiscountText(item.dish) }}</span>
               <img :src="getDishThumbnail(item.dish.id)" alt="" />
             </div>
           </div>
@@ -87,6 +92,7 @@
               </div>
               <span v-else-if="dish.stockEnabled && (dish.stock ?? 0) > 0" class="grid-stock-badge">剩余 {{ dish.stock }} {{ dish.unit || '串' }}</span>
               <div class="menu-grid-thumb">
+                <span v-if="promoPrice(dish)" class="menu-grid-promo-tag">{{ promoDiscountText(dish) }}</span>
                 <img :src="getDishThumbnail(dish.id)" :alt="dish.name" loading="lazy" />
               </div>
               <div class="menu-grid-half">
@@ -95,7 +101,13 @@
                   <p class="menu-grid-desc">{{ dish.desc }}</p>
                 </div>
                 <div class="menu-grid-bottom">
-                  <span class="menu-grid-price">¥{{ dish.price.toFixed(2) }}<span v-if="dish.portionSize" class="menu-grid-portion"> / {{ dish.portionSize }}{{ dish.unit || '串' }}</span></span>
+                  <template v-if="promoPrice(dish)">
+                    <div class="menu-grid-promo-row">
+                      <span class="menu-grid-price menu-grid-price-original">¥{{ dish.price.toFixed(2) }}<span v-if="dish.portionSize" class="menu-grid-portion"> / {{ dish.portionSize }}{{ dish.unit || '串' }}</span></span>
+                      <span class="menu-grid-price menu-grid-price-promo">¥{{ promoPrice(dish)!.toFixed(2) }}<span v-if="dish.portionSize" class="menu-grid-portion"> / {{ dish.portionSize }}{{ dish.unit || '串' }}</span></span>
+                    </div>
+                  </template>
+                  <span v-else class="menu-grid-price">¥{{ dish.price.toFixed(2) }}<span v-if="dish.portionSize" class="menu-grid-portion"> / {{ dish.portionSize }}{{ dish.unit || '串' }}</span></span>
                 </div>
               </div>
             </div>
@@ -225,6 +237,8 @@ interface MenuCategoryDish {
   portionSize: number | null
   image: string | null
   tags: string[]
+  promoPrice?: number | null
+  promotionName?: string | null
 }
 
 interface MenuCategory {
@@ -302,6 +316,26 @@ function getDisplayGroups(dishes: any[]): DisplayItem[] {
   }
   return items
 }
+
+function promoPrice(dish: MenuCategoryDish): number | null {
+  const pp = dish.promoPrice
+  const p = dish.price
+  if (!pp || !p || pp <= 0 || pp >= p) return null
+  return pp
+}
+function promoDiscountText(dish: MenuCategoryDish): string {
+  const pp = promoPrice(dish)
+  if (pp == null) return ''
+  const zhe = String(((pp / dish.price) * 10).toFixed(1)).replace(/\.0$/, '')
+  return `折扣 ${zhe}折`
+}
+function promoSaveText(dish: MenuCategoryDish): string {
+  const pp = promoPrice(dish)
+  if (pp == null) return ''
+  const save = dish.price - pp
+  return save >= 1 ? `促销省¥${save.toFixed(0)}` : `促销¥${pp.toFixed(2)}`
+}
+
 const heroImages = [
   lb1, lb2, lb3, lb4,
 ]
@@ -699,9 +733,12 @@ onMounted(async () => {
 .featured-sold-out { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: rgba(0,0,0,0.5); color: #fff; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; z-index: 2; border-radius: var(--radius-lg); }
 .featured-sold-out .material-icons { font-size: 30px !important; }
 .featured-stock-badge { position: absolute; bottom: 8px; right: 8px; padding: 1px 8px; border-radius: var(--radius-full); background: rgb(255 124 0 / 89%); color: #fff; font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 700; line-height: 1.5; pointer-events: none; z-index: 2; }
-.featured-price { color: var(--primary-container); font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; }
+.featured-price { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: var(--primary-container); }
 .featured-portion { font-size: var(--text-label-sm); font-weight: 700; color: var(--secondary); }
-.featured-bottom { margin-top: var(--spacing-md); }
+.featured-price-original { font-size: var(--text-body-md); font-weight: 600; color: var(--outline); text-decoration: line-through; }
+.featured-price-promo { font-size: calc(var(--text-price-display) * 1.1); font-weight: 900; color: #e53935; margin-right: 6px; }
+.featured-promo-tag { position: absolute; top: 6px; left: 6px; z-index: 2; padding: 2px 10px; border-radius: 40px; background: linear-gradient(135deg, #ff8a3d, #ff6b00); color: #fff; font-family: var(--font-display); font-size: 11px; font-weight: 800; white-space: nowrap; box-shadow: 0 2px 10px rgba(255, 107, 0, 0.45); pointer-events: none; }
+.featured-bottom { margin-top: var(--spacing-md); display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; }
 
 /* old overrides removed */
 
@@ -724,7 +761,7 @@ onMounted(async () => {
 }
 .menu-grid-card:active { transform: scale(0.97); transition: transform 0.1s; }
 .menu-grid-card::after { content: 'restaurant'; font-family: 'Material Symbols Outlined'; position: absolute; bottom: -8px; right: -8px; font-size: 56px; color: var(--outline-variant); opacity: 0.4; transform: rotate(12deg); pointer-events: none; }
-.menu-grid-thumb { width: 100%; height: 120px; border-radius: var(--radius-lg); overflow: hidden; background: var(--surface-container); margin-bottom: var(--spacing-md); }
+.menu-grid-thumb { position: relative; width: 100%; height: 120px; border-radius: var(--radius-lg); overflow: hidden; background: var(--surface-container); margin-bottom: var(--spacing-md); }
 .menu-grid-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .menu-grid-half { display: flex; flex-direction: column; justify-content: space-between; flex: 1; min-width: 0; }
 .grid-sold-out { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: rgba(0,0,0,0.5); color: #fff; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; z-index: 2; border-radius: var(--radius-xl); }
@@ -733,8 +770,12 @@ onMounted(async () => {
 .menu-grid-name { margin: 0; font-family: var(--font-display); font-size: var(--text-headline-md); font-weight: 700; color: var(--on-surface); }
 .menu-grid-desc { margin: 4px 0 0; font-family: var(--font-body); font-size: var(--text-body-md); color: var(--on-surface-variant); line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .menu-grid-bottom { margin-top: var(--spacing-sm); }
-.menu-grid-price { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: var(--primary-container); display: block; }
-.menu-grid-portion { display: block; font-size: var(--text-label-sm); font-weight: 700; color: var(--secondary); }
+.menu-grid-price { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: var(--primary-container); }
+.menu-grid-portion { font-size: var(--text-label-sm); font-weight: 700; color: var(--secondary); }
+.menu-grid-promo-row { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; }
+.menu-grid-price-original { font-size: var(--text-body-sm); font-weight: 500; color: var(--outline); text-decoration: line-through; }
+.menu-grid-price-promo { font-size: calc(var(--text-price-display) * 1.05); font-weight: 900; color: #e53935; }
+.menu-grid-promo-tag { position: absolute; top: 4px; left: 4px; z-index: 2; display: inline-block; padding: 1px 8px; border-radius: 40px; background: linear-gradient(135deg, #ff8a3d, #ff6b00); color: #fff; font-family: var(--font-display); font-size: 10px; font-weight: 800; white-space: nowrap; pointer-events: none; }
 
 /* Info Grid */
 .info-grid {

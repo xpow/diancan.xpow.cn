@@ -113,7 +113,7 @@ const discountTag = computed<string>(() => {
 .dish-sold-out { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: rgba(0, 0, 0, 0.5); color: #fff; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; letter-spacing: 0.05em; }
 .dish-sold-out .material-icons { font-size: 34px !important; opacity: 0.9; }
 .dish-stock-badge { position: absolute; top: 4px; right: 4px; padding: 2px 12px; border-radius: var(--radius-full); background: rgb(255 124 0 / 89%); color: #fff; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; line-height: 1.5; pointer-events: none; box-shadow: 0 2px 8px rgba(255, 61, 0, 0.4); }
-.dish-discount-ribbon { position: absolute; top: 8px; left: 8px; padding: 3px 10px; border-radius: var(--radius-full); background: #e53935; color: #fff; font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 800; line-height: 1.4; box-shadow: 0 2px 10px rgba(229, 57, 53, 0.45); pointer-events: none; z-index: 1; }
+.dish-discount-ribbon { position: absolute; top: 8px; left: 8px; padding: 3px 10px; border-radius: var(--radius-full); background: linear-gradient(135deg, #ff8a3d, #ff6b00); color: #fff; font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 800; line-height: 1.4; box-shadow: 0 2px 10px rgba(255, 107, 0, 0.45); pointer-events: none; z-index: 1; }
 
 .dish-specs { margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--card-border-subtle); display: flex; flex-direction: column; gap: var(--spacing-md); }
 .spec-group { display: flex; flex-direction: column; gap: var(--spacing-sm); }

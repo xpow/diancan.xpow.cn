@@ -196,7 +196,28 @@ app.get('/api/system/bootstrap', generalLimiter, async (req, res) => {
   const availablePromotions = filterPromotionsByDevice(
     activePromotions.filter((p: any) => p.status === 'active' && ['buy_get', 'full_reduction', 'welfare_item', 'time_discount', 'new_user', 'holiday_gift', 'total_discount'].includes(p.type)),
     device?.id,
-  )
+)
+
+  // 首页折扣价：为菜品附加促销价与活动名（与菜单接口同口径）
+  const dishPriceMap = new Map((cacheDishes ?? []).map((d: any) => [d.id, d.price]))
+  const promoDishMap = new Map<string, { promoPrice: number; name: string }>()
+  const now = new Date()
+  for (const promo of availablePromotions ?? []) {
+    if (promo.endDate && new Date(promo.endDate) < now) continue
+    if (promo.startDate && new Date(promo.startDate) > now) continue
+    for (const pi of promo.items ?? []) {
+      if (promo.type === 'time_discount') {
+        const price = pi.promoPrice ?? (() => {
+          const rules = typeof promo.rules === 'string' ? JSON.parse(promo.rules) : promo.rules
+          const rate = rules?.discountRate ?? 1
+          return Math.round((dishPriceMap.get(pi.dishId) ?? 0) * rate * 100) / 100
+        })()
+        promoDishMap.set(pi.dishId, { promoPrice: price, name: promo.name })
+      } else if (promo.type === 'welfare_item' && pi.promoPrice) {
+        promoDishMap.set(pi.dishId, { promoPrice: pi.promoPrice, name: promo.name })
+      }
+    }
+  }
 
   res.json({
     merchantId: merchant.id,
@@ -245,6 +266,7 @@ app.get('/api/system/bootstrap', generalLimiter, async (req, res) => {
         itemIds: p.items?.map((i: any) => i.dishId).filter(Boolean) || [],
       }
     }),
+
     featuredItems,
     menuCategories: cacheCategories.map((cat) => ({
       id: cat.id,
@@ -267,6 +289,8 @@ app.get('/api/system/bootstrap', generalLimiter, async (req, res) => {
           tags: typeof d.tags === 'string' ? JSON.parse(d.tags) : (d.tags ?? []),
           stock: d.stockEnabled ? d.stock : undefined,
           stockEnabled: d.stockEnabled || undefined,
+          promoPrice: promoDishMap.get(d.id)?.promoPrice ?? null,
+          promotionName: promoDishMap.get(d.id)?.name ?? null,
         })),
     })).filter((c: any) => c.dishes.length > 0),
     commands: device ? await prisma.deviceCommand.findMany({
