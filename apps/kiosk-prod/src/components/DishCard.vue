@@ -3,6 +3,7 @@
     <div class="dish-image-wrap">
       <img :src="dish.image" :alt="dish.name" class="dish-image" />
       <span class="dish-image-disclaimer">*手工制作，实物与图片可能存在差异</span>
+      <span v-if="discountRate && discountRate < 1" class="dish-discount-ribbon">{{ discountText }}</span>
       <div v-if="soldOut" class="dish-sold-out">
         <span class="material-icons">inventory_2</span>
         <span>今日已售罄</span>
@@ -16,10 +17,10 @@
       </div>
       <p class="dish-desc">{{ dish.desc }}</p>
       <div class="dish-price-row">
-        <template v-if="dish.promoPrice">
+        <template v-if="discountRate && discountRate < 1">
           <span class="dish-price dish-price-original">¥{{ dish.price.toFixed(2) }}</span>
           <span class="dish-promo-price">¥{{ dish.promoPrice.toFixed(2) }}<span class="dish-portion" v-if="dish.portionSize"> / {{ dish.portionSize }}{{ dish.unit || '串' }}</span></span>
-          <span class="dish-promo-tag">{{ dish.promotionName }}</span>
+          <span class="dish-promo-tag">{{ discountTag }}</span>
         </template>
         <span v-else class="dish-price">¥{{ dish.price.toFixed(2) }}<span class="dish-portion" v-if="dish.portionSize"> / {{ dish.portionSize }}{{ dish.unit || '串' }}</span></span>
       </div>
@@ -62,6 +63,24 @@ const addBtnRef = ref<HTMLElement>()
 
 const soldOut = computed(() => !!props.dish.stockEnabled && (props.dish.stock ?? 0) <= 0)
 const showStockBadge = computed(() => !!props.dish.stockEnabled && (props.dish.stock ?? 0) > 0)
+
+const discountRate = computed<number | null>(() => {
+  const pp = props.dish.promoPrice
+  const p = props.dish.price
+  if (!pp || !p || pp <= 0 || pp >= p) return null
+  return Math.round((pp / p) * 1000) / 1000
+})
+const discountText = computed<string>(() => {
+  if (discountRate.value == null) return ''
+  const zhe = String((discountRate.value * 10).toFixed(1)).replace(/\.0$/, '')
+  return `折扣 ${zhe}折`
+})
+const discountTag = computed<string>(() => {
+  if (discountRate.value == null) return ''
+  const zhe = String((discountRate.value * 10).toFixed(1)).replace(/\.0$/, '')
+  const save = props.dish.price - (props.dish.promoPrice ?? 0)
+  return `促销${zhe}折 · 省¥${save.toFixed(0)}`
+})
 </script>
 
 <style scoped>
@@ -83,9 +102,9 @@ const showStockBadge = computed(() => !!props.dish.stockEnabled && (props.dish.s
 
 .dish-price-row { display: flex; align-items: center; gap: var(--spacing-sm); margin-top: var(--spacing-xs); }
 .dish-price { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: var(--primary-container); }
-.dish-price-original { font-size: 16px; font-weight: 600; color: var(--secondary); text-decoration: line-through; }
-.dish-promo-price { font-family: var(--font-display); font-size: var(--text-price-display); font-weight: 800; color: var(--primary-container); }
-.dish-promo-tag { display: inline-block; padding: 1px 8px; border-radius: 40px; background: var(--primary-container); color: var(--on-primary); font-family: var(--font-display); font-size: 11px; font-weight: 700; }
+.dish-price-original { font-size: 14px; font-weight: 500; color: var(--outline); text-decoration: line-through; }
+.dish-promo-price { font-family: var(--font-display); font-size: calc(var(--text-price-display) * 1.12); font-weight: 900; color: #e53935; }
+.dish-promo-tag { display: inline-block; padding: 2px 10px; border-radius: 40px; background: linear-gradient(90deg, #ffe0b2, #ffcc80); color: #b23c00; font-family: var(--font-display); font-size: 11px; font-weight: 800; white-space: nowrap; }
 .dish-portion { font-family: var(--font-display); font-size: var(--text-body-lg); font-weight: 700; color: var(--secondary); }
 
 .dish-image-wrap { position: relative; border-radius: var(--radius-lg); overflow: hidden; background: var(--surface-container); margin-bottom: var(--spacing-md); }
@@ -94,6 +113,7 @@ const showStockBadge = computed(() => !!props.dish.stockEnabled && (props.dish.s
 .dish-sold-out { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: rgba(0, 0, 0, 0.5); color: #fff; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; letter-spacing: 0.05em; }
 .dish-sold-out .material-icons { font-size: 34px !important; opacity: 0.9; }
 .dish-stock-badge { position: absolute; top: 4px; right: 4px; padding: 2px 12px; border-radius: var(--radius-full); background: rgb(255 124 0 / 89%); color: #fff; font-family: var(--font-display); font-size: var(--text-label-lg); font-weight: 700; line-height: 1.5; pointer-events: none; box-shadow: 0 2px 8px rgba(255, 61, 0, 0.4); }
+.dish-discount-ribbon { position: absolute; top: 8px; left: 8px; padding: 3px 10px; border-radius: var(--radius-full); background: #e53935; color: #fff; font-family: var(--font-display); font-size: var(--text-label-sm); font-weight: 800; line-height: 1.4; box-shadow: 0 2px 10px rgba(229, 57, 53, 0.45); pointer-events: none; z-index: 1; }
 
 .dish-specs { margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--card-border-subtle); display: flex; flex-direction: column; gap: var(--spacing-md); }
 .spec-group { display: flex; flex-direction: column; gap: var(--spacing-sm); }
