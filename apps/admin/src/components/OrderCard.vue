@@ -140,6 +140,7 @@
       <div class="order-amount" v-if="!isGroup">
         <span class="amount-label">{{ orderUnpaid ? '待付金额' : '实付' }}</span>
         <span :class="['amount-value', orderUnpaid && 'amount-unpaid']">¥{{ order.totals.payableAmount?.toFixed(2) }}</span>
+        <span v-if="(order.fullReduction ?? 0) > 0" class="order-fr">满减 -¥{{ order.fullReduction.toFixed(2) }}</span>
       </div>
       <div class="order-amount-group" v-else>
         <div class="amount-row" v-if="unpaidGroupTotal < groupTotal">
@@ -395,6 +396,7 @@ function formatTime(t: string) {
 .group-amount { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 700; color: var(--on-surface); text-align: right; }
 .group-amount-box { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
 .group-fr { font-size: 11px; font-weight: 600; color: #ff6b00; background: var(--primary-soft); padding: 2px 8px; border-radius: 12px; white-space: nowrap; }
+.order-fr { font-size: 11px; font-weight: 600; color: #ff6b00; background: var(--primary-soft); padding: 2px 8px; border-radius: 12px; white-space: nowrap; }
 
 /* Meta - pushed to bottom */
 .order-meta { padding: 12px 16px; background: var(--surface-container-low); font-size: 12px; margin-top: auto; }
