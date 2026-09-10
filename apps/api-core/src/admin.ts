@@ -342,7 +342,7 @@ router.get('/backup.sql', async (_req, res) => {
 /* ===== Orders ===== */
 
 router.get('/orders', async (_req, res) => {
-  const { status, scope, branchId, groupId, unpaid, page = '1', limit = '50' } = _req.query as Record<string, string>
+  const { status, scope, branchId, groupId, deviceId, unpaid, page = '1', limit = '50' } = _req.query as Record<string, string>
   const where: any = {}
   if (unpaid === '1') {
     // 待付款：对齐取餐端，先限定 active 状态范围，再按未支付(paidAt为空)
@@ -351,6 +351,7 @@ router.get('/orders', async (_req, res) => {
   } else if (scope === 'active') where.status = { in: ['unpaid', 'paid', 'preparing', 'ready'] }
   else if (status) where.status = status.includes(',') ? { in: status.split(',') } : status
   if (branchId) where.branchId = branchId
+  if (deviceId) where.deviceId = deviceId
   if (groupId) where.groupId = groupId
 
   const skip = (Math.max(1, Number(page)) - 1) * Number(limit)

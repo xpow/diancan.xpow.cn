@@ -7,6 +7,13 @@
         <p class="page-subtitle">查看和管理所有订单</p>
       </div>
       <div class="header-actions">
+        <div class="device-select">
+          <span class="material-symbols-outlined">devices</span>
+          <select v-model="deviceFilter" @change="setDeviceFilter">
+            <option value="">全部点菜机</option>
+            <option v-for="d in devices" :key="d.id" :value="d.id">{{ deviceLabel(d) }}</option>
+          </select>
+        </div>
         <div class="search-box">
           <span class="material-symbols-outlined">search</span>
           <input type="text" v-model="searchKeyword" placeholder="搜索订单号..." @keyup.enter="searchOrders" />
@@ -170,6 +177,8 @@ interface Order {
 }
 
 const orders = ref<Order[]>([])
+const devices = ref<{ id: string; name: string; code: string; sn: string }[]>([])
+const deviceFilter = ref('')
 const statusFilter = ref<string>(new URLSearchParams(location.search).get('status') || 'all')
 const searchKeyword = ref('')
 const pageSize = 30
@@ -188,6 +197,26 @@ const statusCounts = reactive({
 
 function canCancel(status: string): boolean {
   return ['unpaid', 'pending', 'paid', 'preparing', 'ready'].includes(status)
+}
+
+function deviceLabel(d: { name: string; code: string; sn: string }): string {
+  const label = d.name || d.code || d.sn || '点菜机'
+  return d.code && d.name ? `${d.name} (${d.code})` : label
+}
+
+async function loadDevices() {
+  try {
+    const res = await fetch('/api/admin/devices')
+    const data = await res.json()
+    devices.value = Array.isArray(data) ? data : []
+  } catch {
+    devices.value = []
+  }
+}
+
+function setDeviceFilter() {
+  page.value = 1
+  fetchOrders()
 }
 
 function setStatusFilter(status: string) {
@@ -218,6 +247,7 @@ async function fetchOrders() {
   }
   params.set('page', String(page.value))
   params.set('limit', String(pageSize))
+  if (deviceFilter.value) params.set('deviceId', deviceFilter.value)
   const res = await fetch(`/api/admin/orders?${params}`)
   const data = await res.json()
   // 参考取餐端（kiosk PickupPage）排序：按 createdAt 降序，新单在前
@@ -249,7 +279,10 @@ async function updateStatus(id: string, status: string, cancelReason?: string) {
   await fetchOrders()
 }
 
-onMounted(fetchOrders)
+onMounted(() => {
+  loadDevices()
+  fetchOrders()
+})
 
 const showCancel = ref(false)
 const cancelOrderId = ref('')
@@ -300,6 +333,32 @@ async function confirmCancel() {
 .header-actions {
   display: flex;
   gap: 12px;
+}
+
+.device-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  color: var(--on-surface-variant);
+}
+
+.device-select .material-symbols-outlined {
+  font-size: 18px;
+  color: var(--on-surface-variant);
+}
+
+.device-select select {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: var(--on-surface);
+  cursor: pointer;
+  min-width: 120px;
 }
 
 .search-box {
