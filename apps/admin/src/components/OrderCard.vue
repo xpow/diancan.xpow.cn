@@ -100,6 +100,7 @@
           <div class="group-amount-box">
             <div class="group-amount">¥{{ (g.totals?.payableAmount ?? 0).toFixed(2) }}</div>
             <span v-if="(g.fullReduction ?? 0) > 0" class="group-fr">满减 -¥{{ g.fullReduction.toFixed(2) }}</span>
+            <span v-if="(g.totalDiscount ?? 0) > 0" class="group-fr">总价直减 -¥{{ g.totalDiscount.toFixed(2) }}</span>
           </div>
         </div>
         <div v-if="expandedSet[g.id]" class="group-order-body">
@@ -138,9 +139,12 @@
     <!-- Order Footer -->
     <div class="order-footer">
       <div class="order-amount" v-if="!isGroup">
-        <span class="amount-label">{{ orderUnpaid ? '待付金额' : '实付' }}</span>
-        <span :class="['amount-value', orderUnpaid && 'amount-unpaid']">¥{{ order.totals.payableAmount?.toFixed(2) }}</span>
-        <span v-if="(order.fullReduction ?? 0) > 0" class="order-fr">满减 -¥{{ order.fullReduction.toFixed(2) }}</span>
+        <div class="amount-line">
+          <span class="amount-label">{{ orderUnpaid ? '待付金额' : '实付' }}</span>
+          <span :class="['amount-value', orderUnpaid && 'amount-unpaid']">¥{{ order.totals.payableAmount?.toFixed(2) }}</span>
+          <span v-if="(order.fullReduction ?? 0) > 0" class="order-fr">满减 -¥{{ order.fullReduction.toFixed(2) }}</span>
+          <span v-if="(order.totalDiscount ?? 0) > 0" class="order-fr">总价直减 -¥{{ order.totalDiscount.toFixed(2) }}</span>
+        </div>
       </div>
       <div class="order-amount-group" v-else>
         <div class="amount-row" v-if="unpaidGroupTotal < groupTotal">
@@ -415,7 +419,8 @@ function formatTime(t: string) {
   border-top: 1px solid var(--divider);
   margin-top: auto;
 }
-.order-amount { display: flex; flex-direction: column; }
+.order-amount { display: flex; flex-direction: column; gap: 2px; }
+.amount-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .amount-label { font-size: 11px; color: var(--text-disabled); }
 .amount-value { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 700; color: var(--on-surface); }
 .amount-unpaid {   color: #f74e22; }

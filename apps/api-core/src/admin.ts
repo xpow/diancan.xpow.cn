@@ -419,6 +419,9 @@ router.get('/orders', async (_req, res) => {
         fullReduction: m.promotions
           .filter((p) => p.type === 'full_reduction')
           .reduce((s, p) => s + (p.discount || 0), 0),
+        totalDiscount: m.promotions
+          .filter((p) => p.type === 'total_discount')
+          .reduce((s, p) => s + (p.discount || 0), 0),
         itemCount: m.items.reduce((s, i) => s + i.quantity, 0),
         items: m.items.map((i) => ({
           id: i.id,
@@ -466,6 +469,9 @@ router.get('/orders', async (_req, res) => {
       },
       fullReduction: o.promotions
         .filter((p) => p.type === 'full_reduction')
+        .reduce((s, p) => s + p.discount, 0),
+      totalDiscount: o.promotions
+        .filter((p) => p.type === 'total_discount')
         .reduce((s, p) => s + p.discount, 0),
       items: o.items.map((i) => ({
         id: i.id,

@@ -143,6 +143,7 @@ interface Order {
     paymentMethod?: string
     totals: { originalAmount: number; discountAmount: number; payableAmount: number }
     fullReduction?: number
+    totalDiscount?: number
     itemCount: number
     items: {
       id: string
@@ -161,6 +162,7 @@ interface Order {
   paymentMethod?: string
   totals: { originalAmount: number; discountAmount: number; payableAmount: number }
   fullReduction?: number
+  totalDiscount?: number
   items: OrderItem[]
   createdAt: string
   cancelReason?: string
