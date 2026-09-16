@@ -24,9 +24,11 @@ for (let i = 0; i < 10 && !siteName; i++) {
 
 // .env 文件搜索路径（按优先级）
 const candidates: string[] = []
-if (siteName && rootDir) {
-  // 原路径：config/{siteName}/.env（从项目根目录）
-  candidates.push(path.join(rootDir, 'config', siteName, '.env'))
+if (siteName) {
+  // 外部规范路径：E:/www/config/{siteName}/.env（与项目平行）
+  candidates.push(path.join(rootDir, '..', 'config', siteName, '.env'))
+  // 项目内路径：config/{siteName}/.env（从项目根目录）
+  if (rootDir) candidates.push(path.join(rootDir, 'config', siteName, '.env'))
 }
 // api-core 同级
 candidates.push(path.join(fileDir, '..', '..', '.env'))
