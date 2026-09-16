@@ -22,9 +22,24 @@ for (let i = 0; i < 10 && !siteName; i++) {
   dir = path.dirname(dir)
 }
 
-if (siteName) {
-  const envFile = path.join(rootDir, '..', 'config', siteName, '.env')
-  if (fs.existsSync(envFile)) {
-    process.loadEnvFile(envFile)
+// .env 文件搜索路径（按优先级）
+const candidates: string[] = []
+if (siteName && rootDir) {
+  // 原路径：config/{siteName}/.env（从项目根目录）
+  candidates.push(path.join(rootDir, 'config', siteName, '.env'))
+}
+// api-core 同级
+candidates.push(path.join(fileDir, '..', '..', '.env'))
+// 项目根目录
+if (rootDir) candidates.push(path.join(rootDir, '.env'))
+// api-core 目录
+candidates.push(path.join(fileDir, '..', '.env'))
+
+for (const envFile of candidates) {
+  const resolved = path.resolve(envFile)
+  if (fs.existsSync(resolved)) {
+    process.loadEnvFile(resolved)
+    console.log(`[env] loaded: ${resolved}`)
+    break
   }
 }

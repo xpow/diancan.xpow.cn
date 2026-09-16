@@ -1,6 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import { PrismaClient } from '@prisma/client'
 import crypto from 'node:crypto'
+import bcrypt from 'bcrypt'
+import rateLimit from 'express-rate-limit'
 import { invalidateGlobalCache } from './cache.js'
 import { encryptDeviceSN } from './crypto.js'
 
@@ -10,11 +12,9 @@ const prisma = new PrismaClient()
 // 设备指纹有效期（测试用 30s，上线改回 7 * 24 * 60 * 60 * 1000）
 const FINGERPRINT_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000
 
-const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD || '34deb53eb707328254eac286931a7583'
-console.log('[admin] password hash:', ADMIN_PASSWORD_HASH)
-
-const KITCHEN_PASSWORD_HASH = process.env.KITCHEN_PASSWORD || '34deb53eb707328254eac286931a7583'
-console.log('[kitchen] password hash:', KITCHEN_PASSWORD_HASH)
+// ===== 密码哈希（bcrypt，向前兼容旧 MD5） =====
+const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD || '$2b$10$1DAOq3XoVCGloIP83XEykucvWJp3cTvPGw0ohL0hLtFb4tNkN93fS'
+const KITCHEN_PASSWORD_HASH = process.env.KITCHEN_PASSWORD || '$2b$10$zjJ6t40oEuedq133Ooq2XOx45SU9XidX84kkiwa1VbqZBshwXr2xS'
 
 function quoteIdentifier(name: string): string {
   return `"${String(name).replace(/"/g, '""')}"`
@@ -32,6 +32,61 @@ function sqlValue(value: unknown): string {
   const text = String(value).replace(/'/g, "''")
   return `'${text}'`
 }
+
+// ===== 密码验证（支持 bcrypt + 旧 MD5 向前兼容）=====
+async function comparePassword(plaintext: string, storedHash: string): Promise<boolean> {
+  if (storedHash.startsWith('$2a$') || storedHash.startsWith('$2b$') || storedHash.startsWith('$2c$')) {
+    return bcrypt.compare(plaintext, storedHash)
+  }
+  // 旧 MD5 哈希向前兼容（后续迁移到 bcrypt 后可移除）
+  const md5 = crypto.createHash('md5').update(String(plaintext ?? '')).digest('hex')
+  return md5 === storedHash
+}
+
+// ===== 登录失败锁定（5 次 / 15 分钟）=====
+const loginAttempts = new Map<string, { count: number; resetAt: number }>()
+const LOCKOUT_THRESHOLD = 5
+const LOCKOUT_MS = 15 * 60 * 1000
+
+function isLockedOut(ip: string): boolean {
+  const entry = loginAttempts.get(ip)
+  if (!entry) return false
+  if (Date.now() > entry.resetAt) {
+    loginAttempts.delete(ip)
+    return false
+  }
+  return entry.count >= LOCKOUT_THRESHOLD
+}
+
+function recordFailedAttempt(ip: string): void {
+  const entry = loginAttempts.get(ip)
+  if (!entry || Date.now() > entry.resetAt) {
+    loginAttempts.set(ip, { count: 1, resetAt: Date.now() + LOCKOUT_MS })
+  } else {
+    entry.count++
+  }
+}
+
+function clearAttempts(ip: string): void {
+  loginAttempts.delete(ip)
+}
+
+// ===== 速率限制 =====
+const kitchenLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { message: '请求过于频繁，请稍后再试' },
+  standardHeaders: false,
+  legacyHeaders: false,
+})
+
+const adminLoginLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { message: '请求过于频繁，请稍后再试' },
+  standardHeaders: false,
+  legacyHeaders: false,
+})
 
 declare module 'express-session' {
   interface SessionData {
@@ -72,12 +127,18 @@ async function checkDishConflict(dishIds: string[], excludePromotionId?: string)
 }
 
 /* ===== Auth ===== */
-router.post('/auth/login', (req, res) => {
+router.post('/auth/login', adminLoginLimiter, async (req, res) => {
+  const ip = req.ip || req.socket.remoteAddress || 'unknown'
+  if (isLockedOut(ip)) {
+    return res.status(429).json({ message: '登录失败次数过多，请 15 分钟后再试' })
+  }
   const { password } = req.body ?? {}
-  const hash = crypto.createHash('md5').update(String(password ?? '')).digest('hex')
-  if (hash !== ADMIN_PASSWORD_HASH) {
+  const ok = await comparePassword(String(password ?? ''), ADMIN_PASSWORD_HASH)
+  if (!ok) {
+    recordFailedAttempt(ip)
     return res.status(403).json({ message: '密码错误' })
   }
+  clearAttempts(ip)
   req.session.adminAuthed = true
   res.json({ success: true })
 })
@@ -93,12 +154,18 @@ router.post('/auth/logout', (req, res) => {
 
 /* ===== Kitchen Auth（出餐管理独立密码） ===== */
 
-router.post('/kitchen/login', (req, res) => {
+router.post('/kitchen/login', kitchenLimiter, async (req, res) => {
+  const ip = req.ip || req.socket.remoteAddress || 'unknown'
+  if (isLockedOut(ip)) {
+    return res.status(429).json({ message: '登录失败次数过多，请 15 分钟后再试' })
+  }
   const { password } = req.body ?? {}
-  const hash = crypto.createHash('md5').update(String(password ?? '')).digest('hex')
-  if (hash !== KITCHEN_PASSWORD_HASH) {
+  const ok = await comparePassword(String(password ?? ''), KITCHEN_PASSWORD_HASH)
+  if (!ok) {
+    recordFailedAttempt(ip)
     return res.status(403).json({ message: '出餐密码错误' })
   }
+  clearAttempts(ip)
   req.session.kitchenAuthed = true
   res.json({ success: true })
 })

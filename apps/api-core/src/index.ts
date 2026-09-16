@@ -162,7 +162,13 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'diancan-dev-secret',
   resave: false,
   saveUninitialized: false,
-  cookie: { httpOnly: true, sameSite: 'lax', maxAge: 24 * 60 * 60 * 1000 },
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000,
+    // 生产环境（HTTPS）启用 secure，本地开发（HTTP）自动关闭
+    secure: process.env.NODE_ENV === 'production' || process.env.COOKIE_SECURE === 'true',
+  },
 }))
 
 app.use('/api/admin', adminRouter)

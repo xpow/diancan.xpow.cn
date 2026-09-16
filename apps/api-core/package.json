@@ -12,6 +12,7 @@
   "dependencies": {
     "@prisma/client": "^6.19.3",
     "@resvg/resvg-js": "^2.6.2",
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "express": "^4.21.0",
     "express-rate-limit": "^8.5.2",
@@ -22,6 +23,7 @@
     "sharp": "^0.35.3"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/express-session": "^1.19.0",
