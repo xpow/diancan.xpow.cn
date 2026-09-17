@@ -332,6 +332,7 @@ async function confirmCancel() {
 
 .header-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
 }
 
@@ -683,8 +684,23 @@ async function confirmCancel() {
     gap: 16px;
   }
 
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .device-select {
+    width: 100%;
+  }
+
+  .device-select select {
+    flex: 1;
+    min-width: 0;
+  }
+
   .search-box {
     min-width: 100%;
+    width: 100%;
   }
 
   .orders-grid {
