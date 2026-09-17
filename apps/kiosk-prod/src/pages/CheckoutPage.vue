@@ -564,6 +564,50 @@ onMounted(() => {
   margin: 0 auto;
 }
 
+/* Wide-screen: two-column layout (order details | payment methods) */
+@media (min-width: 1024px) {
+  .page-content {
+    max-width: 1080px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    grid-template-areas:
+      "hero   hero"
+      "toggle pay"
+      "order  pay"
+      "succ   succ";
+    gap: var(--spacing-lg);
+    align-items: start;
+  }
+
+  .page-content > .hero-context {
+    grid-area: hero;
+  }
+
+  .page-content > .order-type-toggle {
+    grid-area: toggle;
+  }
+
+  .page-content > .order-card {
+    grid-area: order;
+  }
+
+  .page-content > .payment-row {
+    grid-area: pay;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-md);
+  }
+
+  .page-content > .success-card {
+    grid-area: succ;
+    margin: 0;
+  }
+
+  .page-content > .empty-state {
+    grid-area: hero;
+  }
+}
+
 /* Hero Context */
 .hero-context {
   position: relative;
