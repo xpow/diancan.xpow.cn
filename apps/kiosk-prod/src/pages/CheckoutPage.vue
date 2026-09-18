@@ -154,6 +154,39 @@
               <span class="payment-name">支付宝</span>
             </div>
           </section>
+
+
+          <!-- Wide-screen cashier confirm card (hidden on mobile; replaces the bottom action bar) -->
+          <section class="payment-card checkout-confirm-card">
+            <div class="confirm-wrap">
+<div class="confirm-head">
+              <h3 class="confirm-title">支付与结算</h3>
+              <span class="confirm-label">待支付金额</span>
+                <div class="confirm-amount">
+                  <span class="currency"><small class="c-sign">¥</small></span>
+                  <span class="amount">{{ quote?.totals.payableAmount.toFixed(2) || '0.00' }}</span>
+                </div>
+              </div>
+              <div class="confirm-btns">
+                <button
+                  class="action-btn action-btn-secondary"
+                  :disabled="submitting || !quote"
+                  @click="submitOrder(true)"
+                >
+                  <span class="material-icons">schedule</span>
+                  <span>暂不付款</span>
+                </button>
+                <button
+                  class="action-btn"
+                  :disabled="submitting || !quote"
+                  @click="openPaymentPopup"
+                >
+                  <span class="material-icons">qr_code_scanner</span>
+                  <span>确认支付</span>
+                </button>
+              </div>
+            </div>
+          </section>
         </div>
 
         <!-- Payment Popup -->
@@ -1391,6 +1424,31 @@ onMounted(() => {
   .popup-cancel-btn {
     font-size: var(--text-body-md);
   }
+}
+@media (max-width: 1023px) {
+  .checkout-confirm-card {
+    display: none;
+  }
+}
+@media (min-width: 1024px) {
+  .checkout-confirm-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    background-color: #fcf9f8;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    padding: var(--spacing-md);
+  }
+  .action-bar {
+    display: none;
+  }
+}
+.confirm-title {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #1c1b1b;
+  margin-bottom: var(--spacing-md);
 }
 </style>
 
