@@ -37,12 +37,14 @@
               :class="['toggle-btn', orderType === 'dine-in' && 'toggle-btn-active']"
               @click="orderType = 'dine-in'"
             >
+              <span class="material-icons toggle-icon">restaurant</span>
               堂食
             </button>
             <button
               :class="['toggle-btn', orderType === 'takeaway' && 'toggle-btn-active']"
               @click="orderType = 'takeaway'"
             >
+              <span class="material-icons toggle-icon">takeout_dining</span>
               自提
             </button>
             <div class="toggle-indicator" :style="{ left: orderType === 'dine-in' ? '4px' : 'calc(50%)' }"></div>
@@ -155,13 +157,18 @@
             </div>
           </section>
 
+          <section class="payment-card" :class="{ 'payment-active': paymentMethod === 'cash' }" @click="paymentMethod = 'cash'">
+            <div class="payment-item">
+              <span class="material-icons payment-icon-cash">payments</span>
+              <span class="payment-name">现金支付</span>
+            </div>
+          </section>
 
           <!-- Wide-screen cashier confirm card (hidden on mobile; replaces the bottom action bar) -->
           <section class="payment-card checkout-confirm-card">
             <div class="confirm-wrap">
-<div class="confirm-head">
-              <h3 class="confirm-title">支付与结算</h3>
-              <span class="confirm-label">待支付金额</span>
+              <div class="confirm-head">
+                <span class="confirm-label">待支付金额</span>
                 <div class="confirm-amount">
                   <span class="currency"><small class="c-sign">¥</small></span>
                   <span class="amount">{{ quote?.totals.payableAmount.toFixed(2) || '0.00' }}</span>
@@ -170,7 +177,7 @@
               <div class="confirm-btns">
                 <button
                   class="action-btn action-btn-secondary"
-                  :disabled="submitting || !quote"
+                  :disabled="submitting || !quote || paymentMethod === 'cash'"
                   @click="submitOrder(true)"
                 >
                   <span class="material-icons">schedule</span>
@@ -222,6 +229,35 @@
               <button class="popup-cancel-btn" @click="showPaymentPopup = false">取消支付</button>
             </div>
         </AppOverlay>
+
+        <!-- Cash Payment Popup -->
+        <AppOverlay :show="showCashPopup" @click-mask="showCashPopup = false">
+            <div class="payment-popup cash-popup">
+              <div class="popup-header">
+                <span class="popup-icon">
+                  <span class="material-icons">payments</span>
+                </span>
+                <h3>现金支付</h3>
+                <p class="popup-amount"><small class="c-sign">¥</small>{{ quote?.totals.payableAmount.toFixed(2) || '0.00' }}</p>
+              </div>
+              <p class="popup-hint">请向收银员支付现金</p>
+              <div class="popup-btn-row">
+                <button class="popup-cancel-action" :disabled="submitting" @click="showCashPopup = false">
+                  取消
+                </button>
+                <button class="popup-paid-btn" :disabled="submitting" @click="submitOrder()">
+                  <template v-if="submitting">
+                    <span class="spinner"></span>
+                    <span>处理中...</span>
+                  </template>
+                  <template v-else>
+                    <span class="material-icons">check_circle</span>
+                    <span>我已支付现金</span>
+                  </template>
+                </button>
+              </div>
+            </div>
+        </AppOverlay>
       </template>
     </div>
 
@@ -236,7 +272,7 @@
       <div class="action-btns">
         <button
           class="action-btn action-btn-secondary"
-          :disabled="submitting || !quote"
+          :disabled="submitting || !quote || paymentMethod === 'cash'"
           @click="submitOrder(true)"
         >
           <span class="material-icons">schedule</span>
@@ -342,8 +378,9 @@ const displayTitle = computed(() => {
   return m && b ? `${m}（${b}）` : m || b || '典韦烤串'
 })
 const orderType = ref<'dine-in' | 'takeaway'>('dine-in')
-const paymentMethod = ref<'wechat' | 'alipay'>('wechat')
+const paymentMethod = ref<'wechat' | 'alipay' | 'cash'>('wechat')
 const showPaymentPopup = ref(false)
+const showCashPopup = ref(false)
 const forceStock = ref(false)
 
 const qrModules = import.meta.glob('@/assets/images/payments/*.{jpg,png,webp}', { eager: true, query: '?url', import: 'default' })
@@ -468,6 +505,12 @@ async function openPaymentPopup() {
   // 结算保护：订单金额为 0 或负数时禁止提交
   if (quote.value.totals.payableAmount <= 0) {
     orderError.value = '订单金额无效，无法提交'
+    return
+  }
+
+  // 现金支付弹出专用弹窗
+  if (paymentMethod.value === 'cash') {
+    showCashPopup.value = true
     return
   }
 
@@ -605,19 +648,20 @@ onMounted(() => {
     grid-template-columns: minmax(0, 1fr) 360px;
     grid-template-areas:
       "hero   hero"
-      "toggle pay"
+      "toggle toggle"
       "order  pay"
       "succ   succ";
     gap: var(--spacing-lg);
-    align-items: start;
+    align-items: stretch;
   }
 
   .page-content > .hero-context {
     grid-area: hero;
   }
 
-  .page-content > .order-type-toggle {
+  .page-content > .order-type-section {
     grid-area: toggle;
+    margin-bottom: 0;
   }
 
   .page-content > .order-card {
@@ -736,6 +780,10 @@ onMounted(() => {
 
 .toggle-btn {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
   padding: var(--spacing-md) var(--spacing-lg);
   border: none;
   border-radius: var(--radius-full);
@@ -751,6 +799,9 @@ onMounted(() => {
 
 .toggle-btn-active {
   color: var(--on-primary);
+}
+.toggle-icon {
+  font-size: 20px;
 }
 
 .toggle-indicator {
@@ -1159,12 +1210,21 @@ onMounted(() => {
 /* Payment Row */
 .payment-row {
   display: flex;
+  flex-direction: column;
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-lg);
 }
 
+.column-title {
+  font-weight: 700;
+  font-size: var(--text-headline-md, 18px);
+  color: var(--on-surface);
+  margin: 0 0 var(--spacing-md) 0;
+  font-family: var(--font-display);
+  line-height: 1.2;
+}
+
 .payment-row .payment-card {
-  flex: 1;
   margin-bottom: 0;
 }
 
@@ -1213,6 +1273,7 @@ onMounted(() => {
 .payment-card { cursor: pointer; transition: all var(--transition-fast); }
 .payment-card.payment-active { outline: 2px solid var(--primary-container); outline-offset: -2px; }
 .payment-icon-img { width: 28px; height: 28px; object-fit: contain; flex-shrink: 0; }
+.checkout-confirm-card { cursor: default; }
 
 /* Payment Popup */
 .payment-overlay {
@@ -1266,6 +1327,17 @@ onMounted(() => {
   font-family: var(--font-display); font-size: var(--text-body-sm); color: var(--secondary);
   cursor: pointer; text-decoration: underline;
 }
+.popup-cancel-action {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm);
+  flex: 1; padding: 12px;
+  border: 1px solid var(--outline-variant); border-radius: var(--radius-full);
+  background: transparent; color: var(--secondary);
+  font-family: var(--font-display); font-size: 18px; font-weight: 600;
+  cursor: pointer; transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+.popup-cancel-action:active { transform: scale(0.98); }
+.popup-cancel-action:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 .popup-paylater-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm);
   flex: 1; padding: 12px;
@@ -1435,20 +1507,48 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
-    background-color: #fcf9f8;
-    border-radius: 0.5rem;
+    background-color: var(--surface);
+    border: 1px solid var(--outline-variant);
+    border-radius: var(--radius-lg);
     box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-    padding: var(--spacing-md);
+    padding: var(--spacing-lg);
   }
   .action-bar {
     display: none;
   }
 }
-.confirm-title {
-  font-weight: 600;
-  font-size: 1rem;
-  color: #1c1b1b;
-  margin-bottom: var(--spacing-md);
+.confirm-label {
+  font-family: var(--font-display);
+  font-size: var(--text-headline-md, 18px);
+  font-weight: 700;
+  color: var(--on-surface);
+  line-height: 1.2;
+}
+.confirm-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+.confirm-amount {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-xs);
+}
+.payment-icon-cash {
+  font-size: 28px;
+  color: var(--primary-container);
+}
+.confirm-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+.confirm-btns {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+.confirm-btns .action-btn {
+  flex: 1;
 }
 </style>
 
@@ -1460,4 +1560,25 @@ onMounted(() => {
 [data-theme="dark"] .page .summary-row,
 [data-theme="dark"] .page .promo-desc,
 [data-theme="dark"] .page .empty-state p { color: #fff; }
+
+[data-theme="dark"] .checkout-confirm-card {
+  background-color: var(--surface);
+  border-color: var(--card-border-light);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+[data-theme="dark"] .confirm-label {
+  color: var(--on-surface);
+}
+
+[data-theme="dark"] .payment-card {
+  background-color: var(--surface);
+  border: 1px solid var(--card-border-light);
+}
+
+[data-theme="dark"] .action-btn-secondary {
+  background: var(--surface-container-high);
+  border-color: var(--outline-variant);
+  color: var(--on-surface);
+}
 </style>
