@@ -6,11 +6,12 @@
     <!-- Content -->
     <div class="page-content">
       <!-- Hero Context -->
-      <section class="hero-context">
+      <section class="hero-context" style="height: 80px;">
         <img
           src="/src/assets/images/pages/banner.jpg"
           alt="订单确认"
           class="hero-img"
+          style="filter: blur(3px);"
         />
         <div class="hero-overlay">
           <h2>订单确认</h2>
