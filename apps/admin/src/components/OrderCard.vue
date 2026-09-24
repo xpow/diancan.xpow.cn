@@ -65,10 +65,10 @@
         <div class="item-info">
           <span class="item-name">{{ item.name }}</span>
           <span v-if="item.specs" class="item-specs">{{ item.specs }}</span>
+          <span v-if="item.promotionLabel" class="item-promo">{{ item.promotionLabel }}</span>
         </div>
         <span class="item-qty">x{{ item.quantity }}</span>
         <span class="item-subtotal">¥{{ (item.finalSubtotal ?? 0).toFixed(2) }}</span>
-        <span v-if="item.promotionLabel" class="item-promo">{{ item.promotionLabel }}</span>
       </div>
     </div>
 
@@ -108,8 +108,8 @@
             <div v-for="item in g.items" :key="item.id" class="group-order-item">
               <div class="group-item-info">
                 <span class="group-item-name">{{ item.name }}</span>
-                <span v-if="item.promotionLabel" class="group-item-promo">{{ item.promotionLabel }}</span>
                 <span v-if="item.specs" class="group-item-specs">{{ item.specs }}</span>
+                <span v-if="item.promotionLabel" class="group-item-promo">{{ item.promotionLabel }}</span>
               </div>
               <span class="group-item-qty">x{{ item.quantity }}</span>
               <span class="group-item-subtotal">¥{{ (item.finalSubtotal ?? 0).toFixed(2) }}</span>
@@ -362,13 +362,13 @@ function formatTime(t: string) {
 
 /* Items */
 .order-items { padding: 12px 16px; border-bottom: 1px solid var(--divider); flex: 1; }
-.order-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; }
-.item-info { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; }
-.item-name { color: var(--on-surface); font-weight: 600; }
-.item-specs { font-size: 12px; color: var(--on-surface-variant); background: var(--surface-container-low); padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
+.order-item { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; }
+.item-info { flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
+.item-name { color: var(--on-surface); font-weight: 600; word-break: break-all; flex: 0 1 auto; }
+.item-specs { flex: 1 1 0; font-size: 12px; color: var(--on-surface-variant); background: var(--surface-container-low); padding: 2px 8px; border-radius: 4px; white-space: normal; word-break: break-all; min-width: 0; max-width: 85%; line-height: 1.4; }
 .item-qty { font-weight: 700; color: #ff6b00; flex-shrink: 0; }
 .item-subtotal { color: var(--on-surface-variant); flex-shrink: 0; font-size: 12px; }
-.item-promo { background: var(--primary-soft); color: #ff6b00; font-size: 11px; padding: 1px 6px; border-radius: 4px; }
+.item-promo { font-size: 12px; color: #ff6b00; font-weight: 500; min-width: 0; word-break: break-all; }
 
 /* Merged group section: one fold box per member order */
 .order-group { border-bottom: 1px solid var(--divider); background: var(--primary-soft); display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; }
@@ -390,11 +390,11 @@ function formatTime(t: string) {
 .group-flag .material-symbols-outlined { font-size: 13px; }
 .group-flag.flag-active { color: #4aad4e; }
 .group-order-items { padding-top: 6px; margin-bottom: 2px; }
-.group-order-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 12px; }
-.group-item-info { flex: 1; display: flex; align-items: center; gap: 6px; min-width: 0; }
-.group-item-name { color: var(--on-surface); font-weight: 600; }
-.group-item-specs { font-size: 11px; color: var(--on-surface-variant); background: var(--surface-container-low); padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
-.group-item-promo { background: var(--primary-soft); color: #ff6b00; font-size: 11px; padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
+.group-order-item { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 5px 0; font-size: 12px; }
+.group-item-info { flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; min-width: 0; }
+.group-item-name { color: var(--on-surface); font-weight: 600; word-break: break-all; flex: 0 1 auto; }
+.group-item-specs { flex: 1 1 0; font-size: 11px; color: var(--on-surface-variant); background: var(--surface-container-low); padding: 1px 6px; border-radius: 4px; white-space: normal; word-break: break-all; min-width: 0; max-width: 85%; line-height: 1.4; }
+.group-item-promo { font-size: 11px; color: #ff6b00; font-weight: 500; min-width: 0; word-break: break-all; }
 .group-item-qty { font-weight: 700; color: #ff6b00; flex-shrink: 0; }
 .group-item-subtotal { color: var(--on-surface-variant); flex-shrink: 0; }
 .group-amount { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 700; color: var(--on-surface); text-align: right; }
