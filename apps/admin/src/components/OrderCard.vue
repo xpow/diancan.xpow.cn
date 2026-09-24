@@ -64,8 +64,10 @@
       <div v-for="item in order.items" :key="item.id" class="order-item">
         <div class="item-info">
           <span class="item-name">{{ item.name }}</span>
-          <span v-if="item.specs" class="item-specs">{{ item.specs }}</span>
-          <span v-if="item.promotionLabel" class="item-promo">{{ item.promotionLabel }}</span>
+          <span v-if="item.specs || item.promotionLabel" class="item-specs">
+            {{ item.specs }}
+            <span v-if="item.promotionLabel" class="item-promo">{{ item.promotionLabel }}</span>
+          </span>
         </div>
         <span class="item-qty">x{{ item.quantity }}</span>
         <span class="item-subtotal">¥{{ (item.finalSubtotal ?? 0).toFixed(2) }}</span>
@@ -108,8 +110,10 @@
             <div v-for="item in g.items" :key="item.id" class="group-order-item">
               <div class="group-item-info">
                 <span class="group-item-name">{{ item.name }}</span>
-                <span v-if="item.specs" class="group-item-specs">{{ item.specs }}</span>
-                <span v-if="item.promotionLabel" class="group-item-promo">{{ item.promotionLabel }}</span>
+                <span v-if="item.specs || item.promotionLabel" class="group-item-specs">
+                  {{ item.specs }}
+                  <span v-if="item.promotionLabel" class="group-item-promo">{{ item.promotionLabel }}</span>
+                </span>
               </div>
               <span class="group-item-qty">x{{ item.quantity }}</span>
               <span class="group-item-subtotal">¥{{ (item.finalSubtotal ?? 0).toFixed(2) }}</span>
