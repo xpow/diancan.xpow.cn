@@ -107,6 +107,13 @@ function filterPromotionsByDevice(promotions: any[], deviceId?: string): any[] {
   })
 }
 
+// 限时折扣率：优先 rules.discountRate，兼容旧数据 rules.discount；仅接受 (0, 1] 内的有效数值，否则返回 undefined
+function getDiscountRate(rules: any): number | undefined {
+  const raw = rules?.discountRate ?? rules?.discount
+  const rate = typeof raw === 'string' && raw.trim() !== '' ? Number(raw) : raw
+  return typeof rate === 'number' && Number.isFinite(rate) && rate > 0 && rate <= 1 ? rate : undefined
+}
+
 const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : undefined
 app.use(cors({
   origin: allowedOrigins ?? true,
@@ -213,12 +220,14 @@ app.get('/api/system/bootstrap', generalLimiter, async (req, res) => {
     if (promo.startDate && new Date(promo.startDate) > now) continue
     for (const pi of promo.items ?? []) {
       if (promo.type === 'time_discount') {
-        const price = pi.promoPrice ?? (() => {
-          const rules = typeof promo.rules === 'string' ? JSON.parse(promo.rules) : promo.rules
-          const rate = rules?.discountRate ?? 1
-          return Math.round((dishPriceMap.get(pi.dishId) ?? 0) * rate * 100) / 100
-        })()
-        promoDishMap.set(pi.dishId, { promoPrice: price, name: promo.name })
+        // 折扣率优先（兼容旧数据 rules.discount）；无有效折扣率时回退固定 promoPrice（与菜单、试算同口径）
+        const rules = typeof promo.rules === 'string' ? JSON.parse(promo.rules) : promo.rules
+        const rate = getDiscountRate(rules)
+        if (rate !== undefined) {
+          if (rate < 1) promoDishMap.set(pi.dishId, { promoPrice: Math.round((dishPriceMap.get(pi.dishId) ?? 0) * rate * 100) / 100, name: promo.name })
+        } else if (pi.promoPrice != null) {
+          promoDishMap.set(pi.dishId, { promoPrice: pi.promoPrice, name: promo.name })
+        }
       } else if (promo.type === 'welfare_item' && pi.promoPrice) {
         promoDishMap.set(pi.dishId, { promoPrice: pi.promoPrice, name: promo.name })
       }
@@ -252,7 +261,7 @@ app.get('/api/system/bootstrap', generalLimiter, async (req, res) => {
       if (p.type === 'full_reduction') subtitle = `满¥${rules.threshold}减¥${rules.discount}`
       else if (p.type === 'welfare_item') subtitle = `指定商品福利价`
       else if (p.type === 'time_discount') {
-        const rate = rules.discountRate
+        const rate = getDiscountRate(rules)
         const discountLabels: Record<number, string> = { 0.1: '1折', 0.2: '2折', 0.3: '3折', 0.4: '4折', 0.5: '5折', 0.6: '6折', 0.7: '7折', 0.8: '8折', 0.85: '85折', 0.9: '9折' }
         const label = rate ? discountLabels[rate] || '' : ''
         subtitle = label ? `指定商品${label}` : ''
@@ -328,20 +337,25 @@ app.get('/api/catalog/menu', generalLimiter, async (req, res) => {
     deviceId,
   )
   const now = new Date()
-  const promoDishMap = new Map<string, { promoPrice: number; type: string; name: string }>()
+  const promoDishMap = new Map<string, { promoPrice: number; type: string; name: string; discountRate?: number }>()
   for (const promo of activePromotions) {
     if (promo.endDate && new Date(promo.endDate) < now) continue
     if (promo.startDate && new Date(promo.startDate) > now) continue
 
     for (const pi of promo.items) {
       if (promo.type === 'time_discount') {
-        const price = pi.promoPrice ?? (() => {
-          const rules = typeof promo.rules === 'string' ? JSON.parse(promo.rules) : promo.rules
-          const rate = rules.discountRate ?? 1
-          const origPrice = dishPriceMap.get(pi.dishId) ?? 0
-          return Math.round(origPrice * rate * 100) / 100
-        })()
-        promoDishMap.set(pi.dishId, { promoPrice: price, type: promo.type, name: promo.name })
+        // 折扣率优先（兼容旧数据 rules.discount），下发 discountRate 供前端对 (原价 + 规格加价) 整体打折；
+        // 无有效折扣率时回退固定 promoPrice（前端按 福利价 + 规格加价 计算），与试算同口径
+        const rules = typeof promo.rules === 'string' ? JSON.parse(promo.rules) : promo.rules
+        const rate = getDiscountRate(rules)
+        if (rate !== undefined) {
+          if (rate < 1) {
+            const origPrice = dishPriceMap.get(pi.dishId) ?? 0
+            promoDishMap.set(pi.dishId, { promoPrice: Math.round(origPrice * rate * 100) / 100, type: promo.type, name: promo.name, discountRate: rate })
+          }
+        } else if (pi.promoPrice != null) {
+          promoDishMap.set(pi.dishId, { promoPrice: pi.promoPrice, type: promo.type, name: promo.name })
+        }
       } else if (promo.type === 'welfare_item' && pi.promoPrice) {
         promoDishMap.set(pi.dishId, { promoPrice: pi.promoPrice, type: promo.type, name: promo.name })
       }
@@ -371,6 +385,7 @@ app.get('/api/catalog/menu', generalLimiter, async (req, res) => {
         stock: d.stock ?? 0,
         stockEnabled: d.stockEnabled ?? false,
         promoPrice: promo?.promoPrice ?? null,
+        discountRate: promo?.discountRate ?? null,
         promotionName: promo?.name ?? null,
       }
     }),
@@ -390,6 +405,7 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
       quantity: Number(item?.quantity ?? 0),
       specs: String(item?.specs ?? ''),
       unitPrice: item?.unitPrice ? Number(item.unitPrice) : undefined,
+      specDelta: item?.specDelta != null && Number.isFinite(Number(item.specDelta)) ? Number(item.specDelta) : undefined,
     }))
     .filter((item) => item.dishId && item.quantity > 0)
 
@@ -428,7 +444,11 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
     const dish = dishMap.get(item.dishId)
     if (!dish) continue
 
-    const basePrice = item.unitPrice ?? dish.price
+    // 原价 + 规格加价；新版前端传 specDelta，旧版回退到 unitPrice
+    const specDelta = item.specDelta ?? 0
+    const basePrice = item.specDelta !== undefined ? dish.price + specDelta : (item.unitPrice ?? dish.price)
+    // 营销活动计价基准：新版为 原价 + 规格加价；旧版前端未传 specDelta 时沿用 dish.price（保持原行为）
+    const promoBasePrice = item.specDelta !== undefined ? basePrice : dish.price
     const portionFactor = dish.portionSize || 1
     const subtotal = basePrice * item.quantity / portionFactor
     originalAmount += subtotal
@@ -448,9 +468,11 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
         const unlimited = promoItem.limitType === 'unlimited'
         const welfareQty = isRedeemed ? 0 : (unlimited ? item.quantity : Math.min(item.quantity, promoItem.maxQty))
         const normalQty = item.quantity - welfareQty
-        finalSubtotal = welfareQty * (promoItem.promoPrice ?? dish.price) + normalQty * dish.price
+        // 福利价 + 规格加价（加价按原价计）
+        const welfareUnit = (promoItem.promoPrice ?? dish.price) + specDelta
+        finalSubtotal = welfareQty * welfareUnit + normalQty * promoBasePrice
         finalSubtotal /= portionFactor
-        finalUnitPrice = welfareQty === item.quantity ? (promoItem.promoPrice ?? dish.price) : dish.price
+        finalUnitPrice = welfareQty === item.quantity ? welfareUnit : promoBasePrice
         welfareAppliedDishIds.add(item.dishId)
 
         if (welfareQty > 0) {
@@ -459,7 +481,7 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
             id: welfarePromo.id,
             name: welfarePromo.name,
             type: 'welfare_item',
-            discount: Number(((dish.price - (promoItem.promoPrice ?? 0)) * welfareQty / portionFactor).toFixed(2)),
+            discount: Number(((promoBasePrice - welfareUnit) * welfareQty / portionFactor).toFixed(2)),
             description: `福利价 ¥${promoItem.promoPrice?.toFixed(2)}，${qtyText}享受福利价`,
           })
           promotionLabel = '福利价'
@@ -471,7 +493,7 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
       }
     }
 
-    // 限时折扣（以菜品原始价 dish.price 为基准，忽略前端已折扣的 unitPrice）
+    // 限时折扣：(原价 + 规格加价) × 折扣率；旧版前端未传 specDelta 时以 dish.price 为基准
     if (!promotionLabel) {
       const timeDiscountPromo = timeDiscountPromos.find((p) =>
         p.items.some((pi) => pi.dishId === item.dishId),
@@ -479,10 +501,13 @@ app.post('/api/cart/quote', generalLimiter, authMiddleware, async (req, res) => 
       if (timeDiscountPromo) {
         const promoItem = timeDiscountPromo.items.find((pi) => pi.dishId === item.dishId)
         const rules = JSON.parse(timeDiscountPromo.rules)
-        const discountRate = rules.discountRate ?? 1
-        const originalPrice = dish.price
-        const discountedPrice = Math.round(originalPrice * discountRate * 100) / 100
-        if (discountRate < 1) {
+        // 折扣率优先（兼容旧数据 rules.discount）；无有效折扣率时回退固定 promoPrice + 规格加价（加价按原价）
+        const discountRate = getDiscountRate(rules)
+        const originalPrice = promoBasePrice
+        const discountedPrice = discountRate !== undefined
+          ? Math.round(originalPrice * discountRate * 100) / 100
+          : promoItem?.promoPrice != null ? promoItem.promoPrice + specDelta : originalPrice
+        if (discountedPrice < originalPrice) {
           finalUnitPrice = discountedPrice
           finalSubtotal = discountedPrice * item.quantity / portionFactor
           const perItem = originalPrice - discountedPrice
@@ -795,6 +820,7 @@ app.post('/api/orders', orderLimiter, authMiddleware, async (req, res) => {
       quantity: Number(item?.quantity ?? 0),
       specs: String(item?.specs ?? ''),
       unitPrice: item?.unitPrice ? Number(item.unitPrice) : undefined,
+      specDelta: item?.specDelta != null && Number.isFinite(Number(item.specDelta)) ? Number(item.specDelta) : undefined,
     }))
     .filter((item) => item.dishId && item.quantity > 0)
 

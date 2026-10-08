@@ -650,7 +650,8 @@ function ruleText(p: Promotion): string {
     const item = p.items?.[0]
     if (!item) return '-'
     const dish = dishes.value.find((d) => d.id === item.dishId)
-    const label = discountOptions.find((o) => o.value === p.rules.discountRate)?.label || `${(p.rules.discountRate || 1) * 100}折`
+    const rate = p.rules.discountRate ?? p.rules.discount // 兼容旧数据 rules.discount
+    const label = discountOptions.find((o) => o.value === rate)?.label || `${(rate || 1) * 100}折`
     let text = `${dish?.name || item.dishId} ${label}`
     if (p.rules.durationDays) text += ` (${p.rules.durationDays}天)`
     return text

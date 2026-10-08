@@ -101,7 +101,17 @@ export function useSpecEditor(dishes: { value: MenuDish[] }) {
       if (idx > -1) {
         cart[idx].dishId = newDishId
         cart[idx].specs = newSpecs
-        cart[idx].price = (editingDish.value?.promoPrice ?? editingDish.value?.price ?? 0) + priceDelta
+        // 折扣率活动对 (原价 + 规格加价) 整体打折；固定福利价活动规格加价按原价叠加
+        const d = editingDish.value
+        const full = (d?.price ?? 0) + priceDelta
+        let promo: number | undefined
+        if (d && d.promoPrice != null) {
+          promo = d.discountRate != null ? Math.round(full * d.discountRate * 100) / 100 : d.promoPrice + priceDelta
+        }
+        cart[idx].price = promo ?? full
+        cart[idx].promoPrice = promo
+        cart[idx].originalPrice = promo != null ? full : undefined
+        cart[idx].specDelta = priceDelta
         cart[idx].quantity = newQty
       }
     }

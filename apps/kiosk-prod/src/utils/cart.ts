@@ -9,6 +9,7 @@ export interface StoredCartItem {
   promotionId?: string
   promoPrice?: number
   originalPrice?: number
+  specDelta?: number
   promotionName?: string
   portionSize?: number
   unit?: string

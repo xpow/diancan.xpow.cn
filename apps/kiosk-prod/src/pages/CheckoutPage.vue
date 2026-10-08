@@ -482,6 +482,7 @@ async function reloadQuote() {
         quantity: item.quantity,
         specs: item.specs ?? '',
         unitPrice: item.price,
+        specDelta: item.specDelta,
       })),
     })
   } catch (error) {
@@ -586,6 +587,7 @@ async function submitOrder(payLater = false) {
         quantity: item.quantity,
         specs: item.specs ?? '',
         unitPrice: item.price,
+        specDelta: item.specDelta,
       })),
     })
     showPaymentPopup.value = false

@@ -12,7 +12,7 @@ export interface MenuDish {
   specsPreset?: SpecPreset
   specGroups?: SpecGroup[]
   selectedLabels?: (string | string[])[]
-  promotionId?: string; promoPrice?: number; promotionName?: string
+  promotionId?: string; promoPrice?: number; promotionName?: string; discountRate?: number
   portionSize?: number
   unit?: string
   stock?: number
@@ -152,7 +152,7 @@ const restReason = ref('')
         dishes: {
           id: string; categoryId: string; name: string; price: number
           desc: string; image?: string; tags?: string[]; specsPreset?: SpecPreset
-          promoPrice?: number | null; promotionName?: string | null; portionSize?: number; unit?: string
+          promoPrice?: number | null; discountRate?: number | null; promotionName?: string | null; portionSize?: number; unit?: string
         }[]
       }
 
@@ -192,6 +192,7 @@ const restReason = ref('')
           tags: d.tags, specsPreset: d.specsPreset,
           specGroups: groups, selectedLabels: defaults,
           promoPrice: d.promoPrice ?? undefined,
+          discountRate: d.discountRate ?? undefined,
           promotionName: d.promotionName ?? undefined,
           portionSize: d.portionSize ?? 0,
           unit: d.unit || '串',

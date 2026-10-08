@@ -26,6 +26,16 @@ export interface QuoteResponse {
   hints: string[]
 }
 
+// 购物车单价：折扣率活动对 (原价 + 规格加价) 整体打折；固定福利价活动规格加价按原价叠加
+function calcUnitPrice(dish: MenuDish, priceDelta: number): { price: number; promo?: number } {
+  const full = dish.price + priceDelta
+  if (dish.promoPrice == null) return { price: full }
+  const promo = dish.discountRate != null
+    ? Math.round(full * dish.discountRate * 100) / 100
+    : dish.promoPrice + priceDelta
+  return { price: promo, promo }
+}
+
 export function useCartQuote(dishes: Ref<MenuDish[]>) {
   const router = useRouter()
   const showCart = ref(false)
@@ -48,6 +58,11 @@ export function useCartQuote(dishes: Ref<MenuDish[]>) {
     return cartQuote.value?.itemDetails.find((i) => i.dishId === dishId)
   }
 
+  // 同一菜品不同规格需按 dishId + specs 匹配试算行
+  function quoteItemFor(item: StoredCartItem) {
+    return cartQuote.value?.itemDetails.find((i) => i.dishId === item.baseDishId && (i.specs ?? '') === (item.specs ?? ''))
+  }
+
   function isItemDiscounted(item: StoredCartItem) {
     return !!item.originalPrice
   }
@@ -57,12 +72,12 @@ export function useCartQuote(dishes: Ref<MenuDish[]>) {
   }
 
   function getItemFinalPrice(item: StoredCartItem) {
-    const qi = quoteItemForDishId(item.baseDishId)
-    return qi ? qi.finalUnitPrice : (item.promoPrice ?? item.price)
+    const qi = quoteItemFor(item)
+    return qi ? qi.finalUnitPrice : item.price
   }
 
   function cartItemPromotionLabel(item: StoredCartItem) {
-    const qi = quoteItemForDishId(item.baseDishId)
+    const qi = quoteItemFor(item)
     if (qi?.promotionLabel) return qi.promotionLabel
     return item.promotionName || ''
   }
@@ -125,7 +140,7 @@ export function useCartQuote(dishes: Ref<MenuDish[]>) {
     }
 
     const specsKey = specsParts.join(' · ')
-    const price = (dish.promoPrice ?? dish.price) + priceDelta
+    const { price, promo } = calcUnitPrice(dish, priceDelta)
 
     addToCartStorage({
       dishId: `${dish.id}|${specsKey}`,
@@ -135,8 +150,9 @@ export function useCartQuote(dishes: Ref<MenuDish[]>) {
       quantity: qty,
       specs: specsKey || undefined,
       image: dish.image,
-      promoPrice: dish.promoPrice,
-      originalPrice: dish.promoPrice ? dish.price : undefined,
+      promoPrice: promo,
+      originalPrice: promo != null ? dish.price + priceDelta : undefined,
+      specDelta: priceDelta,
       promotionName: dish.promotionName,
       portionSize: dish.portionSize || undefined,
       unit: dish.unit || '串',
@@ -178,6 +194,7 @@ export function useCartQuote(dishes: Ref<MenuDish[]>) {
           quantity: i.quantity,
           specs: i.specs ?? '',
           unitPrice: i.price,
+          specDelta: i.specDelta,
         })),
       })
     } catch (error) {
