@@ -38,9 +38,20 @@ declare global {
     }
   }
 }
+// 内部调用判定：X-Internal-Request 仅对本机直连请求生效。
+// 使用 req.socket.remoteAddress（不用 req.ip，因已开启 trust proxy，req.ip 取自 X-Forwarded-For 可被伪造）；
+// 生产环境若经同机反向代理（如 nginx），外部请求的 socket 地址同样是回环地址，
+// 因此带有 X-Forwarded-For / X-Real-IP / Forwarded 等代理转发头的请求一律不视为内部调用。
+const LOOPBACK_ADDRS = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1'])
+function isInternalRequest(req: Request): boolean {
+  if (req.headers['x-internal-request'] !== 'true') return false
+  if (req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.headers['forwarded']) return false
+  return LOOPBACK_ADDRS.has(req.socket.remoteAddress ?? '')
+}
+
 function authMiddleware(req: Request, res: Response, next: NextFunction) {
   // 内部调用放行
-  if (req.headers['x-internal-request'] === 'true') {
+  if (isInternalRequest(req)) {
     req.authDevice = {
       deviceId: (req.body?.deviceId as string) || (req.query?.deviceId as string) || '',
       sn: 'internal',
@@ -139,7 +150,7 @@ const originPatterns = (allowedOrigins ?? []).map((o) => {
 }).filter(Boolean).map((u) => `${u!.host}`)
 app.use((req, res, next) => {
   // 内部调用放行（服务端自请求）
-  if (req.headers['x-internal-request'] === 'true') return next()
+  if (isInternalRequest(req)) return next()
   // 健康检查放行
   if (req.path === '/api/health') return next()
 
