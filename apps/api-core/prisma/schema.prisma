@@ -273,6 +273,9 @@ model Order {
   cancelledAt DateTime?
   paidAt      DateTime?
   dishOutAt   DateTime?
+  waiveAmount Float    @default(0)  // 抹零金额（审计）；payableAmount 为扣抹零后的实收/应付
+  waiveNote   String?
+  waivedAt    DateTime?
 }
 
 model OrderItem {
@@ -287,10 +290,12 @@ model OrderItem {
   finalSubtotal  Float
   specs          String?
   promotionLabel String?
-  status         String  @default("pending") // pending | preparing | ready
+  status         String  @default("pending") // pending | preparing | ready | cancelled
   portionSize    Int     @default(0)
   unit           String  @default("串")
   alliance       Boolean @default(false)
+  cancelReason   String?
+  cancelledAt    DateTime?
 
   order Order @relation(fields: [orderId], references: [id])
 

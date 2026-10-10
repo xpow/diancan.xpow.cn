@@ -72,6 +72,18 @@
             <span class="metric-value">-¥{{ fmtNum(overview?.summary.fullReductionNormal) }}</span>
           </div>
         </div>
+        <div class="metric-card">
+          <div class="metric-body">
+            <span class="metric-label">总价直减</span>
+            <span class="metric-value">-¥{{ fmtNum(overview?.summary.totalDiscountNormal) }}</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-body">
+            <span class="metric-label">抹零扣除</span>
+            <span class="metric-value">-¥{{ fmtNum(overview?.summary.waiveNormal) }}</span>
+          </div>
+        </div>
       </div>
 
       <div class="card" v-if="overview?.trend?.length">
@@ -146,6 +158,20 @@
               <td class="col-name">满减</td>
               <td class="col-qty">—</td>
               <td class="col-revenue">-¥{{ summary.totalFullReduction.toFixed(2) }}</td>
+            </tr>
+            <tr class="fr-row" v-if="(summary.totalOrderDiscount || 0) > 0">
+              <td class="col-check"></td>
+              <td class="col-rank"></td>
+              <td class="col-name">总价直减</td>
+              <td class="col-qty">—</td>
+              <td class="col-revenue">-¥{{ summary.totalOrderDiscount.toFixed(2) }}</td>
+            </tr>
+            <tr class="fr-row" v-if="summary.totalWaiveAmount > 0">
+              <td class="col-check"></td>
+              <td class="col-rank"></td>
+              <td class="col-name">抹零扣除</td>
+              <td class="col-qty">—</td>
+              <td class="col-revenue">-¥{{ summary.totalWaiveAmount.toFixed(2) }}</td>
             </tr>
           </tbody>
           <tfoot v-if="selected.size > 0">
@@ -262,6 +288,8 @@ interface OverviewSummary {
   allianceRevenue: number
   normalRevenue: number
   fullReductionNormal: number
+  totalDiscountNormal?: number
+  waiveNormal?: number
 }
 
 interface TrendItem { day: string; revenue: number; orderCount: number }
@@ -286,7 +314,11 @@ const COLORS = ['#ff6b00', '#4aad4e', '#3b82f6', '#a04100', '#8b5cf6', '#f59e0b'
 const activeTab = ref<'overview' | 'normal' | 'alliance' | 'orders'>('normal')
 const overview = ref<OverviewData | null>(null)
 const items = ref<DishSales[]>([])
-const summary = ref<{ totalFullReduction: number }>({ totalFullReduction: 0 })
+const summary = ref<{ totalFullReduction: number; totalOrderDiscount: number; totalWaiveAmount: number }>({
+  totalFullReduction: 0,
+  totalOrderDiscount: 0,
+  totalWaiveAmount: 0,
+})
 const loaded = ref(false)
 const quickRange = ref('today')
 const dateRange = ref<[Date | null, Date | null] | undefined>()
@@ -301,7 +333,11 @@ const subtotal = computed(() => {
       rev += item.totalRevenue
     }
   }
-  return { qty, rev, net: rev - summary.value.totalFullReduction }
+  return {
+    qty,
+    rev,
+    net: rev - summary.value.totalFullReduction - (summary.value.totalOrderDiscount || 0) - (summary.value.totalWaiveAmount || 0),
+  }
 })
 
 const maxTrendRevenue = computed(() => {
@@ -534,7 +570,7 @@ async function fetchStats() {
       const res = await fetch(`${endpoint}${url}`)
       const data = await res.json()
       items.value = data.items ?? []
-      summary.value = data.summary ?? { totalFullReduction: 0 }
+      summary.value = data.summary ?? { totalFullReduction: 0, totalOrderDiscount: 0, totalWaiveAmount: 0 }
       selected.value = new Set(items.value.map(i => i.dishId))
     }
   } catch { /* ignore */ }

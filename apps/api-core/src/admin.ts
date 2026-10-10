@@ -464,8 +464,9 @@ router.get('/orders', async (_req, res) => {
         createdAt: true,
         paidAt: true,
         dishOutAt: true,
+        waiveAmount: true,
         promotions: { select: { type: true, discount: true, name: true } },
-        items: { select: { id: true, name: true, quantity: true, finalSubtotal: true, unitPrice: true, specs: true, unit: true, promotionLabel: true } },
+        items: { select: { id: true, name: true, quantity: true, finalSubtotal: true, unitPrice: true, specs: true, unit: true, promotionLabel: true, status: true, cancelReason: true, cancelledAt: true } },
       },
       orderBy: { createdAt: 'asc' },
     })
@@ -500,10 +501,14 @@ router.get('/orders', async (_req, res) => {
           specs: i.specs || undefined,
           unit: i.unit || '串',
           promotionLabel: i.promotionLabel || undefined,
+          status: i.status,
+          cancelReason: i.cancelReason || undefined,
+          cancelledAt: i.cancelledAt?.toISOString() || undefined,
         })),
         createdAt: m.createdAt.toISOString(),
         paidAt: m.paidAt?.toISOString() || undefined,
         dishOutAt: m.dishOutAt?.toISOString() || undefined,
+        waiveAmount: m.waiveAmount || 0,
       })
       groupOrdersById.set(m.groupId, list)
     }
@@ -556,12 +561,17 @@ router.get('/orders', async (_req, res) => {
         status: i.status,
         portionSize: i.portionSize || undefined,
         unit: i.unit || '串',
+        cancelReason: i.cancelReason || undefined,
+        cancelledAt: i.cancelledAt?.toISOString() || undefined,
       })),
       createdAt: o.createdAt.toISOString(),
       cancelReason: o.cancelReason || undefined,
       cancelledAt: o.cancelledAt?.toISOString() || undefined,
       paidAt: o.paidAt?.toISOString() || undefined,
       dishOutAt: o.dishOutAt?.toISOString() || undefined,
+      waiveAmount: o.waiveAmount || 0,
+      waiveNote: o.waiveNote || undefined,
+      waivedAt: o.waivedAt?.toISOString() || undefined,
     })),
     total,
     page: Number(page),
@@ -596,7 +606,8 @@ router.put('/orders/:id/status', async (req, res) => {
 
     // 回补库存（仅启用库存的菜品，仅首次取消时回补）
     if (order.status !== 'cancelled') {
-      const items = await prisma.orderItem.findMany({ where: { orderId: id } })
+      // 仅回补尚未退菜的明细（已退菜行在 void 时已回补，避免重复加库存）
+      const items = await prisma.orderItem.findMany({ where: { orderId: id, status: { not: 'cancelled' } } })
       if (items.length) {
         const dishIds = [...new Set(items.map((i) => i.dishId))]
         const stockDishes = await prisma.dish.findMany({ where: { id: { in: dishIds }, stockEnabled: true }, select: { id: true } })
@@ -627,10 +638,10 @@ router.put('/orders/:id/status', async (req, res) => {
 
   // 管理员在订单管理中标记开始制作 / 制作完成时，同步订单项状态，取餐屏状态灯随制作进度变化
   if (status === 'preparing' && order.status !== 'preparing' && order.status !== 'paid') {
-    await prisma.orderItem.updateMany({ where: { orderId: id }, data: { status: 'preparing' } })
+    await prisma.orderItem.updateMany({ where: { orderId: id, status: { not: 'cancelled' } }, data: { status: 'preparing' } })
   }
   if (status === 'ready') {
-    await prisma.orderItem.updateMany({ where: { orderId: id }, data: { status: 'ready' } })
+    await prisma.orderItem.updateMany({ where: { orderId: id, status: { not: 'cancelled' } }, data: { status: 'ready' } })
   }
 
   const updated = await prisma.order.update({
@@ -640,6 +651,167 @@ router.put('/orders/:id/status', async (req, res) => {
   })
 
   res.json({ id: updated.id, status: updated.status, paymentMethod: updated.paymentMethod })
+})
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100
+}
+
+/** 按未退菜明细 + 订单级优惠 + 抹零重算金额；originalAmount 不含抹零。 */
+async function recalcOrderAmounts(
+  orderId: string,
+  opts?: { forceCancelReason?: string },
+): Promise<{ activeCount: number; payableAmount: number }> {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { items: true, promotions: true },
+  })
+  if (!order) throw new Error('ORDER_NOT_FOUND')
+  const active = order.items.filter((i) => i.status !== 'cancelled')
+  const originalAmount = round2(active.reduce((s, i) => s + i.subtotal, 0))
+  const itemsFinal = round2(active.reduce((s, i) => s + i.finalSubtotal, 0))
+  const orderPromo = round2(order.promotions.reduce((s, p) => s + (p.discount || 0), 0))
+  const waive = order.waiveAmount || 0
+  const payableAmount = Math.max(0, round2(itemsFinal - orderPromo - waive))
+  const discountAmount = Math.max(0, round2(originalAmount - itemsFinal + orderPromo))
+  const data: any = { originalAmount, discountAmount, payableAmount }
+  if (active.length === 0) {
+    data.status = 'cancelled'
+    data.cancelledAt = new Date()
+    if (opts?.forceCancelReason) data.cancelReason = opts.forceCancelReason
+    else if (!order.cancelReason) data.cancelReason = '全部退菜'
+  }
+  await prisma.order.update({ where: { id: orderId }, data })
+  return { activeCount: active.length, payableAmount }
+}
+
+/** 上海自然日：下单日(createdAt)起含当日共 3 个日历日可调（D..D+2）；第 D+3 日起不可退菜/抹零。 */
+function shanghaiYmd(d: Date): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(d)
+}
+function orderWithinAdjustWindow(createdAt: Date, now = new Date()): boolean {
+  const orderYmd = shanghaiYmd(createdAt)
+  const todayYmd = shanghaiYmd(now)
+  const [y, m, day] = orderYmd.split('-').map(Number)
+  const deadline = new Date(Date.UTC(y, m - 1, day + 2))
+  const deadlineYmd = [
+    deadline.getUTCFullYear(),
+    String(deadline.getUTCMonth() + 1).padStart(2, '0'),
+    String(deadline.getUTCDate()).padStart(2, '0'),
+  ].join('-')
+  return todayYmd <= deadlineYmd
+}
+
+/** 除已取消外均可退菜/抹零；另受 2 自然日窗口约束。 */
+const VOIDABLE_ORDER_STATUSES = new Set(['unpaid', 'pending', 'paid', 'preparing', 'ready', 'completed'])
+const WAIVEABLE_ORDER_STATUSES = new Set(['unpaid', 'pending', 'paid', 'preparing', 'ready', 'completed'])
+
+/** 退菜：单行作废（保留审计），回补库存并重算订单金额。允许 unpaid/pending/paid/preparing。 */
+router.post('/orders/:id/items/:itemId/void', async (req, res) => {
+  const { id, itemId } = req.params
+  const reason = String(req.body?.reason ?? '').trim()
+  if (!reason) return res.status(400).json({ message: '请选择退菜原因' })
+
+  const order = await prisma.order.findUnique({ where: { id } })
+  if (!order) return res.status(404).json({ message: '订单不存在' })
+  if (!VOIDABLE_ORDER_STATUSES.has(order.status)) {
+    return res.status(400).json({ message: `订单状态「${order.status}」不可退菜` })
+  }
+  if (!orderWithinAdjustWindow(order.createdAt)) {
+    return res.status(400).json({ message: '下单已超过 2 个自然日（上海时区按 createdAt 日历日+2），不可退菜' })
+  }
+
+  const item = await prisma.orderItem.findUnique({ where: { id: itemId } })
+  if (!item || item.orderId !== id) return res.status(404).json({ message: '菜品不存在' })
+  if (item.status === 'cancelled') return res.status(400).json({ message: '该菜品已退菜' })
+
+  await prisma.orderItem.update({
+    where: { id: itemId },
+    data: { status: 'cancelled', cancelReason: reason, cancelledAt: new Date() },
+  })
+
+  // 回补库存（仅启用库存的菜品）
+  const dish = await prisma.dish.findUnique({ where: { id: item.dishId }, select: { stockEnabled: true } })
+  if (dish?.stockEnabled) {
+    await prisma.dish.update({ where: { id: item.dishId }, data: { stock: { increment: item.quantity } } })
+    invalidateGlobalCache()
+  }
+
+  const { activeCount, payableAmount } = await recalcOrderAmounts(id, { forceCancelReason: reason })
+  const updated = await prisma.order.findUnique({
+    where: { id },
+    include: { items: true },
+  })
+  res.json({
+    success: true,
+    orderId: id,
+    itemId,
+    activeCount,
+    payableAmount,
+    status: updated?.status,
+    items: updated?.items,
+  })
+})
+
+/** 抹零：事后人工减收。写入 waiveAmount，并扣减 payableAmount；不改 originalAmount。 */
+router.post('/orders/:id/waive', async (req, res) => {
+  const { id } = req.params
+  const amount = Number(req.body?.amount)
+  const note = typeof req.body?.note === 'string' ? req.body.note.trim().slice(0, 200) : ''
+  if (!Number.isFinite(amount) || amount < 0) {
+    return res.status(400).json({ message: '抹零金额无效' })
+  }
+
+  const order = await prisma.order.findUnique({
+    where: { id },
+    include: { items: true, promotions: true },
+  })
+  if (!order) return res.status(404).json({ message: '订单不存在' })
+  if (!WAIVEABLE_ORDER_STATUSES.has(order.status)) {
+    return res.status(400).json({ message: `订单状态「${order.status}」不可抹零` })
+  }
+  if (!orderWithinAdjustWindow(order.createdAt)) {
+    return res.status(400).json({ message: '下单已超过 2 个自然日（上海时区按 createdAt 日历日+2），不可抹零' })
+  }
+
+  const active = order.items.filter((i) => i.status !== 'cancelled')
+  const itemsFinal = round2(active.reduce((s, i) => s + i.finalSubtotal, 0))
+  const orderPromo = round2(order.promotions.reduce((s, p) => s + (p.discount || 0), 0))
+  const systemPayable = Math.max(0, round2(itemsFinal - orderPromo)) // 未抹零前应付
+  const nextWaive = round2(amount)
+  if (nextWaive > systemPayable + 1e-9) {
+    return res.status(400).json({ message: `抹零金额不能超过应付 ¥${systemPayable.toFixed(2)}` })
+  }
+
+  const payableAmount = Math.max(0, round2(systemPayable - nextWaive))
+  const originalAmount = round2(active.reduce((s, i) => s + i.subtotal, 0))
+  const discountAmount = Math.max(0, round2(originalAmount - itemsFinal + orderPromo))
+
+  const updated = await prisma.order.update({
+    where: { id },
+    data: {
+      waiveAmount: nextWaive,
+      waiveNote: note || null,
+      waivedAt: nextWaive > 0 ? new Date() : null,
+      payableAmount,
+      originalAmount,
+      discountAmount,
+    },
+  })
+  res.json({
+    success: true,
+    orderId: id,
+    waiveAmount: updated.waiveAmount,
+    waiveNote: updated.waiveNote,
+    waivedAt: updated.waivedAt,
+    payableAmount: updated.payableAmount,
+    originalAmount: updated.originalAmount,
+  })
 })
 
 /* ===== 加单分组 ===== */
@@ -1528,6 +1700,7 @@ async function getDishSales(req: any, filterAlliance: boolean | null) {
   const orders = await prisma.order.findMany({
     where,
     select: {
+      waiveAmount: true,
       items: {
         select: {
           dishId: true,
@@ -1535,6 +1708,7 @@ async function getDishSales(req: any, filterAlliance: boolean | null) {
           quantity: true,
           finalSubtotal: true,
           alliance: true,
+          status: true,
         },
       },
       promotions: {
@@ -1554,13 +1728,21 @@ async function getDishSales(req: any, filterAlliance: boolean | null) {
   }>()
 
   let totalFullReduction = 0
+  let totalOrderDiscount = 0 // total_discount 总价直减
+  let totalWaiveAmount = 0
   for (const order of orders) {
     const fullReduction = order.promotions
       .filter((p: any) => p.type === 'full_reduction')
       .reduce((s: number, p: any) => s + p.discount, 0)
-    // 联盟商品不参与满减，联盟商品统计时满减计 0
+    const orderDiscount = order.promotions
+      .filter((p: any) => p.type === 'total_discount')
+      .reduce((s: number, p: any) => s + p.discount, 0)
+    // 整单优惠（满减/总价直减）与抹零：联盟统计页不计（与订单卡口径一致）
     totalFullReduction += filterAlliance === true ? 0 : fullReduction
+    totalOrderDiscount += filterAlliance === true ? 0 : orderDiscount
+    totalWaiveAmount += filterAlliance === true ? 0 : (order.waiveAmount || 0)
     for (const item of order.items) {
+      if (item.status === 'cancelled') continue // 已退菜不计销量/收入
       if (filterAlliance === true && !item.alliance) continue
       if (filterAlliance === false && item.alliance) continue
       const key = item.dishId || item.name
@@ -1579,7 +1761,11 @@ async function getDishSales(req: any, filterAlliance: boolean | null) {
   const result = Array.from(salesMap.values()).sort((a, b) => b.totalQuantity - a.totalQuantity)
   return {
     items: result,
-    summary: { totalFullReduction: Number(totalFullReduction.toFixed(2)) },
+    summary: {
+      totalFullReduction: Number(totalFullReduction.toFixed(2)),
+      totalOrderDiscount: Number(totalOrderDiscount.toFixed(2)),
+      totalWaiveAmount: Number(totalWaiveAmount.toFixed(2)),
+    },
   }
 }
 
@@ -1672,7 +1858,8 @@ router.get('/stats/overview-analysis', async (req, res) => {
       payableAmount: true,
       paymentMethod: true,
       orderType: true,
-      items: { select: { dishId: true, name: true, quantity: true, finalSubtotal: true, alliance: true } },
+      waiveAmount: true,
+      items: { select: { dishId: true, name: true, quantity: true, finalSubtotal: true, alliance: true, status: true } },
       promotions: { select: { type: true, discount: true } },
     },
   })
@@ -1692,6 +1879,8 @@ router.get('/stats/overview-analysis', async (req, res) => {
       allianceRevenue: 0,
       normalRevenue: 0,
       fullReductionNormal: 0,
+      totalDiscountNormal: 0,
+      waiveNormal: 0,
       topMap: new Map<string, { dishId: string; name: string; quantity: number; revenue: number; alliance: boolean }>(),
       categoryMap: new Map<string, { name: string; revenue: number; count: number }>(),
       paymentMap: new Map<string, { name: string; count: number; amount: number }>(),
@@ -1729,9 +1918,14 @@ router.get('/stats/overview-analysis', async (req, res) => {
       agg.dayMap.set(dk, dm)
 
       let orderFullRed = 0
-      for (const p of o.promotions) if (p.type === 'full_reduction') orderFullRed += p.discount || 0
+      let orderTotalDisc = 0
+      for (const p of o.promotions) {
+        if (p.type === 'full_reduction') orderFullRed += p.discount || 0
+        if (p.type === 'total_discount') orderTotalDisc += p.discount || 0
+      }
 
       for (const item of o.items) {
+        if ((item as any).status === 'cancelled') continue
         agg.itemQty += item.quantity
         const cat = dishMap.get(item.dishId)?.category?.name
         if (item.alliance) {
@@ -1752,8 +1946,11 @@ router.get('/stats/overview-analysis', async (req, res) => {
         tm.alliance = item.alliance
         agg.topMap.set(key, tm)
       }
-      // 满减归属：联盟商品不参与满减，满减全额计入普通商品（与 getDishSales 口径一致）
+      // 满减/总价直减归属普通商品侧（与 getDishSales / 订单卡一致）
       agg.fullReductionNormal += orderFullRed
+      agg.totalDiscountNormal += orderTotalDisc
+      // 抹零整单计入普通商品侧展示；营收已用 payableAmount（含抹零后实收）
+      agg.waiveNormal += (o as any).waiveAmount || 0
     }
     return agg
   }
@@ -1823,6 +2020,8 @@ router.get('/stats/overview-analysis', async (req, res) => {
       allianceRevenue: Number(cur.allianceRevenue.toFixed(2)),
       normalRevenue: Number(cur.normalRevenue.toFixed(2)),
       fullReductionNormal: Number(cur.fullReductionNormal.toFixed(2)),
+      totalDiscountNormal: Number(cur.totalDiscountNormal.toFixed(2)),
+      waiveNormal: Number(cur.waiveNormal.toFixed(2)),
     },
     trend,
     categoryShare,

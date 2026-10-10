@@ -61,16 +61,23 @@
 
     <!-- Order Items -->
     <div v-if="!isGroup" class="order-items">
-      <div v-for="item in order.items" :key="item.id" class="order-item">
+      <div v-for="item in order.items" :key="item.id" :class="['order-item', item.status === 'cancelled' && 'item-voided']">
         <div class="item-info">
-          <span class="item-name">{{ item.name }}</span>
+          <span class="item-name">{{ item.name }}<span v-if="item.status === 'cancelled'" class="void-tag">已退菜</span></span>
           <span v-if="item.specs || item.promotionLabel" class="item-specs">
             {{ item.specs }}
             <span v-if="item.promotionLabel" class="item-promo">{{ item.promotionLabel }}</span>
           </span>
+          <span v-if="item.cancelReason" class="item-void-reason">退菜：{{ item.cancelReason }}</span>
         </div>
         <span class="item-qty">x{{ item.quantity }}</span>
         <span class="item-subtotal">¥{{ (item.finalSubtotal ?? 0).toFixed(2) }}</span>
+        <button
+          v-if="canVoidItem(item)"
+          class="btn-void-item"
+          type="button"
+          @click="$emit('voidItem', order.id, item.id)"
+        >退菜</button>
       </div>
     </div>
 
@@ -101,23 +108,38 @@
           </div>
           <div class="group-amount-box">
             <div class="group-amount">¥{{ (g.totals?.payableAmount ?? 0).toFixed(2) }}</div>
+            <span v-if="(g.waiveAmount ?? 0) > 0" class="group-fr">抹零 -¥{{ Number(g.waiveAmount).toFixed(2) }}</span>
             <span v-if="(g.fullReduction ?? 0) > 0" class="group-fr">满减 -¥{{ g.fullReduction.toFixed(2) }}</span>
             <span v-if="(g.totalDiscount ?? 0) > 0" class="group-fr">总价直减 -¥{{ g.totalDiscount.toFixed(2) }}</span>
           </div>
         </div>
         <div v-if="expandedSet[g.id]" class="group-order-body">
           <div class="group-order-items" v-if="g.items && g.items.length">
-            <div v-for="item in g.items" :key="item.id" class="group-order-item">
+            <div v-for="item in g.items" :key="item.id" :class="['group-order-item', item.status === 'cancelled' && 'item-voided']">
               <div class="group-item-info">
-                <span class="group-item-name">{{ item.name }}</span>
+                <span class="group-item-name">{{ item.name }}<span v-if="item.status === 'cancelled'" class="void-tag">已退菜</span></span>
                 <span v-if="item.specs || item.promotionLabel" class="group-item-specs">
                   {{ item.specs }}
                   <span v-if="item.promotionLabel" class="group-item-promo">{{ item.promotionLabel }}</span>
                 </span>
+                <span v-if="item.cancelReason" class="item-void-reason">退菜：{{ item.cancelReason }}</span>
               </div>
               <span class="group-item-qty">x{{ item.quantity }}</span>
               <span class="group-item-subtotal">¥{{ (item.finalSubtotal ?? 0).toFixed(2) }}</span>
+              <button
+                v-if="canVoidItemOn(g, item)"
+                class="btn-void-item"
+                type="button"
+                @click.stop="$emit('voidItem', g.id, item.id)"
+              >退菜</button>
             </div>
+          </div>
+          <div class="group-order-actions" v-if="canWaiveOrder(g)">
+            <button type="button" class="btn-action btn-waive-sm" @click.stop="$emit('waive', g.id)">
+              <span class="material-symbols-outlined">money_off</span>
+              抹零
+            </button>
+            <span v-if="(g.waiveAmount ?? 0) > 0" class="group-fr">抹零 -¥{{ Number(g.waiveAmount).toFixed(2) }}</span>
           </div>
         </div>
       </div>
@@ -138,6 +160,10 @@
         <span class="meta-label">取消原因</span>
         <span class="meta-value cancel-reason">{{ order.cancelReason }}</span>
       </div>
+      <div class="meta-row" v-if="(order.waiveAmount ?? 0) > 0">
+        <span class="meta-label">抹零</span>
+        <span class="meta-value">-¥{{ Number(order.waiveAmount).toFixed(2) }}<template v-if="order.waiveNote">（{{ order.waiveNote }}）</template></span>
+      </div>
     </div>
 
     <!-- Order Footer -->
@@ -146,6 +172,7 @@
         <div class="amount-line">
           <span class="amount-label">{{ orderUnpaid ? '待付金额' : '实付' }}</span>
           <span :class="['amount-value', orderUnpaid && 'amount-unpaid']">¥{{ order.totals.payableAmount?.toFixed(2) }}</span>
+          <span v-if="(order.waiveAmount ?? 0) > 0" class="order-fr">抹零 -¥{{ Number(order.waiveAmount).toFixed(2) }}</span>
           <span v-if="(order.fullReduction ?? 0) > 0" class="order-fr">满减 -¥{{ order.fullReduction.toFixed(2) }}</span>
           <span v-if="(order.totalDiscount ?? 0) > 0" class="order-fr">总价直减 -¥{{ order.totalDiscount.toFixed(2) }}</span>
         </div>
@@ -173,6 +200,10 @@
           <span class="material-symbols-outlined">check_circle</span>
           取餐
         </button>
+        <button v-if="canWaive && !isGroup" class="btn-action btn-waive-sm" @click="$emit('waive', order.id)">
+          <span class="material-symbols-outlined">money_off</span>
+          抹零
+        </button>
         <button v-if="canCancel" class="btn-action btn-danger-sm" @click="$emit('cancel', order.id)">
           <span class="material-symbols-outlined">cancel</span>
           取消
@@ -193,6 +224,8 @@ const props = defineProps<{
 defineEmits<{
   action: [id: string, status: string]
   cancel: [id: string]
+  voidItem: [orderId: string, itemId: string]
+  waive: [orderId: string]
 }>()
 
 const groupExpanded = ref(false)
@@ -261,6 +294,41 @@ const hasUnpaidFlag = computed<boolean>(() => (isGroup.value ? unpaidGroupCount.
 const canTake = computed<boolean>(() => !hasUnpaidFlag.value && !isPickedUp.value && showAction('completed'))
 // 取消：只要未取餐就显示
 const canCancel = computed<boolean>(() => !isPickedUp.value)
+/** 上海自然日：下单日+2（含当日共 3 天）内可退菜/抹零 */
+function shanghaiYmd(iso: string | Date): string {
+  const d = typeof iso === 'string' ? new Date(iso) : iso
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(d)
+}
+function withinAdjustWindow(createdAt?: string): boolean {
+  if (!createdAt) return false
+  const orderYmd = shanghaiYmd(createdAt)
+  const todayYmd = shanghaiYmd(new Date())
+  const [y, m, day] = orderYmd.split('-').map(Number)
+  const deadline = new Date(Date.UTC(y, m - 1, day + 2))
+  const deadlineYmd = [
+    deadline.getUTCFullYear(),
+    String(deadline.getUTCMonth() + 1).padStart(2, '0'),
+    String(deadline.getUTCDate()).padStart(2, '0'),
+  ].join('-')
+  return todayYmd <= deadlineYmd
+}
+const ADJUSTABLE_ORDER = ['unpaid', 'pending', 'paid', 'preparing', 'ready', 'completed']
+function canWaiveOrder(o: any): boolean {
+  return !!o && ADJUSTABLE_ORDER.includes(o.status) && withinAdjustWindow(o.createdAt)
+}
+const canWaive = computed(() => canWaiveOrder(props.order))
+function canVoidItem(item: any): boolean {
+  return canVoidItemOn(props.order, item)
+}
+function canVoidItemOn(o: any, item: any): boolean {
+  if (!canWaiveOrder(o)) return false
+  return item?.status !== 'cancelled'
+}
 // 通用状态徽标：待付款/可取餐/已完成/已取消 之外的剩余状态才显示
 const showFallbackStatus = computed<boolean>(() =>
   !orderUnpaid.value &&
@@ -455,5 +523,18 @@ function formatTime(t: string) {
 .btn-warning-sm { background: #f59e0b; color: var(--on-primary); }
 .btn-warning-sm:hover { background: #d97706; }
 .btn-danger-sm { background: transparent;   color: #f74e22; border: 1px solid #f74e22; }
+.btn-waive-sm { background: transparent; color: #d97706; border: 1px solid #d97706; }
+.btn-waive-sm:hover { background: rgba(217, 119, 6, 0.12); }
+.item-voided { opacity: 0.55; }
+.item-voided .item-name { text-decoration: line-through; }
+.void-tag { margin-left: 6px; font-size: 11px; color: #f74e22; text-decoration: none; font-weight: 600; }
+.item-void-reason { display: block; font-size: 11px; color: #f74e22; margin-top: 2px; }
+.btn-void-item {
+  flex-shrink: 0; margin-left: auto; border: 1px solid #f74e22; background: transparent;
+  color: #f74e22; font-size: 12px; border-radius: 6px; padding: 2px 8px; cursor: pointer;
+}
+.btn-void-item:hover { background: rgba(247, 78, 34, 0.1); }
+.group-order-actions { display: flex; align-items: center; gap: 8px; padding: 8px 12px 10px; border-top: 1px dashed var(--divider); }
+.group-order-item { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px; }
 .btn-danger-sm:hover { background: rgb(255 76 55 / 16%); }
 </style>

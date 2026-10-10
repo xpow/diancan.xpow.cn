@@ -4,7 +4,7 @@
     <div class="page-header">
       <div>
         <h2 class="page-title">订单管理</h2>
-        <p class="page-subtitle">查看和管理所有订单</p>
+        <p class="page-subtitle">查看和管理所有订单。超过两天的订单不支持退菜和抹零操作。</p>
       </div>
       <div class="header-actions">
         <div class="device-select">
@@ -66,6 +66,8 @@
         :order="order"
         @action="updateStatus"
         @cancel="openCancelDialog"
+        @void-item="openVoidDialog"
+        @waive="openWaiveDialog"
       />
     </div>
 
@@ -116,8 +118,61 @@
         </div>
       </div>
     </div>
+
+    <div v-if="showVoid" class="modal-overlay">
+      <div class="modal modal-sm">
+        <div class="modal-header">
+          <h3>退菜</h3>
+          <button class="btn-icon" @click="showVoid = false">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p class="cancel-hint">请选择退菜原因：</p>
+          <div class="cancel-options">
+            <div
+              v-for="reason in cancelReasons"
+              :key="'void-' + reason"
+              :class="['cancel-option', voidReason === reason && 'selected']"
+              @click="voidReason = reason"
+            >
+              <span class="material-symbols-outlined" v-if="voidReason === reason">check_circle</span>
+              <span class="material-symbols-outlined" v-else>circle</span>
+              {{ reason }}
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" @click="showVoid = false">取消</button>
+          <button class="btn-danger" :disabled="!voidReason" @click="confirmVoid">确认退菜</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="showWaive" class="modal-overlay">
+      <div class="modal modal-sm">
+        <div class="modal-header">
+          <h3>抹零</h3>
+          <button class="btn-icon" @click="showWaive = false">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p class="cancel-hint">录入实际少收金额（事后人工调整）。应付上限 ¥{{ waiveMax.toFixed(2) }}。</p>
+          <label class="waive-label">抹零金额（元）</label>
+          <input v-model.number="waiveAmount" type="number" min="0" step="0.01" :max="waiveMax" class="waive-input" />
+          <label class="waive-label">备注（可选）</label>
+          <input v-model="waiveNote" type="text" maxlength="200" class="waive-input" placeholder="如：现金凑整" />
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" @click="showWaive = false">取消</button>
+          <button class="btn-danger" :disabled="waiveAmount < 0 || waiveAmount > waiveMax" @click="confirmWaive">确认抹零</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
+
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
@@ -131,7 +186,9 @@ interface OrderItem {
   finalSubtotal: number
   specs: string | null
   promotionLabel: string | null
-  status: string
+  status?: string
+  cancelReason?: string
+  cancelledAt?: string
 }
 
 interface Order {
@@ -174,6 +231,9 @@ interface Order {
   createdAt: string
   cancelReason?: string
   cancelledAt?: string
+  waiveAmount?: number
+  waiveNote?: string
+  waivedAt?: string
 }
 
 const orders = ref<Order[]>([])
@@ -299,6 +359,71 @@ async function confirmCancel() {
   if (!selectedReason.value) return
   await updateStatus(cancelOrderId.value, 'cancelled', selectedReason.value)
   showCancel.value = false
+}
+
+const showVoid = ref(false)
+const voidOrderId = ref('')
+const voidItemId = ref('')
+const voidReason = ref('')
+function openVoidDialog(orderId: string, itemId: string) {
+  voidOrderId.value = orderId
+  voidItemId.value = itemId
+  voidReason.value = ''
+  showVoid.value = true
+}
+async function confirmVoid() {
+  if (!voidReason.value) return
+  const res = await fetch('/api/admin/orders/' + voidOrderId.value + '/items/' + voidItemId.value + '/void', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reason: voidReason.value }),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    alert(body.message || '退菜失败')
+    return
+  }
+  showVoid.value = false
+  await fetchOrders()
+}
+
+const showWaive = ref(false)
+const waiveOrderId = ref('')
+const waiveAmount = ref(0)
+const waiveNote = ref('')
+const waiveMax = ref(0)
+function findOrderById(orderId: string): any | undefined {
+  for (const x of orders.value) {
+    if (x.id === orderId) return x
+    const g = x.group?.find((m) => m.id === orderId)
+    if (g) return g
+  }
+  return undefined
+}
+function openWaiveDialog(orderId: string) {
+  const o = findOrderById(orderId)
+  waiveOrderId.value = orderId
+  const currentWaive = Number(o?.waiveAmount || 0)
+  const payable = Number(o?.totals?.payableAmount || 0)
+  waiveMax.value = Math.round((payable + currentWaive) * 100) / 100
+  waiveAmount.value = currentWaive
+  waiveNote.value = o?.waiveNote || ''
+  showWaive.value = true
+}
+async function confirmWaive() {
+  if (waiveAmount.value < 0 || waiveAmount.value > waiveMax.value) return
+  const res = await fetch('/api/admin/orders/' + waiveOrderId.value + '/waive', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount: waiveAmount.value, note: waiveNote.value }),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    alert(body.message || '抹零失败')
+    return
+  }
+  showWaive.value = false
+  await fetchOrders()
 }
 </script>
 
@@ -606,6 +731,11 @@ async function confirmCancel() {
   background: var(--surface-container-low);
 }
 
+.waive-label { display: block; margin: 12px 0 6px; font-size: 13px; color: var(--text-secondary); }
+.waive-input {
+  width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--on-surface); font-size: 14px;
+}
 .cancel-option.selected {
   border-color: #ff6b00;
   background: var(--primary-soft);

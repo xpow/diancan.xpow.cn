@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "Order" ADD COLUMN "waiveAmount" REAL NOT NULL DEFAULT 0;
+ALTER TABLE "Order" ADD COLUMN "waiveNote" TEXT;
+ALTER TABLE "Order" ADD COLUMN "waivedAt" DATETIME;
+ALTER TABLE "OrderItem" ADD COLUMN "cancelReason" TEXT;
+ALTER TABLE "OrderItem" ADD COLUMN "cancelledAt" DATETIME;
