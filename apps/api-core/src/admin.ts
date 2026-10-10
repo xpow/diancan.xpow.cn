@@ -1967,6 +1967,50 @@ router.post('/reviews/redeem', async (req, res) => {
 /* ===== 成本利润核算 ===== */
 
 // 获取某天所有菜品的成本录入
+
+/** 成本利润菜品集合（按日/区间独立）：
+ *  1) 区间内有自有销量（OrderItem.alliance=false）→ 纳入（即使今日 Dish.alliance=true）
+ *  2) 区间内有成本录入，且并非「仅联盟销量」→ 纳入
+ *  3) 区间内无任何销量且当前非联盟的在售菜 → 晨间备料占位
+ *  当前联盟且无自有销量的在售菜不出现在列表。
+ */
+async function resolveCostProfitDishIds(merchantId: string, rangeStart: Date, rangeEnd: Date): Promise<string[]> {
+  const [ownedSold, anySold, costRows, dishes] = await Promise.all([
+    prisma.orderItem.findMany({
+      where: { alliance: false, order: { createdAt: { gte: rangeStart, lt: rangeEnd }, status: { not: 'cancelled' } } },
+      select: { dishId: true },
+      distinct: ['dishId'],
+    }),
+    prisma.orderItem.findMany({
+      where: { order: { createdAt: { gte: rangeStart, lt: rangeEnd }, status: { not: 'cancelled' } } },
+      select: { dishId: true },
+      distinct: ['dishId'],
+    }),
+    prisma.dishCostEntry.findMany({
+      where: { date: { gte: rangeStart, lt: rangeEnd } },
+      select: { dishId: true },
+      distinct: ['dishId'],
+    }),
+    prisma.dish.findMany({
+      where: { merchantId },
+      select: { id: true, alliance: true, status: true },
+    }),
+  ])
+  const owned = new Set(ownedSold.map((r) => r.dishId))
+  const any = new Set(anySold.map((r) => r.dishId))
+  const cost = new Set(costRows.map((r) => r.dishId))
+  const ids: string[] = []
+  for (const d of dishes) {
+    const hasOwned = owned.has(d.id)
+    const hasAny = any.has(d.id)
+    const hasCost = cost.has(d.id)
+    const onlyAlliance = hasAny && !hasOwned
+    const morningFill = !hasAny && d.status === 'active' && !d.alliance
+    if (hasOwned || (hasCost && !onlyAlliance) || morningFill) ids.push(d.id)
+  }
+  return ids
+}
+
 router.get('/cost-entries', requireAuth, async (req, res) => {
   const { date, merchantId } = req.query
   if (!date || !merchantId) return res.status(400).json({ message: 'date and merchantId required' })
@@ -1975,29 +2019,7 @@ router.get('/cost-entries', requireAuth, async (req, res) => {
   const dayEnd = new Date(dayStart)
   dayEnd.setDate(dayEnd.getDate() + 1)
 
-  // 按日独立核算：是否算「自有」只看当日 OrderItem.alliance 下单快照，不看当前 Dish.alliance。
-  // 列表 = 在售菜 ∪ 当日自有销量菜 ∪ 当日已有成本录入；营收只计 alliance=false 的明细行。
-  const [soldDishes, costDishIds] = await Promise.all([
-    prisma.orderItem.findMany({
-      where: { alliance: false, order: { createdAt: { gte: dayStart, lt: dayEnd }, status: { not: 'cancelled' } } },
-      select: { dishId: true },
-      distinct: ['dishId'],
-    }),
-    prisma.dishCostEntry.findMany({
-      where: { date: { gte: dayStart, lt: dayEnd } },
-      select: { dishId: true },
-      distinct: ['dishId'],
-    }),
-  ])
-  const activeDishIds = await prisma.dish.findMany({
-    where: { merchantId: merchantId as string, status: 'active' },
-    select: { id: true },
-  })
-  const allDishIds = Array.from(new Set([
-    ...activeDishIds.map((d) => d.id),
-    ...soldDishes.map((d) => d.dishId),
-    ...costDishIds.map((d) => d.dishId),
-  ]))
+  const allDishIds = await resolveCostProfitDishIds(merchantId as string, dayStart, dayEnd)
 
   const dishes = await prisma.dish.findMany({
     where: { merchantId: merchantId as string, id: { in: allDishIds } },
@@ -2090,8 +2112,18 @@ router.post('/cost-entries', requireAuth, async (req, res) => {
   const ownedSold = new Set(ownedSoldRows.map((r) => r.dishId))
   const anySold = new Set(anySoldRows.map((r) => r.dishId))
   const existingCost = new Set(existingCostRows.map((r) => r.dishId))
-  const allowCostEntry = (dishId: string) =>
-    ownedSold.has(dishId) || !anySold.has(dishId) || existingCost.has(dishId)
+  const allianceNow = new Set(
+    (await prisma.dish.findMany({
+      where: { id: { in: entryDishIds }, alliance: true },
+      select: { id: true },
+    })).map((d) => d.id),
+  )
+  // 与列表口径一致：无销量时的晨间录入不允许当前联盟菜；有自有销量或已有成本行仍可
+  const allowCostEntry = (dishId: string) => {
+    if (ownedSold.has(dishId) || existingCost.has(dishId)) return true
+    if (!anySold.has(dishId) && !allianceNow.has(dishId)) return true
+    return false
+  }
 
   await prisma.$transaction(
     entries
@@ -2131,28 +2163,7 @@ router.get('/cost-profit-report', requireAuth, async (req, res) => {
   const toDate = new Date(to as string)
   toDate.setDate(toDate.getDate() + 1) // 包含结束日
 
-  // 按日/区间独立核算：菜品集合不看当前 Dish.alliance；营收只计区间内 OrderItem.alliance=false。
-  const [soldDishes, costDishIds] = await Promise.all([
-    prisma.orderItem.findMany({
-      where: { alliance: false, order: { createdAt: { gte: fromDate, lt: toDate }, status: { not: 'cancelled' } } },
-      select: { dishId: true },
-      distinct: ['dishId'],
-    }),
-    prisma.dishCostEntry.findMany({
-      where: { date: { gte: fromDate, lt: toDate } },
-      select: { dishId: true },
-      distinct: ['dishId'],
-    }),
-  ])
-  const activeDishIds = await prisma.dish.findMany({
-    where: { merchantId: merchantId as string, status: 'active' },
-    select: { id: true },
-  })
-  const allDishIds = Array.from(new Set([
-    ...activeDishIds.map((d) => d.id),
-    ...soldDishes.map((d) => d.dishId),
-    ...costDishIds.map((d) => d.dishId),
-  ]))
+  const allDishIds = await resolveCostProfitDishIds(merchantId as string, fromDate, toDate)
 
   const dishes = await prisma.dish.findMany({
     where: { merchantId: merchantId as string, id: { in: allDishIds } },
