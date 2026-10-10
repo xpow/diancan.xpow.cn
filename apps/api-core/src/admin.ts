@@ -1975,10 +1975,11 @@ router.get('/cost-entries', requireAuth, async (req, res) => {
   const dayEnd = new Date(dayStart)
   dayEnd.setDate(dayEnd.getDate() + 1)
 
-  // 以实际销售为原则：包含有销量/成本记录的已下架菜品
+  // 按日独立核算：是否算「自有」只看当日 OrderItem.alliance 下单快照，不看当前 Dish.alliance。
+  // 列表 = 在售菜 ∪ 当日自有销量菜 ∪ 当日已有成本录入；营收只计 alliance=false 的明细行。
   const [soldDishes, costDishIds] = await Promise.all([
     prisma.orderItem.findMany({
-      where: { order: { createdAt: { gte: dayStart, lt: dayEnd }, status: { not: 'cancelled' } } },
+      where: { alliance: false, order: { createdAt: { gte: dayStart, lt: dayEnd }, status: { not: 'cancelled' } } },
       select: { dishId: true },
       distinct: ['dishId'],
     }),
@@ -2010,7 +2011,7 @@ router.get('/cost-entries', requireAuth, async (req, res) => {
     },
   })
 
-  // 查当天实际销售数据
+  // 当天销售：仅计 OrderItem.alliance=false（该日下单快照）；联盟行不计入营收/销量
   const orders = await prisma.order.findMany({
     where: { createdAt: { gte: dayStart, lt: dayEnd }, status: { not: 'cancelled' } },
     select: { items: { select: { dishId: true, quantity: true, finalSubtotal: true, alliance: true } } },
@@ -2063,9 +2064,38 @@ router.post('/cost-entries', requireAuth, async (req, res) => {
   const dayEnd = new Date(dayStart)
   dayEnd.setDate(dayEnd.getDate() + 1)
 
+  // 按日校验（不看当前 Dish.alliance）：
+  // - 当日有自有销量 → 允许
+  // - 当日尚无任何销量（晨间备料）→ 允许
+  // - 当日已有成本行 → 允许更新
+  // - 当日仅有联盟销量、且无自有销量、无成本行 → 拒绝
+  // DishCostEntry 仅按 dishId+date 作用域，无 alliance 字段。
+  const entryDishIds = [...new Set(entries.map((e: any) => e.dishId).filter(Boolean))] as string[]
+  const [ownedSoldRows, anySoldRows, existingCostRows] = await Promise.all([
+    prisma.orderItem.findMany({
+      where: { dishId: { in: entryDishIds }, alliance: false, order: { createdAt: { gte: dayStart, lt: dayEnd }, status: { not: 'cancelled' } } },
+      select: { dishId: true },
+      distinct: ['dishId'],
+    }),
+    prisma.orderItem.findMany({
+      where: { dishId: { in: entryDishIds }, order: { createdAt: { gte: dayStart, lt: dayEnd }, status: { not: 'cancelled' } } },
+      select: { dishId: true },
+      distinct: ['dishId'],
+    }),
+    prisma.dishCostEntry.findMany({
+      where: { dishId: { in: entryDishIds }, date: { gte: dayStart, lt: dayEnd } },
+      select: { dishId: true },
+    }),
+  ])
+  const ownedSold = new Set(ownedSoldRows.map((r) => r.dishId))
+  const anySold = new Set(anySoldRows.map((r) => r.dishId))
+  const existingCost = new Set(existingCostRows.map((r) => r.dishId))
+  const allowCostEntry = (dishId: string) =>
+    ownedSold.has(dishId) || !anySold.has(dishId) || existingCost.has(dishId)
+
   await prisma.$transaction(
     entries
-      .filter((e: any) => e.weight != null && e.unitCost != null)
+      .filter((e: any) => e.weight != null && e.unitCost != null && allowCostEntry(e.dishId))
       .map((e: any) => {
         const totalCost = Math.round((e.weight * e.unitCost / 1000) * 100) / 100
         const skewerCount = e.skewerCount ?? 0
@@ -2101,10 +2131,10 @@ router.get('/cost-profit-report', requireAuth, async (req, res) => {
   const toDate = new Date(to as string)
   toDate.setDate(toDate.getDate() + 1) // 包含结束日
 
-  // 以实际销售为原则：包含有销量/成本记录的已下架菜品
+  // 按日/区间独立核算：菜品集合不看当前 Dish.alliance；营收只计区间内 OrderItem.alliance=false。
   const [soldDishes, costDishIds] = await Promise.all([
     prisma.orderItem.findMany({
-      where: { order: { createdAt: { gte: fromDate, lt: toDate }, status: { not: 'cancelled' } } },
+      where: { alliance: false, order: { createdAt: { gte: fromDate, lt: toDate }, status: { not: 'cancelled' } } },
       select: { dishId: true },
       distinct: ['dishId'],
     }),
@@ -2142,7 +2172,7 @@ router.get('/cost-profit-report', requireAuth, async (req, res) => {
     costMap.set(entry.dishId, current)
   }
 
-  // 销量汇总
+  // 销量汇总：仅计区间内 OrderItem.alliance=false；满减按整单计入（联盟不参与满减，与菜品销量统计口径一致）
   const orders = await prisma.order.findMany({
     where: { createdAt: { gte: fromDate, lt: toDate }, status: { not: 'cancelled' } },
     select: {
