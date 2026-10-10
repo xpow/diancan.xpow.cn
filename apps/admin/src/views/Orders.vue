@@ -68,6 +68,7 @@
         @cancel="openCancelDialog"
         @void-item="openVoidDialog"
         @waive="openWaiveDialog"
+        @waive-group="openGroupWaiveDialog"
       />
     </div>
 
@@ -101,14 +102,14 @@
           <p class="cancel-hint">请选择取消原因：</p>
           <div class="cancel-options">
             <div
-              v-for="reason in cancelReasons"
-              :key="reason"
-              :class="['cancel-option', selectedReason === reason && 'selected']"
-              @click="selectedReason = reason"
+              v-for="reason in VOID_REASONS"
+              :key="reason.code"
+              :class="['cancel-option', selectedReason === reason.code && 'selected']"
+              @click="selectedReason = reason.code"
             >
-              <span class="material-symbols-outlined" v-if="selectedReason === reason">check_circle</span>
+              <span class="material-symbols-outlined" v-if="selectedReason === reason.code">check_circle</span>
               <span class="material-symbols-outlined" v-else>circle</span>
-              {{ reason }}
+              {{ voidReasonOptionText(reason.code, reason.label) }}
             </div>
           </div>
         </div>
@@ -131,14 +132,14 @@
           <p class="cancel-hint">请选择退菜原因：</p>
           <div class="cancel-options">
             <div
-              v-for="reason in cancelReasons"
-              :key="'void-' + reason"
-              :class="['cancel-option', voidReason === reason && 'selected']"
-              @click="voidReason = reason"
+              v-for="reason in VOID_REASONS"
+              :key="'void-' + reason.code"
+              :class="['cancel-option', voidReason === reason.code && 'selected']"
+              @click="voidReason = reason.code"
             >
-              <span class="material-symbols-outlined" v-if="voidReason === reason">check_circle</span>
+              <span class="material-symbols-outlined" v-if="voidReason === reason.code">check_circle</span>
               <span class="material-symbols-outlined" v-else>circle</span>
-              {{ reason }}
+              {{ voidReasonOptionText(reason.code, reason.label) }}
             </div>
           </div>
         </div>
@@ -158,7 +159,10 @@
           </button>
         </div>
         <div class="modal-body">
-          <p class="cancel-hint">录入实际少收金额（事后人工调整）。应付上限 ¥{{ waiveMax.toFixed(2) }}。</p>
+          <p class="cancel-hint">
+            {{ waiveKind === 'group' ? '整组合并抹零（收入扣减，不改子单应付）' : '单订单抹零（收入扣减，不改订单应付原值）' }}。
+            上限 ¥{{ waiveMax.toFixed(2) }}。
+          </p>
           <label class="waive-label">抹零金额（元）</label>
           <input v-model.number="waiveAmount" type="number" min="0" step="0.01" :max="waiveMax" class="waive-input" />
           <label class="waive-label">备注（可选）</label>
@@ -177,6 +181,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import OrderCard from '../components/OrderCard.vue'
+import { VOID_REASONS, voidReasonOptionText } from '../utils/voidReasons'
 
 interface OrderItem {
   id: string
@@ -234,6 +239,7 @@ interface Order {
   waiveAmount?: number
   waiveNote?: string
   waivedAt?: string
+  groupWaive?: { amount: number; note?: string; waivedAt?: string }
 }
 
 const orders = ref<Order[]>([])
@@ -330,12 +336,31 @@ async function fetchOrders() {
   }
 }
 
-async function updateStatus(id: string, status: string, cancelReason?: string) {
-  await fetch(`/api/admin/orders/${id}/status`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status, cancelReason }),
-  })
+async function updateStatus(id: string, status: string, cancelReason?: string, applyToGroup?: boolean) {
+  const targets: string[] = [id]
+  if (applyToGroup) {
+    const card = orders.value.find((o) => o.id === id) || orders.value.find((o) => o.group?.some((m) => m.id === id))
+    const members = card?.groupId ? (card.group || []) : []
+    const fromStatuses =
+      status === 'preparing' ? ['unpaid', 'pending', 'paid']
+      : status === 'ready' ? ['preparing']
+      : status === 'completed' ? ['ready']
+      : []
+    for (const m of members) {
+      if (fromStatuses.includes(m.status) && !targets.includes(m.id)) targets.push(m.id)
+    }
+    // 代表单若也在组内列表，确保包含；若代表不在 group 数组，仍用 id
+    if (card && fromStatuses.includes(card.status) && !targets.includes(card.id)) targets.push(card.id)
+  }
+  await Promise.all(
+    targets.map((tid) =>
+      fetch('/api/admin/orders/' + tid + '/status', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, cancelReason }),
+      }),
+    ),
+  )
   await fetchOrders()
 }
 
@@ -347,7 +372,6 @@ onMounted(() => {
 const showCancel = ref(false)
 const cancelOrderId = ref('')
 const selectedReason = ref('')
-const cancelReasons = ['等待时间过长，客户不要了', '客户有事不要了', '测试订单', '菜品不足，无法出餐', '菜单下错了，重新下单']
 
 function openCancelDialog(id: string) {
   cancelOrderId.value = id
@@ -392,6 +416,9 @@ const waiveOrderId = ref('')
 const waiveAmount = ref(0)
 const waiveNote = ref('')
 const waiveMax = ref(0)
+const waiveKind = ref<'order' | 'group'>('order')
+const waiveTargetId = ref('')
+
 function findOrderById(orderId: string): any | undefined {
   for (const x of orders.value) {
     if (x.id === orderId) return x
@@ -402,17 +429,35 @@ function findOrderById(orderId: string): any | undefined {
 }
 function openWaiveDialog(orderId: string) {
   const o = findOrderById(orderId)
-  waiveOrderId.value = orderId
+  waiveKind.value = 'order'
+  waiveTargetId.value = orderId
   const currentWaive = Number(o?.waiveAmount || 0)
   const payable = Number(o?.totals?.payableAmount || 0)
-  waiveMax.value = Math.round((payable + currentWaive) * 100) / 100
+  // payable 不再扣抹零，上限 = 系统应付
+  waiveMax.value = Math.round(payable * 100) / 100
   waiveAmount.value = currentWaive
   waiveNote.value = o?.waiveNote || ''
   showWaive.value = true
 }
+function openGroupWaiveDialog(groupId: string) {
+  const card = orders.value.find((x) => x.groupId === groupId)
+  const members = card?.group || []
+  waiveKind.value = 'group'
+  waiveTargetId.value = groupId
+  const currentWaive = Number(card?.waiveAmount || card?.groupWaive?.amount || 0)
+  const payable = members.reduce((s: number, m: any) => s + Number(m?.totals?.payableAmount || 0), 0)
+  waiveMax.value = Math.round(payable * 100) / 100
+  waiveAmount.value = currentWaive
+  waiveNote.value = card?.waiveNote || card?.groupWaive?.note || ''
+  showWaive.value = true
+}
 async function confirmWaive() {
   if (waiveAmount.value < 0 || waiveAmount.value > waiveMax.value) return
-  const res = await fetch('/api/admin/orders/' + waiveOrderId.value + '/waive', {
+  const url =
+    waiveKind.value === 'group'
+      ? '/api/admin/groups/' + encodeURIComponent(waiveTargetId.value) + '/waive'
+      : '/api/admin/orders/' + waiveTargetId.value + '/waive'
+  const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ amount: waiveAmount.value, note: waiveNote.value }),

@@ -63,12 +63,11 @@
     <div v-if="!isGroup" class="order-items">
       <div v-for="item in order.items" :key="item.id" :class="['order-item', item.status === 'cancelled' && 'item-voided']">
         <div class="item-info">
-          <span class="item-name">{{ item.name }}<span v-if="item.status === 'cancelled'" class="void-tag">已退菜</span></span>
+          <span class="item-name">{{ item.name }}<span v-if="item.status === 'cancelled'" class="void-tag" :title="voidReasonLabel(item.cancelReason)">{{ formatVoidTag(item.cancelReason) }}</span></span>
           <span v-if="item.specs || item.promotionLabel" class="item-specs">
             {{ item.specs }}
             <span v-if="item.promotionLabel" class="item-promo">{{ item.promotionLabel }}</span>
           </span>
-          <span v-if="item.cancelReason" class="item-void-reason">退菜：{{ item.cancelReason }}</span>
         </div>
         <span class="item-qty">x{{ item.quantity }}</span>
         <span class="item-subtotal">¥{{ (item.finalSubtotal ?? 0).toFixed(2) }}</span>
@@ -108,7 +107,6 @@
           </div>
           <div class="group-amount-box">
             <div class="group-amount">¥{{ (g.totals?.payableAmount ?? 0).toFixed(2) }}</div>
-            <span v-if="(g.waiveAmount ?? 0) > 0" class="group-fr">抹零 -¥{{ Number(g.waiveAmount).toFixed(2) }}</span>
             <span v-if="(g.fullReduction ?? 0) > 0" class="group-fr">满减 -¥{{ g.fullReduction.toFixed(2) }}</span>
             <span v-if="(g.totalDiscount ?? 0) > 0" class="group-fr">总价直减 -¥{{ g.totalDiscount.toFixed(2) }}</span>
           </div>
@@ -117,12 +115,11 @@
           <div class="group-order-items" v-if="g.items && g.items.length">
             <div v-for="item in g.items" :key="item.id" :class="['group-order-item', item.status === 'cancelled' && 'item-voided']">
               <div class="group-item-info">
-                <span class="group-item-name">{{ item.name }}<span v-if="item.status === 'cancelled'" class="void-tag">已退菜</span></span>
+                <span class="group-item-name">{{ item.name }}<span v-if="item.status === 'cancelled'" class="void-tag" :title="voidReasonLabel(item.cancelReason)">{{ formatVoidTag(item.cancelReason) }}</span></span>
                 <span v-if="item.specs || item.promotionLabel" class="group-item-specs">
                   {{ item.specs }}
                   <span v-if="item.promotionLabel" class="group-item-promo">{{ item.promotionLabel }}</span>
                 </span>
-                <span v-if="item.cancelReason" class="item-void-reason">退菜：{{ item.cancelReason }}</span>
               </div>
               <span class="group-item-qty">x{{ item.quantity }}</span>
               <span class="group-item-subtotal">¥{{ (item.finalSubtotal ?? 0).toFixed(2) }}</span>
@@ -133,13 +130,6 @@
                 @click.stop="$emit('voidItem', g.id, item.id)"
               >退菜</button>
             </div>
-          </div>
-          <div class="group-order-actions" v-if="canWaiveOrder(g)">
-            <button type="button" class="btn-action btn-waive-sm" @click.stop="$emit('waive', g.id)">
-              <span class="material-symbols-outlined">money_off</span>
-              抹零
-            </button>
-            <span v-if="(g.waiveAmount ?? 0) > 0" class="group-fr">抹零 -¥{{ Number(g.waiveAmount).toFixed(2) }}</span>
           </div>
         </div>
       </div>
@@ -158,7 +148,7 @@
       </div>
       <div class="meta-row" v-if="order.cancelReason">
         <span class="meta-label">取消原因</span>
-        <span class="meta-value cancel-reason">{{ order.cancelReason }}</span>
+        <span class="meta-value cancel-reason">{{ formatOrderCancelReason(order.cancelReason) }}</span>
       </div>
       <div class="meta-row" v-if="(order.waiveAmount ?? 0) > 0">
         <span class="meta-label">抹零</span>
@@ -186,21 +176,41 @@
           <span class="amount-label">待付金额</span>
           <span :class="['amount-value', 'amount-unpaid']">¥{{ unpaidGroupTotal.toFixed(2) }}</span>
         </div>
+        <div class="amount-row" v-if="(order.waiveAmount ?? order.groupWaive?.amount ?? 0) > 0">
+          <span class="amount-label">整组抹零</span>
+          <span class="amount-value">-¥{{ Number(order.waiveAmount ?? order.groupWaive?.amount).toFixed(2) }}</span>
+        </div>
       </div>
       <div class="order-actions">
-        <button v-if="showAction('preparing')" class="btn-action btn-primary-sm" @click="$emit('action', order.id, 'preparing')">
+        <button
+          v-if="showAction('preparing')"
+          class="btn-action btn-primary-sm"
+          @click="$emit('action', order.id, 'preparing', undefined, isGroup)"
+        >
           <span class="material-symbols-outlined">play_arrow</span>
           开始制作
         </button>
-        <button v-if="showAction('ready')" class="btn-action btn-success-sm" @click="$emit('action', order.id, 'ready')">
+        <button
+          v-if="showAction('ready')"
+          class="btn-action btn-success-sm"
+          @click="$emit('action', order.id, 'ready', undefined, isGroup)"
+        >
           <span class="material-symbols-outlined">check</span>
           制作完成
         </button>
-        <button v-if="canTake" class="btn-action btn-warning-sm" @click="$emit('action', order.id, 'completed')">
+        <button
+          v-if="canTake"
+          class="btn-action btn-warning-sm"
+          @click="$emit('action', order.id, 'completed', undefined, isGroup)"
+        >
           <span class="material-symbols-outlined">check_circle</span>
           取餐
         </button>
-        <button v-if="canWaive && !isGroup" class="btn-action btn-waive-sm" @click="$emit('waive', order.id)">
+        <button
+          v-if="isGroup ? canWaiveGroup : canWaive"
+          class="btn-action btn-waive-sm"
+          @click="isGroup ? $emit('waiveGroup', order.groupId) : $emit('waive', order.id)"
+        >
           <span class="material-symbols-outlined">money_off</span>
           抹零
         </button>
@@ -215,6 +225,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { formatVoidTag, voidReasonLabel, formatOrderCancelReason } from '../utils/voidReasons'
 
 const props = defineProps<{
   order: any
@@ -222,10 +233,11 @@ const props = defineProps<{
 }>()
 
 defineEmits<{
-  action: [id: string, status: string]
+  action: [id: string, status: string, cancelReason?: string, applyToGroup?: boolean]
   cancel: [id: string]
   voidItem: [orderId: string, itemId: string]
   waive: [orderId: string]
+  waiveGroup: [groupId: string]
 }>()
 
 const groupExpanded = ref(false)
@@ -322,6 +334,16 @@ function canWaiveOrder(o: any): boolean {
   return !!o && ADJUSTABLE_ORDER.includes(o.status) && withinAdjustWindow(o.createdAt)
 }
 const canWaive = computed(() => canWaiveOrder(props.order))
+const canWaiveGroup = computed(() => {
+  if (!isGroup.value) return false
+  const members = allGroupOrders.value.length ? allGroupOrders.value : (props.order.group || [])
+  if (!members.length) return false
+  // 最早子单在窗口内，且至少一单可调
+  const earliest = members.reduce((a: any, b: any) =>
+    new Date(a.createdAt).getTime() <= new Date(b.createdAt).getTime() ? a : b)
+  if (!withinAdjustWindow(earliest.createdAt)) return false
+  return members.some((m: any) => ADJUSTABLE_ORDER.includes(m.status))
+})
 function canVoidItem(item: any): boolean {
   return canVoidItemOn(props.order, item)
 }
@@ -342,6 +364,29 @@ function toggleGroup(id: string) {
 }
 
 function showAction(action: string): boolean {
+  // 合并卡：按组内最慢未完结子单判断，避免代表单已推进导致「开始制作」消失
+  if (isGroup.value) {
+    const active = allGroupOrders.value.filter(
+      (g: any) => g.status !== 'cancelled' && g.status !== 'completed',
+    )
+    if (!active.length) return false
+    const statuses = active.map((g: any) => g.status as string)
+    if (action === 'preparing') {
+      return statuses.some((s) => s === 'unpaid' || s === 'pending' || s === 'paid')
+    }
+    if (action === 'ready') {
+      // 组内无人停留在待处理，且仍有制作中
+      const anyPending = statuses.some((s) => s === 'unpaid' || s === 'pending' || s === 'paid')
+      return !anyPending && statuses.some((s) => s === 'preparing')
+    }
+    if (action === 'completed') {
+      const anyBeforeReady = statuses.some((s) =>
+        s === 'unpaid' || s === 'pending' || s === 'paid' || s === 'preparing',
+      )
+      return !anyBeforeReady && statuses.some((s) => s === 'ready')
+    }
+    return false
+  }
   const s = props.order.status
   if (action === 'preparing') return s === 'unpaid' || s === 'pending' || s === 'paid'
   if (action === 'ready') return s === 'preparing'
@@ -487,21 +532,34 @@ function formatTime(t: string) {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   padding: 12px 16px;
   border-top: 1px solid var(--divider);
   margin-top: auto;
 }
-.order-amount { display: flex; flex-direction: column; gap: 2px; }
+.order-amount,
+.order-amount-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
 .amount-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .amount-label { font-size: 11px; color: var(--text-disabled); }
 .amount-value { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 700; color: var(--on-surface); }
 .amount-unpaid {   color: #f74e22; }
-.order-amount-group { display: flex; flex-direction: column; gap: 2px; }
 .amount-row { display: flex; align-items: baseline; gap: 8px; }
 .amount-row .amount-value { font-size: 16px; }
 
 /* Actions */
-.order-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.order-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
 .btn-action {
   display: inline-flex;
   align-items: center;
@@ -526,8 +584,18 @@ function formatTime(t: string) {
 .btn-waive-sm { background: transparent; color: #d97706; border: 1px solid #d97706; }
 .btn-waive-sm:hover { background: rgba(217, 119, 6, 0.12); }
 .item-voided { opacity: 0.55; }
-.item-voided .item-name { text-decoration: line-through; }
-.void-tag { margin-left: 6px; font-size: 11px; color: #f74e22; text-decoration: none; font-weight: 600; }
+.item-voided .item-name,
+.item-voided .group-item-name { text-decoration: line-through; }
+.void-tag {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 11px;
+  color: #f74e22;
+  font-weight: 600;
+  text-decoration: none !important;
+  vertical-align: middle;
+}
+.item-voided .void-tag { text-decoration: none !important; }
 .item-void-reason { display: block; font-size: 11px; color: #f74e22; margin-top: 2px; }
 .btn-void-item {
   flex-shrink: 0; margin-left: auto; border: 1px solid #f74e22; background: transparent;

@@ -273,7 +273,7 @@ model Order {
   cancelledAt DateTime?
   paidAt      DateTime?
   dishOutAt   DateTime?
-  waiveAmount Float    @default(0)  // 抹零金额（审计）；payableAmount 为扣抹零后的实收/应付
+  waiveAmount Float    @default(0)  // legacy：新抹零写入 WaiveEntry；迁移后清零，列表可回退读
   waiveNote   String?
   waivedAt    DateTime?
 }
@@ -371,6 +371,22 @@ model ReviewGiftDish {
   @@unique([merchantId, dishId])
 }
 
+
+model WaiveEntry {
+  id         String   @id @default(cuid())
+  amount     Float
+  note       String?
+  orderId    String?  // 单订单抹零（可选）
+  groupId    String?  // 合并组抹零（Order.groupId）；整组收入扣减，不改子单 payable
+  merchantId String?
+  createdAt  DateTime @default(now())
+  waivedAt   DateTime @default(now())
+
+  @@index([orderId])
+  @@index([groupId])
+  @@index([waivedAt])
+  @@index([createdAt])
+}
 model KitchenTerminal {
   id          String   @id @default(cuid())
   merchantId  String

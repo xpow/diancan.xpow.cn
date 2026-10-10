@@ -1143,6 +1143,9 @@ app.get('/api/orders', generalLimiter, authMiddleware, async (req, res) => {
       fullReduction: o.promotions
         .filter((p) => p.type === 'full_reduction')
         .reduce((s, p) => s + p.discount, 0),
+      totalDiscount: o.promotions
+        .filter((p) => p.type === 'total_discount')
+        .reduce((s, p) => s + p.discount, 0),
       items: o.items.map((i) => ({
         id: i.id,
         dishId: i.dishId,
@@ -1153,6 +1156,8 @@ app.get('/api/orders', generalLimiter, authMiddleware, async (req, res) => {
         specs: i.specs || undefined,
         promotionLabel: i.promotionLabel || undefined,
         status: i.status,
+        cancelReason: i.cancelReason || undefined,
+        cancelledAt: i.cancelledAt?.toISOString() || undefined,
         portionSize: i.portionSize || undefined,
         unit: i.unit || '串',
         statusLight: catLight.get(dishCat.get(i.dishId) ?? '') ?? false,
@@ -1166,7 +1171,7 @@ app.get('/api/orders', generalLimiter, authMiddleware, async (req, res) => {
 })
 
 app.get('/api/orders/:orderNo', generalLimiter, authMiddleware, async (req, res) => {
-  const { orderNo } = req.params
+  const orderNo = String(req.params.orderNo)
   const order = await prisma.order.findUnique({
     where: { orderNo },
     include: { items: true, promotions: true },
@@ -1185,6 +1190,9 @@ app.get('/api/orders/:orderNo', generalLimiter, authMiddleware, async (req, res)
     },
     fullReduction: order.promotions
       .filter((p) => p.type === 'full_reduction')
+      .reduce((s, p) => s + p.discount, 0),
+    totalDiscount: order.promotions
+      .filter((p) => p.type === 'total_discount')
       .reduce((s, p) => s + p.discount, 0),
     items: order.items.map((i) => ({
       dishId: i.dishId,

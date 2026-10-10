@@ -81,14 +81,15 @@
                         <span class="ticket-group-title">{{ g.label }}</span>
                         <span class="ticket-group-count">{{ g.count }} 项</span>
                       </div>
-                      <div v-for="(item2, idx2) in g.items" :key="idx2" class="ticket-item">
+                      <div v-for="(item2, idx2) in g.items" :key="idx2" :class="['ticket-item', item2.status === 'cancelled' && 'ticket-item-voided']">
                         <div class="ticket-item-left">
                           <div class="ticket-item-img">
                             <img :src="dishImage(item2)" :alt="item2.name" class="ticket-item-img-el" />
                           </div>
                           <span v-if="itemStatusLabel(item2.status) && item2.statusLight" class="item-status-light" :class="'item-status-light-' + item2.status"></span>
                           <div>
-                            <p class="ticket-item-name">{{ item2.name }}<template v-if="item2.portionSize && (item2.finalUnitPrice ?? item2.unitPrice) > 0"> <span class="ticket-item-unit">（¥{{ (item2.finalUnitPrice ?? item2.unitPrice).toFixed(2) }}/{{ item2.portionSize }}{{ item2.unit || '串' }}）</span></template><template v-else-if="(item2.finalUnitPrice ?? item2.unitPrice) === 0"> <span class="ticket-item-unit tag-gift">赠品</span></template></p>
+                            <p class="ticket-item-name">{{ item2.name }}<span v-if="item2.status === 'cancelled'" class="void-tag">已退菜</span><template v-if="item2.portionSize && (item2.finalUnitPrice ?? item2.unitPrice) > 0"> <span class="ticket-item-unit">（¥{{ (item2.finalUnitPrice ?? item2.unitPrice).toFixed(2) }}/{{ item2.portionSize }}{{ item2.unit || '串' }}）</span></template><template v-else-if="(item2.finalUnitPrice ?? item2.unitPrice) === 0 && item2.status !== 'cancelled'"> <span class="ticket-item-unit tag-gift">赠品</span></template></p>
+                            <p v-if="item2.status === 'cancelled'" class="ticket-item-void-reason">{{ voidReasonLabel(item2.cancelReason) || '已退菜' }}</p>
                             <p v-if="item2.specs" class="ticket-item-spec">{{ item2.specs }}</p>
                             
                           </div>
@@ -100,7 +101,7 @@
                       </div>
                     </div>
                     <div class="ticket-total">
-                      <span class="ticket-total-label"><span class="ticket-time">{{ formatTime(order.createdAt) }}</span> {{ (order.items || []).length }} 项</span>
+                      <span class="ticket-total-label"><span class="ticket-time">{{ formatTime(order.createdAt) }}</span> {{ activeItemCount(order) }} 项</span>
                       <div class="ticket-total-right">
                         <span class="ticket-total-price"><small class="c-sign">¥</small>{{ (order.totals?.payableAmount || 0).toFixed(2) }}</span>
                       </div>
@@ -119,6 +120,7 @@
                   </div>
                   <div class="group-total-right">
                     <span v-if="item.totalReduction > 0" class="group-total-fr">满减 -¥{{ item.totalReduction.toFixed(2) }}</span>
+                    <span v-if="item.totalOrderDiscount > 0" class="group-total-fr">总价直减 -¥{{ item.totalOrderDiscount.toFixed(2) }}</span>
                     <span v-if="item.totalPending > 0" class="group-total-pending">待付 <small class="c-sign">¥</small>{{ item.totalPending.toFixed(2) }}</span>
                     <span class="group-total-price"><small class="c-sign">¥</small>{{ item.totalAmount.toFixed(2) }}</span>
                   </div>
@@ -183,16 +185,17 @@
                 <span class="ticket-group-title">{{ group.label }}</span>
                 <span class="ticket-group-count">{{ group.count }} 项</span>
               </div>
-              <div v-for="(item2, idx) in group.items" :key="idx" class="ticket-item">
+              <div v-for="(item2, idx) in group.items" :key="idx" :class="['ticket-item', item2.status === 'cancelled' && 'ticket-item-voided']">
                 <div class="ticket-item-left">
                   <div class="ticket-item-img">
                     <img :src="dishImage(item2)" :alt="item2.name" class="ticket-item-img-el" />
                   </div>
                   <span v-if="itemStatusLabel(item2.status) && item2.statusLight" class="item-status-light" :class="'item-status-light-' + item2.status"></span>
                   <div>
-                    <p class="ticket-item-name">{{ item2.name }}<template v-if="item2.portionSize && (item2.finalUnitPrice ?? item2.unitPrice) > 0"> <span class="ticket-item-unit">（¥{{ (item2.finalUnitPrice ?? item2.unitPrice).toFixed(2) }}/{{ item2.portionSize }}{{ item2.unit || '串' }}）</span></template><template v-else-if="(item2.finalUnitPrice ?? item2.unitPrice) === 0"> <span class="ticket-item-unit tag-gift">赠品</span></template></p>
+                    <p class="ticket-item-name">{{ item2.name }}<span v-if="item2.status === 'cancelled'" class="void-tag">已退菜</span><template v-if="item2.portionSize && (item2.finalUnitPrice ?? item2.unitPrice) > 0"> <span class="ticket-item-unit">（¥{{ (item2.finalUnitPrice ?? item2.unitPrice).toFixed(2) }}/{{ item2.portionSize }}{{ item2.unit || '串' }}）</span></template><template v-else-if="(item2.finalUnitPrice ?? item2.unitPrice) === 0 && item2.status !== 'cancelled'"> <span class="ticket-item-unit tag-gift">赠品</span></template></p>
+                    <p v-if="item2.status === 'cancelled'" class="ticket-item-void-reason">{{ voidReasonLabel(item2.cancelReason) || '已退菜' }}</p>
                     <p v-if="item2.specs" class="ticket-item-spec">{{ item2.specs }}</p>
-                            
+                    
                   </div>
                 </div>
                 <div class="ticket-item-right">
@@ -203,9 +206,10 @@
             </div>
 
             <div class="ticket-total">
-              <span class="ticket-total-label">合计 {{ (item.orders[0].items || []).length }} 项商品</span>
+              <span class="ticket-total-label">合计 {{ activeItemCount(item.orders[0]) }} 项商品</span>
               <div class="ticket-total-right">
                 <span v-if="item.orders[0].fullReduction > 0" class="ticket-total-fr">满减 -¥{{ item.orders[0].fullReduction.toFixed(2) }}</span>
+                <span v-if="(item.orders[0].totalDiscount || 0) > 0" class="ticket-total-fr">总价直减 -¥{{ item.orders[0].totalDiscount.toFixed(2) }}</span>
                 <span class="ticket-total-sub">{{ !item.orders[0].paidAt ? '待付金额' : '实付金额' }}</span>
                 <span class="ticket-total-price"><small class="c-sign">¥</small>{{ (item.orders[0].totals?.payableAmount || 0).toFixed(2) }}</span>
               </div>
@@ -379,6 +383,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { getDishImage } from '@/utils/dishImages'
 import { apiGet, apiPost } from '@/utils/api'
+import { voidReasonLabel } from '@/utils/voidReasons'
 import KioskTopBar from '@/components/KioskTopBar.vue'
 import BottomNav from '@/components/BottomNav.vue'
 import AppOverlay from '@/components/AppOverlay.vue'
@@ -389,6 +394,8 @@ interface OrderItem {
   quantity: number
   finalUnitPrice: number
   finalSubtotal: number
+  cancelReason?: string
+  cancelledAt?: string
   specs?: string
   promotionLabel?: string
   status?: string
@@ -408,6 +415,7 @@ interface OrderSummary {
   orderType?: string
   paymentMethod?: string
   fullReduction?: number
+  totalDiscount?: number
   groupId?: string
   items: OrderItem[]
   totals: OrderTotals
@@ -540,6 +548,7 @@ interface DisplayItem {
   totalCount: number
   totalPending: number
   totalReduction: number
+  totalOrderDiscount: number
 }
 
 const displayItems = computed<DisplayItem[]>(() => {
@@ -568,6 +577,7 @@ const displayItems = computed<DisplayItem[]>(() => {
       totalCount: orders.reduce((s, o) => s + (o.items || []).length, 0),
       totalPending: orders.filter(o => !o.paidAt).reduce((s, o) => s + (o.totals?.payableAmount || 0), 0),
       totalReduction: orders.reduce((s, o) => s + (o.fullReduction || 0), 0),
+      totalOrderDiscount: orders.reduce((s, o) => s + (o.totalDiscount || 0), 0),
     })
   }
 
@@ -580,6 +590,7 @@ const displayItems = computed<DisplayItem[]>(() => {
       totalCount: (o.items || []).length,
       totalPending: o.paidAt ? 0 : (o.totals?.payableAmount || 0),
       totalReduction: o.fullReduction || 0,
+      totalOrderDiscount: o.totalDiscount || 0,
     })
   }
 
@@ -634,8 +645,13 @@ function itemStatusLabel(s: string) {
     preparing: '制作中',
     ready: '待取餐',
     completed: '已完成',
+    cancelled: '已退菜',
   }
   return m[s] || ''
+}
+
+function activeItemCount(order: OrderSummary): number {
+  return (order.items || []).filter((i) => i.status !== 'cancelled').length
 }
 
 function formatTime(ts: string) {
@@ -1308,6 +1324,49 @@ onUnmounted(() => {
 .confirm-cancel-btn { background: var(--surface-variant); border: none; color: var(--on-surface-variant); }
 .confirm-ok-btn { background: var(--primary-container); border: none; color: var(--on-primary); }
 .confirm-ok-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* 退菜：醒目中划线，顾客一眼可见 */
+.ticket-item-voided {
+  opacity: 0.72;
+  position: relative;
+}
+.ticket-item-voided .ticket-item-name,
+.ticket-item-voided .ticket-item-unit,
+.ticket-item-voided .ticket-item-spec,
+.ticket-item-voided .ticket-item-qty {
+  color: #8a8a8a !important;
+}
+.ticket-item-voided .ticket-item-price,
+.ticket-item-voided .ticket-item-price .c-sign {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  text-decoration-color: #c62828;
+  color: #8a8a8a !important;
+}
+.ticket-item-voided .void-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  vertical-align: middle;
+  text-decoration: none !important;
+  color: #fff !important;
+  background: #e53935;
+}
+.ticket-item-voided .ticket-item-void-reason {
+  margin: 4px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: #e53935;
+  text-decoration: none;
+}
+.ticket-item-voided .ticket-item-img-el {
+  filter: grayscale(0.85) brightness(0.9);
+  opacity: 0.75;
+}
 </style>
 
 <style>
