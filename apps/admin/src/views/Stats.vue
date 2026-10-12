@@ -9,24 +9,13 @@
         <button :class="['tab-btn', activeTab === 'orders' && 'active']" @click="switchTab('orders')">订单统计</button>
       </div>
     </div>
-
-    <div class="filter-bar">
-      <div class="quick-btns">
-        <button :class="['quick-btn', quickRange === 'today' && 'active']" @click="setQuick('today')">今日</button>
-        <button :class="['quick-btn', quickRange === 'yesterday' && 'active']" @click="setQuick('yesterday')">昨日</button>
-        <button :class="['quick-btn', quickRange === 'week' && 'active']" @click="setQuick('week')">本周</button>
-        <button :class="['quick-btn', quickRange === 'month' && 'active']" @click="setQuick('month')">本月</button>
-        <button :class="['quick-btn', quickRange === 'all' && 'active']" @click="setQuick('all')">全部</button>
-        <span class="nav-sep"></span>
-        <button class="nav-btn" @click="shiftRange(navUnit, -1)"><span class="nav-arrow">‹</span> {{ navLabels[0] }}</button>
-        <button class="nav-btn" @click="shiftRange(navUnit, 1)">{{ navLabels[1] }} <span class="nav-arrow">›</span></button>
-      </div>
-      <DatePicker v-model="dateRange" selectionMode="range" :manualInput="false" showIcon class="date-picker"
-        @update:modelValue="onDateChange" />
-    </div>
-    <div class="date-display" v-if="dateDisplayText()">
-      📅 {{ dateDisplayText() }}
-    </div>
+    <DateRangePicker
+      v-model="dateRange"
+      v-model:quick-range="quickRange"
+      :initial-quick="routeInitialQuick"
+      class="stats-date"
+      @change="fetchStats"
+    />
 
     <!-- ==================== 经营概览 ==================== -->
     <template v-if="activeTab === 'overview'">
@@ -269,6 +258,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import DateRangePicker from '../components/DateRangePicker.vue'
 
 interface DishSales {
   dishId: string
@@ -350,25 +340,9 @@ const maxHourlyCount = computed(() => {
   return Math.max(...flow.map(h => h.orderCount), 1)
 })
 
-const navUnit = computed(() => {
-  const r = dateRange.value
-  if (r && r[0] && r[1]) {
-    const days = Math.round((new Date(r[1]).getTime() - new Date(r[0]).getTime()) / 86400000)
-    if (days <= 1) return 'day'
-    if (days <= 8) return 'week'
-    if (days <= 35) return 'month'
-    return 'year'
-  }
-  if (quickRange.value === 'week') return 'week'
-  if (quickRange.value === 'month' || quickRange.value === 'all') return 'month'
-  return 'day'
-})
 
-const navLabels = computed(() => {
-  const u = navUnit.value
-  const unitMap: Record<string, [string, string]> = { day: ['上一日', '下一日'], week: ['上一周', '下一周'], month: ['上一月', '下一月'], year: ['上一年', '下一年'] }
-  return unitMap[u]
-})
+
+
 
 const dineInPct = computed(() => {
   if (!overview.value) return 0
@@ -388,11 +362,7 @@ function fmtNum(v: number | null | undefined) {
   return v != null ? v.toFixed(2) : '—'
 }
 
-function formatDate(d: Date | null) {
-  if (!d) return ''
-  const dt = new Date(d)
-  return `${dt.getMonth() + 1}/${dt.getDate()}`
-}
+
 
 function weekday(dayStr: string) {
   const now = new Date()
@@ -401,15 +371,7 @@ function weekday(dayStr: string) {
   return ['日', '一', '二', '三', '四', '五', '六'][dt.getDay()]
 }
 
-function dateDisplayText() {
-  const r = dateRange.value
-  if (!r || !r[0] || !r[1]) return ''
-  const s = new Date(r[0])
-  const e = new Date(r[1])
-  const sameDay = s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth() && s.getDate() === e.getDate()
-  if (sameDay) return formatDate(s)
-  return `${formatDate(s)} — ${formatDate(e)}`
-}
+
 
 function barHeight(revenue: number) {
   return (revenue / maxTrendRevenue.value) * 95
@@ -467,86 +429,11 @@ function switchTab(tab: typeof activeTab.value) {
   fetchStats()
 }
 
-function setQuick(key: string) {
-  quickRange.value = key
-  const now = new Date()
-  let start: Date | null = null
-  let end: Date | null = null
 
-  if (key === 'today') {
-    start = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    end = new Date(start.getTime() + 86400000)
-  } else if (key === 'yesterday') {
-    end = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    start = new Date(end.getTime() - 86400000)
-  } else if (key === 'week') {
-    const day = now.getDay()
-    const diff = day === 0 ? 6 : day - 1
-    start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diff)
-    end = new Date(start.getTime() + 7 * 86400000)
-  } else if (key === 'month') {
-    start = new Date(now.getFullYear(), now.getMonth(), 1)
-    end = new Date(now.getFullYear(), now.getMonth() + 1, 1)
-  }
 
-  if (start && end) {
-    dateRange.value = [start, end]
-  } else {
-    const endD = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
-    const startD = new Date(endD.getTime() - 90 * 86400000)
-    dateRange.value = [startD, endD]
-  }
-  fetchStats()
-}
 
-function onDateChange(value: (Date | null)[] | undefined) {
-  quickRange.value = ''
-  if (!value || value.length === 0) {
-    dateRange.value = undefined
-    fetchStats()
-    return
-  }
 
-  const [start, end] = value
-  dateRange.value = [start ?? null, end ?? null]
 
-  if (start && !end) return
-  fetchStats()
-}
-
-function shiftRange(unit: 'day' | 'week' | 'month' | 'year', dir: -1 | 1) {
-  const cur = dateRange.value
-  let start: Date
-  let end: Date
-
-  if (cur && cur[0] && cur[1]) {
-    start = new Date(cur[0])
-    end = new Date(cur[1])
-  } else {
-    start = new Date()
-    end = new Date()
-  }
-
-  if (unit === 'day') {
-    const d = dir * 86400000
-    start = new Date(start.getTime() + d)
-    end = new Date(end.getTime() + d)
-  } else if (unit === 'week') {
-    const d = dir * 7 * 86400000
-    start = new Date(start.getTime() + d)
-    end = new Date(end.getTime() + d)
-  } else if (unit === 'month') {
-    start = new Date(start.getFullYear(), start.getMonth() + dir, start.getDate())
-    end = new Date(end.getFullYear(), end.getMonth() + dir, end.getDate())
-  } else if (unit === 'year') {
-    start = new Date(start.getFullYear() + dir, start.getMonth(), start.getDate())
-    end = new Date(end.getFullYear() + dir, end.getMonth(), end.getDate())
-  }
-
-  quickRange.value = ''
-  dateRange.value = [start, end]
-  fetchStats()
-}
 
 let lastOverviewQs = ''
 async function fetchStats() {
@@ -580,10 +467,11 @@ async function fetchStats() {
 
 const route = useRoute()
 const range = route.query.range as string | undefined
-setQuick(range === 'all' ? 'all' : 'today')
+const routeInitialQuick = range === 'all' ? 'all' : 'today'
 </script>
 
 <style scoped>
+.stats-date { margin-bottom: 16px; }
 .stats {
   width: 100%;
   max-width: 100%;
@@ -629,77 +517,6 @@ setQuick(range === 'all' ? 'all' : 'today')
   color: #ff6b00;
 }
 
-.filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-.quick-btns { display: flex; gap: 6px; }
-.quick-btn {
-  padding: 6px 14px;
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  background: var(--surface);
-  font-size: 13px;
-  cursor: pointer;
-  color: var(--text-secondary);
-  transition: all 0.15s;
-}
-.quick-btn.active {
-  background: #ff6b00;
-  color: var(--on-primary);
-  border-color: #ff6b00;
-}
-.quick-btn:hover:not(.active) {
-  border-color: #ff6b00;
-  color: #ff6b00;
-}
-.nav-sep {
-  width: 1px;
-  background: var(--border);
-  margin: 0 2px;
-}
-.nav-btn {
-  padding: 5px 14px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s;
-  white-space: nowrap;
-  gap: 2px;
-}
-.nav-btn:hover {
-  border-color: #ff6b00;
-  color: #ff6b00;
-  background: var(--primary-soft);
-}
-.nav-arrow {
-  font-size: 16px;
-  line-height: 1;
-  font-weight: 700;
-}
-.date-display {
-  display: inline-block;
-  margin-bottom: 12px;
-  padding: 6px 14px;
-  background: var(--primary-soft);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #a04100;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-}
-.date-picker { margin-left: auto; }
 
 .card {
   background: var(--surface);
@@ -1069,10 +886,7 @@ setQuick(range === 'all' ? 'all' : 'today')
   .row-2col { grid-template-columns: 1fr; }
   .page-header { flex-direction: column; gap: 12px; align-items: flex-start; }
   .header-tabs { flex-wrap: wrap; }
-  .filter-bar { flex-direction: column; align-items: flex-start; }
-  .quick-btns { flex-wrap: wrap; }
-  .date-display { width: 100%; }
-  .chart-scroll { max-width: calc(100vw - 32px); }
+        .chart-scroll { max-width: calc(100vw - 32px); }
 }
 
 @media (max-width: 480px) {
